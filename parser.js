@@ -1,6 +1,6 @@
-const axios = require("axios");
-const cheerio = require("cheerio");
-const fs = require("fs");
+import axios from "axios";
+import * as cheerio from "cheerio";
+import fs from "fs";
 
 const BASE_URL = "https://www.b17.ru";
 const PROFILE_URL = "https://www.b17.ru/dinakachaeva/";
