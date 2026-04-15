@@ -78,7 +78,7 @@ async function parseProfile() {
     articles,
   };
 
-  fs.writeFileSync("data.json", JSON.stringify(result, null, 2));
+  console.log(JSON.stringify(result, null, 2));
 
   console.log("Готово. Сохранено в data.json");
 })();
