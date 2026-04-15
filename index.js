@@ -1,60 +1,68 @@
-const express = require("express");
-const OpenAI = require("openai");
+import express from "express";
+import fetch from "node-fetch";
 
 const app = express();
 app.use(express.json());
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const PORT = process.env.PORT || 10000;
 
-const PORT = process.env.PORT || 3000;
+// === ТВОИ ПЕРЕМЕННЫЕ ===
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 
-// Проверка
-app.get("/", (req, res) => {
-  res.send("MVP WORKING");
-});
+// === ТВОЙ API ===
+const API_URL = "https://mvp-content-api.onrender.com/generate-post";
 
-// Health check
-app.get("/health", (req, res) => {
-  res.json({ status: "ok" });
-});
-
-// Генерация поста
-app.post("/generate-post", async (req, res) => {
+// === Webhook endpoint ===
+app.post(`/bot${TELEGRAM_TOKEN}`, async (req, res) => {
   try {
-    const { topic } = req.body;
+    const message = req.body.message;
 
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "Ты опытный психолог. Пиши глубокие, вовлекающие посты для соцсетей.",
-        },
-        {
-          role: "user",
-          content: `Напиши пост на тему: ${topic}`,
-        },
-      ],
+    if (!message || !message.text) {
+      return res.sendStatus(200);
+    }
+
+    const chatId = message.chat.id;
+    const userText = message.text;
+
+    console.log("User:", userText);
+
+    // === Запрос к твоему API ===
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ topic: userText }),
     });
 
-    const text = completion.choices[0].message.content;
+    const data = await response.json();
 
-    res.json({
-      success: true,
-      topic,
-      text,
+    const replyText = data.text || "Ошибка генерации";
+
+    // === Ответ в Telegram ===
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: replyText,
+      }),
     });
+
+    res.sendStatus(200);
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.sendStatus(500);
   }
 });
 
+// === Проверка сервера ===
+app.get("/", (req, res) => {
+  res.send("Bot is running 🚀");
+});
+
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log(`Server running on port ${PORT}`);
 });
