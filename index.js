@@ -1,66 +1,44 @@
-import fetch from "node-fetch";
+import express from "express";
+import { Telegraf } from "telegraf";
 
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-let offset = 0;
+// ⚠️ ВСТАВЬ СВОЙ ТОКЕН
+const bot = new Telegraf("ТВОЙ_ТОКЕН");
 
-// функция отправки сообщения
-async function sendMessage(chatId, text) {
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-    }),
-  });
-}
+// ====== ЛОГИ ДЛЯ ДЕБАГА ======
+bot.use((ctx, next) => {
+  console.log("📩 Update:", ctx.update);
+  return next();
+});
 
-// основной цикл
-async function startBot() {
-  console.log("🚀 Bot started...");
+// ====== КОМАНДЫ ======
+bot.start((ctx) => {
+  console.log("👉 /start from", ctx.from.username);
+  ctx.reply("Бот работает 🚀");
+});
 
-  while (true) {
-    try {
-      const res = await fetch(
-        `${TELEGRAM_API}/getUpdates?offset=${offset}&timeout=30`
-      );
-      const data = await res.json();
+bot.on("text", (ctx) => {
+  console.log("👉 text:", ctx.message.text);
+  ctx.reply("Ты написал: " + ctx.message.text);
+});
 
-      // защита от ошибок
-      if (!data.ok) {
-        console.log("Telegram API error:", data);
-        continue;
-      }
+// ====== HTTP СЕРВЕР ======
+app.get("/", (req, res) => {
+  res.send("Bot is alive");
+});
 
-      if (!data.result || data.result.length === 0) {
-        continue;
-      }
+// ====== ЗАПУСК ======
+app.listen(PORT, () => {
+  console.log(`🌐 Server running on port ${PORT}`);
+});
 
-      for (const update of data.result) {
-        offset = update.update_id + 1;
+// ====== ЗАПУСК БОТА ======
+bot.launch().then(() => {
+  console.log("🤖 Bot started");
+});
 
-        if (!update.message) continue;
-
-        const chatId = update.message.chat.id;
-        const text = update.message.text;
-
-        console.log("Message:", text);
-
-        // логика бота
-        if (text === "/start") {
-          await sendMessage(chatId, "Привет 👋 Я бот. Напиши что-нибудь.");
-        } else {
-          await sendMessage(chatId, `Ты написал: ${text}`);
-        }
-      }
-    } catch (err) {
-      console.log("Error:", err.message);
-    }
-  }
-}
-
-startBot();
+// graceful stop
+process.once("SIGINT", () => bot.stop("SIGINT"));
+process.once("SIGTERM", () => bot.stop("SIGTERM"));
