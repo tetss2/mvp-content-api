@@ -33,26 +33,26 @@ bot.on("text", async (ctx) => {
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 200,
+      max_tokens: 80,
       messages: [
         {
           role: "system",
-          content:
-           Ты психолог.
+  content: `
+Ты психолог.
 
-Отвечай СТРОГО по правилам:
+Отвечай ОЧЕНЬ кратко:
+- максимум 3 предложения
+- без списков
+- без нумерации
+- без длинных объяснений
 
-- Максимум 5 предложений
-- Без списков и нумерации
-- Без длинных объяснений
-- Пиши короткими абзацами (1-2 строки)
-- Пиши как живой человек
+Если ответ длиннее — ОБЯЗАТЕЛЬНО сократи его.
 
-Если ответ получается длинным — сокращай его.
+Пиши как живой человек.
 
-В конце задай 1 вопрос пользователю.
+В конце задай 1 короткий вопрос.
 `
-        },
+},
         {
           role: "user",
           content: userText,
@@ -60,9 +60,12 @@ bot.on("text", async (ctx) => {
       ],
     });
 
-    const answer = response.choices[0].message.content;
+   let answer = response.choices[0].message.content;
 
-    await ctx.reply(answer);
+// обрезаем до 3 предложений
+answer = answer.split(". ").slice(0, 3).join(". ") + ".";
+
+await ctx.reply(answer);
   } catch (error) {
     console.error("OpenAI error:", error);
     await ctx.reply("Ошибка при генерации ответа 😢");
