@@ -1,51 +1,66 @@
 import fetch from "node-fetch";
 
-const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-
-async function getUpdates(offset) {
-  const res = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates?offset=${offset}`);
-  return res.json();
-}
-
-async function sendMessage(chatId, text) {
-  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text
-    })
-  });
-}
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 let offset = 0;
 
-setInterval(async () => {
-  const data = await getUpdates(offset);
-
- if (!data.ok) {
-  console.log("Telegram error:", data);
-  return;
+// функция отправки сообщения
+async function sendMessage(chatId, text) {
+  await fetch(`${TELEGRAM_API}/sendMessage`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+    }),
+  });
 }
 
-if (data.result && data.result.length > 0) {
-  for (const update of data.result) {
-    offset = update.update_id + 1;
+// основной цикл
+async function startBot() {
+  console.log("🚀 Bot started...");
 
-    if (!update.message || !update.message.text) continue;
+  while (true) {
+    try {
+      const res = await fetch(
+        `${TELEGRAM_API}/getUpdates?offset=${offset}&timeout=30`
+      );
+      const data = await res.json();
 
-    const chatId = update.message.chat.id;
-    const text = update.message.text;
+      // защита от ошибок
+      if (!data.ok) {
+        console.log("Telegram API error:", data);
+        continue;
+      }
 
-    const response = await fetch("https://mvp-content-api.onrender.com/generate-post", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic: text })
-    });
+      if (!data.result || data.result.length === 0) {
+        continue;
+      }
 
-    const json = await response.json();
+      for (const update of data.result) {
+        offset = update.update_id + 1;
 
-    await sendMessage(chatId, json.text);
+        if (!update.message) continue;
+
+        const chatId = update.message.chat.id;
+        const text = update.message.text;
+
+        console.log("Message:", text);
+
+        // логика бота
+        if (text === "/start") {
+          await sendMessage(chatId, "Привет 👋 Я бот. Напиши что-нибудь.");
+        } else {
+          await sendMessage(chatId, `Ты написал: ${text}`);
+        }
+      }
+    } catch (err) {
+      console.log("Error:", err.message);
+    }
   }
 }
-}, 3000);
+
+startBot();
