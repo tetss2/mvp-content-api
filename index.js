@@ -1,4 +1,4 @@
-require('./parser');
+import './parser.js';
 
 import express from "express";
 import { Telegraf } from "telegraf";
