@@ -1,68 +1,44 @@
-import express from "express";
 import fetch from "node-fetch";
 
-const app = express();
-app.use(express.json());
+const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-const PORT = process.env.PORT || 10000;
+async function getUpdates(offset) {
+  const res = await fetch(`https://api.telegram.org/bot${TOKEN}/getUpdates?offset=${offset}`);
+  return res.json();
+}
 
-// === ТВОИ ПЕРЕМЕННЫЕ ===
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+async function sendMessage(chatId, text) {
+  await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text
+    })
+  });
+}
 
-// === ТВОЙ API ===
-const API_URL = "https://mvp-content-api.onrender.com/generate-post";
+let offset = 0;
 
-// === Webhook endpoint ===
-app.post(`/bot${TELEGRAM_TOKEN}`, async (req, res) => {
-  try {
-    const message = req.body.message;
+setInterval(async () => {
+  const data = await getUpdates(offset);
 
-    if (!message || !message.text) {
-      return res.sendStatus(200);
+  if (data.result.length > 0) {
+    for (const update of data.result) {
+      offset = update.update_id + 1;
+
+      const chatId = update.message.chat.id;
+      const text = update.message.text;
+
+      const response = await fetch("https://mvp-content-api.onrender.com/generate-post", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ topic: text })
+      });
+
+      const json = await response.json();
+
+      await sendMessage(chatId, json.text);
     }
-
-    const chatId = message.chat.id;
-    const userText = message.text;
-
-    console.log("User:", userText);
-
-    // === Запрос к твоему API ===
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ topic: userText }),
-    });
-
-    const data = await response.json();
-
-    const replyText = data.text || "Ошибка генерации";
-
-    // === Ответ в Telegram ===
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: replyText,
-      }),
-    });
-
-    res.sendStatus(200);
-  } catch (error) {
-    console.error(error);
-    res.sendStatus(500);
   }
-});
-
-// === Проверка сервера ===
-app.get("/", (req, res) => {
-  res.send("Bot is running 🚀");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+}, 3000);
