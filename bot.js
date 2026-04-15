@@ -15,8 +15,7 @@ const openai = new OpenAI({
 
 // ===== LOAD ARTICLES =====
 const rawData = fs.readFileSync("./articles.production.json");
-const json = JSON.parse(rawData);
-const articles = json.articles;
+const articles = JSON.parse(rawData);
 
 // ===== SIMPLE FAST SEARCH =====
 function searchArticles(query) {
