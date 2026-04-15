@@ -23,7 +23,9 @@ const ARTICLES = [
   "https://www.b17.ru/article/104933/"
 ];
 
-// задержка (антибан)
+let cachedBlocks = null;
+
+// задержка
 const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 
 // очистка текста
@@ -35,28 +37,23 @@ function cleanText(text) {
     .trim();
 }
 
-// разбивка на предложения
+// предложения
 function splitIntoSentences(text) {
   return text.match(/[^.!?]+[.!?]+/g) || [];
 }
 
-// делаем 3 блока по 4–6 предложений
+// 3 блока
 function makeBlocks(text) {
   const sentences = splitIntoSentences(text);
 
-  const blocks = [];
-  let index = 0;
-
-  for (let i = 0; i < 3; i++) {
-    const block = sentences.slice(index, index + 5).join(" ");
-    blocks.push(block);
-    index += 5;
-  }
-
-  return blocks;
+  return [
+    sentences.slice(0, 5).join(" "),
+    sentences.slice(5, 10).join(" "),
+    sentences.slice(10, 15).join(" ")
+  ];
 }
 
-// парсинг одной статьи
+// парсинг
 async function parseArticle(url) {
   try {
     console.log("Парсим:", url);
@@ -64,27 +61,17 @@ async function parseArticle(url) {
     const { data } = await axios.get(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+        "Accept-Language": "ru-RU,ru;q=0.9"
       },
-      timeout: 10000
+      timeout: 15000
     });
 
     const $ = cheerio.load(data);
 
-    const title = $("h1").first().text().trim();
-
-    $(".article_text script, .article_text style").remove();
-
-    $(".article_text a").each((i, el) => {
-      const text = $(el).text();
-      $(el).replaceWith(text);
-    });
-
     const raw = $(".article_text").text();
 
-    const content = cleanText(raw);
-
-    return { title, content };
+    return cleanText(raw);
 
   } catch (err) {
     console.log("Ошибка:", url, err.message);
@@ -92,52 +79,49 @@ async function parseArticle(url) {
   }
 }
 
-// собираем все статьи
-async function buildKnowledge() {
-  const allTexts = [];
+// сборка ОДИН РАЗ
+async function buildOnce() {
+  console.log("СТАРТ ПАРСИНГА (1 раз)");
+
+  const texts = [];
 
   for (const url of ARTICLES) {
-    const article = await parseArticle(url);
+    const t = await parseArticle(url);
 
-    if (article && article.content) {
-      allTexts.push(article.content);
-    }
+    if (t) texts.push(t);
 
-    await delay(2000); // антибан
+    await delay(7000); // ⬅️ сильно увеличили паузу
   }
 
-  const combined = allTexts.join(" ");
+  const combined = texts.join(" ");
 
-  console.log("Все статьи объединены");
+  cachedBlocks = makeBlocks(combined);
 
-  return makeBlocks(combined);
+  console.log("ГОТОВО. ДАННЫЕ ЗАКЭШИРОВАНЫ");
 }
 
 // endpoint
 app.get("/", async (req, res) => {
-  console.log("Запрос пришёл");
+  console.log("Запрос к API");
 
-  try {
-    const blocks = await buildKnowledge();
-
-    res.json({
-      status: "ok",
-      blocks
-    });
-
-  } catch (e) {
-    console.error("Ошибка сервера:", e.message);
-
-    res.status(500).json({
-      status: "error",
-      message: e.message
+  if (!cachedBlocks) {
+    return res.json({
+      status: "loading",
+      message: "Данные ещё собираются, попробуй через 1-2 минуты"
     });
   }
+
+  res.json({
+    status: "ok",
+    blocks: cachedBlocks
+  });
 });
 
-// порт для Render
+// запуск
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log("Server running on port", PORT);
+
+  await buildOnce(); // ⬅️ ключевой момент
 });
