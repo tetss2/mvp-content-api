@@ -1,18 +1,21 @@
+import fs from "fs";
 import OpenAI from "openai";
 
-// ✅ ВАЖНО: фикс для Node 22
-import articles from "./articles.production.json" assert { type: "json" };
+// === 1. Читаем JSON вручную ===
+const raw = fs.readFileSync("./articles.production.json", "utf-8");
+const articles = JSON.parse(raw);
 
-// === Контекст ===
+// === 2. Собираем контекст ===
 const context = articles.articles
   .map(a => `### ${a.title}\n${a.content}`)
   .join("\n\n");
 
-// === OpenAI ===
+// === 3. OpenAI ===
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// === 4. Функция ответа ===
 async function askBot(userMessage) {
   const response = await client.chat.completions.create({
     model: "gpt-4o-mini",
@@ -21,10 +24,11 @@ async function askBot(userMessage) {
         role: "system",
         content: `
 Ты — помощник психолога.
-Используй ТОЛЬКО контекст ниже.
+Отвечай только на основе контекста.
 
-Если ответа нет — скажи, что в базе нет информации.
+Если ответа нет — скажи, что информации нет.
 
+Контекст:
 ${context}
         `,
       },
@@ -38,7 +42,7 @@ ${context}
   return response.choices[0].message.content;
 }
 
-// тест
+// === 5. Тест ===
 (async () => {
   const answer = await askBot("Как справиться с тревогой?");
   console.log(answer);
