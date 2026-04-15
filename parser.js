@@ -19,7 +19,7 @@ async function getArticlesLinks() {
   $("a").each((i, el) => {
     const href = $(el).attr("href");
 
-    if (href && href.includes("/article/")) {
+    if (href && href.startsWith("/article/")) {
       links.push(BASE_URL + href);
     }
   });
@@ -31,8 +31,12 @@ async function getArticlesLinks() {
 async function parseArticle(url) {
   const $ = await getHTML(url);
 
-  const title = $("h1").text().trim();
-  const content = $(".article-content, .text").text().trim();
+  const title = $("h1").first().text().trim();
+
+const content = $(".article_text, .text, .content, article")
+  .text()
+  .replace(/\s+/g, " ")
+  .trim();
 
   return {
     url,
