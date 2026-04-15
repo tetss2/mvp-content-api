@@ -5,7 +5,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ⚠️ ВСТАВЬ СВОЙ ТОКЕН
-const bot = new Telegraf(process.env.8397973688:AAGftC8rnExoTcQzh5r2Il9stqY5OyAS0rA);
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // ====== ЛОГИ ДЛЯ ДЕБАГА ======
 bot.use((ctx, next) => {
