@@ -23,22 +23,29 @@ let offset = 0;
 setInterval(async () => {
   const data = await getUpdates(offset);
 
-  if (data.result.length > 0) {
-    for (const update of data.result) {
-      offset = update.update_id + 1;
+ if (!data.ok) {
+  console.log("Telegram error:", data);
+  return;
+}
 
-      const chatId = update.message.chat.id;
-      const text = update.message.text;
+if (data.result && data.result.length > 0) {
+  for (const update of data.result) {
+    offset = update.update_id + 1;
 
-      const response = await fetch("https://mvp-content-api.onrender.com/generate-post", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ topic: text })
-      });
+    if (!update.message || !update.message.text) continue;
 
-      const json = await response.json();
+    const chatId = update.message.chat.id;
+    const text = update.message.text;
 
-      await sendMessage(chatId, json.text);
-    }
+    const response = await fetch("https://mvp-content-api.onrender.com/generate-post", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: text })
+    });
+
+    const json = await response.json();
+
+    await sendMessage(chatId, json.text);
   }
+}
 }, 3000);
