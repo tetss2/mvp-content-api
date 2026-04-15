@@ -2,56 +2,53 @@ import express from "express";
 import { Telegraf } from "telegraf";
 import OpenAI from "openai";
 
-// === ИНИЦИАЛИЗАЦИЯ ===
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Telegram bot
+// === ИНИЦИАЛИЗАЦИЯ ===
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
-// OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// === ЛОГИ (для дебага) ===
-bot.use((ctx, next) => {
-  console.log("Update:", ctx.update);
-  return next();
-});
-
-// === КОМАНДА /start ===
+// === СТАРТ ===
 bot.start((ctx) => {
-  console.log("/start from:", ctx.from.username);
-  ctx.reply("Бот работает 🚀 Напиши свой вопрос");
+  ctx.reply("Привет. Я рядом. Можешь написать, что тебя беспокоит.");
 });
 
-// === ОСНОВНАЯ ЛОГИКА (AI) ===
+// === ОСНОВНАЯ ЛОГИКА ===
 bot.on("text", async (ctx) => {
   try {
     const userText = ctx.message.text;
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      max_tokens: 80,
+
+      temperature: 0.7,
+      max_tokens: 180,
+
       messages: [
         {
           role: "system",
-content: `
-Ты психолог.
+          content: `
+Ты — психолог (женщина), отвечаешь как живой человек.
 
-Отвечай ОЧЕНЬ кратко:
-- максимум 3 предложения
-- без списков
-- без нумерации
+Правила ответа:
+- 2–4 коротких предложения
+- без списков и нумерации
+- без длинных объяснений
+- пиши простым разговорным языком
+- проявляй эмпатию (поддержка, понимание)
+- не давай сухих советов
+- в конце задай 1 мягкий вопрос
 
-Если ответ длиннее — ОБЯЗАТЕЛЬНО сократи его.
-
-Пиши как живой человек.
-
-В конце задай 1 короткий вопрос.
+Стиль:
+- спокойно, тепло, без морализаторства
+- как в переписке в Telegram
+- без шаблонных фраз типа "это нормально"
 `
-},
+        },
         {
           role: "user",
           content: userText,
@@ -59,15 +56,13 @@ content: `
       ],
     });
 
-   let answer = response.choices[0].message.content;
+    let answer = response.choices[0].message.content;
 
-// обрезаем до 3 предложений
-answer = answer.split(". ").slice(0, 3).join(". ") + ".";
+    await ctx.reply(answer);
 
-await ctx.reply(answer);
   } catch (error) {
     console.error("OpenAI error:", error);
-    await ctx.reply("Ошибка при генерации ответа 😢");
+    await ctx.reply("Сейчас не получилось ответить, попробуй ещё раз 🙏");
   }
 });
 
@@ -76,12 +71,12 @@ app.get("/", (req, res) => {
   res.send("Bot is alive");
 });
 
-// === ЗАПУСК СЕРВЕРА ===
+// === ЗАПУСК ===
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// === ЗАПУСК БОТА (polling) ===
+// === ЗАПУСК БОТА ===
 bot.launch().then(() => {
   console.log("Bot started");
 });
