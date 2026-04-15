@@ -1,3 +1,5 @@
+require('./parser');
+
 import express from "express";
 import { Telegraf } from "telegraf";
 import OpenAI from "openai";
