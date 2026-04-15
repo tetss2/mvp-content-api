@@ -1,3 +1,4 @@
+import './bot.js';
 import fs from "fs";
 import express from "express";
 import OpenAI from "openai";
