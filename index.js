@@ -1,106 +1,106 @@
-import './bot.js';
-import fs from "fs";
 import express from "express";
 import OpenAI from "openai";
+import fs from "fs";
 
-// =======================
-// 1. Чтение JSON (стабильно для Node 22)
-// =======================
-let articles = { articles: [] };
+const app = express();
+app.use(express.json());
 
-try {
-  const raw = fs.readFileSync("./articles.production.json", "utf-8");
-  articles = JSON.parse(raw);
-} catch (e) {
-  console.error("❌ Ошибка чтения JSON:", e.message);
-}
-
-// =======================
-// 2. Формирование контекста
-// =======================
-const context = (articles.articles || [])
-  .map(a => `### ${a.title}\n${a.content}`)
-  .join("\n\n");
-
-// DEBUG (оставь на первое время)
-console.log("=== ARTICLES COUNT ===", articles.articles?.length || 0);
-console.log("=== CONTEXT LENGTH ===", context.length);
-
-// =======================
-// 3. OpenAI
-// =======================
+// ===== OpenAI =====
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// =======================
-// 4. Express сервер (Render требует этого)
-// =======================
-const app = express();
-app.use(express.json());
+// ===== Загружаем статьи =====
+const data = JSON.parse(fs.readFileSync("./articles.production.json", "utf-8"));
+const articles = data.articles;
 
-// health-check (чтобы Render не думал что сервис умер)
-app.get("/", (req, res) => {
-  res.send("API работает");
-});
+// ===== Простая, но быстрая релевантность =====
+function scoreArticle(article, query) {
+  const text = (
+    article.title +
+    " " +
+    article.content +
+    " " +
+    (article.tags || []).join(" ")
+  ).toLowerCase();
 
-// =======================
-// 5. Основной endpoint
-// =======================
+  const words = query.toLowerCase().split(" ");
+  let score = 0;
+
+  for (let word of words) {
+    if (text.includes(word)) score += 2;
+    if (article.title.toLowerCase().includes(word)) score += 3;
+    if ((article.tags || []).join(" ").includes(word)) score += 4;
+  }
+
+  return score;
+}
+
+// ===== Поиск лучших статей =====
+function findRelevantArticles(query) {
+  return articles
+    .map((a) => ({
+      ...a,
+      score: scoreArticle(a, query),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3); // ТОП 3
+}
+
+// ===== API =====
 app.post("/ask", async (req, res) => {
   try {
     const { question } = req.body;
 
-    if (!question) {
-      return res.status(400).json({ error: "Нет вопроса" });
-    }
+    const relevant = findRelevantArticles(question);
 
-    if (!context || context.length < 50) {
-      return res.json({
-        answer: "База знаний пуста или не загрузилась",
-      });
-    }
+    const context = relevant
+      .map(
+        (a) =>
+          `Заголовок: ${a.title}\nТеги: ${a.tags.join(", ")}\nТекст: ${a.content}`
+      )
+      .join("\n\n---\n\n");
 
-    const response = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
-Ты — помощник психолога.
+    const prompt = `
+Ты — психолог Динара.
 
-Отвечай строго на основе контекста ниже.
-Не выдумывай.
+Используй:
+1) Контекст статей ниже (ОСНОВА)
+2) Свои знания (ДОПОЛНЕНИЕ)
 
-Если ответа нет — пиши: "Информации нет".
+Правила:
+- Пиши как живой человек
+- Без воды
+- Поддерживающе
+- Можно задавать уточняющий вопрос
 
 Контекст:
 ${context}
-          `,
-        },
-        {
-          role: "user",
-          content: question,
-        },
-      ],
-      temperature: 0.7,
+
+Вопрос:
+${question}
+`;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
     });
 
-    res.json({
-      answer: response.choices[0].message.content,
-    });
+    const answer = completion.choices[0].message.content;
 
-  } catch (error) {
-    console.error("❌ Ошибка OpenAI:", error.message);
-    res.status(500).json({ error: "Ошибка сервера" });
+    res.json({ answer });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "Ошибка" });
   }
 });
 
-// =======================
-// 6. Запуск сервера
-// =======================
-const PORT = process.env.PORT || 3000;
+// ===== health-check =====
+app.get("/", (req, res) => {
+  res.send("API работает");
+});
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server started on port ${PORT}`);
+  console.log("Server started on port", PORT);
 });
