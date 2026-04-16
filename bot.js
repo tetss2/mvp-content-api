@@ -1,107 +1,89 @@
 import TelegramBot from "node-telegram-bot-api";
-import fs from "fs";
 import OpenAI from "openai";
+import fs from "fs";
 
-// ===== ENV =====
+// ====== ENV ======
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-// ===== INIT =====
+// ====== INIT ======
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY,
-});
-
-// ===== LOAD ARTICLES =====
-const rawData = fs.readFileSync("./articles.production.json");
+// ====== LOAD ARTICLES ======
+const rawData = fs.readFileSync("./articles.production.json", "utf-8");
 const articles = JSON.parse(rawData);
 
-// ===== SIMPLE FAST SEARCH =====
-function searchArticles(query) {
+// ====== SEMANTIC SCORE ======
+function scoreArticle(article, query) {
+  const text = (article.title + " " + article.content).toLowerCase();
   const q = query.toLowerCase();
 
-  return articles
-    .map((a) => {
-      let score = 0;
+  let score = 0;
 
-      if (a.title.toLowerCase().includes(q)) score += 5;
-
-      a.tags.forEach((tag) => {
-        if (q.includes(tag)) score += 3;
-      });
-
-      if (a.content.toLowerCase().includes(q)) score += 1;
-
-      return { ...a, score };
-    })
-    .filter((a) => a.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-}
-
-// ===== OPENAI =====
-async function askOpenAI(userText, contextText) {
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "Ты психолог (Динара). Отвечай мягко, поддерживающе, без занудства. Используй контекст, но добавляй знания.",
-      },
-      {
-        role: "user",
-        content: `Контекст:\n${contextText}\n\nВопрос:\n${userText}`,
-      },
-    ],
+  q.split(" ").forEach(word => {
+    if (text.includes(word)) score += 1;
   });
 
-  return completion.choices[0].message.content;
+  return score;
 }
 
-// ===== BOT HANDLER =====
+// ====== MAIN HANDLER ======
 bot.on("message", async (msg) => {
-  const chatId = msg.chat.id;
-  const text = msg.text;
-
-  if (!text) return;
-
   try {
-    const found = searchArticles(text);
+    const chatId = msg.chat.id;
+    const text = msg.text;
 
-    let context = "";
+    if (!text) return;
 
-    if (found.length > 0) {
-      context = found
-        .map(
-          (a) =>
-            `Статья: ${a.title}\n${a.content.substring(0, 500)}`
-        )
-        .join("\n\n");
-    }
+    // ====== 1. FIND BEST ARTICLES ======
+    const topArticles = articles
+      .map(a => ({ ...a, score: scoreArticle(a, text) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
 
-    // ===== OPENAI + FALLBACK =====
-    try {
-      const answer = await askOpenAI(text, context);
-      bot.sendMessage(chatId, answer);
-    } catch (e) {
-      console.error("OpenAI ERROR:", e);
+    // ====== 2. BUILD CONTEXT ======
+    const context = topArticles
+      .map(a => `Статья: ${a.title}\n${a.content}`)
+      .join("\n\n");
 
-      if (context) {
-        bot.sendMessage(
-          chatId,
-          "Нашла похожую информацию:\n\n" + context.slice(0, 1000)
-        );
-      } else {
-        bot.sendMessage(
-          chatId,
-          "Пока не нашла точный ответ. Попробуй переформулировать 🙏"
-        );
-      }
-    }
-  } catch (err) {
-    console.error("GLOBAL ERROR:", err);
-    bot.sendMessage(chatId, "Ошибка сервера 😢");
+    // ====== 3. PROMPT ======
+    const prompt = `
+Ты психолог (как Динара).
+
+Отвечай:
+— живым языком
+— с эмпатией
+— без сухой теории
+— как будто общаешься с клиентом
+
+Используй материалы ниже как основу, но не копируй дословно.
+
+Контекст:
+${context}
+
+Вопрос:
+${text}
+
+Ответ:
+`;
+
+    // ====== 4. OPENAI ======
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.7,
+    });
+
+    const answer = completion.choices[0].message.content;
+
+    // ====== 5. SEND ======
+    bot.sendMessage(chatId, answer);
+
+  } catch (error) {
+    console.error(error);
+    bot.sendMessage(msg.chat.id, "Ошибка сервера 😢");
   }
 });
+
+console.log("Bot is running...");
