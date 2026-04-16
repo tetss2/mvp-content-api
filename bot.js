@@ -52,7 +52,9 @@ bot.on("message", async (msg) => {
 Ты практикующий психолог (Динара).
 
 ВАЖНО:
-— отвечай КОРОТКО (до 8-10 предложений)
+— отвечай КОРОТКО (до 3-4 предложений)
+— как сообщение в Telegram
+— без списков
 — не пиши лекции
 — сначала прояви эмпатию
 — затем задай 1-2 вопроса
@@ -78,6 +80,7 @@ ${text}
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.5,
+      max_tokens: 120,
     });
 
     const answer = completion.choices[0].message.content;
