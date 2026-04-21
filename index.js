@@ -26,12 +26,13 @@ function scoreArticle(article, query) {
 }
 
 async function generateVoice(text) {
+  // Расширяем паузы для медленной размеренной речи
   const textWithPauses = text
-    .replace(/\. /g, '.  ')
-    .replace(/\? /g, '?  ')
-    .replace(/\! /g, '!  ')
+    .replace(/\. /g, '.   ')
+    .replace(/\? /g, '?   ')
+    .replace(/\! /g, '!   ')
     .replace(/, /g, ',  ')
-    .replace(/\.\.\./g, '...  ');
+    .replace(/\.\.\./g, '...   ');
 
   const response = await fetch("https://api.cartesia.ai/tts/bytes", {
     method: "POST",
@@ -47,8 +48,7 @@ async function generateVoice(text) {
         mode: "id",
         id: CARTESIA_VOICE_ID,
         __experimental_controls: {
-          speed: "slow",
-          emotion: ["positivity:low", "curiosity:low"]
+          speed: "slowest"  // максимально медленно — как чтение сказки
         }
       },
       output_format: { container: "mp3", encoding: "mp3", sample_rate: 44100 },
@@ -96,11 +96,15 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    // Сжатая версия для голоса — 15 секунд = ~300-350 символов = 2-3 предложения
-    const shortPrompt = `Сожми до 2-3 предложений (300-350 символов).
-Сохрани главную мысль, эмпатию и вопрос в конце. Пиши от первого лица, тепло.
-Добавь многоточие (...) там где нужна естественная пауза.
-Только текст без пояснений.
+    // Сжатая версия для голоса — 2-3 предложения, без вопроса, нейтральная
+    const shortPrompt = `Сожми следующий текст до 2-3 предложений (300-350 символов).
+Требования:
+- Без вопроса в конце
+- Нейтральный тон, тёплый и спокойный
+- Краткая осмысленная версия основной мысли
+- Пиши от первого лица
+- Добавь многоточие (...) там где нужна естественная пауза
+- Только текст без пояснений и заголовков
 
 Текст:
 ${fullAnswer}
