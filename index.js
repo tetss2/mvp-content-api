@@ -14,12 +14,14 @@ bot.setWebHook(`${WEBHOOK_URL}${webhookPath}`)
   .catch(err => console.error("Webhook error:", err));
 
 // ====== RECEIVE UPDATES FROM TELEGRAM ======
-app.post(webhookPath, async (req, res) => {
+app.post(webhookPath, (req, res) => {
+  res.sendStatus(200); // сразу отвечаем Telegram
   const update = req.body;
   if (update.message) {
-    await handleMessage(update.message); // ждём полного выполнения
+    handleMessage(update.message).catch(err => {
+      console.error("Background handler error:", err.message);
+    });
   }
-  res.sendStatus(200);
 });
 
 // ====== HEALTH CHECK ======
