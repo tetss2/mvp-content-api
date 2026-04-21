@@ -1,20 +1,21 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-import fs from "fs";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
 
 // ====== ENV ======
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const CARTESIA_API_KEY = process.env.CARTESIA_API_KEY;
 const CARTESIA_VOICE_ID = process.env.CARTESIA_VOICE_ID;
-const WEBHOOK_URL = process.env.WEBHOOK_URL; // например: https://ai-landing-ten.vercel.app
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 // ====== INIT (webhook mode — NO polling) ======
 const bot = new TelegramBot(TELEGRAM_TOKEN, { webHook: false });
 
 // ====== LOAD ARTICLES ======
-const rawData = fs.readFileSync("./articles.production.json", "utf-8");
-const articles = JSON.parse(rawData);
+const articles = require("./articles.production.json");
 
 // ====== SEMANTIC SCORE ======
 function scoreArticle(article, query) {
