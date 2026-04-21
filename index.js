@@ -1,6 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-import { pack } from "msgpackr";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -26,8 +25,52 @@ function scoreArticle(article, query) {
   return score;
 }
 
+// Простая msgpack упаковка без внешних зависимостей
+function encodeMsgpack(obj) {
+  const parts = [];
+  const keys = Object.keys(obj);
+  // fixmap header
+  parts.push(Buffer.from([0x80 | keys.length]));
+  for (const key of keys) {
+    const val = obj[key];
+    // encode key (string)
+    const keyBuf = Buffer.from(key, 'utf8');
+    if (keyBuf.length <= 31) {
+      parts.push(Buffer.from([0xa0 | keyBuf.length]));
+    } else {
+      parts.push(Buffer.from([0xd9, keyBuf.length]));
+    }
+    parts.push(keyBuf);
+    // encode value
+    if (typeof val === 'string') {
+      const valBuf = Buffer.from(val, 'utf8');
+      if (valBuf.length <= 31) {
+        parts.push(Buffer.from([0xa0 | valBuf.length]));
+      } else if (valBuf.length <= 255) {
+        parts.push(Buffer.from([0xd9, valBuf.length]));
+      } else {
+        parts.push(Buffer.from([0xda, valBuf.length >> 8, valBuf.length & 0xff]));
+      }
+      parts.push(valBuf);
+    } else if (typeof val === 'number') {
+      if (Number.isInteger(val) && val >= 0 && val <= 127) {
+        parts.push(Buffer.from([val]));
+      } else {
+        // int32
+        const b = Buffer.alloc(5);
+        b[0] = 0xd2;
+        b.writeInt32BE(val, 1);
+        parts.push(b);
+      }
+    } else if (typeof val === 'boolean') {
+      parts.push(Buffer.from([val ? 0xc3 : 0xc2]));
+    }
+  }
+  return Buffer.concat(parts);
+}
+
 async function generateVoice(text) {
-  const payload = pack({
+  const payload = encodeMsgpack({
     text: text,
     reference_id: FISH_AUDIO_VOICE_ID,
     format: "mp3",
