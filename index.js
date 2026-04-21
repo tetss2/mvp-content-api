@@ -26,6 +26,13 @@ function scoreArticle(article, query) {
 }
 
 async function generateVoice(text) {
+  // Добавляем паузы через знаки препинания для более естественной речи
+  const textWithPauses = text
+    .replace(/\. /g, '.  ')      // пауза после точки
+    .replace(/\? /g, '?  ')      // пауза после вопроса
+    .replace(/\! /g, '!  ')      // пауза после восклицания
+    .replace(/, /g, ',  ');       // небольшая пауза после запятой
+
   const response = await fetch("https://api.cartesia.ai/tts/bytes", {
     method: "POST",
     headers: {
@@ -35,8 +42,15 @@ async function generateVoice(text) {
     },
     body: JSON.stringify({
       model_id: "sonic-multilingual",
-      transcript: text,
-      voice: { mode: "id", id: CARTESIA_VOICE_ID },
+      transcript: textWithPauses,
+      voice: {
+        mode: "id",
+        id: CARTESIA_VOICE_ID,
+        __experimental_controls: {
+          speed: "slow",   // медленнее (~0.85)
+          emotion: ["positivity:low", "curiosity:low"]  // мягче, теплее
+        }
+      },
       output_format: { container: "mp3", encoding: "mp3", sample_rate: 44100 },
       language: "ru",
     }),
@@ -82,7 +96,16 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    const shortPrompt = `Сожми до 1-2 предложений (не более 200 символов), сохрани главную мысль и эмпатию. Только текст без пояснений.\n\nТекст:\n${fullAnswer}\n\nСжатая версия:`;
+    // Сжатая версия для голоса — короткая, с паузами через многоточие
+    const shortPrompt = `Сожми до 1-2 предложений (не более 200 символов).
+Сохрани главную мысль и тепло. Пиши от первого лица.
+Добавь многоточие (...) там где нужна пауза для живой речи.
+Только текст без пояснений.
+
+Текст:
+${fullAnswer}
+
+Сжатая версия:`;
 
     const shortCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
