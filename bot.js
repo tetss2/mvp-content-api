@@ -135,8 +135,8 @@ ${text}
     }
 
   } catch (error) {
-    console.error("Handler error:", error);
-    bot.sendMessage(msg.chat.id, "Ошибка сервера 😢");
+    console.error("Handler error full:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    bot.sendMessage(msg.chat.id, "Ошибка: " + error.message);
   }
 }
 
