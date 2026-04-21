@@ -6,8 +6,8 @@ const require = createRequire(import.meta.url);
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const CARTESIA_API_KEY = process.env.CARTESIA_API_KEY;
-const CARTESIA_VOICE_ID = process.env.CARTESIA_VOICE_ID;
+const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
+const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -26,37 +26,29 @@ function scoreArticle(article, query) {
 }
 
 async function generateVoice(text) {
-  // Расширяем паузы для медленной размеренной речи
-  const textWithPauses = text
-    .replace(/\. /g, '.   ')
-    .replace(/\? /g, '?   ')
-    .replace(/\! /g, '!   ')
-    .replace(/, /g, ',  ')
-    .replace(/\.\.\./g, '...   ');
-
-  const response = await fetch("https://api.cartesia.ai/tts/bytes", {
+  const response = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: {
-      "Cartesia-Version": "2024-06-10",
-      "X-API-Key": CARTESIA_API_KEY,
-      "Content-Type": "application/json",
+      "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`,
+      "Content-Type": "application/msgpack",
     },
-    body: JSON.stringify({
-      model_id: "sonic-multilingual",
-      transcript: textWithPauses,
-      voice: {
-        mode: "id",
-        id: CARTESIA_VOICE_ID,
-        __experimental_controls: {
-          speed: "slowest"  // максимально медленно — как чтение сказки
-        }
-      },
-      output_format: { container: "mp3", encoding: "mp3", sample_rate: 44100 },
-      language: "ru",
+    body: require("msgpackr").pack({
+      text: text,
+      reference_id: FISH_AUDIO_VOICE_ID,
+      format: "mp3",
+      mp3_bitrate: 128,
+      normalize: true,
+      latency: "normal",
     }),
   });
-  if (!response.ok) throw new Error(`Cartesia error: ${await response.text()}`);
-  return Buffer.from(await response.arrayBuffer());
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Fish Audio error: ${err}`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  return Buffer.from(buffer);
 }
 
 bot.on("message", async (msg) => {
@@ -96,14 +88,12 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    // Сжатая версия для голоса — 2-3 предложения, без вопроса, нейтральная
     const shortPrompt = `Сожми следующий текст до 2-3 предложений (300-350 символов).
 Требования:
 - Без вопроса в конце
 - Нейтральный тон, тёплый и спокойный
 - Краткая осмысленная версия основной мысли
 - Пиши от первого лица
-- Добавь многоточие (...) там где нужна естественная пауза
 - Только текст без пояснений и заголовков
 
 Текст:
