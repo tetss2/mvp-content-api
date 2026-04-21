@@ -48,7 +48,7 @@ async function handleMessage(msg) {
   const text = msg.text;
   if (!text) return;
 
-  console.log("handleMessage called, chatId:", chatId, "text:", text);
+  console.log("handleMessage:", chatId, text);
 
   const topArticles = articles
     .map(a => ({ ...a, score: scoreArticle(a, text) }))
@@ -76,9 +76,8 @@ ${text}
   });
 
   const fullAnswer = completion.choices[0].message.content;
-  console.log("Sending text message...");
   await bot.sendMessage(chatId, fullAnswer);
-  console.log("Text sent!");
+  console.log("Text sent");
 
   const shortPrompt = `Сожми до 1-2 предложений (не более 200 символов), сохрани главную мысль и эмпатию. Только текст без пояснений.\n\nТекст:\n${fullAnswer}\n\nСжатая версия:`;
 
@@ -90,29 +89,26 @@ ${text}
   });
 
   const shortAnswer = shortCompletion.choices[0].message.content.trim();
-  console.log("Short answer:", shortAnswer);
+  console.log("Short:", shortAnswer);
 
   const audioBuffer = await generateVoice(shortAnswer);
-  console.log("Audio generated, sending voice...");
   await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-  console.log("Voice sent!");
+  console.log("Voice sent");
 }
 
 export default async function handler(req, res) {
-  console.log("Webhook received:", req.method, req.url);
-  
+  console.log("Webhook hit:", req.method);
   if (req.method === "POST") {
     const update = req.body;
     res.status(200).json({ ok: true });
-    
     if (update.message) {
       try {
         await handleMessage(update.message);
       } catch (err) {
-        console.error("Handler error:", err.message);
+        console.error("Error:", err.message);
       }
     }
   } else {
-    res.status(200).send("Webhook endpoint active");
+    res.status(200).send("Webhook active");
   }
 }

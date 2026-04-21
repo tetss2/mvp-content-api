@@ -1,3 +1,2 @@
-// This file is intentionally minimal.
-// All logic is in api/webhook.js
+// Logic moved to api/webhook.js
 export {};
