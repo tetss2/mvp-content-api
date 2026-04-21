@@ -1,5 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
+import { pack } from "msgpackr";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -26,20 +27,22 @@ function scoreArticle(article, query) {
 }
 
 async function generateVoice(text) {
+  const payload = pack({
+    text: text,
+    reference_id: FISH_AUDIO_VOICE_ID,
+    format: "mp3",
+    mp3_bitrate: 128,
+    normalize: true,
+    latency: "normal",
+  });
+
   const response = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`,
-      "Content-Type": "application/json",
+      "Content-Type": "application/msgpack",
     },
-    body: JSON.stringify({
-      text: text,
-      reference_id: FISH_AUDIO_VOICE_ID,
-      format: "mp3",
-      mp3_bitrate: 128,
-      normalize: true,
-      latency: "normal",
-    }),
+    body: payload,
   });
 
   if (!response.ok) {
