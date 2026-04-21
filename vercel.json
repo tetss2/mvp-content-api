@@ -1,13 +1,7 @@
 {
   "functions": {
-    "api/webhook.js": {
+    "index.js": {
       "maxDuration": 60
     }
-  },
-  "rewrites": [
-    {
-      "source": "/webhook/(.*)",
-      "destination": "/api/webhook"
-    }
-  ]
+  }
 }
