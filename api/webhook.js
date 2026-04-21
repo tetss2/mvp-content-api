@@ -48,6 +48,8 @@ async function handleMessage(msg) {
   const text = msg.text;
   if (!text) return;
 
+  console.log("handleMessage called, chatId:", chatId, "text:", text);
+
   const topArticles = articles
     .map(a => ({ ...a, score: scoreArticle(a, text) }))
     .sort((a, b) => b.score - a.score)
@@ -58,15 +60,8 @@ async function handleMessage(msg) {
     .join("\n\n");
 
   const prompt = `Ты практикующий психолог (Динара).
-ФОРМАТ ОТВЕТА:
-— 2-4 абзаца, каждый 2-4 предложения
-— перенос строки между абзацами
-СТИЛЬ:
-— спокойно, живой язык, без академизма
-— иногда начинай с: "Понимаю", "Похоже", "Это непросто"
-— без списков, без воды
-ЛОГИКА: эмпатия → раскрытие темы → вопрос/направление
-ОГРАНИЧЕНИЕ: не более 1200 символов
+ФОРМАТ: 2-4 абзаца, живой язык, без списков, эмпатия + вопрос.
+ОГРАНИЧЕНИЕ: не более 1200 символов.
 Контекст:
 ${context}
 Вопрос:
@@ -81,9 +76,11 @@ ${text}
   });
 
   const fullAnswer = completion.choices[0].message.content;
+  console.log("Sending text message...");
   await bot.sendMessage(chatId, fullAnswer);
+  console.log("Text sent!");
 
-  const shortPrompt = `Сожми до 1-2 предложений (не более 200 символов), сохрани главную мысль и эмпатию. Пиши от первого лица, только текст без пояснений.\n\nТекст:\n${fullAnswer}\n\nСжатая версия:`;
+  const shortPrompt = `Сожми до 1-2 предложений (не более 200 символов), сохрани главную мысль и эмпатию. Только текст без пояснений.\n\nТекст:\n${fullAnswer}\n\nСжатая версия:`;
 
   const shortCompletion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -93,17 +90,21 @@ ${text}
   });
 
   const shortAnswer = shortCompletion.choices[0].message.content.trim();
-  console.log("Short answer for voice:", shortAnswer);
+  console.log("Short answer:", shortAnswer);
 
   const audioBuffer = await generateVoice(shortAnswer);
+  console.log("Audio generated, sending voice...");
   await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-  console.log("Voice sent successfully");
+  console.log("Voice sent!");
 }
 
 export default async function handler(req, res) {
+  console.log("Webhook received:", req.method, req.url);
+  
   if (req.method === "POST") {
     const update = req.body;
-    res.status(200).json({ ok: true }); // сразу отвечаем Telegram
+    res.status(200).json({ ok: true });
+    
     if (update.message) {
       try {
         await handleMessage(update.message);
@@ -112,6 +113,6 @@ export default async function handler(req, res) {
       }
     }
   } else {
-    res.status(200).send("Webhook endpoint");
+    res.status(200).send("Webhook endpoint active");
   }
 }

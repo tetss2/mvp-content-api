@@ -6,8 +6,12 @@
   },
   "rewrites": [
     {
-      "source": "/webhook/:token",
+      "source": "/webhook/(.*)",
       "destination": "/api/webhook"
+    },
+    {
+      "source": "/",
+      "destination": "/api/index"
     }
   ]
 }
