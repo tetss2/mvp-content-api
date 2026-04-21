@@ -30,9 +30,9 @@ async function generateVoice(text) {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`,
-      "Content-Type": "application/msgpack",
+      "Content-Type": "application/json",
     },
-    body: require("msgpackr").pack({
+    body: JSON.stringify({
       text: text,
       reference_id: FISH_AUDIO_VOICE_ID,
       format: "mp3",
@@ -94,7 +94,7 @@ ${text}
 - Нейтральный тон, тёплый и спокойный
 - Краткая осмысленная версия основной мысли
 - Пиши от первого лица
-- Только текст без пояснений и заголовков
+- Только текст без пояснений
 
 Текст:
 ${fullAnswer}
