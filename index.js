@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
-const WEBHOOK_URL = process.env.WEBHOOK_URL; // например: https://ai-landing-ten.vercel.app
+const WEBHOOK_URL = process.env.WEBHOOK_URL;
 
 // ====== SET WEBHOOK ON START ======
 const webhookPath = `/webhook/${TELEGRAM_TOKEN}`;
@@ -14,10 +14,10 @@ bot.setWebHook(`${WEBHOOK_URL}${webhookPath}`)
   .catch(err => console.error("Webhook error:", err));
 
 // ====== RECEIVE UPDATES FROM TELEGRAM ======
-app.post(webhookPath, (req, res) => {
+app.post(webhookPath, async (req, res) => {
   const update = req.body;
   if (update.message) {
-    handleMessage(update.message);
+    await handleMessage(update.message); // ждём полного выполнения
   }
   res.sendStatus(200);
 });
@@ -29,5 +29,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("Server started on port", PORT);
+  console.log("Legacy server listening...");
 });
