@@ -7,10 +7,10 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const CARTESIA_API_KEY = process.env.CARTESIA_API_KEY;
 const CARTESIA_VOICE_ID = process.env.CARTESIA_VOICE_ID;
+const WEBHOOK_URL = process.env.WEBHOOK_URL; // например: https://ai-landing-ten.vercel.app
 
-// ====== INIT ======
-const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+// ====== INIT (webhook mode — NO polling) ======
+const bot = new TelegramBot(TELEGRAM_TOKEN, { webHook: false });
 
 // ====== LOAD ARTICLES ======
 const rawData = fs.readFileSync("./articles.production.json", "utf-8");
@@ -62,24 +62,24 @@ async function generateVoice(text) {
 }
 
 // ====== MAIN HANDLER ======
-bot.on("message", async (msg) => {
+async function handleMessage(msg) {
   try {
     const chatId = msg.chat.id;
     const text = msg.text;
     if (!text) return;
 
-    // ====== 1. FIND BEST ARTICLES ======
+    // 1. FIND BEST ARTICLES
     const topArticles = articles
       .map(a => ({ ...a, score: scoreArticle(a, text) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
 
-    // ====== 2. BUILD CONTEXT ======
+    // 2. BUILD CONTEXT
     const context = topArticles
       .map(a => `Статья: ${a.title}\n${a.content}`)
       .join("\n\n");
 
-    // ====== 3. PROMPT ======
+    // 3. PROMPT
     const prompt = `
 Ты практикующий психолог (Динара).
 ФОРМАТ ОТВЕТА:
@@ -108,7 +108,8 @@ ${text}
 Ответ:
 `;
 
-    // ====== 4. OPENAI ======
+    // 4. OPENAI
+    const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
@@ -118,10 +119,10 @@ ${text}
 
     const answer = completion.choices[0].message.content;
 
-    // ====== 5. SEND TEXT ======
+    // 5. SEND TEXT
     await bot.sendMessage(chatId, answer);
 
-    // ====== 6. SEND VOICE ======
+    // 6. SEND VOICE
     try {
       const audioBuffer = await generateVoice(answer);
       await bot.sendVoice(chatId, audioBuffer, {}, {
@@ -130,13 +131,12 @@ ${text}
       });
     } catch (voiceError) {
       console.error("Voice generation failed:", voiceError.message);
-      // не падаем — текст уже отправлен
     }
 
   } catch (error) {
-    console.error(error);
+    console.error("Handler error:", error);
     bot.sendMessage(msg.chat.id, "Ошибка сервера 😢");
   }
-});
+}
 
-console.log("Bot is running...");
+export { bot, handleMessage };
