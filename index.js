@@ -69,7 +69,7 @@ async function generateVoice(text) {
     mp3_bitrate: 128,
     normalize: true,
     latency: "normal",
-    chunk_length: 50,  // меньше чанк = медленнее и размереннее
+    chunk_length: 50,
   });
 
   const response = await fetch("https://api.fish.audio/v1/tts", {
@@ -126,31 +126,30 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    // Голос: строго 1 предложение, макс 120 символов (~10-14 сек)
-    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй её в ОДНО предложение.
+    // Голос: 2 предложения, 200-220 символов = ~15 секунд
+    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 2 коротких предложения.
 Требования:
-- Максимум 120 символов
-- Тёплый, живой тон — как будто говоришь на лекции, не читаешь
-- Добавь паузу через запятую или тире внутри предложения
+- Ровно 200-220 символов суммарно
+- Тёплый, живой тон — как будто говоришь на лекции, не читаешь по бумажке
+- В каждом предложении добавь паузу через запятую или тире
 - Без вопроса в конце
-- Только текст, без пояснений
+- Только текст, без пояснений и заголовков
 
 Текст:
 ${fullAnswer}
 
-Одно предложение:`;
+Два предложения:`;
 
     const shortCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: shortPrompt }],
       temperature: 0.5,
-      max_tokens: 60,
+      max_tokens: 100,
     });
 
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
-    // Жёсткое ограничение на случай если GPT всё равно написал много
-    if (shortAnswer.length > 130) {
-      shortAnswer = shortAnswer.substring(0, 127) + "...";
+    if (shortAnswer.length > 240) {
+      shortAnswer = shortAnswer.substring(0, 237) + "...";
     }
     console.log("Short:", shortAnswer, "| Len:", shortAnswer.length);
 
