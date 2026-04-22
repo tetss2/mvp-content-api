@@ -25,7 +25,6 @@ function scoreArticle(article, query) {
   return score;
 }
 
-// Правильная msgpack упаковка
 function writeMsgpack(val) {
   if (typeof val === 'boolean') {
     return Buffer.from([val ? 0xc3 : 0xc2]);
@@ -59,7 +58,7 @@ function writeMsgpack(val) {
     }
     return Buffer.concat(parts);
   }
-  return Buffer.from([0xc0]); // null
+  return Buffer.from([0xc0]);
 }
 
 async function generateVoice(text) {
@@ -70,6 +69,7 @@ async function generateVoice(text) {
     mp3_bitrate: 128,
     normalize: true,
     latency: "normal",
+    chunk_length: 50,  // меньше чанк = медленнее и размереннее
   });
 
   const response = await fetch("https://api.fish.audio/v1/tts", {
@@ -126,28 +126,33 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    const shortPrompt = `Сожми следующий текст до 2-3 предложений (300-350 символов).
+    // Голос: строго 1 предложение, макс 120 символов (~10-14 сек)
+    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй её в ОДНО предложение.
 Требования:
+- Максимум 120 символов
+- Тёплый, живой тон — как будто говоришь на лекции, не читаешь
+- Добавь паузу через запятую или тире внутри предложения
 - Без вопроса в конце
-- Нейтральный тон, тёплый и спокойный
-- Краткая осмысленная версия основной мысли
-- Пиши от первого лица
-- Только текст без пояснений
+- Только текст, без пояснений
 
 Текст:
 ${fullAnswer}
 
-Сжатая версия:`;
+Одно предложение:`;
 
     const shortCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: shortPrompt }],
       temperature: 0.5,
-      max_tokens: 120,
+      max_tokens: 60,
     });
 
-    const shortAnswer = shortCompletion.choices[0].message.content.trim();
-    console.log("Short:", shortAnswer);
+    let shortAnswer = shortCompletion.choices[0].message.content.trim();
+    // Жёсткое ограничение на случай если GPT всё равно написал много
+    if (shortAnswer.length > 130) {
+      shortAnswer = shortAnswer.substring(0, 127) + "...";
+    }
+    console.log("Short:", shortAnswer, "| Len:", shortAnswer.length);
 
     const audioBuffer = await generateVoice(shortAnswer);
     await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
