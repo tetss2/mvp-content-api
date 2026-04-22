@@ -25,52 +25,45 @@ function scoreArticle(article, query) {
   return score;
 }
 
-// Простая msgpack упаковка без внешних зависимостей
-function encodeMsgpack(obj) {
-  const parts = [];
-  const keys = Object.keys(obj);
-  // fixmap header
-  parts.push(Buffer.from([0x80 | keys.length]));
-  for (const key of keys) {
-    const val = obj[key];
-    // encode key (string)
-    const keyBuf = Buffer.from(key, 'utf8');
-    if (keyBuf.length <= 31) {
-      parts.push(Buffer.from([0xa0 | keyBuf.length]));
-    } else {
-      parts.push(Buffer.from([0xd9, keyBuf.length]));
+// Правильная msgpack упаковка
+function writeMsgpack(val) {
+  if (typeof val === 'boolean') {
+    return Buffer.from([val ? 0xc3 : 0xc2]);
+  }
+  if (typeof val === 'number') {
+    if (Number.isInteger(val) && val >= 0 && val <= 127) {
+      return Buffer.from([val]);
     }
-    parts.push(keyBuf);
-    // encode value
-    if (typeof val === 'string') {
-      const valBuf = Buffer.from(val, 'utf8');
-      if (valBuf.length <= 31) {
-        parts.push(Buffer.from([0xa0 | valBuf.length]));
-      } else if (valBuf.length <= 255) {
-        parts.push(Buffer.from([0xd9, valBuf.length]));
-      } else {
-        parts.push(Buffer.from([0xda, valBuf.length >> 8, valBuf.length & 0xff]));
-      }
-      parts.push(valBuf);
-    } else if (typeof val === 'number') {
-      if (Number.isInteger(val) && val >= 0 && val <= 127) {
-        parts.push(Buffer.from([val]));
-      } else {
-        // int32
-        const b = Buffer.alloc(5);
-        b[0] = 0xd2;
-        b.writeInt32BE(val, 1);
-        parts.push(b);
-      }
-    } else if (typeof val === 'boolean') {
-      parts.push(Buffer.from([val ? 0xc3 : 0xc2]));
+    const b = Buffer.alloc(5);
+    b[0] = 0xd2;
+    b.writeInt32BE(val, 1);
+    return b;
+  }
+  if (typeof val === 'string') {
+    const strBuf = Buffer.from(val, 'utf8');
+    const len = strBuf.length;
+    if (len <= 31) {
+      return Buffer.concat([Buffer.from([0xa0 | len]), strBuf]);
+    } else if (len <= 255) {
+      return Buffer.concat([Buffer.from([0xd9, len]), strBuf]);
+    } else {
+      return Buffer.concat([Buffer.from([0xda, len >> 8, len & 0xff]), strBuf]);
     }
   }
-  return Buffer.concat(parts);
+  if (val && typeof val === 'object') {
+    const keys = Object.keys(val);
+    const parts = [Buffer.from([0x80 | keys.length])];
+    for (const key of keys) {
+      parts.push(writeMsgpack(key));
+      parts.push(writeMsgpack(val[key]));
+    }
+    return Buffer.concat(parts);
+  }
+  return Buffer.from([0xc0]); // null
 }
 
 async function generateVoice(text) {
-  const payload = encodeMsgpack({
+  const payload = writeMsgpack({
     text: text,
     reference_id: FISH_AUDIO_VOICE_ID,
     format: "mp3",
@@ -93,8 +86,7 @@ async function generateVoice(text) {
     throw new Error(`Fish Audio error: ${err}`);
   }
 
-  const buffer = await response.arrayBuffer();
-  return Buffer.from(buffer);
+  return Buffer.from(await response.arrayBuffer());
 }
 
 bot.on("message", async (msg) => {
@@ -163,6 +155,9 @@ ${fullAnswer}
 
   } catch (error) {
     console.error("Error:", error.message);
-    bot.sendMessage(msg.chat.id, "Ошибка сервера 😢");
+    try { bot.sendMessage(msg.chat.id, "Ошибка сервера 😢"); } catch(e) {}
   }
 });
+
+process.on('uncaughtException', err => console.error('Uncaught:', err.message));
+process.on('unhandledRejection', err => console.error('Unhandled:', err));
