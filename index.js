@@ -23,18 +23,17 @@ console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0)
 
 // --- ТАРИФЫ ---
 const PRICE = {
-  audio: 0.000008,   // $0.008 за 1000 символов = $0.000008 за символ
+  audio: 0.000008,   // $0.008 за 1000 символов
   photo: 0.004,      // $0.004 за изображение (FLUX LoRA)
   video: 0.014,      // $0.014 за секунду (Kling LipSync)
 };
 
-// Начальные балансы (приблизительно)
+// Реальные балансы на 30.04.2026
 const BALANCE = {
-  audio: 5.00,   // fish.audio — поставь реальный остаток
-  photo: 16.92,  // fal.ai — поставь реальный остаток
+  audio: 9.93,   // fish.audio
+  photo: 16.61,  // fal.ai
 };
 
-// Счётчик потраченного за сессию (сбрасывается при рестарте)
 const spent = { audio: 0, photo: 0, video: 0 };
 
 function trackCost(type, amount) {
@@ -106,7 +105,6 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// Возвращает { buffer, cost }
 async function generateVoice(text) {
   const payload = writeMsgpack({
     text,
@@ -164,7 +162,6 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-// Возвращает cost
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
 
@@ -222,9 +219,8 @@ bot.on("message", async (msg) => {
       const customScene = `${translatedScene}, bokeh background, photorealistic`;
       const photoCost = await generateImage(chatId, customScene);
       const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
-      const total = photoCost;
       await bot.sendMessage(chatId,
-        `✅ Готово\n${photoLine}\n💰 Итого: $${total.toFixed(4)}`);
+        `✅ Готово\n${photoLine}\n💰 Итого: $${photoCost.toFixed(4)}`);
       return;
     }
 
@@ -285,7 +281,6 @@ ${fullAnswer}
     const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
     await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
 
-    // Показываем стоимость аудио
     const audioLine = formatCostLine("🎙", "Аудио", audioCost, 'audio');
     await bot.sendMessage(chatId,
       `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}`);
