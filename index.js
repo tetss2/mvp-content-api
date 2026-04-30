@@ -101,20 +101,6 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// fetch с таймаутом
-async function fetchWithTimeout(url, options, timeoutMs = 20000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
-}
-
-// Конвертируем аудио буфер в base64 data URI — передаём напрямую в Aurora
-// Это надёжнее чем загрузка на внешний storage
 function bufferToDataUri(buffer, mimeType = "audio/mpeg") {
   return `data:${mimeType};base64,${buffer.toString('base64')}`;
 }
@@ -193,7 +179,6 @@ async function generateImage(chatId, scenePrompt) {
   return { imageUrl, cost: PRICE.photo };
 }
 
-// Aurora принимает base64 data URI напрямую — не нужен внешний storage
 async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
   await bot.sendMessage(chatId, "🎬 Генерирую видео Aurora, подождите ~2-3 минуты...");
   console.log("Aurora: image:", imageUrl, "audio type:", audioDataUri.substring(0, 30));
@@ -203,7 +188,7 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       image_url: imageUrl,
-      audio_url: audioDataUri,  // fal принимает data URI
+      audio_url: audioDataUri,
       prompt: AURORA_PROMPT,
       resolution: "720p",
     }),
@@ -271,12 +256,10 @@ async function showFinalPost(chatId, type) {
     if (!state.lastImageUrl) { await bot.sendMessage(chatId, "❌ Нет фото."); return; }
     await bot.sendPhoto(chatId, state.lastImageUrl, { caption: text.substring(0, 1024) });
     await bot.sendMessage(chatId, "✅ Готовый пост: Текст + Фото\n\nСкопируйте для публикации в Instagram/Telegram.");
-
   } else if (type === "text_video") {
     if (!state.lastVideoUrl) { await bot.sendMessage(chatId, "❌ Нет видео."); return; }
     await bot.sendVideo(chatId, state.lastVideoUrl, { caption: text.substring(0, 1024) });
     await bot.sendMessage(chatId, "✅ Готовый пост: Текст + Видео\n\nСкопируйте для публикации в Instagram/Telegram.");
-
   } else if (type === "text_only") {
     await bot.sendMessage(chatId, `📄 Готовый текст:\n\n${text}`);
     await bot.sendMessage(chatId, "✅ Скопируйте текст для публикации.");
@@ -368,23 +351,18 @@ bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const state = userState.get(chatId) || {};
 
-    // Голосовое сообщение пользователя
     if (msg.voice) {
       if (!state.awaitingVoiceRecord) return;
       const fileId = msg.voice.file_id;
       const fileInfo = await bot.getFile(fileId);
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
       const processingMsg = await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
-
       const voiceRes = await fetch(voiceFileUrl);
       const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
-      // Сохраняем как data URI (ogg/opus)
       const audioDataUri = bufferToDataUri(voiceBuffer, "audio/ogg");
-
       await bot.editMessageText("✅ Голосовое принято!", {
         chat_id: chatId, message_id: processingMsg.message_id
       });
-
       const voices = state.pendingVoices || [];
       voices.push({ audioDataUri, index: voices.length + 1 });
       state.pendingVoices = voices;
@@ -393,7 +371,6 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Пересланное фото
     if (msg.photo) {
       const fileId = msg.photo[msg.photo.length - 1].file_id;
       const fileInfo = await bot.getFile(fileId);
@@ -439,20 +416,44 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    const prompt = `Ты практикующий психолог (Динара).
-ФОРМАТ: 2-4 абзаца, живой язык, без списков, эмпатия + вопрос.
-ОГРАНИЧЕНИЕ: не более 1200 символов.
-Контекст:
+    // --- ОБНОВЛЁННЫЙ ПРОМПТ с эмодзи и живым стилем ---
+    const prompt = `Ты — Динара, практикующий психолог с тёплым, человечным стилем общения.
+
+СТИЛЬ ОТВЕТА:
+- Живой, разговорный язык — как будто пишешь близкому человеку
+- 2-4 абзаца, без списков и заголовков
+- Эмпатия в каждом абзаце, мягкое направление
+- В конце — один искренний вопрос
+- Ограничение: не более 1200 символов
+
+ОФОРМЛЕНИЕ:
+- Добавь 2-4 эмодзи по смыслу — в начале абзацев или внутри текста
+- Используй «—» вместо тире для пауз
+- Можно выделить одну ключевую мысль через 💡 или ✨
+- Не перегружай эмодзи — они должны быть уместны, не декоративны
+- НЕ используй: списки, звёздочки, решётки, заголовки
+
+ПРИМЕРЫ ЭМОДЗИ ПО ТЕМАМ:
+- тревога, страх → 🌿 🤍 💙
+- одиночество, грусть → 🌧️ 🫶 💛
+- отношения → 💕 🌸 🔮
+- злость, обиды → 🔥 ⚡ 🌊
+- рост, изменения → 🌱 ✨ 🦋
+- усталость, выгорание → 🕯️ 🌙 💤
+
+Контекст из базы знаний:
 ${context}
-Вопрос:
+
+Вопрос пользователя:
 ${text}
+
 Ответ:`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
-      max_tokens: 300,
+      temperature: 0.75,
+      max_tokens: 350,
     });
 
     const fullAnswer = completion.choices[0].message.content;
@@ -464,7 +465,7 @@ ${text}
 - Спокойный, негромкий тон
 - Добавь паузу через запятую или тире
 - Без вопроса в конце
-- Только текст
+- Только текст, без эмодзи
 
 Текст:
 ${fullAnswer}
@@ -554,13 +555,10 @@ bot.on("callback_query", async (query) => {
       await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
       await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-
-      // Сохраняем как data URI — мгновенно, без загрузки
       const audioDataUri = bufferToDataUri(audioBuffer, "audio/mpeg");
       const currentState = userState.get(chatId) || {};
       currentState.lastAudioDataUri = audioDataUri;
       userState.set(chatId, currentState);
-
       const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
       await bot.sendMessage(chatId, `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}\n\n✅ Аудио готово для видео!`);
       await sendPhotoButtons(chatId);
