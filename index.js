@@ -35,6 +35,43 @@ const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_p
 
 const userState = new Map();
 
+// --- СЧЕТЧИК РАСХОДОВ ---
+// Цены за единицу
+const COSTS = {
+  AUDIO_PER_CHAR: 0.000008,   // fish.audio: $0.008 / 1000 символов
+  PHOTO: 0.004,               // fal.ai FLUX LoRA: ~$0.004 за изображение
+  VIDEO_PER_SEC: 0.014,       // Kling LipSync: $0.014/сек
+};
+
+// Балансы ( u043fримерные исходные значения)
+const BALANCE = {
+  fishAudio: 10.00,   // установи свой текущий баланс fish.audio
+  falAi: 16.92,       // текущий баланс fal.ai ($16.92 из документа)
+};
+
+// Накопленный расход за сессию
+const spent = { audio: 0, photo: 0, video: 0 };
+
+function calcAudioCost(text) {
+  return Math.max(0.001, text.length * COSTS.AUDIO_PER_CHAR);
+}
+
+function fmt(n) {
+  return "$" + n.toFixed(4);
+}
+
+function audioStats(cost) {
+  const remaining = BALANCE.fishAudio - spent.audio;
+  const unitsLeft = Math.floor(remaining / COSTS.AUDIO_PER_CHAR / 100); // ~100 симв среднее аудио
+  return `🎤 Аудио: ${fmt(cost)}  (остаток ~${fmt(remaining)}, ещё ~${unitsLeft} аудио)`;
+}
+
+function photoStats(cost) {
+  const remaining = BALANCE.falAi - spent.photo;
+  const unitsLeft = Math.floor(remaining / COSTS.PHOTO);
+  return `🖼 Фото: ${fmt(cost)}  (остаток ~${fmt(remaining)}, ещё ~${unitsLeft} фото)`;
+}
+
 // --- УТИЛИТЫ ---
 
 function scoreArticle(article, query) {
@@ -134,8 +171,6 @@ async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
 
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
-  console.log("Generating image, prompt start:", fullPrompt.substring(0, 80));
-  console.log("FALAI_KEY length at call time:", FAL_KEY ? FAL_KEY.length : "MISSING");
 
   const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
@@ -152,14 +187,22 @@ async function generateImage(chatId, scenePrompt) {
   });
 
   const rawText = await res.text();
-  console.log("fal.ai response status:", res.status);
-  console.log("fal.ai response body:", rawText.substring(0, 300));
-
   if (!res.ok) throw new Error(`fal.ai error ${res.status}: ${rawText}`);
 
   const result = JSON.parse(rawText);
   const imageUrl = result.images[0].url;
+
+  // Считаем стоимость
+  spent.photo += COSTS.PHOTO;
+  BALANCE.falAi -= COSTS.PHOTO;
+
   await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
+
+  // Отправляем статистику
+  await bot.sendMessage(chatId,
+    `✅ Готово\n${photoStats(COSTS.PHOTO)}\n💰 Итого за сессию: ${fmt(spent.audio + spent.photo + spent.video)}`
+  );
+
   console.log("Photo sent:", imageUrl);
 }
 
@@ -175,6 +218,8 @@ function sendPhotoButtons(chatId) {
   });
 }
 
+// --- ОСНОВНОЙ ОБРАБОТЧИК ---
+
 bot.on("message", async (msg) => {
   try {
     const chatId = msg.chat.id;
@@ -186,7 +231,6 @@ bot.on("message", async (msg) => {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
       const translatedScene = await translateScene(text);
       const customScene = `${translatedScene}, bokeh background, photorealistic`;
-      console.log("Custom scene translated:", customScene);
       await generateImage(chatId, customScene);
       return;
     }
@@ -221,7 +265,6 @@ ${text}
 
     const fullAnswer = completion.choices[0].message.content;
     await bot.sendMessage(chatId, fullAnswer);
-    console.log("Text sent");
 
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
 Требования:
@@ -245,11 +288,20 @@ ${fullAnswer}
 
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
     if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
-    console.log("Short:", shortAnswer, "| Len:", shortAnswer.length);
 
+    const audioCost = calcAudioCost(shortAnswer);
     const audioBuffer = await generateVoice(shortAnswer);
+
+    // Считаем расход аудио
+    spent.audio += audioCost;
+    BALANCE.fishAudio -= audioCost;
+
     await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-    console.log("Voice sent");
+
+    // Статистика после аудио
+    await bot.sendMessage(chatId,
+      `✅ Готово\n${audioStats(audioCost)}\n💰 Итого за сессию: ${fmt(spent.audio + spent.photo + spent.video)}`
+    );
 
     await sendPhotoButtons(chatId);
 
@@ -258,6 +310,8 @@ ${fullAnswer}
     try { bot.sendMessage(msg.chat.id, "Ошибка сервера 😢"); } catch(e) {}
   }
 });
+
+// --- ОБРАБОТЧИК КНОПОК ---
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
@@ -269,7 +323,6 @@ bot.on("callback_query", async (query) => {
       const state = userState.get(chatId) || {};
       const topic = state.lastTopic || "психология";
       const scenePrompt = await buildTopicScenePrompt(topic);
-      console.log("Topic scene prompt:", scenePrompt);
       await generateImage(chatId, scenePrompt);
 
     } else if (data === "photo_office") {
