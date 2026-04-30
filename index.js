@@ -9,6 +9,9 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
 const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
 const FAL_KEY = process.env.FALAI_KEY;
+const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -20,6 +23,7 @@ console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
 console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
 console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
 console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
+console.log(" CLOUDINARY:", !!CLOUDINARY_CLOUD, !!CLOUDINARY_API_KEY, !!CLOUDINARY_API_SECRET);
 
 // --- ТАРИФЫ ---
 const PRICE = { audio: 0.000008, photo: 0.004, video: 0.14 };
@@ -92,26 +96,44 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// Загрузка mp3 буфера на tmpfiles.org → публичный URL для Aurora
-async function uploadAudioToTmpfiles(audioBuffer) {
+// Загрузка на Cloudinary — постоянное хранение, бесплатно до 25GB
+async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
+  if (!CLOUDINARY_CLOUD || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+    throw new Error("Cloudinary не настроен. Добавьте CLOUDINARY_CLOUD, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET в Railway Variables.");
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const publicId = `audio_${timestamp}`;
+
+  // Подписываем запрос
+  const crypto = await import('crypto');
+  const signature = crypto.createHash('sha1')
+    .update(`public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`)
+    .digest('hex');
+
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
-  formData.append("file", blob, "voice.mp3");
+  formData.append("file", blob, filename);
+  formData.append("public_id", publicId);
+  formData.append("timestamp", timestamp.toString());
+  formData.append("api_key", CLOUDINARY_API_KEY);
+  formData.append("signature", signature);
+  formData.append("resource_type", "video"); // Cloudinary использует "video" для аудио
 
-  const res = await fetch("https://tmpfiles.org/api/v1/upload", {
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, {
     method: "POST",
     body: formData,
   });
 
-  if (!res.ok) throw new Error(`tmpfiles upload error: ${await res.text()}`);
-  const data = await res.json();
-  // tmpfiles возвращает {"status":"success","data":{"url":"https://tmpfiles.org/XXXX/voice.mp3"}}
-  // Нужно преобразовать в прямой dl-линк: tmpfiles.org → tmpfiles.org/dl
-  const pageUrl = data?.data?.url;
-  if (!pageUrl) throw new Error(`tmpfiles: no URL in response: ${JSON.stringify(data)}`);
-  const directUrl = pageUrl.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-  console.log("Audio uploaded to tmpfiles:", directUrl);
-  return directUrl;
+  const resText = await res.text();
+  console.log("Cloudinary upload status:", res.status, "body:", resText.substring(0, 200));
+  if (!res.ok) throw new Error(`Cloudinary upload error: ${resText}`);
+
+  const data = JSON.parse(resText);
+  const url = data.secure_url;
+  if (!url) throw new Error(`Cloudinary: no URL in response: ${resText}`);
+  console.log("Audio uploaded to Cloudinary:", url);
+  return url;
 }
 
 async function generateVoice(text) {
@@ -168,13 +190,13 @@ async function generateImage(chatId, scenePrompt) {
   return { imageUrl, cost: PRICE.photo, scenePrompt };
 }
 
-// Aurora с прогресс-статусами и реальным audio URL
+// Aurora — с защитой от пустых ответов
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
-  const statusMsg = await bot.sendMessage(chatId,
-    "🎬 Шаг 1/3 — Отправляю запрос на генерацию видео...");
+  const statusMsg = await bot.sendMessage(chatId, "🎬 Шаг 1/3 — Отправляю запрос...");
   const msgId = statusMsg.message_id;
 
-  console.log("Aurora: image:", imageUrl, "audio:", audioUrl.substring(0, 60));
+  console.log("Aurora: image:", imageUrl);
+  console.log("Aurora: audio:", audioUrl);
 
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
@@ -187,15 +209,27 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     }),
   });
 
-  if (!submitRes.ok) {
-    const err = await submitRes.text();
-    await bot.editMessageText(`❌ Ошибка запроса:\n${err.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
-    throw new Error(`Aurora submit error: ${err}`);
+  const submitText = await submitRes.text();
+  console.log("Aurora submit status:", submitRes.status, "body:", submitText.substring(0, 300));
+
+  if (!submitRes.ok || !submitText.trim()) {
+    await bot.editMessageText(`❌ Ошибка отправки запроса (${submitRes.status}):\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora submit error: ${submitText}`);
   }
 
-  const submitBody = await submitRes.text();
-  console.log("Aurora submit response:", submitBody.substring(0, 200));
-  const { request_id } = JSON.parse(submitBody);
+  let submitData;
+  try {
+    submitData = JSON.parse(submitText);
+  } catch(e) {
+    await bot.editMessageText(`❌ Неверный ответ от Aurora:\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora submit JSON parse error: ${submitText}`);
+  }
+
+  const request_id = submitData.request_id;
+  if (!request_id) {
+    await bot.editMessageText(`❌ Aurora не вернула request_id:\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora: no request_id in response`);
+  }
   console.log("Aurora request_id:", request_id);
 
   await bot.editMessageText(
@@ -211,8 +245,20 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
 
     const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
     const statusText = await statusRes.text();
-    console.log(`Aurora status [${i + 1}]:`, statusText.substring(0, 100));
-    const status = JSON.parse(statusText);
+    console.log(`Aurora status [${i + 1}] (${statusRes.status}):`, statusText.substring(0, 150));
+
+    if (!statusText.trim()) {
+      console.log("Aurora: empty status response, retrying...");
+      continue;
+    }
+
+    let status;
+    try {
+      status = JSON.parse(statusText);
+    } catch(e) {
+      console.log("Aurora: status JSON parse error:", e.message);
+      continue;
+    }
 
     if (i > 0 && i % 6 === 0) {
       const elapsed = Math.round((i + 1) * 5 / 60);
@@ -381,27 +427,18 @@ bot.on("message", async (msg) => {
       if (!state.awaitingVoiceRecord) return;
       const fileId = msg.voice.file_id;
       const fileInfo = await bot.getFile(fileId);
-      // Telegram voice URL — ogg файл, нужно скачать и загрузить на tmpfiles
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-      const processingMsg = await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
-
+      const processingMsg = await bot.sendMessage(chatId, "⏳ Загружаю голосовое...");
       const voiceRes = await fetch(voiceFileUrl);
       const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
 
-      // Загружаем ogg на tmpfiles
       let audioUrl;
       try {
-        const formData = new FormData();
-        const blob = new Blob([voiceBuffer], { type: "audio/ogg" });
-        formData.append("file", blob, "voice.ogg");
-        const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", { method: "POST", body: formData });
-        const uploadData = await uploadRes.json();
-        audioUrl = uploadData?.data?.url?.replace("tmpfiles.org/", "tmpfiles.org/dl/");
-        if (!audioUrl) throw new Error("no URL");
+        audioUrl = await uploadAudioToCloudinary(voiceBuffer, "voice.ogg");
         await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
       } catch(err) {
         console.error("Voice upload error:", err.message);
-        await bot.editMessageText("⚠️ Ошибка загрузки голосового.", { chat_id: chatId, message_id: processingMsg.message_id });
+        await bot.editMessageText(`⚠️ Ошибка: ${err.message.substring(0, 100)}`, { chat_id: chatId, message_id: processingMsg.message_id });
         return;
       }
 
@@ -458,39 +495,46 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    const prompt = `Ты — Динара, практикующий психолог с тёплым, человечным стилем общения.
+    // Правка 3: улучшенный промпт с чётким оформлением
+    const prompt = `Ты — Динара, практикующий психолог. Пишешь как живой человек, тепло и лично.
 
-СТИЛЬ ОТВЕТА:
-- Живой, разговорный язык — как будто пишешь близкому человеку лично
-- 3 абзаца: (1) признание чувств, (2) объяснение/инсайт, (3) направление + вопрос
-- Без списков, заголовков, звёздочек
+СТРУКТУРА — строго 3 абзаца, разделённых пустой строкой:
+1. Первый абзац: начни с эмодзи + признание чувств человека, покажи что слышишь его
+2. Второй абзац: инсайт или объяснение — _выдели главную мысль курсивом_ (одинарные подчёркивания вокруг фразы)
+3. Третий абзац: мягкое направление + один вопрос в конце
 
-ОФОРМЛЕНИЕ ТЕКСТА (важно):
-- Первый абзац начинай с эмодзи по теме
-- В середине текста используй 1-2 эмодзи органично, не в начале строки
-- Выдели одну ключевую фразу через _курсив_ (обернуть в одинарные подчёркивания)
-- Абзацы разделяй пустой строкой
-- Используй «—» вместо тире
-- Ограничение: не более 1200 символов
+ОФОРМЛЕНИЕ — обязательно:
+✦ Эмодзи: 3-4 штуки, по смыслу темы, не все подряд
+✦ Курсив: ровно одна фраза во втором абзаце через _вот так_
+✦ Тире через «—» (не через дефис)
+✦ Разговорный тон, без канцелярита
 
-ЭМОДЗИ ПО ТЕМАМ (выбирай 2-3 уместных):
-тревога/страх → 🌿 💙 🤍 | одиночество/грусть → 🌧️ 🫶 💛
-отношения → 💕 🌸 | злость/обида → 🔥 🌊 | рост → 🌱 ✨ 🦋
-усталость → 🕯️ 🌙 | принятие → 🍃 🌤️
+ЗАПРЕЩЕНО: списки, заголовки, звёздочки **вот так**, решётки
 
-Контекст:
+ЭМОДЗИ ДЛЯ ТЕМ:
+тревога → 🌿 💙 | грусть/одиночество → 🌧️ 💛 🫶 | отношения → 💕 🌸
+злость → 🔥 🌊 | рост/изменения → 🌱 🦋 ✨ | усталость → 🕯️ 🌙
+
+ПРИМЕР ПРАВИЛЬНОГО ОТВЕТА (на тему тревоги):
+"🌿 Знаешь, тревога — это не враг, даже если так ощущается. Она появляется там, где для тебя что-то важно, где есть что терять или о чём заботиться.
+
+_Тревога сигналит, что ты неравнодушна_ — и в этом её смысл, даже когда она мешает жить. Она не значит, что ты слабая или что всё пойдёт плохо. Это просто твой внутренний радар, который иногда чуть перегревается 💙
+
+Попробуй в следующий раз, когда почувствуешь это, спросить себя: о чём именно беспокоится эта часть меня? Что для меня сейчас важно? Это помогает перейти от ощущения к пониманию. Как ты обычно справляешься, когда тревога накрывает?"
+
+Контекст из базы знаний:
 ${context}
 
-Вопрос:
+Вопрос пользователя:
 ${text}
 
-Ответ:`;
+Ответ (строго по структуре выше):`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.75,
-      max_tokens: 350,
+      max_tokens: 400,
     });
 
     const fullAnswer = completion.choices[0].message.content;
@@ -502,7 +546,7 @@ ${text}
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
 - До 160 символов
 - Спокойный тон, пауза через запятую или тире
-- Без вопроса в конце, без эмодзи, только текст
+- Без вопроса, без эмодзи, только текст
 
 Текст:
 ${fullAnswer}
@@ -603,19 +647,16 @@ bot.on("callback_query", async (query) => {
 
       const statusMsg = await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
-
-      // Отправляем голос в Telegram
       await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
 
-      // Загружаем на tmpfiles для Aurora
-      await bot.editMessageText("🔄 Подготавливаю аудио для видео...", { chat_id: chatId, message_id: statusMsg.message_id });
+      await bot.editMessageText("🔄 Загружаю аудио на сервер...", { chat_id: chatId, message_id: statusMsg.message_id });
       let audioUrl = null;
       try {
-        audioUrl = await uploadAudioToTmpfiles(audioBuffer);
+        audioUrl = await uploadAudioToCloudinary(audioBuffer);
         await bot.editMessageText("✅ Аудио готово для видео!", { chat_id: chatId, message_id: statusMsg.message_id });
       } catch(err) {
-        console.error("tmpfiles upload error:", err.message);
-        await bot.editMessageText("⚠️ Аудио создано, но видеогенерация может быть недоступна.", { chat_id: chatId, message_id: statusMsg.message_id });
+        console.error("Cloudinary upload error:", err.message);
+        await bot.editMessageText(`⚠️ ${err.message.substring(0, 100)}`, { chat_id: chatId, message_id: statusMsg.message_id });
       }
 
       const currentState = userState.get(chatId) || {};
