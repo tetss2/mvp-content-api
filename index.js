@@ -1,6 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
-import { fal } from "@fal-ai/client";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -10,8 +9,6 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
 const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
 const FAL_KEY = process.env.FAL_KEY;
-
-fal.config({ credentials: FAL_KEY });
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -31,17 +28,8 @@ no drooping eyes, no sad eyes`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
-const SCENE_OFFICE = `${BASE_PROMPT},
-very subtle smile, slightly open mouth, relaxed lips, no gum show,
-wearing elegant professional blouse, warm neutral colors,
-sitting in cozy therapist office, bookshelf background,
-soft warm lamp light, wooden furniture, indoor plants,
-shallow depth of field, bokeh background, warm cozy atmosphere`;
-
 // --- ХРАНИЛИЩЕ СОСТОЯНИЙ ---
-// Хранит: последний топик диалога и режим ожидания кастомного описания
 const userState = new Map();
-// userState[chatId] = { lastTopic: string, awaitingCustomScene: boolean }
 
 // --- УТИЛИТЫ ---
 
@@ -56,13 +44,9 @@ function scoreArticle(article, query) {
 }
 
 function writeMsgpack(val) {
-  if (typeof val === 'boolean') {
-    return Buffer.from([val ? 0xc3 : 0xc2]);
-  }
+  if (typeof val === 'boolean') return Buffer.from([val ? 0xc3 : 0xc2]);
   if (typeof val === 'number') {
-    if (Number.isInteger(val) && val >= 0 && val <= 127) {
-      return Buffer.from([val]);
-    }
+    if (Number.isInteger(val) && val >= 0 && val <= 127) return Buffer.from([val]);
     const b = Buffer.alloc(5);
     b[0] = 0xd2;
     b.writeInt32BE(val, 1);
@@ -71,13 +55,9 @@ function writeMsgpack(val) {
   if (typeof val === 'string') {
     const strBuf = Buffer.from(val, 'utf8');
     const len = strBuf.length;
-    if (len <= 31) {
-      return Buffer.concat([Buffer.from([0xa0 | len]), strBuf]);
-    } else if (len <= 255) {
-      return Buffer.concat([Buffer.from([0xd9, len]), strBuf]);
-    } else {
-      return Buffer.concat([Buffer.from([0xda, len >> 8, len & 0xff]), strBuf]);
-    }
+    if (len <= 31) return Buffer.concat([Buffer.from([0xa0 | len]), strBuf]);
+    if (len <= 255) return Buffer.concat([Buffer.from([0xd9, len]), strBuf]);
+    return Buffer.concat([Buffer.from([0xda, len >> 8, len & 0xff]), strBuf]);
   }
   if (val && typeof val === 'object') {
     const keys = Object.keys(val);
@@ -93,14 +73,13 @@ function writeMsgpack(val) {
 
 async function generateVoice(text) {
   const payload = writeMsgpack({
-    text: text,
+    text,
     reference_id: FISH_AUDIO_VOICE_ID,
     format: "mp3",
     mp3_bitrate: 128,
     normalize: true,
     latency: "normal",
   });
-
   const response = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: {
@@ -109,12 +88,7 @@ async function generateVoice(text) {
     },
     body: payload,
   });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Fish Audio error: ${err}`);
-  }
-
+  if (!response.ok) throw new Error(`Fish Audio error: ${await response.text()}`);
   return Buffer.from(await response.arrayBuffer());
 }
 
@@ -124,15 +98,15 @@ async function buildTopicScenePrompt(topic) {
     model: "gpt-4o-mini",
     messages: [{
       role: "user",
-      content: `Тема психологической консультации: "${topic}".
-Опиши одну краткую сцену (на английском, 1-2 предложения) где женщина-психолог находится в месте, подходящем к этой теме.
-Правила:
-- Только описание места и атмосферы (не человека)
-- Реалистичное, уютное место
-- Без слова "psychologist"
-- Только текст сцены, без пояснений
-Пример: "sitting at outdoor cafe table, warm golden sunlight, cobblestone street background, bokeh background"
-Ответ:`
+      content: `Topic of psychological consultation: "${topic}".
+Describe one short scene (in English, 1-2 sentences) where a woman is in a place that fits this topic.
+Rules:
+- Only place and atmosphere description (no person description)
+- Realistic, cozy location
+- No word "psychologist"
+- Only scene text, no explanations
+Example: "sitting at outdoor cafe table, warm golden sunlight, cobblestone street background, bokeh background"
+Answer:`
     }],
     temperature: 0.7,
     max_tokens: 80,
@@ -140,24 +114,80 @@ async function buildTopicScenePrompt(topic) {
   return completion.choices[0].message.content.trim();
 }
 
-// Генерация изображения через fal.ai
+// Перевод пользовательского описания сцены на английский
+async function translateScene(text) {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{
+      role: "user",
+      content: `Translate this scene description to English for an image generation prompt. Keep it concise, descriptive, location/atmosphere only. No explanations, just the translated description:\n\n${text}`
+    }],
+    temperature: 0.3,
+    max_tokens: 80,
+  });
+  return completion.choices[0].message.content.trim();
+}
+
+// Генерация изображения через fal.ai (прямой HTTP)
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~30 секунд...");
 
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
+  console.log("Generating image with prompt:", fullPrompt.substring(0, 100) + "...");
 
-  const result = await fal.subscribe("fal-ai/flux-lora", {
-    input: {
+  // Шаг 1: отправить задачу
+  const submitRes = await fetch("https://queue.fal.run/fal-ai/flux-lora", {
+    method: "POST",
+    headers: {
+      "Authorization": `Key ${FAL_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
       prompt: fullPrompt,
       loras: [{ path: LORA_URL, scale: 0.85 }],
       num_inference_steps: 35,
       image_size: { width: 1024, height: 1024 },
-    },
+    }),
   });
 
-  const imageUrl = result.data.images[0].url;
-  await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
-  console.log("Photo sent:", imageUrl);
+  if (!submitRes.ok) {
+    const err = await submitRes.text();
+    throw new Error(`fal.ai submit error: ${err}`);
+  }
+
+  const { request_id } = await submitRes.json();
+  console.log("fal.ai request_id:", request_id);
+
+  // Шаг 2: polling статуса (до 120 сек)
+  const statusUrl = `https://queue.fal.run/fal-ai/flux-lora/requests/${request_id}/status`;
+  const resultUrl = `https://queue.fal.run/fal-ai/flux-lora/requests/${request_id}`;
+
+  for (let i = 0; i < 24; i++) {
+    await new Promise(r => setTimeout(r, 5000)); // ждём 5 сек
+
+    const statusRes = await fetch(statusUrl, {
+      headers: { "Authorization": `Key ${FAL_KEY}` },
+    });
+    const status = await statusRes.json();
+    console.log(`fal.ai status [${i+1}]:`, status.status);
+
+    if (status.status === "COMPLETED") {
+      const resultRes = await fetch(resultUrl, {
+        headers: { "Authorization": `Key ${FAL_KEY}` },
+      });
+      const result = await resultRes.json();
+      const imageUrl = result.images[0].url;
+      await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
+      console.log("Photo sent:", imageUrl);
+      return;
+    }
+
+    if (status.status === "FAILED") {
+      throw new Error(`fal.ai generation failed: ${JSON.stringify(status)}`);
+    }
+  }
+
+  throw new Error("fal.ai timeout: generation took too long");
 }
 
 // Кнопки выбора фото
@@ -185,14 +215,14 @@ bot.on("message", async (msg) => {
     const state = userState.get(chatId) || {};
     if (state.awaitingCustomScene) {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
-      const customScene = `${text}, bokeh background, photorealistic`;
+      const translatedScene = await translateScene(text);
+      const customScene = `${translatedScene}, bokeh background, photorealistic`;
+      console.log("Custom scene translated:", customScene);
       await generateImage(chatId, customScene);
       return;
     }
 
     console.log("Message:", text);
-
-    // Сохраняем тему для кнопки "по теме"
     userState.set(chatId, { lastTopic: text, awaitingCustomScene: false });
 
     const topArticles = articles
@@ -224,7 +254,6 @@ ${text}
     await bot.sendMessage(chatId, fullAnswer);
     console.log("Text sent");
 
-    // Голос
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
 Требования:
 - Строго до 160 символов суммарно
@@ -246,16 +275,13 @@ ${fullAnswer}
     });
 
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
-    if (shortAnswer.length > 160) {
-      shortAnswer = shortAnswer.substring(0, 157) + "...";
-    }
+    if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
     console.log("Short:", shortAnswer, "| Len:", shortAnswer.length);
 
     const audioBuffer = await generateVoice(shortAnswer);
     await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
     console.log("Voice sent");
 
-    // Кнопки выбора фото — показываем после голоса
     await sendPhotoButtons(chatId);
 
   } catch (error) {
@@ -269,8 +295,6 @@ ${fullAnswer}
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
-
-  // Убираем "часики" с кнопки
   await bot.answerCallbackQuery(query.id);
 
   try {
