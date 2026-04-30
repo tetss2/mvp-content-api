@@ -21,6 +21,37 @@ console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
 console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
 console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
 
+// --- ТАРИФЫ ---
+const PRICE = {
+  audio: 0.000008,   // $0.008 за 1000 символов = $0.000008 за символ
+  photo: 0.004,      // $0.004 за изображение (FLUX LoRA)
+  video: 0.014,      // $0.014 за секунду (Kling LipSync)
+};
+
+// Начальные балансы (приблизительно)
+const BALANCE = {
+  audio: 5.00,   // fish.audio — поставь реальный остаток
+  photo: 16.92,  // fal.ai — поставь реальный остаток
+};
+
+// Счётчик потраченного за сессию (сбрасывается при рестарте)
+const spent = { audio: 0, photo: 0, video: 0 };
+
+function trackCost(type, amount) {
+  spent[type] = (spent[type] || 0) + amount;
+  BALANCE[type] = Math.max(0, (BALANCE[type] || 0) - amount);
+}
+
+function formatCostLine(emoji, label, cost, type) {
+  const remaining = BALANCE[type] || 0;
+  const unitsLeft = type === 'audio'
+    ? Math.floor(remaining / PRICE.audio / 100) + " аудио"
+    : type === 'photo'
+    ? Math.floor(remaining / PRICE.photo) + " фото"
+    : Math.floor(remaining / PRICE.video / 30) + " видео";
+  return `${emoji} ${label}: $${cost.toFixed(4)}  (баланс $${remaining.toFixed(2)} ≈ ${unitsLeft})`;
+}
+
 // --- БАЗА ПРОМПТОВ ---
 
 const BASE_PROMPT = `portrait of dinara_psych woman, professional psychologist,
@@ -34,43 +65,6 @@ no drooping eyes, no sad eyes`;
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
 const userState = new Map();
-
-// --- СЧЕТЧИК РАСХОДОВ ---
-// Цены за единицу
-const COSTS = {
-  AUDIO_PER_CHAR: 0.000008,   // fish.audio: $0.008 / 1000 символов
-  PHOTO: 0.004,               // fal.ai FLUX LoRA: ~$0.004 за изображение
-  VIDEO_PER_SEC: 0.014,       // Kling LipSync: $0.014/сек
-};
-
-// Балансы ( u043fримерные исходные значения)
-const BALANCE = {
-  fishAudio: 10.00,   // установи свой текущий баланс fish.audio
-  falAi: 16.92,       // текущий баланс fal.ai ($16.92 из документа)
-};
-
-// Накопленный расход за сессию
-const spent = { audio: 0, photo: 0, video: 0 };
-
-function calcAudioCost(text) {
-  return Math.max(0.001, text.length * COSTS.AUDIO_PER_CHAR);
-}
-
-function fmt(n) {
-  return "$" + n.toFixed(4);
-}
-
-function audioStats(cost) {
-  const remaining = BALANCE.fishAudio - spent.audio;
-  const unitsLeft = Math.floor(remaining / COSTS.AUDIO_PER_CHAR / 100); // ~100 симв среднее аудио
-  return `🎤 Аудио: ${fmt(cost)}  (остаток ~${fmt(remaining)}, ещё ~${unitsLeft} аудио)`;
-}
-
-function photoStats(cost) {
-  const remaining = BALANCE.falAi - spent.photo;
-  const unitsLeft = Math.floor(remaining / COSTS.PHOTO);
-  return `🖼 Фото: ${fmt(cost)}  (остаток ~${fmt(remaining)}, ещё ~${unitsLeft} фото)`;
-}
 
 // --- УТИЛИТЫ ---
 
@@ -112,6 +106,7 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
+// Возвращает { buffer, cost }
 async function generateVoice(text) {
   const payload = writeMsgpack({
     text,
@@ -130,7 +125,9 @@ async function generateVoice(text) {
     body: payload,
   });
   if (!response.ok) throw new Error(`Fish Audio error: ${await response.text()}`);
-  return Buffer.from(await response.arrayBuffer());
+  const cost = text.length * PRICE.audio;
+  trackCost('audio', cost);
+  return { buffer: Buffer.from(await response.arrayBuffer()), cost };
 }
 
 async function buildTopicScenePrompt(topic) {
@@ -167,6 +164,7 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
+// Возвращает cost
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
 
@@ -187,23 +185,16 @@ async function generateImage(chatId, scenePrompt) {
   });
 
   const rawText = await res.text();
+  console.log("fal.ai response status:", res.status);
   if (!res.ok) throw new Error(`fal.ai error ${res.status}: ${rawText}`);
 
   const result = JSON.parse(rawText);
   const imageUrl = result.images[0].url;
-
-  // Считаем стоимость
-  spent.photo += COSTS.PHOTO;
-  BALANCE.falAi -= COSTS.PHOTO;
-
-  await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
-
-  // Отправляем статистику
-  await bot.sendMessage(chatId,
-    `✅ Готово\n${photoStats(COSTS.PHOTO)}\n💰 Итого за сессию: ${fmt(spent.audio + spent.photo + spent.video)}`
-  );
-
+  await bot.sendPhoto(chatId, imageUrl);
   console.log("Photo sent:", imageUrl);
+
+  trackCost('photo', PRICE.photo);
+  return PRICE.photo;
 }
 
 function sendPhotoButtons(chatId) {
@@ -218,8 +209,6 @@ function sendPhotoButtons(chatId) {
   });
 }
 
-// --- ОСНОВНОЙ ОБРАБОТЧИК ---
-
 bot.on("message", async (msg) => {
   try {
     const chatId = msg.chat.id;
@@ -231,7 +220,11 @@ bot.on("message", async (msg) => {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
       const translatedScene = await translateScene(text);
       const customScene = `${translatedScene}, bokeh background, photorealistic`;
-      await generateImage(chatId, customScene);
+      const photoCost = await generateImage(chatId, customScene);
+      const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
+      const total = photoCost;
+      await bot.sendMessage(chatId,
+        `✅ Готово\n${photoLine}\n💰 Итого: $${total.toFixed(4)}`);
       return;
     }
 
@@ -289,19 +282,13 @@ ${fullAnswer}
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
     if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
 
-    const audioCost = calcAudioCost(shortAnswer);
-    const audioBuffer = await generateVoice(shortAnswer);
-
-    // Считаем расход аудио
-    spent.audio += audioCost;
-    BALANCE.fishAudio -= audioCost;
-
+    const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
     await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
 
-    // Статистика после аудио
+    // Показываем стоимость аудио
+    const audioLine = formatCostLine("🎙", "Аудио", audioCost, 'audio');
     await bot.sendMessage(chatId,
-      `✅ Готово\n${audioStats(audioCost)}\n💰 Итого за сессию: ${fmt(spent.audio + spent.photo + spent.video)}`
-    );
+      `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}`);
 
     await sendPhotoButtons(chatId);
 
@@ -310,8 +297,6 @@ ${fullAnswer}
     try { bot.sendMessage(msg.chat.id, "Ошибка сервера 😢"); } catch(e) {}
   }
 });
-
-// --- ОБРАБОТЧИК КНОПОК ---
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
@@ -323,13 +308,19 @@ bot.on("callback_query", async (query) => {
       const state = userState.get(chatId) || {};
       const topic = state.lastTopic || "психология";
       const scenePrompt = await buildTopicScenePrompt(topic);
-      await generateImage(chatId, scenePrompt);
+      const photoCost = await generateImage(chatId, scenePrompt);
+      const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
+      await bot.sendMessage(chatId,
+        `✅ Готово\n${photoLine}\n💰 Итого: $${photoCost.toFixed(4)}`);
 
     } else if (data === "photo_office") {
-      await generateImage(chatId, `sitting in cozy therapist office, bookshelf background,
+      const photoCost = await generateImage(chatId, `sitting in cozy therapist office, bookshelf background,
 soft warm lamp light, wooden furniture, indoor plants,
 shallow depth of field, bokeh background, warm cozy atmosphere,
 wearing elegant professional blouse, warm neutral colors`);
+      const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
+      await bot.sendMessage(chatId,
+        `✅ Готово\n${photoLine}\n💰 Итого: $${photoCost.toFixed(4)}`);
 
     } else if (data === "photo_custom") {
       const state = userState.get(chatId) || {};
