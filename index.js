@@ -15,6 +15,7 @@ const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
 console.log("Bot started in polling mode");
+console.log("FAL_KEY present:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
 
 // --- БАЗА ПРОМПТОВ ---
 
@@ -92,7 +93,6 @@ async function generateVoice(text) {
   return Buffer.from(await response.arrayBuffer());
 }
 
-// Генерация промпта по теме через GPT
 async function buildTopicScenePrompt(topic) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -114,7 +114,6 @@ Answer:`
   return completion.choices[0].message.content.trim();
 }
 
-// Перевод пользовательского описания сцены на английский
 async function translateScene(text) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -128,15 +127,16 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-// Генерация изображения через fal.ai (прямой HTTP)
+// Генерация изображения через fal.ai REST API
 async function generateImage(chatId, scenePrompt) {
-  await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~30 секунд...");
+  await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
 
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
-  console.log("Generating image with prompt:", fullPrompt.substring(0, 100) + "...");
+  console.log("Generating image, prompt start:", fullPrompt.substring(0, 80));
+  console.log("Using FAL_KEY length:", FAL_KEY ? FAL_KEY.length : "MISSING");
 
-  // Шаг 1: отправить задачу
-  const submitRes = await fetch("https://queue.fal.run/fal-ai/flux-lora", {
+  // Прямой вызов (sync, не queue) через fal.run
+  const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
     headers: {
       "Authorization": `Key ${FAL_KEY}`,
@@ -145,52 +145,25 @@ async function generateImage(chatId, scenePrompt) {
     body: JSON.stringify({
       prompt: fullPrompt,
       loras: [{ path: LORA_URL, scale: 0.85 }],
-      num_inference_steps: 35,
-      image_size: { width: 1024, height: 1024 },
+      num_inference_steps: 28,
+      image_size: "square_hd",
     }),
   });
 
-  if (!submitRes.ok) {
-    const err = await submitRes.text();
-    throw new Error(`fal.ai submit error: ${err}`);
+  const rawText = await res.text();
+  console.log("fal.ai response status:", res.status);
+  console.log("fal.ai response body:", rawText.substring(0, 300));
+
+  if (!res.ok) {
+    throw new Error(`fal.ai error ${res.status}: ${rawText}`);
   }
 
-  const { request_id } = await submitRes.json();
-  console.log("fal.ai request_id:", request_id);
-
-  // Шаг 2: polling статуса (до 120 сек)
-  const statusUrl = `https://queue.fal.run/fal-ai/flux-lora/requests/${request_id}/status`;
-  const resultUrl = `https://queue.fal.run/fal-ai/flux-lora/requests/${request_id}`;
-
-  for (let i = 0; i < 24; i++) {
-    await new Promise(r => setTimeout(r, 5000)); // ждём 5 сек
-
-    const statusRes = await fetch(statusUrl, {
-      headers: { "Authorization": `Key ${FAL_KEY}` },
-    });
-    const status = await statusRes.json();
-    console.log(`fal.ai status [${i+1}]:`, status.status);
-
-    if (status.status === "COMPLETED") {
-      const resultRes = await fetch(resultUrl, {
-        headers: { "Authorization": `Key ${FAL_KEY}` },
-      });
-      const result = await resultRes.json();
-      const imageUrl = result.images[0].url;
-      await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
-      console.log("Photo sent:", imageUrl);
-      return;
-    }
-
-    if (status.status === "FAILED") {
-      throw new Error(`fal.ai generation failed: ${JSON.stringify(status)}`);
-    }
-  }
-
-  throw new Error("fal.ai timeout: generation took too long");
+  const result = JSON.parse(rawText);
+  const imageUrl = result.images[0].url;
+  await bot.sendPhoto(chatId, imageUrl, { caption: "✨ Фото Динары" });
+  console.log("Photo sent:", imageUrl);
 }
 
-// Кнопки выбора фото
 function sendPhotoButtons(chatId) {
   return bot.sendMessage(chatId, "📸 Хотите сгенерировать фото?", {
     reply_markup: {
@@ -203,7 +176,7 @@ function sendPhotoButtons(chatId) {
   });
 }
 
-// --- ОСНОВНОЙ ОБРАБОТЧИК СООБЩЕНИЙ ---
+// --- ОСНОВНОЙ ОБРАБОТЧИК ---
 
 bot.on("message", async (msg) => {
   try {
@@ -211,7 +184,6 @@ bot.on("message", async (msg) => {
     const text = msg.text;
     if (!text) return;
 
-    // Режим ожидания кастомного описания сцены
     const state = userState.get(chatId) || {};
     if (state.awaitingCustomScene) {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
@@ -257,10 +229,10 @@ ${text}
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
 Требования:
 - Строго до 160 символов суммарно
-- Спокойный, негромкий тон — как будто говоришь доверительно, не читаешь по бумажке
+- Спокойный, негромкий тон
 - Добавь паузу через запятую или тире
 - Без вопроса в конце
-- Только текст, без пояснений
+- Только текст
 
 Текст:
 ${fullAnswer}
