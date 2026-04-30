@@ -8,14 +8,18 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
 const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
-const FAL_KEY = process.env.FAL_KEY;
+const FAL_KEY = process.env.FALAI_KEY;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
 console.log("Bot started in polling mode");
-console.log("FAL_KEY present:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
+console.log("ENV CHECK:");
+console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
+console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
+console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
+console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
 
 // --- БАЗА ПРОМПТОВ ---
 
@@ -29,7 +33,6 @@ no drooping eyes, no sad eyes`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
-// --- ХРАНИЛИЩЕ СОСТОЯНИЙ ---
 const userState = new Map();
 
 // --- УТИЛИТЫ ---
@@ -127,15 +130,13 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-// Генерация изображения через fal.ai REST API
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
 
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
   console.log("Generating image, prompt start:", fullPrompt.substring(0, 80));
-  console.log("Using FAL_KEY length:", FAL_KEY ? FAL_KEY.length : "MISSING");
+  console.log("FALAI_KEY length at call time:", FAL_KEY ? FAL_KEY.length : "MISSING");
 
-  // Прямой вызов (sync, не queue) через fal.run
   const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
     headers: {
@@ -154,9 +155,7 @@ async function generateImage(chatId, scenePrompt) {
   console.log("fal.ai response status:", res.status);
   console.log("fal.ai response body:", rawText.substring(0, 300));
 
-  if (!res.ok) {
-    throw new Error(`fal.ai error ${res.status}: ${rawText}`);
-  }
+  if (!res.ok) throw new Error(`fal.ai error ${res.status}: ${rawText}`);
 
   const result = JSON.parse(rawText);
   const imageUrl = result.images[0].url;
@@ -175,8 +174,6 @@ function sendPhotoButtons(chatId) {
     },
   });
 }
-
-// --- ОСНОВНОЙ ОБРАБОТЧИК ---
 
 bot.on("message", async (msg) => {
   try {
@@ -261,8 +258,6 @@ ${fullAnswer}
     try { bot.sendMessage(msg.chat.id, "Ошибка сервера 😢"); } catch(e) {}
   }
 });
-
-// --- ОБРАБОТЧИК КНОПОК ---
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
