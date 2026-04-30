@@ -101,7 +101,7 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// Загрузка аудио на fal.ai storage через правильный endpoint
+// Загрузка аудио на fal.ai storage
 async function uploadAudioToFal(audioBuffer, mimeType = "audio/mpeg", filename = "voice.mp3") {
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: mimeType });
@@ -115,11 +115,9 @@ async function uploadAudioToFal(audioBuffer, mimeType = "audio/mpeg", filename =
 
   const resText = await res.text();
   console.log("fal storage upload status:", res.status, "body:", resText.substring(0, 200));
-
   if (!res.ok) throw new Error(`fal storage upload error ${res.status}: ${resText}`);
 
   const data = JSON.parse(resText);
-  // fal storage возвращает либо { url } либо { access_url }
   const url = data.url || data.access_url;
   if (!url) throw new Error(`fal storage: no URL in response: ${resText}`);
   console.log("Audio uploaded to fal:", url);
@@ -127,7 +125,6 @@ async function uploadAudioToFal(audioBuffer, mimeType = "audio/mpeg", filename =
 }
 
 // Генерация голоса fish.audio → { buffer, cost }
-// audioUrl загружается отдельно только когда нужно видео
 async function generateVoice(text) {
   const payload = writeMsgpack({
     text,
@@ -304,6 +301,36 @@ function sendPhotoButtons(chatId) {
   });
 }
 
+// Отправляем статус аудио и редактируем его после загрузки
+async function sendAudioUploadStatus(chatId, audioBuffer) {
+  // Отправляем начальный статус
+  const statusMsg = await bot.sendMessage(chatId,
+    "🔄 Загружаю аудио на сервер для видео... (это займёт ~10-15 сек)"
+  );
+  const statusMsgId = statusMsg.message_id;
+
+  try {
+    const audioUrl = await uploadAudioToFal(audioBuffer);
+    const s = userState.get(chatId) || {};
+    s.lastAudioUrl = audioUrl;
+    userState.set(chatId, s);
+
+    // Редактируем сообщение — успех
+    await bot.editMessageText(
+      "✅ Аудио загружено — можно генерировать видео!",
+      { chat_id: chatId, message_id: statusMsgId }
+    );
+    console.log("Audio URL saved for video:", audioUrl);
+  } catch (err) {
+    console.error("fal upload error:", err.message);
+    // Редактируем сообщение — ошибка
+    await bot.editMessageText(
+      "⚠️ Не удалось загрузить аудио для видео. Видеогенерация будет недоступна.",
+      { chat_id: chatId, message_id: statusMsgId }
+    );
+  }
+}
+
 // --- ОСНОВНОЙ ОБРАБОТЧИК СООБЩЕНИЙ ---
 
 bot.on("message", async (msg) => {
@@ -319,13 +346,24 @@ bot.on("message", async (msg) => {
       const fileInfo = await bot.getFile(fileId);
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
 
-      await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
+      const processingMsg = await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
 
-      // Скачиваем ogg файл и загружаем на fal.ai
       const voiceRes = await fetch(voiceFileUrl);
       const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
-      // Telegram голосовые — ogg/opus
-      const audioUrl = await uploadAudioToFal(voiceBuffer, "audio/ogg", "voice.ogg");
+
+      let audioUrl;
+      try {
+        audioUrl = await uploadAudioToFal(voiceBuffer, "audio/ogg", "voice.ogg");
+        await bot.editMessageText("✅ Голосовое загружено!", {
+          chat_id: chatId, message_id: processingMsg.message_id
+        });
+      } catch(err) {
+        console.error("Voice upload error:", err.message);
+        await bot.editMessageText("⚠️ Ошибка загрузки голосового.", {
+          chat_id: chatId, message_id: processingMsg.message_id
+        });
+        return;
+      }
 
       const voices = state.pendingVoices || [];
       voices.push({ audioUrl, index: voices.length + 1 });
@@ -428,6 +466,7 @@ ${fullAnswer}
 
     const currentState = userState.get(chatId) || {};
     currentState.lastShortText = shortAnswer;
+    currentState.lastAudioUrl = null; // сбрасываем старое аудио
     currentState.pendingVoices = [];
     currentState.awaitingVoiceRecord = false;
     userState.set(chatId, currentState);
@@ -465,19 +504,14 @@ bot.on("callback_query", async (query) => {
       // Шаг 2: отправляем в Telegram
       await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
 
-      // Шаг 3: загружаем на fal.ai для видео (в фоне, не блокируем)
-      uploadAudioToFal(audioBuffer).then(audioUrl => {
-        const s = userState.get(chatId) || {};
-        s.lastAudioUrl = audioUrl;
-        userState.set(chatId, s);
-        console.log("Audio URL saved for video:", audioUrl);
-      }).catch(err => {
-        console.error("fal upload error (non-critical):", err.message);
-      });
-
       const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
       await bot.sendMessage(chatId, `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}`);
+
+      // Шаг 3: показываем кнопки фото
       await sendPhotoButtons(chatId);
+
+      // Шаг 4: загружаем на fal.ai В ФОН с видимым статусом
+      sendAudioUploadStatus(chatId, audioBuffer);
       return;
     }
 
@@ -530,7 +564,9 @@ bot.on("callback_query", async (query) => {
         return;
       }
       if (!audioUrl) {
-        await bot.sendMessage(chatId, "⏳ Аудио ещё загружается на сервер, подождите 10 секунд и попробуйте снова.");
+        await bot.sendMessage(chatId,
+          "🔄 Аудио ещё загружается на сервер.\n\nПодождите пока появится сообщение ✅ Аудио загружено — и попробуйте снова."
+        );
         return;
       }
 
