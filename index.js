@@ -22,17 +22,8 @@ console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
 console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
 
 // --- ТАРИФЫ ---
-const PRICE = {
-  audio: 0.000008,
-  photo: 0.004,
-  video: 0.14,
-};
-
-const BALANCE = {
-  audio: 9.93,
-  photo: 16.61,
-};
-
+const PRICE = { audio: 0.000008, photo: 0.004, video: 0.14 };
+const BALANCE = { audio: 9.93, photo: 16.61 };
 const spent = { audio: 0, photo: 0, video: 0 };
 
 function trackCost(type, amount) {
@@ -48,8 +39,8 @@ function formatCostLine(emoji, label, cost, type) {
     ? Math.floor(remaining / PRICE.audio / 100) + " аудио"
     : type === 'photo'
     ? Math.floor(remaining / PRICE.photo) + " фото"
-    : Math.floor(remaining / (PRICE.video * 5)) + " видео(5сек)";
-  return `${emoji} ${label}: $${cost.toFixed(4)}  (баланс $${remaining.toFixed(2)} ≈ ${unitsLeft})`;
+    : Math.floor(remaining / (PRICE.video * 5)) + " видео(5с)";
+  return `${emoji} ${label}: $${cost.toFixed(4)} (баланс $${remaining.toFixed(2)} ≈ ${unitsLeft})`;
 }
 
 // --- ПРОМПТЫ ---
@@ -107,19 +98,12 @@ function bufferToDataUri(buffer, mimeType = "audio/mpeg") {
 
 async function generateVoice(text) {
   const payload = writeMsgpack({
-    text,
-    reference_id: FISH_AUDIO_VOICE_ID,
-    format: "mp3",
-    mp3_bitrate: 128,
-    normalize: true,
-    latency: "normal",
+    text, reference_id: FISH_AUDIO_VOICE_ID,
+    format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
   });
   const response = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
-    headers: {
-      "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`,
-      "Content-Type": "application/msgpack",
-    },
+    headers: { "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`, "Content-Type": "application/msgpack" },
     body: payload,
   });
   if (!response.ok) throw new Error(`Fish Audio error: ${await response.text()}`);
@@ -134,15 +118,10 @@ async function buildTopicScenePrompt(topic) {
     model: "gpt-4o-mini",
     messages: [{ role: "user", content: `Topic of psychological consultation: "${topic}".
 Describe one short scene (in English, 1-2 sentences) where a woman is in a place that fits this topic.
-Rules:
-- Only place and atmosphere description (no person description)
-- Realistic, cozy location
-- No word "psychologist"
-- Only scene text, no explanations
+Rules: only place/atmosphere (no person), realistic cozy location, no word "psychologist", only scene text.
 Example: "sitting at outdoor cafe table, warm golden sunlight, cobblestone street background, bokeh background"
 Answer:` }],
-    temperature: 0.7,
-    max_tokens: 80,
+    temperature: 0.7, max_tokens: 80,
   });
   return completion.choices[0].message.content.trim();
 }
@@ -150,38 +129,34 @@ Answer:` }],
 async function translateScene(text) {
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: `Translate this scene description to English for an image generation prompt. Keep it concise, descriptive, location/atmosphere only. No explanations, just the translated description:\n\n${text}` }],
-    temperature: 0.3,
-    max_tokens: 80,
+    messages: [{ role: "user", content: `Translate to English for image prompt. Location/atmosphere only, concise:\n\n${text}` }],
+    temperature: 0.3, max_tokens: 80,
   });
   return completion.choices[0].message.content.trim();
 }
 
+// Генерация фото — возвращает { imageUrl, cost, scenePrompt }
 async function generateImage(chatId, scenePrompt) {
-  await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
+  await bot.sendMessage(chatId, "⏳ Генерирую фото ~60 сек...");
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
   const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      prompt: fullPrompt,
-      loras: [{ path: LORA_URL, scale: 0.85 }],
-      num_inference_steps: 28,
-      image_size: "square_hd",
-    }),
+    body: JSON.stringify({ prompt: fullPrompt, loras: [{ path: LORA_URL, scale: 0.85 }], num_inference_steps: 28, image_size: "square_hd" }),
   });
   const rawText = await res.text();
-  console.log("fal.ai photo status:", res.status);
-  if (!res.ok) throw new Error(`fal.ai photo error ${res.status}: ${rawText}`);
-  const result = JSON.parse(rawText);
-  const imageUrl = result.images[0].url;
+  if (!res.ok) throw new Error(`fal photo error ${res.status}: ${rawText}`);
+  const imageUrl = JSON.parse(rawText).images[0].url;
   trackCost('photo', PRICE.photo);
-  return { imageUrl, cost: PRICE.photo };
+  return { imageUrl, cost: PRICE.photo, scenePrompt };
 }
 
+// Aurora с прогресс-статусами через редактирование сообщения
 async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
-  await bot.sendMessage(chatId, "🎬 Генерирую видео Aurora, подождите ~2-3 минуты...");
-  console.log("Aurora: image:", imageUrl, "audio type:", audioDataUri.substring(0, 30));
+  // Шаг 1: отправляем запрос
+  const statusMsg = await bot.sendMessage(chatId,
+    "🎬 Шаг 1/3 — Отправляю запрос на генерацию видео...");
+  const msgId = statusMsg.message_id;
 
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
@@ -193,9 +168,21 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
       resolution: "720p",
     }),
   });
-  if (!submitRes.ok) throw new Error(`Aurora submit error: ${await submitRes.text()}`);
+
+  if (!submitRes.ok) {
+    const err = await submitRes.text();
+    await bot.editMessageText(`❌ Ошибка отправки запроса:\n${err.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora submit error: ${err}`);
+  }
+
   const { request_id } = await submitRes.json();
   console.log("Aurora request_id:", request_id);
+
+  // Шаг 2: ожидание обработки
+  await bot.editMessageText(
+    "⚙️ Шаг 2/3 — Запрос принят, Aurora обрабатывает видео...\n⏱ Обычно занимает 2-4 минуты",
+    { chat_id: chatId, message_id: msgId }
+  );
 
   const statusUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
   const resultUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
@@ -205,7 +192,18 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
     const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
     const status = await statusRes.json();
     console.log(`Aurora status [${i + 1}]:`, status.status);
+
+    // Обновляем прогресс каждые 30 секунд (каждые 6 итераций)
+    if (i > 0 && i % 6 === 0) {
+      const elapsed = Math.round((i + 1) * 5 / 60);
+      await bot.editMessageText(
+        `⚙️ Шаг 2/3 — Aurora обрабатывает видео...\n⏱ Прошло ~${elapsed} мин, ожидайте ещё 1-2 мин`,
+        { chat_id: chatId, message_id: msgId }
+      ).catch(() => {});
+    }
+
     if (status.status === "COMPLETED") {
+      await bot.editMessageText("✅ Шаг 3/3 — Видео готово! Загружаю...", { chat_id: chatId, message_id: msgId });
       const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
       const result = await resultRes.json();
       const videoUrl = result.video?.url || result.data?.video?.url;
@@ -215,79 +213,48 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
       trackCost('video', cost);
       return { videoUrl, cost, durationSec };
     }
-    if (status.status === "FAILED") throw new Error(`Aurora failed: ${JSON.stringify(status)}`);
+
+    if (status.status === "FAILED") {
+      const errMsg = JSON.stringify(status).substring(0, 200);
+      await bot.editMessageText(`❌ Aurora не смогла сгенерировать видео.\n${errMsg}`, { chat_id: chatId, message_id: msgId });
+      throw new Error(`Aurora failed: ${JSON.stringify(status)}`);
+    }
   }
+
+  await bot.editMessageText("⚠️ Таймаут — видео генерировалось слишком долго.", { chat_id: chatId, message_id: msgId });
   throw new Error("Aurora timeout");
 }
 
 // --- UI ФУНКЦИИ ---
 
-function getPublishButtons(state) {
-  const buttons = [];
-  if (state.lastImageUrl && state.lastFullAnswer) {
-    buttons.push([{ text: "📄🖼 Текст + Фото", callback_data: "publish:text_photo" }]);
-  }
-  if (state.lastVideoUrl && state.lastFullAnswer) {
-    buttons.push([{ text: "📄🎬 Текст + Видео", callback_data: "publish:text_video" }]);
-  }
-  if (state.lastFullAnswer) {
-    buttons.push([{ text: "📄 Только текст", callback_data: "publish:text_only" }]);
-  }
-  return buttons;
-}
-
-async function sendPublishMenu(chatId) {
-  const state = userState.get(chatId) || {};
-  const buttons = getPublishButtons(state);
-  if (buttons.length === 0) {
-    await bot.sendMessage(chatId, "❌ Нечего публиковать — сначала создайте контент.");
-    return;
-  }
-  await bot.sendMessage(chatId, "📤 Выберите формат публикации:", {
-    reply_markup: { inline_keyboard: buttons },
-  });
-}
-
-async function showFinalPost(chatId, type) {
-  const state = userState.get(chatId) || {};
-  const text = state.lastFullAnswer || "";
-
-  if (type === "text_photo") {
-    if (!state.lastImageUrl) { await bot.sendMessage(chatId, "❌ Нет фото."); return; }
-    await bot.sendPhoto(chatId, state.lastImageUrl, { caption: text.substring(0, 1024) });
-    await bot.sendMessage(chatId, "✅ Готовый пост: Текст + Фото\n\nСкопируйте для публикации в Instagram/Telegram.");
-  } else if (type === "text_video") {
-    if (!state.lastVideoUrl) { await bot.sendMessage(chatId, "❌ Нет видео."); return; }
-    await bot.sendVideo(chatId, state.lastVideoUrl, { caption: text.substring(0, 1024) });
-    await bot.sendMessage(chatId, "✅ Готовый пост: Текст + Видео\n\nСкопируйте для публикации в Instagram/Telegram.");
-  } else if (type === "text_only") {
-    await bot.sendMessage(chatId, `📄 Готовый текст:\n\n${text}`);
-    await bot.sendMessage(chatId, "✅ Скопируйте текст для публикации.");
-  }
-}
-
-async function sendPhotoWithButtons(chatId, imageUrl, photoCost) {
+// Правка 2: компактные кнопки — по 2 в строке там где уместно
+async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
   const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
   const photoKey = `photo_${Date.now()}`;
   const state = userState.get(chatId) || {};
   if (!state.photos) state.photos = {};
-  state.photos[photoKey] = imageUrl;
+  state.photos[photoKey] = { imageUrl, scenePrompt };
   state.lastImageUrl = imageUrl;
+  state.lastScenePrompt = scenePrompt;
   userState.set(chatId, state);
 
   await bot.sendPhoto(chatId, imageUrl, {
-    caption: `✅ Готово\n${photoLine}\n💰 Итого: $${photoCost.toFixed(4)}`,
+    caption: `✅ ${photoLine}\n💰 $${photoCost.toFixed(4)}`,
     reply_markup: {
       inline_keyboard: [
-        [{ text: "🎬 Сделать видео из этого фото", callback_data: `make_video:${photoKey}` }],
-        [{ text: "📤 Опубликовать результат", callback_data: "open_publish_menu" }],
+        // Правка 1: кнопка "Ещё вариант" + "Видео" в одной строке
+        [
+          { text: "🔄 Ещё вариант", callback_data: `regen_photo:${photoKey}` },
+          { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
+        ],
+        [{ text: "📤 Опубликовать", callback_data: "open_publish_menu" }],
       ],
     },
   });
 }
 
 async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
-  const videoLine = formatCostLine("🎬", `Видео (~${durationSec}сек)`, videoCost, 'video');
+  const videoLine = formatCostLine("🎬", `Видео ~${durationSec}с`, videoCost, 'video');
   const videoKey = `video_${Date.now()}`;
   const state = userState.get(chatId) || {};
   if (!state.videos) state.videos = {};
@@ -295,23 +262,29 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
   userState.set(chatId, state);
 
   await bot.sendVideo(chatId, videoUrl, {
-    caption: `✅ Видео готово!\n${videoLine}\n💰 Итого: $${videoCost.toFixed(4)}`,
+    caption: `✅ ${videoLine}\n💰 $${videoCost.toFixed(4)}`,
     reply_markup: {
       inline_keyboard: [
-        [{ text: "✅ Выбрать это видео для поста", callback_data: `confirm_video:${videoKey}` }],
-        [{ text: "🔄 Сгенерировать ещё одно видео", callback_data: "make_video_again" }],
-        [{ text: "📤 Опубликовать результат", callback_data: "open_publish_menu" }],
+        // Правка 2: 2 кнопки в строке
+        [
+          { text: "✅ Выбрать", callback_data: `confirm_video:${videoKey}` },
+          { text: "🔄 Ещё вариант", callback_data: "make_video_again" },
+        ],
+        [{ text: "📤 Опубликовать", callback_data: "open_publish_menu" }],
       ],
     },
   });
 }
 
+// Правка 2: аудио-кнопки в одну строку
 function sendAudioChoiceButtons(chatId) {
-  return bot.sendMessage(chatId, "🎙 Выберите вариант аудио:", {
+  return bot.sendMessage(chatId, "🎙 Выберите аудио:", {
     reply_markup: {
       inline_keyboard: [
-        [{ text: "🤖 Сгенерировать аудио ИИ", callback_data: "audio_generate" }],
-        [{ text: "🎤 Записать своё голосовое", callback_data: "audio_record" }],
+        [
+          { text: "🤖 ИИ-аудио", callback_data: "audio_generate" },
+          { text: "🎤 Своё голосовое", callback_data: "audio_record" },
+        ],
       ],
     },
   });
@@ -321,27 +294,69 @@ async function sendVoiceSelectionMenu(chatId) {
   const state = userState.get(chatId) || {};
   const voices = state.pendingVoices || [];
   if (voices.length === 0) { await bot.sendMessage(chatId, "❌ Нет записанных голосовых."); return; }
-  const keyboard = voices.map((v, i) => [
-    { text: `✅ Выбрать голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }
-  ]);
-  keyboard.push([{ text: "➕ Записать ещё одно", callback_data: "add_more_voice" }]);
+  // Правка 2: кнопки голосовых по 2 в строке
+  const rows = [];
+  for (let i = 0; i < voices.length; i += 2) {
+    const row = [{ text: `✅ Голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }];
+    if (voices[i + 1]) row.push({ text: `✅ Голосовое ${i + 2}`, callback_data: `confirm_voice:${i + 1}` });
+    rows.push(row);
+  }
+  rows.push([{ text: "➕ Записать ещё", callback_data: "add_more_voice" }]);
   await bot.sendMessage(chatId,
-    `🎤 У вас ${voices.length} голосовых. Выберите нужное или запишите ещё:`,
-    { reply_markup: { inline_keyboard: keyboard } }
+    `🎤 Голосовых: ${voices.length}. Выберите нужное:`,
+    { reply_markup: { inline_keyboard: rows } }
   );
 }
 
+// Правка 2: фото-кнопки по 2 в строке
 function sendPhotoButtons(chatId) {
-  return bot.sendMessage(chatId, "📸 Хотите сгенерировать фото?", {
+  return bot.sendMessage(chatId, "📸 Сгенерировать фото:", {
     reply_markup: {
       inline_keyboard: [
-        [{ text: "🎯 Близко к теме", callback_data: "photo_topic" }],
-        [{ text: "🏠 В кабинете", callback_data: "photo_office" }],
-        [{ text: "✏️ Свой вариант", callback_data: "photo_custom" }],
-        [{ text: "📤 Опубликовать результат", callback_data: "open_publish_menu" }],
+        [
+          { text: "🎯 По теме", callback_data: "photo_topic" },
+          { text: "🏠 Кабинет", callback_data: "photo_office" },
+        ],
+        [
+          { text: "✏️ Свой вариант", callback_data: "photo_custom" },
+          { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
+        ],
       ],
     },
   });
+}
+
+function getPublishButtons(state) {
+  const buttons = [];
+  const row1 = [];
+  if (state.lastImageUrl && state.lastFullAnswer) row1.push({ text: "🖼 Текст+Фото", callback_data: "publish:text_photo" });
+  if (state.lastVideoUrl && state.lastFullAnswer) row1.push({ text: "🎬 Текст+Видео", callback_data: "publish:text_video" });
+  if (row1.length > 0) buttons.push(row1);
+  if (state.lastFullAnswer) buttons.push([{ text: "📄 Только текст", callback_data: "publish:text_only" }]);
+  return buttons;
+}
+
+async function sendPublishMenu(chatId) {
+  const state = userState.get(chatId) || {};
+  const buttons = getPublishButtons(state);
+  if (buttons.length === 0) { await bot.sendMessage(chatId, "❌ Нечего публиковать."); return; }
+  await bot.sendMessage(chatId, "📤 Формат публикации:", { reply_markup: { inline_keyboard: buttons } });
+}
+
+async function showFinalPost(chatId, type) {
+  const state = userState.get(chatId) || {};
+  const text = state.lastFullAnswer || "";
+  if (type === "text_photo") {
+    if (!state.lastImageUrl) { await bot.sendMessage(chatId, "❌ Нет фото."); return; }
+    await bot.sendPhoto(chatId, state.lastImageUrl, { caption: text.substring(0, 1024) });
+    await bot.sendMessage(chatId, "✅ Пост: Текст + Фото\nСкопируйте для Instagram/Telegram.");
+  } else if (type === "text_video") {
+    if (!state.lastVideoUrl) { await bot.sendMessage(chatId, "❌ Нет видео."); return; }
+    await bot.sendVideo(chatId, state.lastVideoUrl, { caption: text.substring(0, 1024) });
+    await bot.sendMessage(chatId, "✅ Пост: Текст + Видео\nСкопируйте для Instagram/Telegram.");
+  } else if (type === "text_only") {
+    await bot.sendMessage(chatId, `📄 Текст для публикации:\n\n${text}`);
+  }
 }
 
 // --- ОСНОВНОЙ ОБРАБОТЧИК СООБЩЕНИЙ ---
@@ -356,15 +371,13 @@ bot.on("message", async (msg) => {
       const fileId = msg.voice.file_id;
       const fileInfo = await bot.getFile(fileId);
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-      const processingMsg = await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
+      const processingMsg = await bot.sendMessage(chatId, "⏳ Принимаю голосовое...");
       const voiceRes = await fetch(voiceFileUrl);
       const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
       const audioDataUri = bufferToDataUri(voiceBuffer, "audio/ogg");
-      await bot.editMessageText("✅ Голосовое принято!", {
-        chat_id: chatId, message_id: processingMsg.message_id
-      });
+      await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
       const voices = state.pendingVoices || [];
-      voices.push({ audioDataUri, index: voices.length + 1 });
+      voices.push({ audioDataUri });
       state.pendingVoices = voices;
       userState.set(chatId, state);
       await sendVoiceSelectionMenu(chatId);
@@ -377,14 +390,16 @@ bot.on("message", async (msg) => {
       const imageUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
       const photoKey = `forwarded_${Date.now()}`;
       if (!state.photos) state.photos = {};
-      state.photos[photoKey] = imageUrl;
+      state.photos[photoKey] = { imageUrl, scenePrompt: null };
       state.lastImageUrl = imageUrl;
       userState.set(chatId, state);
       await bot.sendMessage(chatId, "📷 Фото получено!", {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "🎬 Сделать видео из этого фото", callback_data: `make_video:${photoKey}` }],
-            [{ text: "📤 Опубликовать результат", callback_data: "open_publish_menu" }],
+            [
+              { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
+              { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
+            ],
           ],
         },
       });
@@ -398,11 +413,11 @@ bot.on("message", async (msg) => {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
       const translatedScene = await translateScene(text);
       const customScene = `${translatedScene}, bokeh background, photorealistic`;
-      const { imageUrl, cost: photoCost } = await generateImage(chatId, customScene);
+      const { imageUrl, cost: photoCost, scenePrompt } = await generateImage(chatId, customScene);
       const newState = userState.get(chatId) || {};
       newState.lastImageUrl = imageUrl;
       userState.set(chatId, newState);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost);
+      await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
       return;
     }
 
@@ -416,35 +431,31 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    // --- ОБНОВЛЁННЫЙ ПРОМПТ с эмодзи и живым стилем ---
+    // Правка 5: улучшенное оформление текста
     const prompt = `Ты — Динара, практикующий психолог с тёплым, человечным стилем общения.
 
 СТИЛЬ ОТВЕТА:
-- Живой, разговорный язык — как будто пишешь близкому человеку
-- 2-4 абзаца, без списков и заголовков
-- Эмпатия в каждом абзаце, мягкое направление
-- В конце — один искренний вопрос
+- Живой, разговорный язык — как будто пишешь близкому человеку лично
+- 3 абзаца: (1) признание чувств, (2) объяснение/инсайт, (3) направление + вопрос
+- Без списков, заголовков, звёздочек
+
+ОФОРМЛЕНИЕ ТЕКСТА (важно):
+- Первый абзац начинай с эмодзи по теме
+- В середине текста используй 1-2 эмодзи органично, не в начале строки
+- Выдели одну ключевую фразу через _курсив_ (обернуть в одинарные подчёркивания)
+- Абзацы разделяй пустой строкой
+- Используй «—» вместо тире
 - Ограничение: не более 1200 символов
 
-ОФОРМЛЕНИЕ:
-- Добавь 2-4 эмодзи по смыслу — в начале абзацев или внутри текста
-- Используй «—» вместо тире для пауз
-- Можно выделить одну ключевую мысль через 💡 или ✨
-- Не перегружай эмодзи — они должны быть уместны, не декоративны
-- НЕ используй: списки, звёздочки, решётки, заголовки
+ЭМОДЗИ ПО ТЕМАМ (выбирай 2-3 уместных):
+тревога/страх → 🌿 💙 🤍 | одиночество/грусть → 🌧️ 🫶 💛
+отношения → 💕 🌸 | злость/обида → 🔥 🌊 | рост → 🌱 ✨ 🦋
+усталость → 🕯️ 🌙 | принятие → 🍃 🌤️
 
-ПРИМЕРЫ ЭМОДЗИ ПО ТЕМАМ:
-- тревога, страх → 🌿 🤍 💙
-- одиночество, грусть → 🌧️ 🫶 💛
-- отношения → 💕 🌸 🔮
-- злость, обиды → 🔥 ⚡ 🌊
-- рост, изменения → 🌱 ✨ 🦋
-- усталость, выгорание → 🕯️ 🌙 💤
-
-Контекст из базы знаний:
+Контекст:
 ${context}
 
-Вопрос пользователя:
+Вопрос:
 ${text}
 
 Ответ:`;
@@ -457,15 +468,17 @@ ${text}
     });
 
     const fullAnswer = completion.choices[0].message.content;
-    await bot.sendMessage(chatId, fullAnswer);
+
+    // Отправляем с parse_mode Markdown для курсива
+    await bot.sendMessage(chatId, fullAnswer, { parse_mode: "Markdown" }).catch(async () => {
+      // fallback без markdown если есть проблемы с форматированием
+      await bot.sendMessage(chatId, fullAnswer);
+    });
 
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
-Требования:
-- Строго до 160 символов суммарно
-- Спокойный, негромкий тон
-- Добавь паузу через запятую или тире
-- Без вопроса в конце
-- Только текст, без эмодзи
+- До 160 символов
+- Спокойный тон, пауза через запятую или тире
+- Без вопроса в конце, без эмодзи, только текст
 
 Текст:
 ${fullAnswer}
@@ -475,8 +488,7 @@ ${fullAnswer}
     const shortCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: shortPrompt }],
-      temperature: 0.4,
-      max_tokens: 80,
+      temperature: 0.4, max_tokens: 80,
     });
 
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
@@ -516,6 +528,23 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    // Правка 1: регенерация фото (кнопка "Ещё вариант")
+    if (data.startsWith("regen_photo:")) {
+      const photoKey = data.replace("regen_photo:", "");
+      const photoData = state.photos?.[photoKey];
+      const scenePrompt = photoData?.scenePrompt || state.lastScenePrompt;
+      if (!scenePrompt) {
+        await bot.sendMessage(chatId, "❌ Не могу воспроизвести сцену. Выберите фото заново.");
+        return;
+      }
+      const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
+      const newState = userState.get(chatId) || {};
+      newState.lastImageUrl = imageUrl;
+      userState.set(chatId, newState);
+      await sendPhotoWithButtons(chatId, imageUrl, photoCost, newScene);
+      return;
+    }
+
     if (data.startsWith("confirm_video:")) {
       const videoKey = data.replace("confirm_video:", "");
       const videoUrl = state.videos?.[videoKey];
@@ -525,11 +554,13 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, currentState);
       const fullText = currentState.lastFullAnswer || "";
       await bot.sendVideo(chatId, videoUrl, { caption: fullText.substring(0, 1024) });
-      await bot.sendMessage(chatId, "✅ Видео выбрано!\n\n📤 Хотите опубликовать?", {
+      await bot.sendMessage(chatId, "✅ Видео выбрано! Публиковать?", {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "📄🎬 Текст + Видео", callback_data: "publish:text_video" }],
-            [{ text: "📄🖼 Текст + Фото", callback_data: "publish:text_photo" }],
+            [
+              { text: "🎬 Текст+Видео", callback_data: "publish:text_video" },
+              { text: "🖼 Текст+Фото", callback_data: "publish:text_photo" },
+            ],
             [{ text: "📄 Только текст", callback_data: "publish:text_only" }],
           ],
         },
@@ -540,10 +571,7 @@ bot.on("callback_query", async (query) => {
     if (data === "make_video_again") {
       const imageUrl = state.lastImageUrl;
       const audioDataUri = state.lastAudioDataUri;
-      if (!imageUrl || !audioDataUri) {
-        await bot.sendMessage(chatId, "❌ Нет фото или аудио для повторной генерации.");
-        return;
-      }
+      if (!imageUrl || !audioDataUri) { await bot.sendMessage(chatId, "❌ Нет фото или аудио."); return; }
       const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioDataUri);
       await sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec);
       return;
@@ -560,7 +588,7 @@ bot.on("callback_query", async (query) => {
       currentState.lastAudioDataUri = audioDataUri;
       userState.set(chatId, currentState);
       const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
-      await bot.sendMessage(chatId, `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}\n\n✅ Аудио готово для видео!`);
+      await bot.sendMessage(chatId, `✅ ${audioLine}\n✅ Аудио готово для видео!`);
       await sendPhotoButtons(chatId);
       return;
     }
@@ -570,7 +598,7 @@ bot.on("callback_query", async (query) => {
       currentState.awaitingVoiceRecord = true;
       currentState.pendingVoices = [];
       userState.set(chatId, currentState);
-      await bot.sendMessage(chatId, "🎤 Запишите голосовое сообщение.\n\nМожно записать несколько — потом выберете лучшее.");
+      await bot.sendMessage(chatId, "🎤 Запишите голосовое.\nМожно несколько — потом выберете лучшее.");
       return;
     }
 
@@ -592,20 +620,18 @@ bot.on("callback_query", async (query) => {
       currentState.awaitingVoiceRecord = false;
       currentState.pendingVoices = [];
       userState.set(chatId, currentState);
-      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано.\n💡 Стоимость: $0\n✅ Аудио готово для видео!`);
+      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано.\n✅ Аудио готово для видео!`);
       await sendPhotoButtons(chatId);
       return;
     }
 
     if (data.startsWith("make_video:")) {
       const photoKey = data.replace("make_video:", "");
-      const imageUrl = state.photos?.[photoKey];
+      const photoData = state.photos?.[photoKey];
+      const imageUrl = photoData?.imageUrl || (typeof photoData === 'string' ? photoData : null);
       const audioDataUri = state.lastAudioDataUri;
       if (!imageUrl) { await bot.sendMessage(chatId, "❌ Фото не найдено."); return; }
-      if (!audioDataUri) {
-        await bot.sendMessage(chatId, "❌ Нет аудио. Сначала выберите аудио (ИИ или своё голосовое).");
-        return;
-      }
+      if (!audioDataUri) { await bot.sendMessage(chatId, "❌ Нет аудио. Сначала выберите аудио."); return; }
       const currentState = userState.get(chatId) || {};
       currentState.lastImageUrl = imageUrl;
       userState.set(chatId, currentState);
@@ -618,19 +644,22 @@ bot.on("callback_query", async (query) => {
       const topic = state.lastTopic || "психология";
       const scenePrompt = await buildTopicScenePrompt(topic);
       const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost);
+      const newState = userState.get(chatId) || {};
+      newState.lastImageUrl = imageUrl;
+      userState.set(chatId, newState);
+      await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
 
     } else if (data === "photo_office") {
-      const { imageUrl, cost: photoCost } = await generateImage(chatId,
-        `sitting in cozy therapist office, bookshelf background,
-soft warm lamp light, wooden furniture, indoor plants,
-shallow depth of field, bokeh background, warm cozy atmosphere,
-wearing elegant professional blouse, warm neutral colors`);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost);
+      const officeScene = `sitting in cozy therapist office, bookshelf background, soft warm lamp light, wooden furniture, indoor plants, shallow depth of field, bokeh background, warm cozy atmosphere, wearing elegant professional blouse, warm neutral colors`;
+      const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
+      const newState = userState.get(chatId) || {};
+      newState.lastImageUrl = imageUrl;
+      userState.set(chatId, newState);
+      await sendPhotoWithButtons(chatId, imageUrl, photoCost, officeScene);
 
     } else if (data === "photo_custom") {
       userState.set(chatId, { ...state, awaitingCustomScene: true });
-      await bot.sendMessage(chatId, "✏️ Опишите сцену на русском — я переведу и сгенерирую.\n\nНапример: \"я стою на набережной, весна, солнце, синее пальто\"");
+      await bot.sendMessage(chatId, "✏️ Опишите сцену на русском:\nНапример: \"набережная, весна, солнце, синее пальто\"");
     }
 
   } catch (error) {
