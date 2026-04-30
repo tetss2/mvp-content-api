@@ -73,33 +73,89 @@ soft lips slightly curved, peaceful confident expression`;
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
 // --- БИБЛИОТЕКА МУЗЫКИ ---
+// Источники: bensound.com (CC BY-ND 4.0 с атрибуцией), freemusicarchive
+// Прямые mp3 без блокировки серверных запросов
 const MUSIC_LIBRARY = [
-  { id: "lofi1", name: "Soft Lofi Beat", genre: "Lo-fi", mood: "уютный, расслабляющий", tags: ["lofi", "chill", "тревога", "усталость"],
-    url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b1a8ade.mp3" },
-  { id: "lofi2", name: "Coffee & Rain", genre: "Lo-fi", mood: "спокойный, мечтательный", tags: ["lofi", "грусть", "одиночество"],
-    url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3" },
-  { id: "lofi3", name: "Lazy Sunday", genre: "Lo-fi / Chill", mood: "ленивый, мягкий", tags: ["lofi", "chill"],
-    url: "https://cdn.pixabay.com/download/audio/2023/02/28/audio_f6bf7e27c7.mp3" },
-  { id: "ambient1", name: "Deep Silence", genre: "Ambient", mood: "медитативный, глубокий", tags: ["ambient", "тревога", "страх", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3" },
-  { id: "ambient2", name: "Floating Thoughts", genre: "Ambient", mood: "воздушный, созерцательный", tags: ["ambient", "рост"],
-    url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" },
-  { id: "ambient3", name: "Healing Space", genre: "Ambient / Meditative", mood: "исцеляющий, безопасный", tags: ["ambient", "принятие", "усталость"],
-    url: "https://cdn.pixabay.com/download/audio/2022/11/22/audio_ea70b60a2a.mp3" },
-  { id: "piano1", name: "Quiet Reflection", genre: "Piano", mood: "эмоциональный, задумчивый", tags: ["piano", "грусть", "отношения"],
-    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0c6ff1bab.mp3" },
-  { id: "piano2", name: "New Beginning", genre: "Piano / Cinematic", mood: "вдохновляющий, светлый", tags: ["piano", "рост"],
-    url: "https://cdn.pixabay.com/download/audio/2022/04/27/audio_12ef08849e.mp3" },
-  { id: "piano3", name: "Tender Moment", genre: "Piano / Soft", mood: "нежный, тёплый", tags: ["piano", "отношения", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_55ab47b2e1.mp3" },
-  { id: "nature1", name: "Forest Morning", genre: "Nature / Ambient", mood: "природный, заземляющий", tags: ["nature", "тревога", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2022/02/12/audio_8f7c0cdec4.mp3" },
-  { id: "guitar1", name: "Gentle Strings", genre: "Acoustic Guitar", mood: "живой, искренний", tags: ["guitar", "отношения", "грусть"],
-    url: "https://cdn.pixabay.com/download/audio/2022/09/14/audio_6bb9bc9093.mp3" },
-  { id: "meditation1", name: "Stillness", genre: "Meditation", mood: "тишина, покой", tags: ["meditation", "тревога", "страх", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_14c33ef0f3.mp3" },
-  { id: "meditation2", name: "Soft Glow", genre: "Meditation / Ambient", mood: "мягкий, безопасный", tags: ["meditation", "усталость", "грусть"],
-    url: "https://cdn.pixabay.com/download/audio/2022/10/12/audio_b799a218b2.mp3" },
+  {
+    id: "lofi1",
+    name: "Acoustic Breeze",
+    genre: "Lo-fi / Acoustic",
+    mood: "уютный, мечтательный, расслабляющий",
+    tags: ["lofi", "chill", "усталость", "принятие"],
+    url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3",
+  },
+  {
+    id: "ambient1",
+    name: "Relaxing",
+    genre: "Ambient",
+    mood: "медитативный, спокойный, глубокий",
+    tags: ["ambient", "тревога", "страх", "принятие"],
+    url: "https://www.bensound.com/bensound-music/bensound-relaxing.mp3",
+  },
+  {
+    id: "piano1",
+    name: "Sweet",
+    genre: "Piano / Soft",
+    mood: "нежный, тёплый, лиричный",
+    tags: ["piano", "отношения", "грусть", "принятие"],
+    url: "https://www.bensound.com/bensound-music/bensound-sweet.mp3",
+  },
+  {
+    id: "chill1",
+    name: "Sunny",
+    genre: "Chill / Uplifting",
+    mood: "лёгкий, солнечный, вдохновляющий",
+    tags: ["chill", "рост", "изменения"],
+    url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
+  },
+  {
+    id: "dreamy1",
+    name: "Dreams",
+    genre: "Dreamy / Soft",
+    mood: "воздушный, мягкий, созерцательный",
+    tags: ["ambient", "грусть", "одиночество", "рост"],
+    url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3",
+  },
+  {
+    id: "tender1",
+    name: "Tender",
+    genre: "Cinematic / Piano",
+    mood: "кинематографичный, эмоциональный",
+    tags: ["piano", "грусть", "отношения", "усталость"],
+    url: "https://www.bensound.com/bensound-music/bensound-tender.mp3",
+  },
+  {
+    id: "lofi2",
+    name: "Memories",
+    genre: "Lo-fi / Nostalgic",
+    mood: "ностальгический, тёплый, задумчивый",
+    tags: ["lofi", "грусть", "принятие", "одиночество"],
+    url: "https://www.bensound.com/bensound-music/bensound-memories.mp3",
+  },
+  {
+    id: "ambient2",
+    name: "Slow Motion",
+    genre: "Ambient / Cinematic",
+    mood: "пространственный, медленный, глубокий",
+    tags: ["ambient", "тревога", "страх"],
+    url: "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3",
+  },
+  {
+    id: "inspire1",
+    name: "Once Again",
+    genre: "Inspirational / Soft",
+    mood: "вдохновляющий, светлый, надежда",
+    tags: ["piano", "рост", "изменения", "принятие"],
+    url: "https://www.bensound.com/bensound-music/bensound-onceagain.mp3",
+  },
+  {
+    id: "folk1",
+    name: "Creative Minds",
+    genre: "Folk / Acoustic",
+    mood: "творческий, живой, личный",
+    tags: ["guitar", "отношения", "рост"],
+    url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3",
+  },
 ];
 
 function shuffleArray(arr) {
@@ -177,7 +233,7 @@ async function selectMusicTracks(text, count = 3) {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: `Определи настроение текста для подбора фоновой музыки. Текст:\n"${text.substring(0, 300)}"\n\nВыбери подходящие теги из списка (только из этого списка, через запятую):\nlofi, ambient, piano, guitar, meditation, nature, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nВерни только теги, без пояснений. Пример: lofi,ambient,тревога` }],
+      messages: [{ role: "user", content: `Определи настроение текста для подбора фоновой музыки. Текст:\n"${text.substring(0, 300)}"\n\nВыбери подходящие теги из списка (только из этого списка, через запятую):\nlofi, ambient, piano, guitar, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nВерни только теги, без пояснений. Пример: lofi,ambient,тревога` }],
       temperature: 0.3,
       max_tokens: 50,
     });
@@ -191,18 +247,38 @@ async function selectMusicTracks(text, count = 3) {
   }
 }
 
+// Скачивает трек с заголовками браузера чтобы обойти блокировки CDN
+async function downloadTrack(url) {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Referer": "https://www.bensound.com/",
+      "Accept": "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,application/ogg;q=0.7,*/*;q=0.5",
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+  console.log(`Track downloaded: ${buffer.length} bytes from ${url.substring(0, 60)}`);
+  return buffer;
+}
+
 async function mixAudioWithMusic(voiceBuffer, musicUrl) {
   const tmp = tmpdir();
   const voicePath = join(tmp, `voice_${Date.now()}.mp3`);
+  const musicPath = join(tmp, `music_${Date.now()}.mp3`);
   const outputPath = join(tmp, `mixed_${Date.now()}.mp3`);
 
   try {
     await fs.writeFile(voicePath, voiceBuffer);
 
+    // Скачиваем трек на диск (ffmpeg не может читать URL с блокировками)
+    const musicBuffer = await downloadTrack(musicUrl);
+    await fs.writeFile(musicPath, musicBuffer);
+
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(voicePath)
-        .input(musicUrl)
+        .input(musicPath)
         .complexFilter([
           `[1:a]volume=0.13[music_vol]`,
           `[music_vol]apad[music_pad]`,
@@ -223,6 +299,7 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
 
   } finally {
     await fs.unlink(voicePath).catch(() => {});
+    await fs.unlink(musicPath).catch(() => {});
     await fs.unlink(outputPath).catch(() => {});
   }
 }
@@ -353,7 +430,7 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
 
 // --- UI ФУНКЦИИ ---
 
-// FIX: скачиваем трек буфером и отправляем как файл (Telegram не принимает Pixabay CDN URLs напрямую)
+// Скачиваем трек буфером и отправляем как файл
 async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
   const track = tracks[currentIndex];
   const total = tracks.length;
@@ -361,15 +438,9 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
   const loadMsg = await bot.sendMessage(chatId, `\uD83C\uDFB5 Загружаю трек ${currentIndex + 1} из ${total}...`);
 
   try {
-    // Скачиваем трек на сервер
-    const res = await fetch(track.url);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const trackBuffer = Buffer.from(await res.arrayBuffer());
-
-    // Удаляем сообщение "загружаю"
+    const trackBuffer = await downloadTrack(track.url);
     await bot.deleteMessage(chatId, loadMsg.message_id).catch(() => {});
 
-    // Отправляем как файл с кнопками
     await bot.sendAudio(chatId, trackBuffer, {
       caption: `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}`,
       parse_mode: "Markdown",
@@ -389,7 +460,6 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
 
   } catch(err) {
     console.error("Track preview error:", err.message);
-    // Fallback: показываем просто кнопки без превью
     await bot.editMessageText(
       `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
       {
@@ -399,7 +469,7 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "\u2705 Выбрать этот трек", callback_data: `music_confirm:${track.id}` },
+              { text: "\u2705 Выбрать", callback_data: `music_confirm:${track.id}` },
               ...(currentIndex + 1 < total
                 ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }]
                 : []
