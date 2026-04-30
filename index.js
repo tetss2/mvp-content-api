@@ -96,42 +96,30 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// Загрузка на Cloudinary — постоянное хранение, бесплатно до 25GB
 async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   if (!CLOUDINARY_CLOUD || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    throw new Error("Cloudinary не настроен. Добавьте CLOUDINARY_CLOUD, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET в Railway Variables.");
+    throw new Error("Cloudinary не настроен.");
   }
-
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = `audio_${timestamp}`;
-
-  // Подписываем запрос
   const crypto = await import('crypto');
   const signature = crypto.createHash('sha1')
     .update(`public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`)
     .digest('hex');
-
   const formData = new FormData();
-  const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
-  formData.append("file", blob, filename);
+  formData.append("file", new Blob([audioBuffer], { type: "audio/mpeg" }), filename);
   formData.append("public_id", publicId);
   formData.append("timestamp", timestamp.toString());
   formData.append("api_key", CLOUDINARY_API_KEY);
   formData.append("signature", signature);
-  formData.append("resource_type", "video"); // Cloudinary использует "video" для аудио
-
   const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, {
-    method: "POST",
-    body: formData,
+    method: "POST", body: formData,
   });
-
   const resText = await res.text();
-  console.log("Cloudinary upload status:", res.status, "body:", resText.substring(0, 200));
-  if (!res.ok) throw new Error(`Cloudinary upload error: ${resText}`);
-
-  const data = JSON.parse(resText);
-  const url = data.secure_url;
-  if (!url) throw new Error(`Cloudinary: no URL in response: ${resText}`);
+  console.log("Cloudinary upload status:", res.status, resText.substring(0, 200));
+  if (!res.ok) throw new Error(`Cloudinary error: ${resText}`);
+  const url = JSON.parse(resText).secure_url;
+  if (!url) throw new Error("Cloudinary: no URL");
   console.log("Audio uploaded to Cloudinary:", url);
   return url;
 }
@@ -190,13 +178,13 @@ async function generateImage(chatId, scenePrompt) {
   return { imageUrl, cost: PRICE.photo, scenePrompt };
 }
 
-// Aurora — с защитой от пустых ответов
+// Aurora — используем status_url и response_url из ответа submit
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   const statusMsg = await bot.sendMessage(chatId, "🎬 Шаг 1/3 — Отправляю запрос...");
   const msgId = statusMsg.message_id;
 
-  console.log("Aurora: image:", imageUrl);
-  console.log("Aurora: audio:", audioUrl);
+  console.log("Aurora submit: image:", imageUrl);
+  console.log("Aurora submit: audio:", audioUrl);
 
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
@@ -210,45 +198,54 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   });
 
   const submitText = await submitRes.text();
-  console.log("Aurora submit status:", submitRes.status, "body:", submitText.substring(0, 300));
+  console.log("Aurora submit status:", submitRes.status, "body:", submitText.substring(0, 400));
 
-  if (!submitRes.ok || !submitText.trim()) {
-    await bot.editMessageText(`❌ Ошибка отправки запроса (${submitRes.status}):\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
-    throw new Error(`Aurora submit error: ${submitText}`);
+  if (!submitRes.ok) {
+    await bot.editMessageText(`❌ Ошибка запроса (${submitRes.status}):\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora submit error ${submitRes.status}: ${submitText}`);
   }
 
   let submitData;
   try {
     submitData = JSON.parse(submitText);
   } catch(e) {
-    await bot.editMessageText(`❌ Неверный ответ от Aurora:\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
-    throw new Error(`Aurora submit JSON parse error: ${submitText}`);
+    await bot.editMessageText(`❌ Неверный ответ Aurora:\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    throw new Error(`Aurora submit JSON error: ${submitText}`);
   }
 
-  const request_id = submitData.request_id;
+  // КЛЮЧЕВОЕ: берём URL-ы прямо из ответа, не конструируем вручную
+  const { request_id, status_url, response_url } = submitData;
+  console.log("Aurora request_id:", request_id);
+  console.log("Aurora status_url:", status_url);
+  console.log("Aurora response_url:", response_url);
+
   if (!request_id) {
     await bot.editMessageText(`❌ Aurora не вернула request_id:\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
-    throw new Error(`Aurora: no request_id in response`);
+    throw new Error("Aurora: no request_id");
   }
-  console.log("Aurora request_id:", request_id);
 
   await bot.editMessageText(
     "⚙️ Шаг 2/3 — Запрос принят, Aurora обрабатывает видео...\n⏱ Обычно 2-4 минуты",
     { chat_id: chatId, message_id: msgId }
   );
 
-  const statusUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
-  const resultUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
+  // Используем status_url из ответа если есть, иначе стандартный
+  const pollUrl = status_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
+  const resultUrl = response_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
+
+  console.log("Aurora polling url:", pollUrl);
 
   for (let i = 0; i < 48; i++) {
     await new Promise(r => setTimeout(r, 5000));
 
-    const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
+    const statusRes = await fetch(pollUrl, {
+      headers: { "Authorization": `Key ${FAL_KEY}` },
+    });
     const statusText = await statusRes.text();
-    console.log(`Aurora status [${i + 1}] (${statusRes.status}):`, statusText.substring(0, 150));
+    console.log(`Aurora poll [${i + 1}] (${statusRes.status}):`, statusText.substring(0, 200));
 
     if (!statusText.trim()) {
-      console.log("Aurora: empty status response, retrying...");
+      console.log("Aurora: empty poll response, retrying...");
       continue;
     }
 
@@ -256,35 +253,38 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     try {
       status = JSON.parse(statusText);
     } catch(e) {
-      console.log("Aurora: status JSON parse error:", e.message);
+      console.log("Aurora: poll JSON error:", statusText.substring(0, 100));
       continue;
     }
 
+    // Обновляем прогресс каждые 30 сек
     if (i > 0 && i % 6 === 0) {
       const elapsed = Math.round((i + 1) * 5 / 60);
       await bot.editMessageText(
-        `⚙️ Шаг 2/3 — Aurora обрабатывает...\n⏱ Прошло ~${elapsed} мин, ожидайте ещё 1-2 мин`,
+        `⚙️ Шаг 2/3 — Aurora обрабатывает...\n⏱ Прошло ~${elapsed} мин`,
         { chat_id: chatId, message_id: msgId }
       ).catch(() => {});
     }
 
-    if (status.status === "COMPLETED") {
+    const st = status.status;
+    console.log("Aurora status value:", st);
+
+    if (st === "COMPLETED") {
       await bot.editMessageText("✅ Шаг 3/3 — Видео готово! Загружаю...", { chat_id: chatId, message_id: msgId });
       const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
       const resultText = await resultRes.text();
-      console.log("Aurora result:", resultText.substring(0, 300));
+      console.log("Aurora result:", resultText.substring(0, 400));
       const result = JSON.parse(resultText);
-      const videoUrl = result.video?.url || result.data?.video?.url;
-      if (!videoUrl) throw new Error(`Aurora: no video URL. Response: ${resultText.substring(0, 200)}`);
-      const durationSec = 5;
-      const cost = durationSec * PRICE.video;
+      const videoUrl = result.video?.url || result.data?.video?.url || result.output?.video_url;
+      if (!videoUrl) throw new Error(`Aurora: no video URL in: ${resultText.substring(0, 200)}`);
+      const cost = 5 * PRICE.video;
       trackCost('video', cost);
-      return { videoUrl, cost, durationSec };
+      return { videoUrl, cost, durationSec: 5 };
     }
 
-    if (status.status === "FAILED") {
+    if (st === "FAILED") {
       const errMsg = JSON.stringify(status).substring(0, 300);
-      await bot.editMessageText(`❌ Aurora не смогла сгенерировать видео.\n${errMsg}`, { chat_id: chatId, message_id: msgId });
+      await bot.editMessageText(`❌ Aurora не смогла создать видео:\n${errMsg}`, { chat_id: chatId, message_id: msgId });
       throw new Error(`Aurora failed: ${errMsg}`);
     }
   }
@@ -429,9 +429,7 @@ bot.on("message", async (msg) => {
       const fileInfo = await bot.getFile(fileId);
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
       const processingMsg = await bot.sendMessage(chatId, "⏳ Загружаю голосовое...");
-      const voiceRes = await fetch(voiceFileUrl);
-      const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
-
+      const voiceBuffer = Buffer.from(await (await fetch(voiceFileUrl)).arrayBuffer());
       let audioUrl;
       try {
         audioUrl = await uploadAudioToCloudinary(voiceBuffer, "voice.ogg");
@@ -441,7 +439,6 @@ bot.on("message", async (msg) => {
         await bot.editMessageText(`⚠️ Ошибка: ${err.message.substring(0, 100)}`, { chat_id: chatId, message_id: processingMsg.message_id });
         return;
       }
-
       const voices = state.pendingVoices || [];
       voices.push({ audioUrl });
       state.pendingVoices = voices;
@@ -460,12 +457,10 @@ bot.on("message", async (msg) => {
       state.lastImageUrl = imageUrl;
       userState.set(chatId, state);
       await bot.sendMessage(chatId, "📷 Фото получено!", {
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
-            { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
-          ]],
-        },
+        reply_markup: { inline_keyboard: [[
+          { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
+          { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
+        ]] },
       });
       return;
     }
@@ -495,7 +490,6 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    // Правка 3: улучшенный промпт с чётким оформлением
     const prompt = `Ты — Динара, практикующий психолог. Пишешь как живой человек, тепло и лично.
 
 СТРУКТУРА — строго 3 абзаца, разделённых пустой строкой:
@@ -644,11 +638,9 @@ bot.on("callback_query", async (query) => {
     if (data === "audio_generate") {
       const shortAnswer = state.lastShortText;
       if (!shortAnswer) { await bot.sendMessage(chatId, "❌ Нет текста для аудио."); return; }
-
       const statusMsg = await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
       await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-
       await bot.editMessageText("🔄 Загружаю аудио на сервер...", { chat_id: chatId, message_id: statusMsg.message_id });
       let audioUrl = null;
       try {
@@ -658,13 +650,10 @@ bot.on("callback_query", async (query) => {
         console.error("Cloudinary upload error:", err.message);
         await bot.editMessageText(`⚠️ ${err.message.substring(0, 100)}`, { chat_id: chatId, message_id: statusMsg.message_id });
       }
-
       const currentState = userState.get(chatId) || {};
       currentState.lastAudioUrl = audioUrl;
       userState.set(chatId, currentState);
-
-      const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
-      await bot.sendMessage(chatId, `✅ ${audioLine}`);
+      await bot.sendMessage(chatId, `✅ ${formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio')}`);
       await sendPhotoButtons(chatId);
       return;
     }
