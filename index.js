@@ -23,15 +23,14 @@ console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0)
 
 // --- ТАРИФЫ ---
 const PRICE = {
-  audio: 0.000008,  // $0.008 за 1000 символов
-  photo: 0.004,     // $0.004 за фото (FLUX LoRA)
-  video: 0.14,      // $0.14 за секунду Aurora 720p
+  audio: 0.000008,
+  photo: 0.004,
+  video: 0.14,
 };
 
-// Реальные балансы на 30.04.2026
 const BALANCE = {
-  audio: 9.93,   // fish.audio
-  photo: 16.61,  // fal.ai (фото + видео из одного баланса)
+  audio: 9.93,
+  photo: 16.61,
 };
 
 const spent = { audio: 0, photo: 0, video: 0 };
@@ -53,21 +52,29 @@ function formatCostLine(emoji, label, cost, type) {
   return `${emoji} ${label}: $${cost.toFixed(4)}  (баланс $${remaining.toFixed(2)} ≈ ${unitsLeft})`;
 }
 
-// --- ПРОМПТ ДЛЯ AURORA ---
+// --- ПРОМПТЫ ---
+
 const AURORA_PROMPT = "4K studio interview, medium close-up (shoulders-up crop). Solid light-grey seamless backdrop, uniform soft key-light, no lighting change. Presenter faces lens, steady eye-contact. Hands remain below frame, body perfectly still. Ultra-sharp.";
 
-// --- БАЗА ПРОМПТОВ ДЛЯ ИЗОБРАЖЕНИЙ ---
+// Правка 2: моложе на 5-7 лет, меньше морщин
 const BASE_PROMPT = `portrait of dinara_psych woman, professional psychologist,
 fair light skin tone, soft warm skin, dark straight hair, photorealistic,
-minimal wrinkles, very smooth skin, smooth under eyes,
-youthful but mature appearance, 40 years old,
+absolutely no wrinkles, perfectly smooth skin, smooth under eyes, no eye wrinkles,
+no crow's feet, no laugh lines, no forehead lines,
+youthful appearance, 33 years old, looks young,
 asian features, flat cheekbones, no cheekbones, soft round face,
 small nose, almond eyes, upturned eye corners, lifted eye corners,
-no drooping eyes, no sad eyes`;
+no drooping eyes, no sad eyes, bright clear eyes`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
-// userState[chatId] = { lastTopic, awaitingCustomScene, lastAudioUrl, lastImageUrl }
+// userState[chatId] = {
+//   lastTopic, awaitingCustomScene,
+//   lastAudioUrl, lastShortText,
+//   photos: { [key]: url },
+//   awaitingVoiceConfirm: bool,
+//   pendingVoices: [{ audioUrl, fileId, index }]
+// }
 const userState = new Map();
 
 // --- УТИЛИТЫ ---
@@ -102,25 +109,23 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-// Загружаем mp3-буфер на fal.ai storage → получаем публичный URL
+// Загрузка mp3-буфера на fal.ai storage → публичный URL
 async function uploadAudioToFal(audioBuffer) {
   const formData = new FormData();
   const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
   formData.append("file", blob, "voice.mp3");
-
   const res = await fetch("https://fal.run/storage/upload", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}` },
     body: formData,
   });
-
   if (!res.ok) throw new Error(`fal storage upload error: ${await res.text()}`);
   const data = await res.json();
   console.log("Audio uploaded to fal:", data.url);
   return data.url;
 }
 
-// Генерация голоса → возвращает { buffer, cost, audioUrl }
+// Генерация голоса fish.audio → { buffer, cost, audioUrl }
 async function generateVoice(text) {
   const payload = writeMsgpack({
     text,
@@ -142,8 +147,6 @@ async function generateVoice(text) {
   const buffer = Buffer.from(await response.arrayBuffer());
   const cost = text.length * PRICE.audio;
   trackCost('audio', cost);
-
-  // Сразу загружаем на fal.ai storage для будущей видеогенерации
   const audioUrl = await uploadAudioToFal(buffer);
   return { buffer, cost, audioUrl };
 }
@@ -176,10 +179,9 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-// Генерация фото → возвращает { imageUrl, cost }
+// Генерация фото → { imageUrl, cost }
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото, подождите ~60 секунд...");
-
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
   const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
@@ -191,23 +193,20 @@ async function generateImage(chatId, scenePrompt) {
       image_size: "square_hd",
     }),
   });
-
   const rawText = await res.text();
   console.log("fal.ai photo status:", res.status);
   if (!res.ok) throw new Error(`fal.ai photo error ${res.status}: ${rawText}`);
-
   const result = JSON.parse(rawText);
   const imageUrl = result.images[0].url;
   trackCost('photo', PRICE.photo);
   return { imageUrl, cost: PRICE.photo };
 }
 
-// Генерация видео Aurora → возвращает { videoUrl, cost, durationSec }
+// Генерация видео Aurora → { videoUrl, cost, durationSec }
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   await bot.sendMessage(chatId, "🎬 Генерирую видео Aurora, подождите ~2-3 минуты...");
   console.log("Aurora: image:", imageUrl, "audio:", audioUrl);
 
-  // Шаг 1: отправляем задачу в очередь
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
@@ -218,12 +217,10 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
       resolution: "720p",
     }),
   });
-
   if (!submitRes.ok) throw new Error(`Aurora submit error: ${await submitRes.text()}`);
   const { request_id } = await submitRes.json();
   console.log("Aurora request_id:", request_id);
 
-  // Шаг 2: polling статуса (до 4 минут)
   const statusUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
   const resultUrl = `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
 
@@ -232,31 +229,24 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
     const status = await statusRes.json();
     console.log(`Aurora status [${i + 1}]:`, status.status);
-
     if (status.status === "COMPLETED") {
       const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
       const result = await resultRes.json();
       const videoUrl = result.video?.url || result.data?.video?.url;
       if (!videoUrl) throw new Error("Aurora: no video URL in response");
-
-      // Примерная стоимость: ~5 секунд × $0.14
       const durationSec = 5;
       const cost = durationSec * PRICE.video;
       trackCost('video', cost);
       return { videoUrl, cost, durationSec };
     }
-
     if (status.status === "FAILED") throw new Error(`Aurora failed: ${JSON.stringify(status)}`);
   }
-
-  throw new Error("Aurora timeout: generation took too long");
+  throw new Error("Aurora timeout");
 }
 
-// Отправляем фото с кнопкой "🎬 Сделать видео"
+// Отправляем фото с кнопкой видео
 async function sendPhotoWithVideoButton(chatId, imageUrl, photoCost) {
   const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
-
-  // Сохраняем URL фото в уникальный ключ для callback
   const photoKey = `photo_${Date.now()}`;
   const state = userState.get(chatId) || {};
   if (!state.photos) state.photos = {};
@@ -271,6 +261,36 @@ async function sendPhotoWithVideoButton(chatId, imageUrl, photoCost) {
       ],
     },
   });
+}
+
+// Показываем кнопки выбора аудио (правка 1)
+function sendAudioChoiceButtons(chatId) {
+  return bot.sendMessage(chatId, "🎙 Выберите вариант аудио:", {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "🤖 Сгенерировать аудио ИИ", callback_data: "audio_generate" }],
+        [{ text: "🎤 Записать своё голосовое", callback_data: "audio_record" }],
+      ],
+    },
+  });
+}
+
+// Показываем список записанных голосовых для выбора
+async function sendVoiceSelectionMenu(chatId) {
+  const state = userState.get(chatId) || {};
+  const voices = state.pendingVoices || [];
+  if (voices.length === 0) {
+    await bot.sendMessage(chatId, "❌ Нет записанных голосовых.");
+    return;
+  }
+  const keyboard = voices.map((v, i) => [
+    { text: `✅ Выбрать голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }
+  ]);
+  keyboard.push([{ text: "➕ Записать ещё одно", callback_data: "add_more_voice" }]);
+  await bot.sendMessage(chatId,
+    `🎤 У вас ${voices.length} голосовых. Выберите нужное или запишите ещё:`,
+    { reply_markup: { inline_keyboard: keyboard } }
+  );
 }
 
 function sendPhotoButtons(chatId) {
@@ -292,18 +312,38 @@ bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const state = userState.get(chatId) || {};
 
+    // Обработка голосового сообщения пользователя
+    if (msg.voice) {
+      if (!state.awaitingVoiceRecord) return;
+
+      const fileId = msg.voice.file_id;
+      const fileInfo = await bot.getFile(fileId);
+      const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
+
+      // Скачиваем файл и загружаем на fal.ai
+      const voiceRes = await fetch(voiceFileUrl);
+      const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
+      const audioUrl = await uploadAudioToFal(voiceBuffer);
+
+      const voices = state.pendingVoices || [];
+      voices.push({ audioUrl, index: voices.length + 1 });
+      state.pendingVoices = voices;
+      userState.set(chatId, state);
+
+      console.log(`Voice ${voices.length} received, url:`, audioUrl);
+      await sendVoiceSelectionMenu(chatId);
+      return;
+    }
+
     // Обработка пересланного/загруженного фото
     if (msg.photo) {
       const fileId = msg.photo[msg.photo.length - 1].file_id;
       const fileInfo = await bot.getFile(fileId);
       const imageUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-
-      // Сохраняем URL пересланного фото
       const photoKey = `forwarded_${Date.now()}`;
       if (!state.photos) state.photos = {};
       state.photos[photoKey] = imageUrl;
       userState.set(chatId, state);
-
       await bot.sendMessage(chatId, "📷 Фото получено! Хотите сделать из него видео?", {
         reply_markup: {
           inline_keyboard: [
@@ -361,6 +401,7 @@ ${text}
     const fullAnswer = completion.choices[0].message.content;
     await bot.sendMessage(chatId, fullAnswer);
 
+    // Правка 1: генерируем короткий текст заранее и сохраняем
     const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
 Требования:
 - Строго до 160 символов суммарно
@@ -384,19 +425,15 @@ ${fullAnswer}
     let shortAnswer = shortCompletion.choices[0].message.content.trim();
     if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
 
-    const { buffer: audioBuffer, cost: audioCost, audioUrl } = await generateVoice(shortAnswer);
-    await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-
-    // Сохраняем audioUrl для видеогенерации
+    // Сохраняем короткий текст и сбрасываем голосовые
     const currentState = userState.get(chatId) || {};
-    currentState.lastAudioUrl = audioUrl;
+    currentState.lastShortText = shortAnswer;
+    currentState.pendingVoices = [];
+    currentState.awaitingVoiceRecord = false;
     userState.set(chatId, currentState);
 
-    const audioLine = formatCostLine("🎙", "Аудио", audioCost, 'audio');
-    await bot.sendMessage(chatId,
-      `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}`);
-
-    await sendPhotoButtons(chatId);
+    // Правка 1: предлагаем выбор аудио
+    await sendAudioChoiceButtons(chatId);
 
   } catch (error) {
     console.error("Error:", error.message);
@@ -412,10 +449,71 @@ bot.on("callback_query", async (query) => {
   await bot.answerCallbackQuery(query.id);
 
   try {
-    // --- КНОПКА "СДЕЛАТЬ ВИДЕО" ---
+    const state = userState.get(chatId) || {};
+
+    // --- ВЫБОР АУДИО ---
+    if (data === "audio_generate") {
+      const shortAnswer = state.lastShortText;
+      if (!shortAnswer) {
+        await bot.sendMessage(chatId, "❌ Нет текста для аудио. Напишите новый запрос.");
+        return;
+      }
+      await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
+      const { buffer: audioBuffer, cost: audioCost, audioUrl } = await generateVoice(shortAnswer);
+      await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
+
+      const currentState = userState.get(chatId) || {};
+      currentState.lastAudioUrl = audioUrl;
+      userState.set(chatId, currentState);
+
+      const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
+      await bot.sendMessage(chatId, `✅ Готово\n${audioLine}\n💰 Итого: $${audioCost.toFixed(4)}`);
+      await sendPhotoButtons(chatId);
+      return;
+    }
+
+    if (data === "audio_record") {
+      const currentState = userState.get(chatId) || {};
+      currentState.awaitingVoiceRecord = true;
+      currentState.pendingVoices = [];
+      userState.set(chatId, currentState);
+      await bot.sendMessage(chatId,
+        "🎤 Запишите голосовое сообщение прямо сейчас.\n\nМожно записать несколько — потом выберете лучшее."
+      );
+      return;
+    }
+
+    if (data === "add_more_voice") {
+      const currentState = userState.get(chatId) || {};
+      currentState.awaitingVoiceRecord = true;
+      userState.set(chatId, currentState);
+      await bot.sendMessage(chatId, "🎤 Запишите ещё одно голосовое сообщение:");
+      return;
+    }
+
+    if (data.startsWith("confirm_voice:")) {
+      const index = parseInt(data.replace("confirm_voice:", ""));
+      const voices = state.pendingVoices || [];
+      const chosen = voices[index];
+      if (!chosen) {
+        await bot.sendMessage(chatId, "❌ Голосовое не найдено.");
+        return;
+      }
+
+      const currentState = userState.get(chatId) || {};
+      currentState.lastAudioUrl = chosen.audioUrl;
+      currentState.awaitingVoiceRecord = false;
+      currentState.pendingVoices = [];
+      userState.set(chatId, currentState);
+
+      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано и сохранено.\n💡 Стоимость: $0 (ваше собственное аудио)`);
+      await sendPhotoButtons(chatId);
+      return;
+    }
+
+    // --- ВИДЕО ---
     if (data.startsWith("make_video:")) {
       const photoKey = data.replace("make_video:", "");
-      const state = userState.get(chatId) || {};
       const imageUrl = state.photos?.[photoKey];
       const audioUrl = state.lastAudioUrl;
 
@@ -424,7 +522,7 @@ bot.on("callback_query", async (query) => {
         return;
       }
       if (!audioUrl) {
-        await bot.sendMessage(chatId, "❌ Нет аудио для видео. Сначала напишите запрос — бот сгенерирует текст и аудио.");
+        await bot.sendMessage(chatId, "❌ Нет аудио для видео. Сначала напишите запрос и выберите аудио.");
         return;
       }
 
@@ -437,9 +535,8 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // --- КНОПКИ ФОТО ---
+    // --- ФОТО ---
     if (data === "photo_topic") {
-      const state = userState.get(chatId) || {};
       const topic = state.lastTopic || "психология";
       const scenePrompt = await buildTopicScenePrompt(topic);
       const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
@@ -460,7 +557,6 @@ wearing elegant professional blouse, warm neutral colors`);
       await sendPhotoWithVideoButton(chatId, imageUrl, photoCost);
 
     } else if (data === "photo_custom") {
-      const state = userState.get(chatId) || {};
       userState.set(chatId, { ...state, awaitingCustomScene: true });
       await bot.sendMessage(chatId,
         "✏️ Опишите сцену на русском — я переведу и сгенерирую.\n\nНапример: \"я стою на набережной, весна, солнце, синее пальто\""
