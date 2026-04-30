@@ -92,8 +92,26 @@ function writeMsgpack(val) {
   return Buffer.from([0xc0]);
 }
 
-function bufferToDataUri(buffer, mimeType = "audio/mpeg") {
-  return `data:${mimeType};base64,${buffer.toString('base64')}`;
+// Загрузка mp3 буфера на tmpfiles.org → публичный URL для Aurora
+async function uploadAudioToTmpfiles(audioBuffer) {
+  const formData = new FormData();
+  const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
+  formData.append("file", blob, "voice.mp3");
+
+  const res = await fetch("https://tmpfiles.org/api/v1/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) throw new Error(`tmpfiles upload error: ${await res.text()}`);
+  const data = await res.json();
+  // tmpfiles возвращает {"status":"success","data":{"url":"https://tmpfiles.org/XXXX/voice.mp3"}}
+  // Нужно преобразовать в прямой dl-линк: tmpfiles.org → tmpfiles.org/dl
+  const pageUrl = data?.data?.url;
+  if (!pageUrl) throw new Error(`tmpfiles: no URL in response: ${JSON.stringify(data)}`);
+  const directUrl = pageUrl.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+  console.log("Audio uploaded to tmpfiles:", directUrl);
+  return directUrl;
 }
 
 async function generateVoice(text) {
@@ -135,7 +153,6 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-// Генерация фото — возвращает { imageUrl, cost, scenePrompt }
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "⏳ Генерирую фото ~60 сек...");
   const fullPrompt = `${BASE_PROMPT}, soft natural smile, ${scenePrompt}`;
@@ -151,19 +168,20 @@ async function generateImage(chatId, scenePrompt) {
   return { imageUrl, cost: PRICE.photo, scenePrompt };
 }
 
-// Aurora с прогресс-статусами через редактирование сообщения
-async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
-  // Шаг 1: отправляем запрос
+// Aurora с прогресс-статусами и реальным audio URL
+async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   const statusMsg = await bot.sendMessage(chatId,
     "🎬 Шаг 1/3 — Отправляю запрос на генерацию видео...");
   const msgId = statusMsg.message_id;
+
+  console.log("Aurora: image:", imageUrl, "audio:", audioUrl.substring(0, 60));
 
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       image_url: imageUrl,
-      audio_url: audioDataUri,
+      audio_url: audioUrl,
       prompt: AURORA_PROMPT,
       resolution: "720p",
     }),
@@ -171,16 +189,17 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
 
   if (!submitRes.ok) {
     const err = await submitRes.text();
-    await bot.editMessageText(`❌ Ошибка отправки запроса:\n${err.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    await bot.editMessageText(`❌ Ошибка запроса:\n${err.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
     throw new Error(`Aurora submit error: ${err}`);
   }
 
-  const { request_id } = await submitRes.json();
+  const submitBody = await submitRes.text();
+  console.log("Aurora submit response:", submitBody.substring(0, 200));
+  const { request_id } = JSON.parse(submitBody);
   console.log("Aurora request_id:", request_id);
 
-  // Шаг 2: ожидание обработки
   await bot.editMessageText(
-    "⚙️ Шаг 2/3 — Запрос принят, Aurora обрабатывает видео...\n⏱ Обычно занимает 2-4 минуты",
+    "⚙️ Шаг 2/3 — Запрос принят, Aurora обрабатывает видео...\n⏱ Обычно 2-4 минуты",
     { chat_id: chatId, message_id: msgId }
   );
 
@@ -189,15 +208,16 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
 
   for (let i = 0; i < 48; i++) {
     await new Promise(r => setTimeout(r, 5000));
-    const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
-    const status = await statusRes.json();
-    console.log(`Aurora status [${i + 1}]:`, status.status);
 
-    // Обновляем прогресс каждые 30 секунд (каждые 6 итераций)
+    const statusRes = await fetch(statusUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
+    const statusText = await statusRes.text();
+    console.log(`Aurora status [${i + 1}]:`, statusText.substring(0, 100));
+    const status = JSON.parse(statusText);
+
     if (i > 0 && i % 6 === 0) {
       const elapsed = Math.round((i + 1) * 5 / 60);
       await bot.editMessageText(
-        `⚙️ Шаг 2/3 — Aurora обрабатывает видео...\n⏱ Прошло ~${elapsed} мин, ожидайте ещё 1-2 мин`,
+        `⚙️ Шаг 2/3 — Aurora обрабатывает...\n⏱ Прошло ~${elapsed} мин, ожидайте ещё 1-2 мин`,
         { chat_id: chatId, message_id: msgId }
       ).catch(() => {});
     }
@@ -205,9 +225,11 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
     if (status.status === "COMPLETED") {
       await bot.editMessageText("✅ Шаг 3/3 — Видео готово! Загружаю...", { chat_id: chatId, message_id: msgId });
       const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
-      const result = await resultRes.json();
+      const resultText = await resultRes.text();
+      console.log("Aurora result:", resultText.substring(0, 300));
+      const result = JSON.parse(resultText);
       const videoUrl = result.video?.url || result.data?.video?.url;
-      if (!videoUrl) throw new Error("Aurora: no video URL in response");
+      if (!videoUrl) throw new Error(`Aurora: no video URL. Response: ${resultText.substring(0, 200)}`);
       const durationSec = 5;
       const cost = durationSec * PRICE.video;
       trackCost('video', cost);
@@ -215,9 +237,9 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
     }
 
     if (status.status === "FAILED") {
-      const errMsg = JSON.stringify(status).substring(0, 200);
+      const errMsg = JSON.stringify(status).substring(0, 300);
       await bot.editMessageText(`❌ Aurora не смогла сгенерировать видео.\n${errMsg}`, { chat_id: chatId, message_id: msgId });
-      throw new Error(`Aurora failed: ${JSON.stringify(status)}`);
+      throw new Error(`Aurora failed: ${errMsg}`);
     }
   }
 
@@ -227,7 +249,6 @@ async function generateVideoAurora(chatId, imageUrl, audioDataUri) {
 
 // --- UI ФУНКЦИИ ---
 
-// Правка 2: компактные кнопки — по 2 в строке там где уместно
 async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
   const photoLine = formatCostLine("🖼", "Фото", photoCost, 'photo');
   const photoKey = `photo_${Date.now()}`;
@@ -242,7 +263,6 @@ async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
     caption: `✅ ${photoLine}\n💰 $${photoCost.toFixed(4)}`,
     reply_markup: {
       inline_keyboard: [
-        // Правка 1: кнопка "Ещё вариант" + "Видео" в одной строке
         [
           { text: "🔄 Ещё вариант", callback_data: `regen_photo:${photoKey}` },
           { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
@@ -265,7 +285,6 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
     caption: `✅ ${videoLine}\n💰 $${videoCost.toFixed(4)}`,
     reply_markup: {
       inline_keyboard: [
-        // Правка 2: 2 кнопки в строке
         [
           { text: "✅ Выбрать", callback_data: `confirm_video:${videoKey}` },
           { text: "🔄 Ещё вариант", callback_data: "make_video_again" },
@@ -276,16 +295,13 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
   });
 }
 
-// Правка 2: аудио-кнопки в одну строку
 function sendAudioChoiceButtons(chatId) {
   return bot.sendMessage(chatId, "🎙 Выберите аудио:", {
     reply_markup: {
-      inline_keyboard: [
-        [
-          { text: "🤖 ИИ-аудио", callback_data: "audio_generate" },
-          { text: "🎤 Своё голосовое", callback_data: "audio_record" },
-        ],
-      ],
+      inline_keyboard: [[
+        { text: "🤖 ИИ-аудио", callback_data: "audio_generate" },
+        { text: "🎤 Своё голосовое", callback_data: "audio_record" },
+      ]],
     },
   });
 }
@@ -294,7 +310,6 @@ async function sendVoiceSelectionMenu(chatId) {
   const state = userState.get(chatId) || {};
   const voices = state.pendingVoices || [];
   if (voices.length === 0) { await bot.sendMessage(chatId, "❌ Нет записанных голосовых."); return; }
-  // Правка 2: кнопки голосовых по 2 в строке
   const rows = [];
   for (let i = 0; i < voices.length; i += 2) {
     const row = [{ text: `✅ Голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }];
@@ -302,13 +317,9 @@ async function sendVoiceSelectionMenu(chatId) {
     rows.push(row);
   }
   rows.push([{ text: "➕ Записать ещё", callback_data: "add_more_voice" }]);
-  await bot.sendMessage(chatId,
-    `🎤 Голосовых: ${voices.length}. Выберите нужное:`,
-    { reply_markup: { inline_keyboard: rows } }
-  );
+  await bot.sendMessage(chatId, `🎤 Голосовых: ${voices.length}. Выберите нужное:`, { reply_markup: { inline_keyboard: rows } });
 }
 
-// Правка 2: фото-кнопки по 2 в строке
 function sendPhotoButtons(chatId) {
   return bot.sendMessage(chatId, "📸 Сгенерировать фото:", {
     reply_markup: {
@@ -370,14 +381,32 @@ bot.on("message", async (msg) => {
       if (!state.awaitingVoiceRecord) return;
       const fileId = msg.voice.file_id;
       const fileInfo = await bot.getFile(fileId);
+      // Telegram voice URL — ogg файл, нужно скачать и загрузить на tmpfiles
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-      const processingMsg = await bot.sendMessage(chatId, "⏳ Принимаю голосовое...");
+      const processingMsg = await bot.sendMessage(chatId, "⏳ Обрабатываю голосовое...");
+
       const voiceRes = await fetch(voiceFileUrl);
       const voiceBuffer = Buffer.from(await voiceRes.arrayBuffer());
-      const audioDataUri = bufferToDataUri(voiceBuffer, "audio/ogg");
-      await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
+
+      // Загружаем ogg на tmpfiles
+      let audioUrl;
+      try {
+        const formData = new FormData();
+        const blob = new Blob([voiceBuffer], { type: "audio/ogg" });
+        formData.append("file", blob, "voice.ogg");
+        const uploadRes = await fetch("https://tmpfiles.org/api/v1/upload", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json();
+        audioUrl = uploadData?.data?.url?.replace("tmpfiles.org/", "tmpfiles.org/dl/");
+        if (!audioUrl) throw new Error("no URL");
+        await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
+      } catch(err) {
+        console.error("Voice upload error:", err.message);
+        await bot.editMessageText("⚠️ Ошибка загрузки голосового.", { chat_id: chatId, message_id: processingMsg.message_id });
+        return;
+      }
+
       const voices = state.pendingVoices || [];
-      voices.push({ audioDataUri });
+      voices.push({ audioUrl });
       state.pendingVoices = voices;
       userState.set(chatId, state);
       await sendVoiceSelectionMenu(chatId);
@@ -395,12 +424,10 @@ bot.on("message", async (msg) => {
       userState.set(chatId, state);
       await bot.sendMessage(chatId, "📷 Фото получено!", {
         reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
-              { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
-            ],
-          ],
+          inline_keyboard: [[
+            { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
+            { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
+          ]],
         },
       });
       return;
@@ -431,7 +458,6 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    // Правка 5: улучшенное оформление текста
     const prompt = `Ты — Динара, практикующий психолог с тёплым, человечным стилем общения.
 
 СТИЛЬ ОТВЕТА:
@@ -469,9 +495,7 @@ ${text}
 
     const fullAnswer = completion.choices[0].message.content;
 
-    // Отправляем с parse_mode Markdown для курсива
     await bot.sendMessage(chatId, fullAnswer, { parse_mode: "Markdown" }).catch(async () => {
-      // fallback без markdown если есть проблемы с форматированием
       await bot.sendMessage(chatId, fullAnswer);
     });
 
@@ -497,7 +521,7 @@ ${fullAnswer}
     const currentState = userState.get(chatId) || {};
     currentState.lastFullAnswer = fullAnswer;
     currentState.lastShortText = shortAnswer;
-    currentState.lastAudioDataUri = null;
+    currentState.lastAudioUrl = null;
     currentState.lastVideoUrl = null;
     currentState.pendingVoices = [];
     currentState.awaitingVoiceRecord = false;
@@ -528,15 +552,11 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Правка 1: регенерация фото (кнопка "Ещё вариант")
     if (data.startsWith("regen_photo:")) {
       const photoKey = data.replace("regen_photo:", "");
       const photoData = state.photos?.[photoKey];
       const scenePrompt = photoData?.scenePrompt || state.lastScenePrompt;
-      if (!scenePrompt) {
-        await bot.sendMessage(chatId, "❌ Не могу воспроизвести сцену. Выберите фото заново.");
-        return;
-      }
+      if (!scenePrompt) { await bot.sendMessage(chatId, "❌ Не могу воспроизвести сцену."); return; }
       const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
       const newState = userState.get(chatId) || {};
       newState.lastImageUrl = imageUrl;
@@ -570,9 +590,9 @@ bot.on("callback_query", async (query) => {
 
     if (data === "make_video_again") {
       const imageUrl = state.lastImageUrl;
-      const audioDataUri = state.lastAudioDataUri;
-      if (!imageUrl || !audioDataUri) { await bot.sendMessage(chatId, "❌ Нет фото или аудио."); return; }
-      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioDataUri);
+      const audioUrl = state.lastAudioUrl;
+      if (!imageUrl || !audioUrl) { await bot.sendMessage(chatId, "❌ Нет фото или аудио."); return; }
+      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioUrl);
       await sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec);
       return;
     }
@@ -580,15 +600,30 @@ bot.on("callback_query", async (query) => {
     if (data === "audio_generate") {
       const shortAnswer = state.lastShortText;
       if (!shortAnswer) { await bot.sendMessage(chatId, "❌ Нет текста для аудио."); return; }
-      await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
+
+      const statusMsg = await bot.sendMessage(chatId, "⏳ Генерирую аудио...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
+
+      // Отправляем голос в Telegram
       await bot.sendVoice(chatId, audioBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-      const audioDataUri = bufferToDataUri(audioBuffer, "audio/mpeg");
+
+      // Загружаем на tmpfiles для Aurora
+      await bot.editMessageText("🔄 Подготавливаю аудио для видео...", { chat_id: chatId, message_id: statusMsg.message_id });
+      let audioUrl = null;
+      try {
+        audioUrl = await uploadAudioToTmpfiles(audioBuffer);
+        await bot.editMessageText("✅ Аудио готово для видео!", { chat_id: chatId, message_id: statusMsg.message_id });
+      } catch(err) {
+        console.error("tmpfiles upload error:", err.message);
+        await bot.editMessageText("⚠️ Аудио создано, но видеогенерация может быть недоступна.", { chat_id: chatId, message_id: statusMsg.message_id });
+      }
+
       const currentState = userState.get(chatId) || {};
-      currentState.lastAudioDataUri = audioDataUri;
+      currentState.lastAudioUrl = audioUrl;
       userState.set(chatId, currentState);
+
       const audioLine = formatCostLine("🎙", "Аудио ИИ", audioCost, 'audio');
-      await bot.sendMessage(chatId, `✅ ${audioLine}\n✅ Аудио готово для видео!`);
+      await bot.sendMessage(chatId, `✅ ${audioLine}`);
       await sendPhotoButtons(chatId);
       return;
     }
@@ -616,11 +651,11 @@ bot.on("callback_query", async (query) => {
       const chosen = voices[index];
       if (!chosen) { await bot.sendMessage(chatId, "❌ Голосовое не найдено."); return; }
       const currentState = userState.get(chatId) || {};
-      currentState.lastAudioDataUri = chosen.audioDataUri;
+      currentState.lastAudioUrl = chosen.audioUrl;
       currentState.awaitingVoiceRecord = false;
       currentState.pendingVoices = [];
       userState.set(chatId, currentState);
-      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано.\n✅ Аудио готово для видео!`);
+      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано.\n✅ Готово для видео!`);
       await sendPhotoButtons(chatId);
       return;
     }
@@ -629,13 +664,13 @@ bot.on("callback_query", async (query) => {
       const photoKey = data.replace("make_video:", "");
       const photoData = state.photos?.[photoKey];
       const imageUrl = photoData?.imageUrl || (typeof photoData === 'string' ? photoData : null);
-      const audioDataUri = state.lastAudioDataUri;
+      const audioUrl = state.lastAudioUrl;
       if (!imageUrl) { await bot.sendMessage(chatId, "❌ Фото не найдено."); return; }
-      if (!audioDataUri) { await bot.sendMessage(chatId, "❌ Нет аудио. Сначала выберите аудио."); return; }
+      if (!audioUrl) { await bot.sendMessage(chatId, "❌ Нет аудио. Сначала выберите аудио."); return; }
       const currentState = userState.get(chatId) || {};
       currentState.lastImageUrl = imageUrl;
       userState.set(chatId, currentState);
-      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioDataUri);
+      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioUrl);
       await sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec);
       return;
     }
