@@ -72,46 +72,57 @@ soft lips slightly curved, peaceful confident expression`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
-// --- БИБЛИОТЕКА МУЗЫКИ ---
-// Бесплатные треки с Pixabay (royalty-free, CC0)
-// Каждый трек: { name, url, mood, genre }
+// --- РАСШИРЕННАЯ БИБЛИОТЕКА МУЗЫКИ ---
+// 15 треков разных жанров — Pixabay (royalty-free CC0)
+// Правка 2: большая библиотека, перемешивается при каждом запросе
 const MUSIC_LIBRARY = [
-  {
-    id: "chill1",
-    name: "Soft Morning",
-    genre: "Chill / Lo-fi",
-    mood: "спокойный, мягкий, утренний",
-    url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
-  },
-  {
-    id: "ambient1",
-    name: "Peaceful Mind",
-    genre: "Ambient",
-    mood: "медитативный, расслабляющий, глубокий",
-    url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3",
-  },
-  {
-    id: "lofi1",
-    name: "Gentle Rain",
-    genre: "Lo-fi",
-    mood: "уютный, дождливый, вдумчивый",
-    url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b1a8ade.mp3",
-  },
-  {
-    id: "piano1",
-    name: "Inner Calm",
-    genre: "Piano / Cinematic",
-    mood: "эмоциональный, тёплый, воодушевляющий",
-    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0c6ff1bab.mp3",
-  },
-  {
-    id: "nature1",
-    name: "Forest Whisper",
-    genre: "Nature / Ambient",
-    mood: "природный, освежающий, заземляющий",
-    url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3",
-  },
+  // Lo-fi / Chill
+  { id: "lofi1", name: "Soft Lofi Beat", genre: "Lo-fi", mood: "уютный, расслабляющий, домашний", tags: ["lofi", "chill", "тревога", "усталость"],
+    url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b1a8ade.mp3" },
+  { id: "lofi2", name: "Coffee & Rain", genre: "Lo-fi", mood: "спокойный, мечтательный, тёплый", tags: ["lofi", "грусть", "одиночество"],
+    url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3" },
+  { id: "lofi3", name: "Lazy Sunday", genre: "Lo-fi / Chill", mood: "ленивый, мягкий, уютный", tags: ["lofi", "chill", "отдых"],
+    url: "https://cdn.pixabay.com/download/audio/2023/02/28/audio_f6bf7e27c7.mp3" },
+  // Ambient
+  { id: "ambient1", name: "Deep Silence", genre: "Ambient", mood: "медитативный, глубокий, пространственный", tags: ["ambient", "тревога", "страх", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_c8c8a73467.mp3" },
+  { id: "ambient2", name: "Floating Thoughts", genre: "Ambient", mood: "воздушный, созерцательный, лёгкий", tags: ["ambient", "рост", "изменения"],
+    url: "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3" },
+  { id: "ambient3", name: "Healing Space", genre: "Ambient / Meditative", mood: "исцеляющий, тихий, безопасный", tags: ["ambient", "принятие", "усталость"],
+    url: "https://cdn.pixabay.com/download/audio/2022/11/22/audio_ea70b60a2a.mp3" },
+  // Piano / Cinematic
+  { id: "piano1", name: "Quiet Reflection", genre: "Piano", mood: "эмоциональный, задумчивый, тёплый", tags: ["piano", "грусть", "отношения"],
+    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0c6ff1bab.mp3" },
+  { id: "piano2", name: "New Beginning", genre: "Piano / Cinematic", mood: "вдохновляющий, светлый, надежда", tags: ["piano", "рост", "изменения"],
+    url: "https://cdn.pixabay.com/download/audio/2022/04/27/audio_12ef08849e.mp3" },
+  { id: "piano3", name: "Tender Moment", genre: "Piano / Soft", mood: "нежный, личный, тёплый", tags: ["piano", "отношения", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_55ab47b2e1.mp3" },
+  // Nature / Organic
+  { id: "nature1", name: "Forest Morning", genre: "Nature / Ambient", mood: "природный, заземляющий, свежий", tags: ["nature", "тревога", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2022/02/12/audio_8f7c0cdec4.mp3" },
+  { id: "nature2", name: "Ocean Breath", genre: "Nature / Waves", mood: "морской, ритмичный, успокаивающий", tags: ["nature", "злость", "тревога"],
+    url: "https://cdn.pixabay.com/download/audio/2022/06/07/audio_c9b8e5b897.mp3" },
+  // Guitar / Acoustic
+  { id: "guitar1", name: "Gentle Strings", genre: "Acoustic Guitar", mood: "живой, личный, искренний", tags: ["guitar", "отношения", "грусть"],
+    url: "https://cdn.pixabay.com/download/audio/2022/09/14/audio_6bb9bc9093.mp3" },
+  { id: "guitar2", name: "Warm Evening", genre: "Acoustic / Folk", mood: "домашний, вечерний, уютный", tags: ["guitar", "усталость", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2022/03/23/audio_942c6017fc.mp3" },
+  // Meditation / Soft
+  { id: "meditation1", name: "Stillness", genre: "Meditation", mood: "тишина, покой, внутренний мир", tags: ["meditation", "тревога", "страх", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_14c33ef0f3.mp3" },
+  { id: "meditation2", name: "Soft Glow", genre: "Meditation / Ambient", mood: "мягкий, обволакивающий, безопасный", tags: ["meditation", "усталость", "грусть"],
+    url: "https://cdn.pixabay.com/download/audio/2022/10/12/audio_b799a218b2.mp3" },
 ];
+
+// Перемешивает массив случайно (Fisher-Yates)
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const userState = new Map();
 
@@ -175,65 +186,56 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   return url;
 }
 
-// Выбирает подходящие треки по смыслу текста через GPT
+// Правка 2: GPT выбирает жанр/теги, мы рандомно выбираем треки из подходящих
 async function selectMusicTracks(text, count = 3) {
-  const libraryDesc = MUSIC_LIBRARY.map(t =>
-    `- ID: ${t.id} | Название: "${t.name}" | Жанр: ${t.genre} | Настроение: ${t.mood}`
-  ).join("\n");
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: `Определи настроение текста для подбора фоновой музыки. Текст:\n"${text.substring(0, 300)}"\n\nВыбери подходящие теги из списка (только из этого списка, через запятую):\nlofi, ambient, piano, guitar, meditation, nature, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nВерни только теги, без пояснений. Пример: lofi,ambient,тревога` }],
+      temperature: 0.3,
+      max_tokens: 50,
+    });
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [{ role: "user", content: `Ты подбираешь фоновую музыку для психологического поста.\n\nТема/текст поста:\n"${text.substring(0, 300)}"\n\nДоступные треки:\n${libraryDesc}\n\nВыбери ${count} наиболее подходящих трека по настроению темы. Верни ТОЛЬКО список ID через запятую, без пояснений.\nПример: chill1,piano1,ambient1` }],
-    temperature: 0.3,
-    max_tokens: 50,
-  });
+    const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
+    console.log("Music tags selected:", tags);
 
-  const ids = completion.choices[0].message.content.trim().split(',').map(s => s.trim());
-  const selected = ids
-    .map(id => MUSIC_LIBRARY.find(t => t.id === id))
-    .filter(Boolean)
-    .slice(0, count);
+    // Фильтруем треки по тегам
+    const matching = MUSIC_LIBRARY.filter(t =>
+      t.tags.some(tag => tags.includes(tag))
+    );
 
-  // Если GPT вернул что-то неверное — берём первые N треков
-  if (selected.length === 0) return MUSIC_LIBRARY.slice(0, count);
-  return selected;
+    // Перемешиваем и берём N треков
+    const pool = matching.length >= count ? matching : MUSIC_LIBRARY;
+    return shuffleArray(pool).slice(0, count);
+
+  } catch(e) {
+    // Fallback: случайные треки
+    return shuffleArray(MUSIC_LIBRARY).slice(0, count);
+  }
 }
 
-// Микширует голос (buffer) с фоновой музыкой (URL) через ffmpeg
-// Музыка: -18dB (тихий фон), голос: нормальный уровень
-// Музыка обрезается по длине голоса + fade out последние 2 сек
+// Микширует голос с фоновой музыкой через ffmpeg
+// Без ffprobe — используем фиксированное затухание на конце
 async function mixAudioWithMusic(voiceBuffer, musicUrl) {
   const tmp = tmpdir();
   const voicePath = join(tmp, `voice_${Date.now()}.mp3`);
   const outputPath = join(tmp, `mixed_${Date.now()}.mp3`);
 
   try {
-    // Сохраняем голос во временный файл
     await fs.writeFile(voicePath, voiceBuffer);
 
-    // Получаем длину голосового файла через ffprobe
-    const duration = await new Promise((resolve, reject) => {
-      ffmpeg.ffprobe(voicePath, (err, meta) => {
-        if (err) reject(err);
-        else resolve(meta.format.duration || 30);
-      });
-    });
-
-    console.log("Voice duration:", duration, "sec");
-    const fadeStart = Math.max(0, duration - 2);
-
-    // Микшируем: голос + музыка с затуханием
     await new Promise((resolve, reject) => {
       ffmpeg()
         .input(voicePath)
         .input(musicUrl)
         .complexFilter([
-          // Музыка: уменьшаем громкость до -18dB (~volume=0.13), обрезаем по длине голоса, fade out
-          `[1:a]volume=0.13,atrim=duration=${duration},afade=t=out:st=${fadeStart}:d=2[music]`,
+          // Музыка: -18dB тихий фон, обрезаем по длине голоса
+          `[1:a]volume=0.13[music_vol]`,
+          `[music_vol]apad[music_pad]`,
           // Голос: нормальная громкость
           `[0:a]volume=1.0[voice]`,
-          // Смешиваем
-          `[voice][music]amix=inputs=2:duration=first:dropout_transition=0[out]`,
+          // Смешиваем — duration=first обрезает по длине первого (голоса)
+          `[voice][music_pad]amix=inputs=2:duration=first:dropout_transition=2[out]`,
         ], 'out')
         .audioCodec('libmp3lame')
         .audioBitrate('128k')
@@ -248,7 +250,6 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
     return mixedBuffer;
 
   } finally {
-    // Чистим временные файлы
     await fs.unlink(voicePath).catch(() => {});
     await fs.unlink(outputPath).catch(() => {});
   }
@@ -380,16 +381,29 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
 
 // --- UI ФУНКЦИИ ---
 
-// Показывает пользователю выбор треков
-async function sendMusicSelection(chatId, tracks) {
-  const keyboard = tracks.map(t => [
-    { text: `\uD83C\uDFB5 ${t.name} — ${t.genre}`, callback_data: `music_pick:${t.id}` }
-  ]);
-  keyboard.push([{ text: "\u23ED Без музыки", callback_data: "music_skip" }]);
-  await bot.sendMessage(chatId,
-    "\uD83C\uDFB6 Выберите фоновую музыку для аудио:\n_(Музыка будет тихим фоном под голосом)_",
-    { reply_markup: { inline_keyboard: keyboard }, parse_mode: "Markdown" }
-  );
+// Правка 1: прослушивание трека перед выбором
+// Отправляем первый трек как аудио с кнопками "Выбрать" / "Следующий"
+async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
+  const track = tracks[currentIndex];
+  const total = tracks.length;
+
+  // Скачиваем первые ~20 секунд трека для превью (отправляем URL напрямую как аудио)
+  await bot.sendAudio(chatId, track.url, {
+    caption: `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}`,
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "\u2705 Выбрать этот трек", callback_data: `music_confirm:${track.id}` },
+          ...(currentIndex + 1 < total
+            ? [{ text: "\u23ED Следующий трек", callback_data: `music_next:${currentIndex + 1}` }]
+            : []
+          ),
+        ],
+        [{ text: "\u23ED Без музыки", callback_data: "music_skip" }],
+      ],
+    },
+  });
 }
 
 async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
@@ -514,6 +528,48 @@ async function showFinalPost(chatId, type) {
   }
 }
 
+// Финальный шаг после выбора трека: микшируем и загружаем
+async function processAudioWithTrack(chatId, trackId) {
+  const state = userState.get(chatId) || {};
+  const track = MUSIC_LIBRARY.find(t => t.id === trackId);
+  const voiceB64 = state.pendingVoiceBuffer;
+  if (!voiceB64) { await bot.sendMessage(chatId, "Нет голоса. Попробуйте снова."); return; }
+
+  const voiceBuffer = Buffer.from(voiceB64, 'base64');
+  const statusMsg = await bot.sendMessage(chatId, `\uD83C\uDFB5 Микширую с треком "${track?.name || trackId}"...`);
+
+  let finalBuffer;
+  try {
+    finalBuffer = await mixAudioWithMusic(voiceBuffer, track.url);
+    await bot.editMessageText("\u2705 Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
+  } catch(err) {
+    console.error("Mix error:", err.message);
+    finalBuffer = voiceBuffer;
+    await bot.editMessageText("\u26A0\uFE0F Микширование не удалось, используем голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
+  }
+
+  await bot.sendVoice(chatId, finalBuffer, {}, { filename: "voice_music.mp3", contentType: "audio/mpeg" });
+
+  const uploadMsg = await bot.sendMessage(chatId, "\uD83D\uDD04 Загружаю на сервер...");
+  let audioUrl = null;
+  try {
+    audioUrl = await uploadAudioToCloudinary(finalBuffer);
+    await bot.editMessageText("\u2705 Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
+  } catch(err) {
+    console.error("Cloudinary error:", err.message);
+    await bot.editMessageText(`Ошибка загрузки: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
+  }
+
+  const currentState = userState.get(chatId) || {};
+  currentState.lastAudioUrl = audioUrl;
+  currentState.pendingVoiceBuffer = null;
+  userState.set(chatId, currentState);
+
+  const audioCost = state.pendingAudioCost || 0;
+  await bot.sendMessage(chatId, `\u2705 ${formatCostLine("\uD83C\uDF99", "Аудио ИИ", audioCost, 'audio')}`);
+  await sendPhotoButtons(chatId);
+}
+
 // --- ОСНОВНОЙ ОБРАБОТЧИК СООБЩЕНИЙ ---
 
 bot.on("message", async (msg) => {
@@ -528,7 +584,6 @@ bot.on("message", async (msg) => {
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
       const processingMsg = await bot.sendMessage(chatId, "\u23F3 Загружаю голосовое...");
       const voiceBuffer = Buffer.from(await (await fetch(voiceFileUrl)).arrayBuffer());
-      // Для своего голосового — сразу предлагаем музыку
       await bot.editMessageText("\u2705 Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
       const voices = state.pendingVoices || [];
       voices.push({ voiceBuffer: voiceBuffer.toString('base64') });
@@ -582,7 +637,37 @@ bot.on("message", async (msg) => {
 
     const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
 
-    const prompt = `Ты — Динара, практикующий психолог. Пишешь как живой человек, тепло и лично.\n\nСТРУКТУРА — строго 3 абзаца, разделённых пустой строкой:\n1. Первый абзац: эмодзи в начале + признание чувств, покажи что слышишь человека\n2. Второй абзац: инсайт — *выдели ключевую мысль жирным* (через звёздочки *вот так*)\n3. Третий абзац: мягкое направление + один вопрос\n\nОФОРМЛЕНИЕ — строго обязательно:\n- Эмодзи: 4-5 штук, ставь прямо в текст где уместно (не только в начале)\n- Жирный текст: одна ключевая фраза в абзаце 2, через *звёздочки*\n- Тире через — (длинное)\n- Разговорный тон, без канцелярита\n- НЕ используй: списки, решётки #, подчёркивания\n\nЭМОДЗИ — используй только эти (надёжно отображаются в Telegram):\n\u{1F49A} \u{1F499} \u{1F90D} \u{1F9E1} \u{1F49B} \u{1F497} \u{1FAF6} \u{1F331} \u{1F98B} \u{2728} \u{1F525} \u{1F30A} \u{1F33A} \u{1F319} \u{1F4AB}\n\nПРИМЕР ПРАВИЛЬНОГО ОТВЕТА:\n"\u{1F9E1} Знаешь, тревога — это не враг, даже если так ощущается. Она появляется там, где для тебя что-то важно, где есть что терять или о чём заботиться \u{1F90D}\n\n*Тревога сигналит, что ты неравнодушна* — и в этом её смысл, даже когда она мешает жить \u{1F331} Это просто твой внутренний радар, который иногда чуть перегревается. Она не значит, что ты слабая или что всё пойдёт плохо.\n\nПопробуй спросить себя: о чём именно беспокоится эта часть меня? Что сейчас важно? \u{2728} Как ты обычно справляешься, когда тревога накрывает?"\n\nКонтекст:\n${context}\n\nВопрос пользователя:\n${text}\n\nОтвет (строго по структуре, с эмодзи и жирным):`;
+    const prompt = `Ты — Динара, практикующий психолог. Пишешь как живой человек, тепло и лично.
+
+СТРУКТУРА — строго 3 абзаца, разделённых пустой строкой:
+1. Первый абзац: эмодзи в начале + признание чувств, покажи что слышишь человека
+2. Второй абзац: инсайт — *выдели ключевую мысль жирным* (через звёздочки *вот так*)
+3. Третий абзац: мягкое направление + один вопрос
+
+ОФОРМЛЕНИЕ — строго обязательно:
+- Эмодзи: 4-5 штук, ставь прямо в текст где уместно (не только в начале)
+- Жирный текст: одна ключевая фраза в абзаце 2, через *звёздочки*
+- Тире через — (длинное)
+- Разговорный тон, без канцелярита
+- НЕ используй: списки, решётки #, подчёркивания
+
+ЭМОДЗИ — используй только эти (надёжно отображаются в Telegram):
+\u{1F49A} \u{1F499} \u{1F90D} \u{1F9E1} \u{1F49B} \u{1F497} \u{1FAF6} \u{1F331} \u{1F98B} \u{2728} \u{1F525} \u{1F30A} \u{1F33A} \u{1F319} \u{1F4AB}
+
+ПРИМЕР ПРАВИЛЬНОГО ОТВЕТА:
+"\u{1F9E1} Знаешь, тревога — это не враг, даже если так ощущается. Она появляется там, где для тебя что-то важно, где есть что терять или о чём заботиться \u{1F90D}
+
+*Тревога сигналит, что ты неравнодушна* — и в этом её смысл, даже когда она мешает жить \u{1F331} Это просто твой внутренний радар, который иногда чуть перегревается. Она не значит, что ты слабая или что всё пойдёт плохо.
+
+Попробуй спросить себя: о чём именно беспокоится эта часть меня? Что сейчас важно? \u{2728} Как ты обычно справляешься, когда тревога накрывает?"
+
+Контекст:
+${context}
+
+Вопрос пользователя:
+${text}
+
+Ответ (строго по структуре, с эмодзи и жирным):`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -597,7 +682,16 @@ bot.on("message", async (msg) => {
       await bot.sendMessage(chatId, fullAnswer);
     });
 
-    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.\n- До 160 символов\n- Спокойный тон, пауза через запятую или тире\n- Без вопроса, без эмодзи, только текст\n- Убери markdown символы (* и _)\n\nТекст:\n${fullAnswer}\n\nРезультат:`;
+    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
+- До 160 символов
+- Спокойный тон, пауза через запятую или тире
+- Без вопроса, без эмодзи, только текст
+- Убери markdown символы (* и _)
+
+Текст:
+${fullAnswer}
+
+Результат:`;
 
     const shortCompletion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -615,11 +709,11 @@ bot.on("message", async (msg) => {
     currentState.lastVideoUrl = null;
     currentState.pendingVoices = [];
     currentState.awaitingVoiceRecord = false;
-    currentState.pendingMusicTracks = null;
     currentState.pendingVoiceBuffer = null;
+    currentState.suggestedTracks = null;
     userState.set(chatId, currentState);
 
-    // Выбираем треки заранее (в фоне, не ждём)
+    // Правка 2: Подбираем треки заранее в фоне
     selectMusicTracks(fullAnswer).then(tracks => {
       const s = userState.get(chatId) || {};
       s.suggestedTracks = tracks;
@@ -693,71 +787,45 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // --- ИИ АУДИО: сначала показываем выбор музыки ---
+    // --- ИИ АУДИО ---
     if (data === "audio_generate") {
       const shortAnswer = state.lastShortText;
       if (!shortAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
 
-      // Генерируем голос сразу (для скорости)
       const genMsg = await bot.sendMessage(chatId, "\u23F3 Генерирую голос...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
-      await bot.editMessageText("\u2705 Голос готов!", { chat_id: chatId, message_id: genMsg.message_id });
+      await bot.editMessageText("\u2705 Голос готов! Выберите фоновую музыку:", { chat_id: chatId, message_id: genMsg.message_id });
 
-      // Сохраняем буфер и стоимость
       const currentState = userState.get(chatId) || {};
       currentState.pendingVoiceBuffer = audioBuffer.toString('base64');
       currentState.pendingAudioCost = audioCost;
       userState.set(chatId, currentState);
 
-      // Показываем выбор музыки
-      const tracks = state.suggestedTracks || MUSIC_LIBRARY.slice(0, 3);
-      await sendMusicSelection(chatId, tracks);
+      // Правка 1: сразу показываем превью первого трека
+      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
+      const currentStateAfter = userState.get(chatId) || {};
+      currentStateAfter.previewTracks = tracks;
+      userState.set(chatId, currentStateAfter);
+      await sendTrackPreview(chatId, tracks, 0);
       return;
     }
 
-    // --- ВЫБОР МУЗЫКИ ---
-    if (data.startsWith("music_pick:")) {
-      const musicId = data.replace("music_pick:", "");
-      const track = MUSIC_LIBRARY.find(t => t.id === musicId);
-      const voiceB64 = state.pendingVoiceBuffer;
-      if (!voiceB64) { await bot.sendMessage(chatId, "Нет голоса. Попробуйте снова."); return; }
-
-      const voiceBuffer = Buffer.from(voiceB64, 'base64');
-      const statusMsg = await bot.sendMessage(chatId, `\uD83C\uDFB5 Микширую с треком "${track?.name || musicId}"...`);
-
-      let finalBuffer;
-      try {
-        finalBuffer = await mixAudioWithMusic(voiceBuffer, track.url);
-        await bot.editMessageText("\u2705 Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
-      } catch(err) {
-        console.error("Mix error:", err.message);
-        // Если микширование не удалось — используем чистый голос
-        finalBuffer = voiceBuffer;
-        await bot.editMessageText("\u26A0\uFE0F Микширование не удалось, используем голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
+    // Правка 1: переключение треков
+    if (data.startsWith("music_next:")) {
+      const nextIndex = parseInt(data.replace("music_next:", ""));
+      const tracks = state.previewTracks;
+      if (!tracks || nextIndex >= tracks.length) {
+        await bot.sendMessage(chatId, "Треки закончились.");
+        return;
       }
+      await sendTrackPreview(chatId, tracks, nextIndex);
+      return;
+    }
 
-      // Отправляем результат пользователю
-      await bot.sendVoice(chatId, finalBuffer, {}, { filename: "voice_music.mp3", contentType: "audio/mpeg" });
-
-      // Загружаем на Cloudinary
-      const uploadMsg = await bot.sendMessage(chatId, "\uD83D\uDD04 Загружаю на сервер...");
-      let audioUrl = null;
-      try {
-        audioUrl = await uploadAudioToCloudinary(finalBuffer);
-        await bot.editMessageText("\u2705 Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
-      } catch(err) {
-        console.error("Cloudinary error:", err.message);
-        await bot.editMessageText(`Ошибка загрузки: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
-      }
-
-      const currentState = userState.get(chatId) || {};
-      currentState.lastAudioUrl = audioUrl;
-      currentState.pendingVoiceBuffer = null;
-      userState.set(chatId, currentState);
-
-      const audioCost = state.pendingAudioCost || 0;
-      await bot.sendMessage(chatId, `\u2705 ${formatCostLine("\uD83C\uDF99", "Аудио ИИ", audioCost, 'audio')}`);
-      await sendPhotoButtons(chatId);
+    // Правка 1: подтверждение трека
+    if (data.startsWith("music_confirm:")) {
+      const trackId = data.replace("music_confirm:", "");
+      await processAudioWithTrack(chatId, trackId);
       return;
     }
 
@@ -813,16 +881,20 @@ bot.on("callback_query", async (query) => {
       if (!chosen) { await bot.sendMessage(chatId, "Голосовое не найдено."); return; }
 
       const currentState = userState.get(chatId) || {};
-      // Предлагаем музыку и для своего голосового тоже
       currentState.pendingVoiceBuffer = chosen.voiceBuffer;
       currentState.pendingAudioCost = 0;
       currentState.awaitingVoiceRecord = false;
       currentState.pendingVoices = [];
       userState.set(chatId, currentState);
 
-      const tracks = state.suggestedTracks || MUSIC_LIBRARY.slice(0, 3);
-      await bot.sendMessage(chatId, `\u2705 Голосовое ${index + 1} выбрано!`);
-      await sendMusicSelection(chatId, tracks);
+      // Правка 1: для своего голосового тоже показываем превью треков
+      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
+      const stateAfter = userState.get(chatId) || {};
+      stateAfter.previewTracks = tracks;
+      userState.set(chatId, stateAfter);
+
+      await bot.sendMessage(chatId, `\u2705 Голосовое ${index + 1} выбрано! Выберите фоновую музыку:`);
+      await sendTrackPreview(chatId, tracks, 0);
       return;
     }
 
