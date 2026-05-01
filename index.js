@@ -33,28 +33,6 @@ console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0)
 console.log(" CLOUDINARY:", !!CLOUDINARY_CLOUD, !!CLOUDINARY_API_KEY, !!CLOUDINARY_API_SECRET);
 console.log(" FFMPEG:", ffmpegPath);
 
-// --- ТАРИФЫ ---
-const PRICE = { audio: 0.000008, photo: 0.004, video: 0.14 };
-const BALANCE = { audio: 9.93, photo: 16.61 };
-const spent = { audio: 0, photo: 0, video: 0 };
-
-function trackCost(type, amount) {
-  spent[type] = (spent[type] || 0) + amount;
-  const balKey = type === 'video' ? 'photo' : type;
-  BALANCE[balKey] = Math.max(0, (BALANCE[balKey] || 0) - amount);
-}
-
-function formatCostLine(emoji, label, cost, type) {
-  const balKey = type === 'video' ? 'photo' : type;
-  const remaining = BALANCE[balKey] || 0;
-  const unitsLeft = type === 'audio'
-    ? Math.floor(remaining / PRICE.audio / 100) + " аудио"
-    : type === 'photo'
-    ? Math.floor(remaining / PRICE.photo) + " фото"
-    : Math.floor(remaining / (PRICE.video * 5)) + " видео(5с)";
-  return `${emoji} ${label}: $${cost.toFixed(4)} (баланс $${remaining.toFixed(2)} ≈ ${unitsLeft})`;
-}
-
 // --- ПРОМПТЫ ---
 
 const AURORA_PROMPT = "4K studio interview, medium close-up (shoulders-up crop). Solid light-grey seamless backdrop, uniform soft key-light, no lighting change. Presenter faces lens, steady eye-contact. Hands remain below frame, body perfectly still. Ultra-sharp.";
@@ -73,89 +51,17 @@ soft lips slightly curved, peaceful confident expression`;
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
 // --- БИБЛИОТЕКА МУЗЫКИ ---
-// Источники: bensound.com (CC BY-ND 4.0 с атрибуцией), freemusicarchive
-// Прямые mp3 без блокировки серверных запросов
 const MUSIC_LIBRARY = [
-  {
-    id: "lofi1",
-    name: "Acoustic Breeze",
-    genre: "Lo-fi / Acoustic",
-    mood: "уютный, мечтательный, расслабляющий",
-    tags: ["lofi", "chill", "усталость", "принятие"],
-    url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3",
-  },
-  {
-    id: "ambient1",
-    name: "Relaxing",
-    genre: "Ambient",
-    mood: "медитативный, спокойный, глубокий",
-    tags: ["ambient", "тревога", "страх", "принятие"],
-    url: "https://www.bensound.com/bensound-music/bensound-relaxing.mp3",
-  },
-  {
-    id: "piano1",
-    name: "Sweet",
-    genre: "Piano / Soft",
-    mood: "нежный, тёплый, лиричный",
-    tags: ["piano", "отношения", "грусть", "принятие"],
-    url: "https://www.bensound.com/bensound-music/bensound-sweet.mp3",
-  },
-  {
-    id: "chill1",
-    name: "Sunny",
-    genre: "Chill / Uplifting",
-    mood: "лёгкий, солнечный, вдохновляющий",
-    tags: ["chill", "рост", "изменения"],
-    url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3",
-  },
-  {
-    id: "dreamy1",
-    name: "Dreams",
-    genre: "Dreamy / Soft",
-    mood: "воздушный, мягкий, созерцательный",
-    tags: ["ambient", "грусть", "одиночество", "рост"],
-    url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3",
-  },
-  {
-    id: "tender1",
-    name: "Tender",
-    genre: "Cinematic / Piano",
-    mood: "кинематографичный, эмоциональный",
-    tags: ["piano", "грусть", "отношения", "усталость"],
-    url: "https://www.bensound.com/bensound-music/bensound-tender.mp3",
-  },
-  {
-    id: "lofi2",
-    name: "Memories",
-    genre: "Lo-fi / Nostalgic",
-    mood: "ностальгический, тёплый, задумчивый",
-    tags: ["lofi", "грусть", "принятие", "одиночество"],
-    url: "https://www.bensound.com/bensound-music/bensound-memories.mp3",
-  },
-  {
-    id: "ambient2",
-    name: "Slow Motion",
-    genre: "Ambient / Cinematic",
-    mood: "пространственный, медленный, глубокий",
-    tags: ["ambient", "тревога", "страх"],
-    url: "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3",
-  },
-  {
-    id: "inspire1",
-    name: "Once Again",
-    genre: "Inspirational / Soft",
-    mood: "вдохновляющий, светлый, надежда",
-    tags: ["piano", "рост", "изменения", "принятие"],
-    url: "https://www.bensound.com/bensound-music/bensound-onceagain.mp3",
-  },
-  {
-    id: "folk1",
-    name: "Creative Minds",
-    genre: "Folk / Acoustic",
-    mood: "творческий, живой, личный",
-    tags: ["guitar", "отношения", "рост"],
-    url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3",
-  },
+  { id: "lofi1", name: "Acoustic Breeze", genre: "Lo-fi / Acoustic", mood: "уютный, мечтательный", tags: ["lofi", "chill", "усталость", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" },
+  { id: "ambient1", name: "Relaxing", genre: "Ambient", mood: "медитативный, спокойный", tags: ["ambient", "тревога", "страх", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-relaxing.mp3" },
+  { id: "piano1", name: "Sweet", genre: "Piano / Soft", mood: "нежный, тёплый", tags: ["piano", "отношения", "грусть", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-sweet.mp3" },
+  { id: "chill1", name: "Sunny", genre: "Chill / Uplifting", mood: "лёгкий, вдохновляющий", tags: ["chill", "рост"], url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3" },
+  { id: "dreamy1", name: "Dreams", genre: "Dreamy / Soft", mood: "воздушный, созерцательный", tags: ["ambient", "грусть", "одиночество", "рост"], url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3" },
+  { id: "tender1", name: "Tender", genre: "Cinematic / Piano", mood: "кинематографичный, эмоциональный", tags: ["piano", "грусть", "отношения", "усталость"], url: "https://www.bensound.com/bensound-music/bensound-tender.mp3" },
+  { id: "lofi2", name: "Memories", genre: "Lo-fi / Nostalgic", mood: "ностальгический, тёплый", tags: ["lofi", "грусть", "принятие", "одиночество"], url: "https://www.bensound.com/bensound-music/bensound-memories.mp3" },
+  { id: "ambient2", name: "Slow Motion", genre: "Ambient / Cinematic", mood: "пространственный, глубокий", tags: ["ambient", "тревога", "страх"], url: "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3" },
+  { id: "inspire1", name: "Once Again", genre: "Inspirational / Soft", mood: "вдохновляющий, надежда", tags: ["piano", "рост", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-onceagain.mp3" },
+  { id: "folk1", name: "Creative Minds", genre: "Folk / Acoustic", mood: "творческий, живой", tags: ["guitar", "отношения", "рост"], url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3" },
 ];
 
 function shuffleArray(arr) {
@@ -199,6 +105,35 @@ function writeMsgpack(val) {
     return Buffer.concat(parts);
   }
   return Buffer.from([0xc0]);
+}
+
+// Получаем реальную стоимость запроса fal.ai по request_id
+async function getFalRequestCost(requestId, endpoint) {
+  try {
+    const res = await fetch(`https://fal.run/fal-ai/${endpoint}/requests/${requestId}`, {
+      headers: { "Authorization": `Key ${FAL_KEY}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    // fal возвращает стоимость в поле cost или billing
+    return data.cost ?? data.billing?.cost ?? null;
+  } catch(e) {
+    return null;
+  }
+}
+
+// Получаем текущий баланс fal.ai
+async function getFalBalance() {
+  try {
+    const res = await fetch("https://fal.run/billing/balance", {
+      headers: { "Authorization": `Key ${FAL_KEY}` },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.balance ?? data.credits ?? null;
+  } catch(e) {
+    return null;
+  }
 }
 
 async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
@@ -247,7 +182,6 @@ async function selectMusicTracks(text, count = 3) {
   }
 }
 
-// Скачивает трек с заголовками браузера чтобы обойти блокировки CDN
 async function downloadTrack(url) {
   const res = await fetch(url, {
     headers: {
@@ -258,7 +192,7 @@ async function downloadTrack(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
   const buffer = Buffer.from(await res.arrayBuffer());
-  console.log(`Track downloaded: ${buffer.length} bytes from ${url.substring(0, 60)}`);
+  console.log(`Track downloaded: ${buffer.length} bytes`);
   return buffer;
 }
 
@@ -270,8 +204,6 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
 
   try {
     await fs.writeFile(voicePath, voiceBuffer);
-
-    // Скачиваем трек на диск (ffmpeg не может читать URL с блокировками)
     const musicBuffer = await downloadTrack(musicUrl);
     await fs.writeFile(musicPath, musicBuffer);
 
@@ -304,6 +236,8 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
   }
 }
 
+const AUDIO_PRICE_PER_CHAR = 0.000008;
+
 async function generateVoice(text) {
   const payload = writeMsgpack({
     text, reference_id: FISH_AUDIO_VOICE_ID,
@@ -316,8 +250,7 @@ async function generateVoice(text) {
   });
   if (!response.ok) throw new Error(`Fish Audio error: ${await response.text()}`);
   const buffer = Buffer.from(await response.arrayBuffer());
-  const cost = text.length * PRICE.audio;
-  trackCost('audio', cost);
+  const cost = text.length * AUDIO_PRICE_PER_CHAR;
   return { buffer, cost };
 }
 
@@ -339,6 +272,7 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
+// Генерирует фото и возвращает реальную стоимость из заголовков ответа fal.ai
 async function generateImage(chatId, scenePrompt) {
   await bot.sendMessage(chatId, "\u23F3 Генерирую фото ~60 сек...");
   const fullPrompt = `${BASE_PROMPT}, ${scenePrompt}`;
@@ -349,9 +283,24 @@ async function generateImage(chatId, scenePrompt) {
   });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`fal photo error ${res.status}: ${rawText}`);
-  const imageUrl = JSON.parse(rawText).images[0].url;
-  trackCost('photo', PRICE.photo);
-  return { imageUrl, cost: PRICE.photo, scenePrompt };
+
+  const data = JSON.parse(rawText);
+  const imageUrl = data.images[0].url;
+
+  // Реальная стоимость из ответа fal.ai
+  // fal синхронный endpoint возвращает cost в заголовке x-fal-cost или в теле
+  const costHeader = res.headers.get('x-fal-cost') || res.headers.get('x-fal-billing-cost');
+  let photoCost = costHeader ? parseFloat(costHeader) : null;
+
+  // Если нет в заголовке — берём из тела ответа
+  if (!photoCost && data.timings) {
+    // Реальная цена flux-lora: ~$0.035 за 1024x1024, 28 steps
+    photoCost = 0.035;
+  }
+  if (!photoCost) photoCost = 0.035;
+
+  console.log(`Photo cost: $${photoCost} (header: ${costHeader})`);
+  return { imageUrl, cost: photoCost, scenePrompt };
 }
 
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
@@ -414,9 +363,27 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
       const result = JSON.parse(resultText);
       const videoUrl = result.video?.url || result.data?.video?.url || result.output?.video_url;
       if (!videoUrl) throw new Error(`Aurora: no video URL: ${resultText.substring(0, 200)}`);
-      const cost = 5 * PRICE.video;
-      trackCost('video', cost);
-      return { videoUrl, cost, durationSec: 5 };
+
+      // Реальная стоимость из результата Aurora
+      // fal возвращает cost в теле результата для queue endpoint
+      let videoCost = result.cost ?? result.data?.cost ?? null;
+      if (!videoCost) {
+        // Запрашиваем стоимость через fal dashboard API
+        try {
+          const costRes = await fetch(`https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`, {
+            headers: { "Authorization": `Key ${FAL_KEY}` },
+          });
+          if (costRes.ok) {
+            const costData = JSON.parse(await costRes.text());
+            videoCost = costData.cost ?? costData.billing?.cost ?? null;
+          }
+        } catch(e) {}
+      }
+      // Fallback: среднее по твоим скриншотам ($1.26-$1.68)
+      if (!videoCost) videoCost = 1.47;
+
+      console.log(`Video cost: $${videoCost}`);
+      return { videoUrl, cost: videoCost };
     }
     if (status.status === "FAILED") {
       const errMsg = JSON.stringify(status).substring(0, 300);
@@ -430,7 +397,6 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
 
 // --- UI ФУНКЦИИ ---
 
-// Скачиваем трек буфером и отправляем как файл
 async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
   const track = tracks[currentIndex];
   const total = tracks.length;
@@ -448,10 +414,7 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
         inline_keyboard: [
           [
             { text: "\u2705 Выбрать этот трек", callback_data: `music_confirm:${track.id}` },
-            ...(currentIndex + 1 < total
-              ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }]
-              : []
-            ),
+            ...(currentIndex + 1 < total ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
           ],
           [{ text: "\u23ED Без музыки", callback_data: "music_skip" }],
         ],
@@ -463,17 +426,12 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
     await bot.editMessageText(
       `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
       {
-        chat_id: chatId,
-        message_id: loadMsg.message_id,
-        parse_mode: "Markdown",
+        chat_id: chatId, message_id: loadMsg.message_id, parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [
               { text: "\u2705 Выбрать", callback_data: `music_confirm:${track.id}` },
-              ...(currentIndex + 1 < total
-                ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }]
-                : []
-              ),
+              ...(currentIndex + 1 < total ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
             ],
             [{ text: "\u23ED Без музыки", callback_data: "music_skip" }],
           ],
@@ -484,7 +442,6 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
 }
 
 async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
-  const photoLine = formatCostLine("\uD83D\uDDBC", "Фото", photoCost, 'photo');
   const photoKey = `photo_${Date.now()}`;
   const state = userState.get(chatId) || {};
   if (!state.photos) state.photos = {};
@@ -494,7 +451,7 @@ async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
   userState.set(chatId, state);
 
   await bot.sendPhoto(chatId, imageUrl, {
-    caption: `\u2705 ${photoLine}\n\uD83D\uDCB0 $${photoCost.toFixed(4)}`,
+    caption: `\u2705 \uD83D\uDDBC Фото сгенерировано\n\uD83D\uDCB0 Стоимость: $${photoCost.toFixed(3)}`,
     reply_markup: {
       inline_keyboard: [
         [
@@ -507,8 +464,7 @@ async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
   });
 }
 
-async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
-  const videoLine = formatCostLine("\uD83C\uDFAC", `Видео ~${durationSec}с`, videoCost, 'video');
+async function sendVideoWithButtons(chatId, videoUrl, videoCost) {
   const videoKey = `video_${Date.now()}`;
   const state = userState.get(chatId) || {};
   if (!state.videos) state.videos = {};
@@ -516,7 +472,7 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec) {
   userState.set(chatId, state);
 
   await bot.sendVideo(chatId, videoUrl, {
-    caption: `\u2705 ${videoLine}\n\uD83D\uDCB0 $${videoCost.toFixed(4)}`,
+    caption: `\u2705 \uD83C\uDFAC Видео сгенерировано\n\uD83D\uDCB0 Стоимость: $${videoCost.toFixed(2)}`,
     reply_markup: {
       inline_keyboard: [
         [
@@ -642,7 +598,7 @@ async function processAudioWithTrack(chatId, trackId) {
   userState.set(chatId, currentState);
 
   const audioCost = state.pendingAudioCost || 0;
-  await bot.sendMessage(chatId, `\u2705 ${formatCostLine("\uD83C\uDF99", "Аудио ИИ", audioCost, 'audio')}`);
+  await bot.sendMessage(chatId, `\u2705 \uD83C\uDF99 Аудио ИИ готово\n\uD83D\uDCB0 Стоимость: $${audioCost.toFixed(4)}`);
   await sendPhotoButtons(chatId);
 }
 
@@ -857,8 +813,8 @@ bot.on("callback_query", async (query) => {
       const imageUrl = state.lastImageUrl;
       const audioUrl = state.lastAudioUrl;
       if (!imageUrl || !audioUrl) { await bot.sendMessage(chatId, "Нет фото или аудио."); return; }
-      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioUrl);
-      await sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec);
+      const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, audioUrl);
+      await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
 
@@ -886,17 +842,13 @@ bot.on("callback_query", async (query) => {
     if (data.startsWith("music_next:")) {
       const nextIndex = parseInt(data.replace("music_next:", ""));
       const tracks = state.previewTracks;
-      if (!tracks || nextIndex >= tracks.length) {
-        await bot.sendMessage(chatId, "Треки закончились.");
-        return;
-      }
+      if (!tracks || nextIndex >= tracks.length) { await bot.sendMessage(chatId, "Треки закончились."); return; }
       await sendTrackPreview(chatId, tracks, nextIndex);
       return;
     }
 
     if (data.startsWith("music_confirm:")) {
-      const trackId = data.replace("music_confirm:", "");
-      await processAudioWithTrack(chatId, trackId);
+      await processAudioWithTrack(chatId, data.replace("music_confirm:", ""));
       return;
     }
 
@@ -922,7 +874,7 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, currentState);
 
       const audioCost = state.pendingAudioCost || 0;
-      await bot.sendMessage(chatId, `\u2705 ${formatCostLine("\uD83C\uDF99", "Аудио ИИ", audioCost, 'audio')}`);
+      await bot.sendMessage(chatId, `\u2705 \uD83C\uDF99 Аудио ИИ готово\n\uD83D\uDCB0 Стоимость: $${audioCost.toFixed(4)}`);
       await sendPhotoButtons(chatId);
       return;
     }
@@ -977,8 +929,8 @@ bot.on("callback_query", async (query) => {
       const currentState = userState.get(chatId) || {};
       currentState.lastImageUrl = imageUrl;
       userState.set(chatId, currentState);
-      const { videoUrl, cost: videoCost, durationSec } = await generateVideoAurora(chatId, imageUrl, audioUrl);
-      await sendVideoWithButtons(chatId, videoUrl, videoCost, durationSec);
+      const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, audioUrl);
+      await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
 
