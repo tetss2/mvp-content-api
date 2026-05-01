@@ -64,6 +64,16 @@ const MUSIC_LIBRARY = [
   { id: "folk1", name: "Creative Minds", genre: "Folk / Acoustic", mood: "творческий, живой", tags: ["guitar", "отношения", "рост"], url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3" },
 ];
 
+// Кнопка "Старт" — Reply Keyboard (постоянная кнопка внизу экрана)
+const START_KEYBOARD = {
+  keyboard: [[{ text: "\uD83D\uDE80 Старт" }]],
+  resize_keyboard: true,
+  one_time_keyboard: true,
+};
+
+// Убираем Reply Keyboard после старта
+const REMOVE_KEYBOARD = { remove_keyboard: true };
+
 function shuffleArray(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -253,7 +263,6 @@ async function generateImage(chatId, scenePrompt) {
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   const statusMsg = await bot.sendMessage(chatId, "\uD83C\uDFAC Шаг 1/3 — Отправляю запрос...");
   const msgId = statusMsg.message_id;
-
   const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
@@ -276,10 +285,8 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     throw new Error("Aurora: no request_id");
   }
   await bot.editMessageText("\u2699\uFE0F Шаг 2/3 — Aurora обрабатывает видео...\n\u23F1 Обычно 2-4 минуты", { chat_id: chatId, message_id: msgId });
-
   const pollUrl = status_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
   const resultUrl = response_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
-
   for (let i = 0; i < 48; i++) {
     await new Promise(r => setTimeout(r, 5000));
     const statusRes = await fetch(pollUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
@@ -321,10 +328,8 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
 
 // --- UI ФУНКЦИИ ---
 
-// /start онбординг — 3 шага
+// Онбординг — 3 шага с inline-кнопками
 async function sendOnboarding(chatId, step = 1) {
-  const name = "\u{1F331}"; // росток
-
   if (step === 1) {
     await bot.sendMessage(chatId,
       `\u{1F331} *Привет! Я — контент-помощник Динары Качаевой*\n\nЯ помогаю создавать профессиональные посты для Instagram и Telegram в стиле психолога.\n\n*Что я умею:*\n\u2728 Генерирую текст в живом стиле психолога\n\uD83C\uDF99 Создаю аудио голосом Динары\n\uD83C\uDFB5 Подбираю фоновую музыку по настроению\n\uD83D\uDDBC Генерирую фото с ИИ\n\uD83C\uDFAC Создаю короткое видео (talking head)\n\uD83D\uDCE4 Готовлю пост к публикации`,
@@ -337,23 +342,19 @@ async function sendOnboarding(chatId, step = 1) {
         },
       }
     );
-
   } else if (step === 2) {
     await bot.sendMessage(chatId,
       `\uD83D\uDCA1 *Как это работает:*\n\n*1.* Напишите тему поста — любым словом или фразой\n_Например: "тревога", "страх одиночества", "выгорание"_\n\n*2.* Я сгенерирую текст в стиле Динары\n\n*3.* Выберите голос и музыку для аудио\n\n*4.* Сгенерируйте фото или видео\n\n*5.* Опубликуйте готовый пост \u2705`,
       {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [
-            [
-              { text: "\u2190 Назад", callback_data: "onboard_step1" },
-              { text: "\u27A1\uFE0F Попробовать", callback_data: "onboard_step3" },
-            ],
-          ],
+          inline_keyboard: [[
+            { text: "\u2190 Назад", callback_data: "onboard_step1" },
+            { text: "\u27A1\uFE0F Попробовать", callback_data: "onboard_step3" },
+          ]],
         },
       }
     );
-
   } else if (step === 3) {
     await bot.sendMessage(chatId,
       `\uD83C\uDF1F *Готово! Давайте начнём*\n\nПросто напишите тему — и я создам пост.\n\n*Примеры тем:*\n\u2022 страх одиночества\n\u2022 как справиться с тревогой\n\u2022 отношения с собой\n\u2022 выгорание на работе\n\u2022 принятие себя\n\nНапишите свою тему прямо сейчас \u{1F447}`,
@@ -372,7 +373,7 @@ async function sendOnboarding(chatId, step = 1) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `\u2139\uFE0F *Справка*\n\n*Как начать:*\nПросто напишите тему поста — слово или фразу\n\n*Что происходит дальше:*\n\uD83D\uDCDD Текст → выбор аудио → фото → видео → публикация\n\n*Доступные команды:*\n/start — начать заново\n/help — эта справка\n\n*Вопросы?* Напишите @tetss2`,
+    `\u2139\uFE0F *Справка*\n\n*Как начать:*\nПросто напишите тему поста — слово или фразу\n\n*Что происходит дальше:*\n\uD83D\uDCDD Текст → выбор аудио → фото → видео → публикация\n\n*Вопросы?* Напишите @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: {
@@ -580,10 +581,14 @@ async function processAudioWithTrack(chatId, trackId) {
 
 // --- КОМАНДЫ ---
 
+// /start — показываем приветствие + кнопку "Старт" внизу экрана
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  userState.set(chatId, {}); // сброс состояния
-  await sendOnboarding(chatId, 1);
+  userState.set(chatId, {});
+  await bot.sendMessage(chatId,
+    `\uD83D\uDC4B Добро пожаловать!\n\nЯ — ИИ-помощник для создания контента.\n\nНажмите кнопку ниже чтобы начать \uD83D\uDC47`,
+    { reply_markup: START_KEYBOARD }
+  );
 });
 
 bot.onText(/\/help/, async (msg) => {
@@ -597,8 +602,16 @@ bot.on("message", async (msg) => {
     const chatId = msg.chat.id;
     const state = userState.get(chatId) || {};
 
-    // Пропускаем команды — они обрабатываются выше
+    // Пропускаем команды
     if (msg.text && msg.text.startsWith('/')) return;
+
+    // Кнопка "Старт" с Reply Keyboard
+    if (msg.text === "\uD83D\uDE80 Старт") {
+      // Убираем Reply Keyboard и запускаем онбординг
+      await bot.sendMessage(chatId, "\uD83C\uDF1F Отлично, начинаем!", { reply_markup: REMOVE_KEYBOARD });
+      await sendOnboarding(chatId, 1);
+      return;
+    }
 
     if (msg.voice) {
       if (!state.awaitingVoiceRecord) return;
@@ -759,7 +772,6 @@ bot.on("callback_query", async (query) => {
   try {
     const state = userState.get(chatId) || {};
 
-    // Онбординг навигация
     if (data === "onboard_step1") { await sendOnboarding(chatId, 1); return; }
     if (data === "onboard_step2") { await sendOnboarding(chatId, 2); return; }
     if (data === "onboard_step3") { await sendOnboarding(chatId, 3); return; }
