@@ -578,6 +578,117 @@ async function processAudioWithTrack(chatId, trackId) {
   await sendPhotoButtons(chatId);
 }
 
+// --- ГЕНЕРАЦИЯ ТЕКСТА (вынесена в отдельную функцию) ---
+
+async function generatePostText(chatId, topic, lengthMode = "normal") {
+  const topArticles = articles
+    .map(a => ({ ...a, score: scoreArticle(a, topic) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
+
+  // Лимиты токенов по режиму длины
+  const tokenLimits = { short: 250, normal: 500, long: 750 };
+  const maxTokens = tokenLimits[lengthMode] || 500;
+
+  const lengthInstruction = {
+    short: "Напиши КОРОТКИЙ пост: строго 2 абзаца, до 600 символов.",
+    normal: "Напиши пост: строго 3-4 абзаца, до 1200 символов.",
+    long: "Напиши РАЗВЁРНУТЫЙ пост: 5-6 абзацев, до 1800 символов. Можно добавить личный пример или развернуть метафору.",
+  }[lengthMode] || "Напиши пост: строго 3-4 абзаца, до 1200 символов.";
+
+  const SYSTEM_PROMPT = `Ты — Динара Качаева, практикующий психолог. Пишешь как живой человек — тепло, лично, с внутренней глубиной.
+
+КТО ТЫ:
+Ты пишешь посты в свой Telegram-канал. Не отвечаешь на вопрос — ты делишься живой мыслью, как будто она только что пришла к тебе. Иногда признаёшься в личном: "я сама долго с этим работала", "не знаю как у вас, а я...". Это создаёт близость.
+
+СТИЛЬ:
+— Тёплый разговорный язык, без академизма и канцелярита
+— Короткие абзацы, разделённые пустой строкой
+— Многоточия для создания паузы и раздумья…
+— Длинное тире — вместо короткого
+— Иногда начинаешь с обращения: "Дорогие," / "Друзья,"
+— Риторические вопросы вовлекают читателя в диалог с собой
+— Используешь метафоры: "мы едим и перевариваем эту жизнь", "закопанные радиоактивные отходы", "смотримся в разные зеркала"
+— Можешь задать вопрос в середине и попросить: "не читайте дальше, ответьте себе сначала"
+
+ЭМОДЗИ:
+Используй 3-5 штук, по смыслу, не в каждом абзаце.
+Предпочтительные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶
+
+СТРУКТУРА:
+1. Принятие темы / эмпатия — покажи что слышишь
+2. Главная мысль — инсайт, метафора, разворот
+3. Личный угол или практическая деталь
+4. Мягкое завершение или вопрос читателю
+
+ЗАПРЕЩЕНО:
+— Нумерованные списки и списки с дефисами
+— Заголовки и подзаголовки
+— Слова: "безусловно", "следует отметить", "таким образом", "данный"
+— Повторять одну мысль дважды
+
+ОФОРМЛЕНИЕ для Telegram Markdown:
+— *жирный* для одной ключевой фразы во 2-м абзаце
+— Эмодзи прямо в тексте где уместно`;
+
+  const userPrompt = `Тема: "${topic}"
+
+Контекст из базы знаний:
+${context}
+
+${lengthInstruction} С эмодзи и одной жирной фразой.`;
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT },
+      { role: "user", content: userPrompt }
+    ],
+    temperature: 0.78,
+    max_tokens: maxTokens,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+// --- ОТПРАВКА ТЕКСТА С КНОПКАМИ РЕДАКТИРОВАНИЯ ---
+
+async function sendGeneratedText(chatId, text) {
+  await bot.sendMessage(chatId, text, { parse_mode: "Markdown" }).catch(async () => {
+    await bot.sendMessage(chatId, text);
+  });
+
+  await bot.sendMessage(chatId, "Что дальше?", {
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "✏️ Отредактировать", callback_data: "text_edit" },
+        { text: "✅ Текст готов", callback_data: "text_ready" },
+      ]],
+    },
+  });
+}
+
+// --- КНОПКИ ВЫБОРА ДЛИНЫ ПОСТА ---
+
+async function sendLengthChoice(chatId, topic) {
+  const state = userState.get(chatId) || {};
+  state.pendingTopic = topic;
+  userState.set(chatId, state);
+
+  await bot.sendMessage(chatId, `📝 Тема: *${topic}*\n\nВыберите длину поста:`, {
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "✂️ Короткий", callback_data: "length_short" },
+        { text: "📄 Обычный", callback_data: "length_normal" },
+        { text: "📖 Длинный", callback_data: "length_long" },
+      ]],
+    },
+  });
+}
+
 // --- КОМАНДЫ ---
 
 bot.onText(/\/start/, async (msg) => {
@@ -646,6 +757,19 @@ bot.on("message", async (msg) => {
     const text = msg.text;
     if (!text) return;
 
+    // Пользователь редактирует текст вручную
+    if (state.awaitingTextEdit) {
+      const editedText = text;
+      const currentState = userState.get(chatId) || {};
+      currentState.lastFullAnswer = editedText;
+      currentState.awaitingTextEdit = false;
+      userState.set(chatId, currentState);
+
+      await bot.sendMessage(chatId, "✅ Текст обновлён!");
+      await sendGeneratedText(chatId, editedText);
+      return;
+    }
+
     if (state.awaitingCustomScene) {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
       const translatedScene = await translateScene(text);
@@ -658,114 +782,9 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    console.log("Message:", text);
-    userState.set(chatId, { ...state, lastTopic: text, awaitingCustomScene: false });
-
-    const topArticles = articles
-      .map(a => ({ ...a, score: scoreArticle(a, text) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-
-    const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
-
-    // ====== ОБНОВЛЁННЫЙ ПРОМПТ В СТИЛЕ ДИНАРЫ ======
-    const SYSTEM_PROMPT = `Ты — Динара Качаева, практикующий психолог. Пишешь как живой человек — тепло, лично, с внутренней глубиной.
-
-КТО ТЫ:
-Ты пишешь посты в свой Telegram-канал. Не отвечаешь на вопрос — ты делишься живой мыслью, как будто она только что пришла к тебе. Иногда признаёшься в личном: "я сама долго с этим работала", "не знаю как у вас, а я...". Это создаёт близость.
-
-СТИЛЬ:
-— Тёплый разговорный язык, без академизма и канцелярита
-— Короткие абзацы, разделённые пустой строкой
-— Многоточия для создания паузы и раздумья…
-— Длинное тире — вместо короткого
-— Иногда начинаешь с обращения: "Дорогие," / "Друзья,"
-— Риторические вопросы вовлекают читателя в диалог с собой
-— Используешь метафоры: "мы едим и перевариваем эту жизнь", "закопанные радиоактивные отходы", "смотримся в разные зеркала"
-— Можешь задать вопрос в середине и попросить: "не читайте дальше, ответьте себе сначала"
-
-ЭМОДЗИ:
-Используй 3-5 штук, по смыслу, не в каждом абзаце.
-Предпочтительные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶
-
-СТРУКТУРА (3–4 абзаца):
-1. Принятие темы / эмпатия — покажи что слышишь
-2. Главная мысль — инсайт, метафора, разворот
-3. Личный угол или практическая деталь
-4. Мягкое завершение или вопрос читателю
-
-ЗАПРЕЩЕНО:
-— Нумерованные списки и списки с дефисами
-— Заголовки и подзаголовки
-— Слова: "безусловно", "следует отметить", "таким образом", "данный"
-— Повторять одну мысль дважды
-— Ответы длиннее 1200 символов
-
-ОФОРМЛЕНИЕ для Telegram Markdown:
-— *жирный* для одной ключевой фразы во 2-м абзаце
-— Эмодзи прямо в тексте где уместно`;
-
-    const userPrompt = `Тема: "${text}"
-
-Контекст из базы знаний:
-${context}
-
-Напиши пост в стиле Динары Качаевой. Строго 3-4 абзаца через пустую строку. С эмодзи и одной жирной фразой.`;
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userPrompt }
-      ],
-      temperature: 0.78,
-      max_tokens: 500,
-    });
-
-    const fullAnswer = completion.choices[0].message.content;
-
-    await bot.sendMessage(chatId, fullAnswer, { parse_mode: "Markdown" }).catch(async () => {
-      await bot.sendMessage(chatId, fullAnswer);
-    });
-
-    const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
-- До 160 символов
-- Спокойный тон, пауза через запятую или тире
-- Без вопроса, без эмодзи, только текст
-- Убери markdown символы (* и _)
-
-Текст:
-${fullAnswer}
-
-Результат:`;
-
-    const shortCompletion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: shortPrompt }],
-      temperature: 0.4, max_tokens: 80,
-    });
-
-    let shortAnswer = shortCompletion.choices[0].message.content.trim().replace(/[*_]/g, '');
-    if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
-
-    const currentState = userState.get(chatId) || {};
-    currentState.lastFullAnswer = fullAnswer;
-    currentState.lastShortText = shortAnswer;
-    currentState.lastAudioUrl = null;
-    currentState.lastVideoUrl = null;
-    currentState.pendingVoices = [];
-    currentState.awaitingVoiceRecord = false;
-    currentState.pendingVoiceBuffer = null;
-    currentState.suggestedTracks = null;
-    userState.set(chatId, currentState);
-
-    selectMusicTracks(fullAnswer).then(tracks => {
-      const s = userState.get(chatId) || {};
-      s.suggestedTracks = tracks;
-      userState.set(chatId, s);
-    }).catch(() => {});
-
-    await sendAudioChoiceButtons(chatId);
+    // Новая тема — показываем выбор длины
+    console.log("New topic:", text);
+    await sendLengthChoice(chatId, text);
 
   } catch (error) {
     console.error("Error:", error.message);
@@ -789,6 +808,88 @@ bot.on("callback_query", async (query) => {
     if (data === "show_help") { await sendHelp(chatId); return; }
     if (data === "prompt_topic") {
       await bot.sendMessage(chatId, "\uD83D\uDCDD Напишите тему поста — слово или фразу:\n\nНапример: _тревога_, _страх одиночества_, _выгорание_", { parse_mode: "Markdown" });
+      return;
+    }
+
+    // --- ВЫБОР ДЛИНЫ ПОСТА ---
+    if (data === "length_short" || data === "length_normal" || data === "length_long") {
+      const lengthMode = data.replace("length_", "");
+      const topic = state.pendingTopic;
+      if (!topic) { await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново."); return; }
+
+      const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
+      const genMsg = await bot.sendMessage(chatId, `⏳ Генерирую ${labelMap[lengthMode]} пост по теме "${topic}"...`);
+
+      const fullAnswer = await generatePostText(chatId, topic, lengthMode);
+
+      await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
+
+      // Генерируем короткий текст для аудио в фоне
+      const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
+- До 160 символов
+- Спокойный тон, пауза через запятую или тире
+- Без вопроса, без эмодзи, только текст
+- Убери markdown символы (* и _)
+
+Текст:
+${fullAnswer}
+
+Результат:`;
+
+      const shortCompletion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: shortPrompt }],
+        temperature: 0.4, max_tokens: 80,
+      });
+
+      let shortAnswer = shortCompletion.choices[0].message.content.trim().replace(/[*_]/g, '');
+      if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
+
+      const currentState = userState.get(chatId) || {};
+      currentState.lastFullAnswer = fullAnswer;
+      currentState.lastShortText = shortAnswer;
+      currentState.lastTopic = topic;
+      currentState.lastLengthMode = lengthMode;
+      currentState.lastAudioUrl = null;
+      currentState.lastVideoUrl = null;
+      currentState.pendingVoices = [];
+      currentState.awaitingVoiceRecord = false;
+      currentState.pendingVoiceBuffer = null;
+      currentState.suggestedTracks = null;
+      currentState.awaitingTextEdit = false;
+      userState.set(chatId, currentState);
+
+      selectMusicTracks(fullAnswer).then(tracks => {
+        const s = userState.get(chatId) || {};
+        s.suggestedTracks = tracks;
+        userState.set(chatId, s);
+      }).catch(() => {});
+
+      await sendGeneratedText(chatId, fullAnswer);
+      return;
+    }
+
+    // --- КНОПКИ ПОСЛЕ ГЕНЕРАЦИИ ТЕКСТА ---
+
+    if (data === "text_edit") {
+      const currentText = state.lastFullAnswer || "";
+      const cleanText = currentText.replace(/[*_]/g, '');
+
+      const currentState = userState.get(chatId) || {};
+      currentState.awaitingTextEdit = true;
+      userState.set(chatId, currentState);
+
+      // Отправляем сообщение с force_reply и текстом — пользователь видит текст в поле ввода
+      await bot.sendMessage(chatId, cleanText, {
+        reply_markup: { force_reply: true, input_field_placeholder: "Отредактируйте текст и отправьте..." },
+      });
+      return;
+    }
+
+    if (data === "text_ready") {
+      // Текст готов — переходим к выбору аудио
+      await bot.sendMessage(chatId, "✅ Отлично! Теперь выберите аудио для поста:");
+      await sendAudioChoiceButtons(chatId);
       return;
     }
 
