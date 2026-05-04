@@ -52,7 +52,6 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 // --- Парсеры ---
 
 async function parsePdf(filePath) {
-  // pdf-parse требует CommonJS require, используем динамический импорт
   const { default: pdfParse } = await import('pdf-parse/lib/pdf-parse.js');
   const buffer = fs.readFileSync(filePath);
   const data = await pdfParse(buffer);
@@ -75,7 +74,6 @@ async function parseUrl(url) {
   const html = await response.text();
   const $ = load(html);
   $('script, style, nav, footer, header, aside, .ad, .ads, .cookie-banner').remove();
-  // Пробуем разные контейнеры контента
   const selectors = ['article', 'main', '.article-body', '.post-content', '.content', '.entry-content', 'body'];
   let text = '';
   for (const sel of selectors) {
@@ -93,7 +91,6 @@ async function parseUrl(url) {
 async function indexSource({ scenario, sourceType, sourceTitle, sourceUrl, text }) {
   console.log(`\n📄 Индексирую: ${sourceTitle} [${scenario}]`);
 
-  // Сначала удаляем старые чанки этого источника (для обновления)
   const { error: deleteError } = await supabase
     .from('knowledge_chunks')
     .delete()
@@ -133,7 +130,7 @@ async function indexSource({ scenario, sourceType, sourceTitle, sourceUrl, text 
       console.error('   ❌ Ошибка embedding:', err.message);
     }
 
-    await sleep(250); // пауза между запросами к OpenAI (rate limit)
+    await sleep(250);
   }
 
   console.log(`\n   ✅ Готово: ${indexed} чанков`);
@@ -195,12 +192,12 @@ const SOURCES = [
   //   filePath: path.join(__dirname, '../sources/sexologist/training-transcript.txt'),
   // },
 
-  // ─── ТЕСТОВЫЙ ИСТОЧНИК (раскомментируй для теста) ───────
+  // ─── ТЕСТОВЫЙ ИСТОЧНИК ───────────────────────────────────
   {
     scenario: 'psychologist',
     sourceType: 'article',
     sourceTitle: 'Тест: что такое тревога',
-    sourceUrl: 'https://psychologies.ru/articles/chto-takoe-trevoga-i-kak-s-ney-spravlyatsya/',
+    sourceUrl: 'https://www.b17.ru/article/chto_takoe_trevoga/',
   },
 ];
 
