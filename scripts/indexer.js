@@ -192,12 +192,12 @@ const SOURCES = [
   //   filePath: path.join(__dirname, '../sources/sexologist/training-transcript.txt'),
   // },
 
-  // ─── ТЕСТОВЫЙ ИСТОЧНИК ───────────────────────────────────
+  // ─── ТЕСТОВЫЙ ИСТОЧНИК (локальный файл) ─────────────────
   {
     scenario: 'psychologist',
-    sourceType: 'article',
+    sourceType: 'video', // тип 'video' читает .txt файл напрямую
     sourceTitle: 'Тест: что такое тревога',
-    sourceUrl: 'https://www.b17.ru/article/chto_takoe_trevoga/',
+    filePath: path.join(__dirname, '../sources/psychologist/test-trevoga.txt'),
   },
 ];
 
@@ -224,7 +224,7 @@ async function main() {
         if (!source.filePath) throw new Error('Нет filePath для DOCX');
         text = await parseDocx(source.filePath);
       } else if (source.sourceType === 'video') {
-        if (!source.filePath) throw new Error('Нет filePath для транскрипта');
+        if (!source.filePath) throw new Error('Нет filePath для файла');
         text = fs.readFileSync(source.filePath, 'utf-8');
       } else {
         throw new Error(`Неизвестный sourceType: ${source.sourceType}`);
