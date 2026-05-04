@@ -1,5 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
 import { createRequire } from "module";
 import { promises as fs } from "fs";
 import { tmpdir } from "os";
@@ -19,19 +20,25 @@ const FAL_KEY = process.env.FALAI_KEY;
 const CLOUDINARY_CLOUD = process.env.CLOUDINARY_CLOUD;
 const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
+// Supabase клиент (опционально — если не настроен, падаем на старый поиск)
+const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  : null;
+
 console.log("Bot started in polling mode");
 console.log("ENV CHECK:");
 console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
 console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
+console.log(" SUPABASE:", !!supabase);
 console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
-console.log(" FALAI_KEY:", !!FAL_KEY, "| Length:", FAL_KEY ? FAL_KEY.length : 0);
-console.log(" CLOUDINARY:", !!CLOUDINARY_CLOUD, !!CLOUDINARY_API_KEY, !!CLOUDINARY_API_SECRET);
-console.log(" FFMPEG:", ffmpegPath);
+console.log(" FALAI_KEY:", !!FAL_KEY);
 
 // --- ПРОМПТЫ ---
 
@@ -50,6 +57,82 @@ soft lips slightly curved, peaceful confident expression`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
+// --- СИСТЕМНЫЕ ПРОМПТЫ ---
+
+const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, практикующий психолог. Пишешь как живой человек — тепло, лично, с внутренней глубиной.
+
+КТО ТЫ:
+Ты пишешь посты в свой Telegram-канал. Не отвечаешь на вопрос — ты делишься живой мыслью, как будто она только что пришла к тебе. Иногда признаёшься в личном: "я сама долго с этим работала", "не знаю как у вас, а я...". Это создаёт близость.
+
+СТИЛЬ:
+— Тёплый разговорный язык, без академизма и канцелярита
+— Короткие абзацы, разделённые пустой строкой
+— Многоточия для создания паузы и раздумья…
+— Длинное тире — вместо короткого
+— Иногда начинаешь с обращения: "Дорогие," / "Друзья,"
+— Риторические вопросы вовлекают читателя в диалог с собой
+— Используешь метафоры: "мы едим и перевариваем эту жизнь", "закопанные радиоактивные отходы", "смотримся в разные зеркала"
+— Можешь задать вопрос в середине и попросить: "не читайте дальше, ответьте себе сначала"
+
+ЭМОДЗИ:
+Используй 3-5 штук, по смыслу, не в каждом абзаце.
+Предпочтительные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶
+
+СТРУКТУРА:
+1. Принятие темы / эмпатия — покажи что слышишь
+2. Главная мысль — инсайт, метафора, разворот
+3. Личный угол или практическая деталь
+4. Мягкое завершение или вопрос читателю
+
+ЗАПРЕЩЕНО:
+— Нумерованные списки и списки с дефисами
+— Заголовки и подзаголовки
+— Слова: "безусловно", "следует отметить", "таким образом", "данный"
+— Повторять одну мысль дважды
+
+ОФОРМЛЕНИЕ для Telegram Markdown:
+— *жирный* для одной ключевой фразы во 2-м абзаце
+— Эмодзи прямо в тексте где уместно`;
+
+const SEXOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, психолог-сексолог. Пишешь о сексуальности научно, но живым человеческим языком — без стыда, без табу, с теплом и уважением к читателю.
+
+КТО ТЫ:
+Ты специалист по сексологии. Опираешься на научные знания, но говоришь как живой человек. Нормализуешь тему, снимаешь стыд и тревогу. Создаёшь безопасное пространство для разговора о сексуальности.
+
+СТИЛЬ:
+— Профессиональный, но тёплый и человечный
+— Без стыда и осуждения — любая тема нормальна
+— Научные факты подаёшь через живые примеры
+— Короткие абзацы, разделённые пустой строкой
+— Многоточия для паузы и раздумья…
+— Длинное тире — вместо короткого
+— Иногда начинаешь с "Дорогие," / "Друзья,"
+— Риторические вопросы вовлекают читателя
+
+ЭМОДЗИ:
+Используй 2-4 штуки, сдержанно и по смыслу.
+Предпочтительные: 💙 🌿 🌟 💫 🙏 ✨ 🫶 💜 🔬
+
+СТРУКТУРА:
+1. Принятие темы — нормализация, снятие стыда
+2. Научный контекст — что говорит наука (из базы знаний)
+3. Практический взгляд — как это работает в жизни
+4. Мягкое завершение или вопрос читателю
+
+ЗАПРЕЩЕНО:
+— Нумерованные списки и списки с дефисами
+— Заголовки и подзаголовки
+— Осуждение или морализаторство
+— Слова: "безусловно", "следует отметить", "таким образом"
+— Повторять одну мысль дважды
+— Явно эротический или порнографический контент
+
+ВАЖНО: Отвечай строго на основе предоставленного контекста из базы знаний по сексологии. Не выдумывай факты.
+
+ОФОРМЛЕНИЕ для Telegram Markdown:
+— *жирный* для одной ключевой фразы во 2-м абзаце
+— Эмодзи прямо в тексте где уместно`;
+
 // --- БИБЛИОТЕКА МУЗЫКИ ---
 const MUSIC_LIBRARY = [
   { id: "lofi1", name: "Acoustic Breeze", genre: "Lo-fi / Acoustic", mood: "уютный, мечтательный", tags: ["lofi", "chill", "усталость", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" },
@@ -64,14 +147,12 @@ const MUSIC_LIBRARY = [
   { id: "folk1", name: "Creative Minds", genre: "Folk / Acoustic", mood: "творческий, живой", tags: ["guitar", "отношения", "рост"], url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3" },
 ];
 
-// Кнопка "Старт" — Reply Keyboard (постоянная кнопка внизу экрана)
 const START_KEYBOARD = {
   keyboard: [[{ text: "\uD83D\uDE80 Старт" }]],
   resize_keyboard: true,
   one_time_keyboard: true,
 };
 
-// Убираем Reply Keyboard после старта
 const REMOVE_KEYBOARD = { remove_keyboard: true };
 
 function shuffleArray(arr) {
@@ -85,8 +166,9 @@ function shuffleArray(arr) {
 
 const userState = new Map();
 
-// --- УТИЛИТЫ ---
+// --- ПОИСК ---
 
+// Старый поиск (fallback для психолога если нет Supabase)
 function scoreArticle(article, query) {
   const text = (article.title + " " + article.content).toLowerCase();
   const q = query.toLowerCase();
@@ -94,6 +176,39 @@ function scoreArticle(article, query) {
   q.split(" ").forEach(word => { if (text.includes(word)) score += 1; });
   return score;
 }
+
+// Векторный поиск через Supabase
+async function vectorSearch(query, scenario, limit = 5) {
+  if (!supabase) return null;
+  try {
+    // Получаем embedding запроса
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: query.slice(0, 8000),
+    });
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+
+    // Ищем похожие чанки
+    const { data, error } = await supabase.rpc("match_chunks", {
+      query_embedding: queryEmbedding,
+      match_scenario: scenario,
+      match_count: limit,
+    });
+
+    if (error) {
+      console.error("Vector search error:", error.message);
+      return null;
+    }
+
+    console.log(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
+    return data;
+  } catch (err) {
+    console.error("Vector search failed:", err.message);
+    return null;
+  }
+}
+
+// --- УТИЛИТЫ ---
 
 function writeMsgpack(val) {
   if (typeof val === 'boolean') return Buffer.from([val ? 0xc3 : 0xc2]);
@@ -152,7 +267,6 @@ async function selectMusicTracks(text, count = 3) {
       temperature: 0.3, max_tokens: 50,
     });
     const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
-    console.log("Music tags selected:", tags);
     const matching = MUSIC_LIBRARY.filter(t => t.tags.some(tag => tags.includes(tag)));
     const pool = matching.length >= count ? matching : MUSIC_LIBRARY;
     return shuffleArray(pool).slice(0, count);
@@ -171,7 +285,6 @@ async function downloadTrack(url) {
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
   const buffer = Buffer.from(await res.arrayBuffer());
-  console.log(`Track downloaded: ${buffer.length} bytes`);
   return buffer;
 }
 
@@ -198,7 +311,6 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
         .on('end', resolve).on('error', reject).run();
     });
     const mixedBuffer = await fs.readFile(outputPath);
-    console.log("Mixed audio size:", mixedBuffer.length, "bytes");
     return mixedBuffer;
   } finally {
     await fs.unlink(voicePath).catch(() => {});
@@ -256,7 +368,6 @@ async function generateImage(chatId, scenePrompt) {
   const imageUrl = data.images[0].url;
   const costHeader = res.headers.get('x-fal-cost') || res.headers.get('x-fal-billing-cost');
   const photoCost = costHeader ? parseFloat(costHeader) : 0.035;
-  console.log(`Photo cost: $${photoCost}`);
   return { imageUrl, cost: photoCost, scenePrompt };
 }
 
@@ -269,7 +380,6 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     body: JSON.stringify({ image_url: imageUrl, audio_url: audioUrl, prompt: AURORA_PROMPT, resolution: "720p" }),
   });
   const submitText = await submitRes.text();
-  console.log("Aurora submit:", submitRes.status, submitText.substring(0, 300));
   if (!submitRes.ok) {
     await bot.editMessageText(`Ошибка запроса (${submitRes.status}):\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
     throw new Error(`Aurora submit error: ${submitText}`);
@@ -291,7 +401,6 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     await new Promise(r => setTimeout(r, 5000));
     const statusRes = await fetch(pollUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
     const statusText = await statusRes.text();
-    console.log(`Aurora poll [${i+1}] (${statusRes.status}):`, statusText.substring(0, 150));
     if (!statusText.trim()) continue;
     let status;
     try { status = JSON.parse(statusText); } catch(e) { continue; }
@@ -307,13 +416,6 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
       const videoUrl = result.video?.url || result.data?.video?.url || result.output?.video_url;
       if (!videoUrl) throw new Error(`Aurora: no video URL: ${resultText.substring(0, 200)}`);
       let videoCost = result.cost ?? result.data?.cost ?? 1.47;
-      if (!videoCost) {
-        try {
-          const costRes = await fetch(`https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`, { headers: { "Authorization": `Key ${FAL_KEY}` } });
-          if (costRes.ok) { const cd = JSON.parse(await costRes.text()); videoCost = cd.cost ?? cd.billing?.cost ?? 1.47; }
-        } catch(e) { videoCost = 1.47; }
-      }
-      console.log(`Video cost: $${videoCost}`);
       return { videoUrl, cost: videoCost };
     }
     if (status.status === "FAILED") {
@@ -343,7 +445,7 @@ async function sendOnboarding(chatId, step = 1) {
     );
   } else if (step === 2) {
     await bot.sendMessage(chatId,
-      `\uD83D\uDCA1 *Как это работает:*\n\n*1.* Напишите тему поста — любым словом или фразой\n_Например: "тревога", "страх одиночества", "выгорание"_\n\n*2.* Я сгенерирую текст в стиле Динары\n\n*3.* Выберите голос и музыку для аудио\n\n*4.* Сгенерируйте фото или видео\n\n*5.* Опубликуйте готовый пост \u2705`,
+      `\uD83D\uDCA1 *Как это работает:*\n\n*1.* Напишите тему поста — любым словом или фразой\n_Например: "тревога", "страх одиночества", "выгорание"_\n\n*2.* Выберите сценарий: Психолог или Сексолог\n\n*3.* Я сгенерирую текст в стиле Динары\n\n*4.* Выберите голос и музыку для аудио\n\n*5.* Сгенерируйте фото или видео\n\n*6.* Опубликуйте готовый пост \u2705`,
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -372,7 +474,7 @@ async function sendOnboarding(chatId, step = 1) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `\u2139\uFE0F *Справка*\n\n*Как начать:*\nПросто напишите тему поста — слово или фразу\n\n*Что происходит дальше:*\n\uD83D\uDCDD Текст → выбор аудио → фото → видео → публикация\n\n*Вопросы?* Напишите @tetss2`,
+    `\u2139\uFE0F *Справка*\n\n*Как начать:*\nПросто напишите тему поста — слово или фразу\n\n*Что происходит дальше:*\n\uD83D\uDCDD Тема → выбор сценария → длина → текст → аудио → фото → видео → публикация\n\n*Вопросы?* Напишите @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: {
@@ -383,6 +485,42 @@ async function sendHelp(chatId) {
       },
     }
   );
+}
+
+// ─── НОВАЯ ФУНКЦИЯ: выбор сценария ───────────────────────────────────────────
+
+async function sendScenarioChoice(chatId, topic) {
+  const state = userState.get(chatId) || {};
+  state.pendingTopic = topic;
+  userState.set(chatId, state);
+
+  await bot.sendMessage(chatId, `📝 Тема: *${topic}*\n\nКто будет отвечать?`, {
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "🧠 Психолог Динара", callback_data: "scenario_psychologist" },
+        { text: "💜 Сексолог Динара", callback_data: "scenario_sexologist" },
+      ]],
+    },
+  });
+}
+
+async function sendLengthChoice(chatId, scenario) {
+  const state = userState.get(chatId) || {};
+  state.pendingScenario = scenario;
+  userState.set(chatId, state);
+
+  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог Динара" : "🧠 Психолог Динара";
+
+  await bot.sendMessage(chatId, `${scenarioLabel}\n\nВыберите длину поста:`, {
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "✂️ Короткий", callback_data: "length_short" },
+        { text: "📄 Обычный", callback_data: "length_normal" },
+        { text: "📖 Длинный", callback_data: "length_long" },
+      ]],
+    },
+  });
 }
 
 async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
@@ -406,7 +544,6 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
       },
     }, { filename: `${track.id}.mp3`, contentType: "audio/mpeg" });
   } catch(err) {
-    console.error("Track preview error:", err.message);
     await bot.editMessageText(
       `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
       {
@@ -555,7 +692,6 @@ async function processAudioWithTrack(chatId, trackId) {
     finalBuffer = await mixAudioWithMusic(voiceBuffer, track.url);
     await bot.editMessageText("\u2705 Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
   } catch(err) {
-    console.error("Mix error:", err.message);
     finalBuffer = voiceBuffer;
     await bot.editMessageText("\u26A0\uFE0F Микширование не удалось, используем голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
   }
@@ -566,7 +702,6 @@ async function processAudioWithTrack(chatId, trackId) {
     audioUrl = await uploadAudioToCloudinary(finalBuffer);
     await bot.editMessageText("\u2705 Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
   } catch(err) {
-    console.error("Cloudinary error:", err.message);
     await bot.editMessageText(`Ошибка загрузки: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
   }
   const currentState = userState.get(chatId) || {};
@@ -578,17 +713,28 @@ async function processAudioWithTrack(chatId, trackId) {
   await sendPhotoButtons(chatId);
 }
 
-// --- ГЕНЕРАЦИЯ ТЕКСТА (вынесена в отдельную функцию) ---
+// --- ГЕНЕРАЦИЯ ТЕКСТА ---
 
-async function generatePostText(chatId, topic, lengthMode = "normal") {
-  const topArticles = articles
-    .map(a => ({ ...a, score: scoreArticle(a, topic) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
+async function generatePostText(chatId, topic, scenario, lengthMode = "normal") {
+  let context = "";
 
-  const context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
+  // Векторный поиск для обоих сценариев
+  const chunks = await vectorSearch(topic, scenario, 5);
+  if (chunks && chunks.length > 0) {
+    context = chunks.map(c => c.chunk_text).join("\n\n");
+    console.log(`Using vector search context: ${context.length} chars`);
+  } else if (scenario === "psychologist") {
+    // Fallback на старый поиск для психолога
+    const topArticles = articles
+      .map(a => ({ ...a, score: scoreArticle(a, topic) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+    context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
+    console.log("Using legacy article search");
+  } else {
+    context = "Используй общие знания по данной теме.";
+  }
 
-  // Лимиты токенов по режиму длины
   const tokenLimits = { short: 250, normal: 500, long: 750 };
   const maxTokens = tokenLimits[lengthMode] || 500;
 
@@ -598,52 +744,16 @@ async function generatePostText(chatId, topic, lengthMode = "normal") {
     long: "Напиши РАЗВЁРНУТЫЙ пост: 5-6 абзацев, до 1800 символов. Можно добавить личный пример или развернуть метафору.",
   }[lengthMode] || "Напиши пост: строго 3-4 абзаца, до 1200 символов.";
 
-  const SYSTEM_PROMPT = `Ты — Динара Качаева, практикующий психолог. Пишешь как живой человек — тепло, лично, с внутренней глубиной.
+  const systemPrompt = scenario === "sexologist"
+    ? SEXOLOGIST_SYSTEM_PROMPT
+    : PSYCHOLOGIST_SYSTEM_PROMPT;
 
-КТО ТЫ:
-Ты пишешь посты в свой Telegram-канал. Не отвечаешь на вопрос — ты делишься живой мыслью, как будто она только что пришла к тебе. Иногда признаёшься в личном: "я сама долго с этим работала", "не знаю как у вас, а я...". Это создаёт близость.
-
-СТИЛЬ:
-— Тёплый разговорный язык, без академизма и канцелярита
-— Короткие абзацы, разделённые пустой строкой
-— Многоточия для создания паузы и раздумья…
-— Длинное тире — вместо короткого
-— Иногда начинаешь с обращения: "Дорогие," / "Друзья,"
-— Риторические вопросы вовлекают читателя в диалог с собой
-— Используешь метафоры: "мы едим и перевариваем эту жизнь", "закопанные радиоактивные отходы", "смотримся в разные зеркала"
-— Можешь задать вопрос в середине и попросить: "не читайте дальше, ответьте себе сначала"
-
-ЭМОДЗИ:
-Используй 3-5 штук, по смыслу, не в каждом абзаце.
-Предпочтительные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶
-
-СТРУКТУРА:
-1. Принятие темы / эмпатия — покажи что слышишь
-2. Главная мысль — инсайт, метафора, разворот
-3. Личный угол или практическая деталь
-4. Мягкое завершение или вопрос читателю
-
-ЗАПРЕЩЕНО:
-— Нумерованные списки и списки с дефисами
-— Заголовки и подзаголовки
-— Слова: "безусловно", "следует отметить", "таким образом", "данный"
-— Повторять одну мысль дважды
-
-ОФОРМЛЕНИЕ для Telegram Markdown:
-— *жирный* для одной ключевой фразы во 2-м абзаце
-— Эмодзи прямо в тексте где уместно`;
-
-  const userPrompt = `Тема: "${topic}"
-
-Контекст из базы знаний:
-${context}
-
-${lengthInstruction} С эмодзи и одной жирной фразой.`;
+  const userPrompt = `Тема: "${topic}"\n\nКонтекст из базы знаний:\n${context}\n\n${lengthInstruction} С эмодзи и одной жирной фразой.`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
     ],
     temperature: 0.78,
@@ -652,8 +762,6 @@ ${lengthInstruction} С эмодзи и одной жирной фразой.`;
 
   return completion.choices[0].message.content;
 }
-
-// --- ОТПРАВКА ТЕКСТА С КНОПКАМИ РЕДАКТИРОВАНИЯ ---
 
 async function sendGeneratedText(chatId, text) {
   await bot.sendMessage(chatId, text, { parse_mode: "Markdown" }).catch(async () => {
@@ -665,25 +773,6 @@ async function sendGeneratedText(chatId, text) {
       inline_keyboard: [[
         { text: "✏️ Отредактировать", callback_data: "text_edit" },
         { text: "✅ Текст готов", callback_data: "text_ready" },
-      ]],
-    },
-  });
-}
-
-// --- КНОПКИ ВЫБОРА ДЛИНЫ ПОСТА ---
-
-async function sendLengthChoice(chatId, topic) {
-  const state = userState.get(chatId) || {};
-  state.pendingTopic = topic;
-  userState.set(chatId, state);
-
-  await bot.sendMessage(chatId, `📝 Тема: *${topic}*\n\nВыберите длину поста:`, {
-    parse_mode: "Markdown",
-    reply_markup: {
-      inline_keyboard: [[
-        { text: "✂️ Короткий", callback_data: "length_short" },
-        { text: "📄 Обычный", callback_data: "length_normal" },
-        { text: "📖 Длинный", callback_data: "length_long" },
       ]],
     },
   });
@@ -757,14 +846,12 @@ bot.on("message", async (msg) => {
     const text = msg.text;
     if (!text) return;
 
-    // Пользователь редактирует текст вручную
     if (state.awaitingTextEdit) {
       const editedText = text;
       const currentState = userState.get(chatId) || {};
       currentState.lastFullAnswer = editedText;
       currentState.awaitingTextEdit = false;
       userState.set(chatId, currentState);
-
       await bot.sendMessage(chatId, "✅ Текст обновлён!");
       await sendGeneratedText(chatId, editedText);
       return;
@@ -782,9 +869,9 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Новая тема — показываем выбор длины
+    // Новая тема — показываем выбор сценария
     console.log("New topic:", text);
-    await sendLengthChoice(chatId, text);
+    await sendScenarioChoice(chatId, text);
 
   } catch (error) {
     console.error("Error:", error.message);
@@ -811,30 +898,30 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // --- ВЫБОР ДЛИНЫ ПОСТА ---
+    // ─── ВЫБОР СЦЕНАРИЯ ───────────────────────────────────────────────────────
+    if (data === "scenario_psychologist" || data === "scenario_sexologist") {
+      const scenario = data.replace("scenario_", "");
+      await sendLengthChoice(chatId, scenario);
+      return;
+    }
+
+    // ─── ВЫБОР ДЛИНЫ ПОСТА ────────────────────────────────────────────────────
     if (data === "length_short" || data === "length_normal" || data === "length_long") {
       const lengthMode = data.replace("length_", "");
       const topic = state.pendingTopic;
+      const scenario = state.pendingScenario || "psychologist";
+
       if (!topic) { await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново."); return; }
 
       const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
-      const genMsg = await bot.sendMessage(chatId, `⏳ Генерирую ${labelMap[lengthMode]} пост по теме "${topic}"...`);
+      const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+      const genMsg = await bot.sendMessage(chatId, `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}] по теме "${topic}"...`);
 
-      const fullAnswer = await generatePostText(chatId, topic, lengthMode);
+      const fullAnswer = await generatePostText(chatId, topic, scenario, lengthMode);
 
       await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
-      // Генерируем короткий текст для аудио в фоне
-      const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.
-- До 160 символов
-- Спокойный тон, пауза через запятую или тире
-- Без вопроса, без эмодзи, только текст
-- Убери markdown символы (* и _)
-
-Текст:
-${fullAnswer}
-
-Результат:`;
+      const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.\n- До 160 символов\n- Спокойный тон, пауза через запятую или тире\n- Без вопроса, без эмодзи, только текст\n- Убери markdown символы (* и _)\n\nТекст:\n${fullAnswer}\n\nРезультат:`;
 
       const shortCompletion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -849,6 +936,7 @@ ${fullAnswer}
       currentState.lastFullAnswer = fullAnswer;
       currentState.lastShortText = shortAnswer;
       currentState.lastTopic = topic;
+      currentState.lastScenario = scenario;
       currentState.lastLengthMode = lengthMode;
       currentState.lastAudioUrl = null;
       currentState.lastVideoUrl = null;
@@ -874,12 +962,9 @@ ${fullAnswer}
     if (data === "text_edit") {
       const currentText = state.lastFullAnswer || "";
       const cleanText = currentText.replace(/[*_]/g, '');
-
       const currentState = userState.get(chatId) || {};
       currentState.awaitingTextEdit = true;
       userState.set(chatId, currentState);
-
-      // Отправляем сообщение с force_reply и текстом — пользователь видит текст в поле ввода
       await bot.sendMessage(chatId, cleanText, {
         reply_markup: { force_reply: true, input_field_placeholder: "Отредактируйте текст и отправьте..." },
       });
@@ -887,7 +972,6 @@ ${fullAnswer}
     }
 
     if (data === "text_ready") {
-      // Текст готов — переходим к выбору аудио
       await bot.sendMessage(chatId, "✅ Отлично! Теперь выберите аудио для поста:");
       await sendAudioChoiceButtons(chatId);
       return;
