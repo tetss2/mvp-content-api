@@ -1,7 +1,17 @@
 /**
- * ИНДЕКСАТОР ИСТОЧНИКОВ ЗНАНИЙ
- * Запуск: node scripts/indexer.js
- * Перед запуском установи переменные окружения:
+ * ИНДЕКСАТОР ИСТОЧНИКОВ ЗНАНИЙ — АВТОСКАНИРОВАНИЕ ПАПОК
+ *
+ * Запуск:
+ *   node scripts/indexer.js              — индексирует ВСЕ новые файлы
+ *   node scripts/indexer.js --force      — переиндексирует ВСЕ файлы заново
+ *   node scripts/indexer.js --scenario sexologist  — только сексолог
+ *   node scripts/indexer.js --scenario psychologist — только психолог
+ *
+ * Структура папок:
+ *   sources/psychologist/  — PDF, DOCX, DOC, TXT для психолога
+ *   sources/sexologist/    — PDF, DOCX, DOC, TXT для сексолога
+ *
+ * Переменные окружения:
  *   SUPABASE_URL, SUPABASE_SERVICE_KEY, OPENAI_API_KEY
  */
 
@@ -12,6 +22,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const SOURCES_DIR = path.join(__dirname, '../sources');
+
+// --- Аргументы запуска ---
+const args = process.argv.slice(2);
+const FORCE_REINDEX = args.includes('--force');
+const SCENARIO_FILTER = args.includes('--scenario')
+  ? args[args.indexOf('--scenario') + 1]
+  : null;
 
 // --- Проверка переменных ---
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -64,42 +82,62 @@ async function parseDocx(filePath) {
   return result.value;
 }
 
-async function parseUrl(url) {
-  const { default: fetch } = await import('node-fetch');
-  const { load } = await import('cheerio');
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-  });
-  if (!response.ok) throw new Error(`HTTP ${response.status} для ${url}`);
-  const html = await response.text();
-  const $ = load(html);
-  $('script, style, nav, footer, header, aside, .ad, .ads, .cookie-banner').remove();
-  const selectors = ['article', 'main', '.article-body', '.post-content', '.content', '.entry-content', 'body'];
-  let text = '';
-  for (const sel of selectors) {
-    const el = $(sel).first();
-    if (el.length) {
-      text = el.text().replace(/\s+/g, ' ').trim();
-      if (text.length > 200) break;
-    }
-  }
-  return text;
+async function parseTxt(filePath) {
+  return fs.readFileSync(filePath, 'utf-8');
 }
 
-// --- Индексация одного источника ---
+async function parseFile(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.pdf') return parsePdf(filePath);
+  if (ext === '.docx' || ext === '.doc' || ext === '.rtf') return parseDocx(filePath);
+  if (ext === '.txt') return parseTxt(filePath);
+  throw new Error(`Неподдерживаемый формат: ${ext}`);
+}
 
-async function indexSource({ scenario, sourceType, sourceTitle, sourceUrl, text }) {
-  console.log(`\n📄 Индексирую: ${sourceTitle} [${scenario}]`);
+// --- Проверка уже проиндексированных ---
 
-  const { error: deleteError } = await supabase
+async function getIndexedTitles(scenario) {
+  const { data, error } = await supabase
+    .from('knowledge_chunks')
+    .select('source_title')
+    .eq('scenario', scenario);
+
+  if (error) return new Set();
+  return new Set(data.map(r => r.source_title));
+}
+
+// --- Индексация одного файла ---
+
+async function indexSource({ scenario, filePath, sourceTitle }) {
+  const ext = path.extname(filePath).toLowerCase();
+  const sourceType = ext === '.pdf' ? 'pdf'
+    : (ext === '.txt') ? 'text'
+    : 'docx';
+
+  console.log(`\n📄 ${sourceTitle}`);
+  console.log(`   Формат: ${ext} | Сценарий: ${scenario}`);
+
+  let text = '';
+  try {
+    text = await parseFile(filePath);
+  } catch (err) {
+    console.error(`   ❌ Ошибка парсинга: ${err.message}`);
+    return false;
+  }
+
+  if (!text || text.trim().length < 100) {
+    console.warn(`   ⚠️  Слишком мало текста (${text.length} симв.) — пропускаю`);
+    return false;
+  }
+
+  console.log(`   Текст: ${text.length} символов`);
+
+  // Удаляем старые чанки если есть
+  await supabase
     .from('knowledge_chunks')
     .delete()
     .eq('source_title', sourceTitle)
     .eq('scenario', scenario);
-
-  if (deleteError) {
-    console.warn('   ⚠️  Ошибка удаления старых чанков:', deleteError.message);
-  }
 
   const chunks = splitIntoChunks(text);
   console.log(`   Чанков: ${chunks.length}`);
@@ -115,149 +153,99 @@ async function indexSource({ scenario, sourceType, sourceTitle, sourceUrl, text 
         scenario,
         source_type: sourceType,
         source_title: sourceTitle,
-        source_url: sourceUrl || null,
+        source_url: null,
         chunk_text: chunk,
         embedding,
       });
 
       if (error) {
-        console.error('   ❌ Ошибка вставки:', error.message);
+        console.error(`\n   ❌ Ошибка вставки: ${error.message}`);
       } else {
         indexed++;
-        process.stdout.write(`\r   Записано: ${indexed}/${chunks.length}`);
+        process.stdout.write(`\r   Записано: ${indexed}/${chunks.length}  `);
       }
     } catch (err) {
-      console.error('   ❌ Ошибка embedding:', err.message);
+      console.error(`\n   ❌ Embedding error: ${err.message}`);
     }
 
     await sleep(250);
   }
 
   console.log(`\n   ✅ Готово: ${indexed} чанков`);
+  return indexed > 0;
 }
 
-// ============================================================
-// КОНФИГ ИСТОЧНИКОВ
-// Добавляй сюда новые источники когда нужно переиндексировать
-// ============================================================
+// --- Сканирование папки ---
 
-const SOURCES = [
-  // ─── ПСИХОЛОГ ───────────────────────────────────────────
-  // Статьи из интернета:
-  // {
-  //   scenario: 'psychologist',
-  //   sourceType: 'article',
-  //   sourceTitle: 'Название статьи',
-  //   sourceUrl: 'https://example.com/article',
-  // },
+function scanFolder(folderPath) {
+  if (!fs.existsSync(folderPath)) return [];
 
-  // PDF книги:
-  // {
-  //   scenario: 'psychologist',
-  //   sourceType: 'pdf',
-  //   sourceTitle: 'Название книги',
-  //   filePath: path.join(__dirname, '../sources/psychologist/book.pdf'),
-  // },
+  return fs.readdirSync(folderPath)
+    .filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.pdf', '.docx', '.doc', '.rtf', '.txt'].includes(ext);
+    })
+    .map(file => ({
+      filePath: path.join(folderPath, file),
+      sourceTitle: path.basename(file, path.extname(file)), // имя файла без расширения
+    }));
+}
 
-  // DOCX файлы:
-  // {
-  //   scenario: 'psychologist',
-  //   sourceType: 'docx',
-  //   sourceTitle: 'Название документа',
-  //   filePath: path.join(__dirname, '../sources/psychologist/doc.docx'),
-  // },
-
-  // ─── СЕКСОЛОГ ───────────────────────────────────────────
-  // Статьи:
-  // {
-  //   scenario: 'sexologist',
-  //   sourceType: 'article',
-  //   sourceTitle: 'Название статьи по сексологии',
-  //   sourceUrl: 'https://example.com/sexology-article',
-  // },
-
-  // PDF книги:
-  // {
-  //   scenario: 'sexologist',
-  //   sourceType: 'pdf',
-  //   sourceTitle: 'Название книги по сексологии',
-  //   filePath: path.join(__dirname, '../sources/sexologist/book.pdf'),
-  // },
-
-  // Транскрипт видео (сначала транскрибируй через Whisper, сохрани как .txt):
-  // {
-  //   scenario: 'sexologist',
-  //   sourceType: 'video',
-  //   sourceTitle: 'Название тренинга',
-  //   filePath: path.join(__dirname, '../sources/sexologist/training-transcript.txt'),
-  // },
-
-  // ─── ТЕСТОВЫЙ ИСТОЧНИК (локальный файл) ─────────────────
-  {
-    scenario: 'psychologist',
-    sourceType: 'video', // тип 'video' читает .txt файл напрямую
-    sourceTitle: 'Тест: что такое тревога',
-    filePath: path.join(__dirname, '../sources/psychologist/test-trevoga.txt'),
-  },
-];
-
-// ============================================================
+// --- Главная функция ---
 
 async function main() {
   console.log('🚀 Запуск индексации...');
-  console.log(`📋 Источников для обработки: ${SOURCES.length}\n`);
+  if (FORCE_REINDEX) console.log('⚡ Режим: переиндексация всех файлов');
+  if (SCENARIO_FILTER) console.log(`🎯 Фильтр сценария: ${SCENARIO_FILTER}`);
+  console.log('');
 
-  let success = 0;
-  let failed = 0;
+  const scenarios = ['psychologist', 'sexologist'].filter(s =>
+    !SCENARIO_FILTER || s === SCENARIO_FILTER
+  );
 
-  for (const source of SOURCES) {
-    let text = '';
+  let totalSuccess = 0;
+  let totalFailed = 0;
+  let totalSkipped = 0;
 
-    try {
-      if (source.sourceType === 'article') {
-        if (!source.sourceUrl) throw new Error('Нет sourceUrl для статьи');
-        text = await parseUrl(source.sourceUrl);
-      } else if (source.sourceType === 'pdf') {
-        if (!source.filePath) throw new Error('Нет filePath для PDF');
-        text = await parsePdf(source.filePath);
-      } else if (source.sourceType === 'docx') {
-        if (!source.filePath) throw new Error('Нет filePath для DOCX');
-        text = await parseDocx(source.filePath);
-      } else if (source.sourceType === 'video') {
-        if (!source.filePath) throw new Error('Нет filePath для файла');
-        text = fs.readFileSync(source.filePath, 'utf-8');
-      } else {
-        throw new Error(`Неизвестный sourceType: ${source.sourceType}`);
-      }
+  for (const scenario of scenarios) {
+    const folderPath = path.join(SOURCES_DIR, scenario);
+    const files = scanFolder(folderPath);
 
-      if (!text || text.length < 100) {
-        console.warn(`⚠️  Слишком мало текста (${text.length} симв.) для: ${source.sourceTitle}`);
-        failed++;
+    console.log(`\n${'─'.repeat(50)}`);
+    console.log(`📁 Папка: sources/${scenario}/ — найдено файлов: ${files.length}`);
+    console.log(`${'─'.repeat(50)}`);
+
+    if (files.length === 0) {
+      console.log('   Пусто — пропускаю');
+      continue;
+    }
+
+    // Получаем уже проиндексированные (если не --force)
+    const indexedTitles = FORCE_REINDEX
+      ? new Set()
+      : await getIndexedTitles(scenario);
+
+    for (const { filePath, sourceTitle } of files) {
+      // Пропускаем уже проиндексированные
+      if (!FORCE_REINDEX && indexedTitles.has(sourceTitle)) {
+        console.log(`\n⏭️  Пропускаю (уже в базе): ${sourceTitle}`);
+        totalSkipped++;
         continue;
       }
 
-      console.log(`   Длина текста: ${text.length} символов`);
-
-      await indexSource({
-        scenario: source.scenario,
-        sourceType: source.sourceType,
-        sourceTitle: source.sourceTitle,
-        sourceUrl: source.sourceUrl,
-        text,
-      });
-
-      success++;
-    } catch (err) {
-      console.error(`❌ Ошибка с источником "${source.sourceTitle}":`, err.message);
-      failed++;
+      const ok = await indexSource({ scenario, filePath, sourceTitle });
+      if (ok) totalSuccess++;
+      else totalFailed++;
     }
   }
 
   console.log(`\n${'='.repeat(50)}`);
   console.log(`🎉 Индексация завершена!`);
-  console.log(`   ✅ Успешно: ${success}`);
-  console.log(`   ❌ Ошибок: ${failed}`);
+  console.log(`   ✅ Успешно:  ${totalSuccess}`);
+  console.log(`   ⏭️  Пропущено: ${totalSkipped} (уже в базе)`);
+  console.log(`   ❌ Ошибок:   ${totalFailed}`);
   console.log(`${'='.repeat(50)}`);
+  console.log(`\n💡 Подсказка: node scripts/indexer.js --force — переиндексировать всё`);
 }
 
 main();
