@@ -435,16 +435,16 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
 }
 
 const MUSIC_LIBRARY = [
-  { id:"789302", name:"Peaceful Nature", genre:"Ambient", mood:"спокойный", tags:["ambient","тревога","принятие"], url:"https://cdn.freesound.org/previews/789/789302_17549092-hq.mp3" },
-  { id:"797700", name:"Meditation Calm", genre:"Медитация", mood:"медитативный", tags:["ambient","страх","усталость"], url:"https://cdn.freesound.org/previews/797/797700_17549092-hq.mp3" },
-  { id:"795983", name:"Hypnotic Ambient", genre:"Ambient", mood:"гипнотический", tags:["ambient","рост","принятие"], url:"https://cdn.freesound.org/previews/795/795983_17549092-hq.mp3" },
-  { id:"712222", name:"For Meditation", genre:"Медитация", mood:"расслабляющий", tags:["piano","грусть","одиночество"], url:"https://cdn.freesound.org/previews/712/712222_14416977-hq.mp3" },
-  { id:"365659", name:"Dive Deep", genre:"Ambient", mood:"глубокий", tags:["ambient","отношения","принятие"], url:"https://cdn.freesound.org/previews/365/365659_5615960-hq.mp3" },
-  { id:"612095", name:"Calm Piano", genre:"Фортепиано", mood:"нежный", tags:["piano","грусть","одиночество"], url:"https://cdn.freesound.org/previews/612/612095_5674468-hq.mp3" },
-  { id:"728927", name:"Serene", genre:"Ambient", mood:"безмятежный", tags:["ambient","усталость","тревога"], url:"https://cdn.freesound.org/previews/728/728927_11861866-hq.mp3" },
-  { id:"741153", name:"Soft Ambient", genre:"Ambient", mood:"мягкий", tags:["ambient","рост","принятие"], url:"https://cdn.freesound.org/previews/741/741153_11861866-hq.mp3" },
-  { id:"798164", name:"Calm Background", genre:"Медитация", mood:"спокойный", tags:["ambient","страх","тревога"], url:"https://cdn.freesound.org/previews/798/798164_13819838-hq.mp3" },
-  { id:"105497", name:"Relaxation Music", genre:"Релакс", mood:"расслабляющий", tags:["piano","отношения","грусть"], url:"https://cdn.freesound.org/previews/105/105497_862210-hq.mp3" },
+  { id:"473545", name:"Медитация 1", genre:"Ambient", mood:"спокойный", tags:["ambient","тревога","принятие"], url:"https://cdn.freesound.org/previews/473/473545_9497060-lq.mp3" },
+  { id:"695879", name:"Медитация 2", genre:"Ambient", mood:"медитативный", tags:["ambient","усталость","страх"], url:"https://cdn.freesound.org/previews/695/695879_12516898-lq.mp3" },
+  { id:"328368", name:"Природа", genre:"Ambient", mood:"расслабляющий", tags:["ambient","принятие","рост"], url:"https://cdn.freesound.org/previews/328/328368_2305278-lq.mp3" },
+  { id:"197173", name:"Тишина", genre:"Ambient", mood:"тихий", tags:["ambient","одиночество","грусть"], url:"https://cdn.freesound.org/previews/197/197173_3664710-lq.mp3" },
+  { id:"718704", name:"Мягкий эмбиент", genre:"Ambient", mood:"мягкий", tags:["ambient","отношения","принятие"], url:"https://cdn.freesound.org/previews/718/718704_15412548-lq.mp3" },
+  { id:"740609", name:"Спокойствие", genre:"Ambient", mood:"безмятежный", tags:["ambient","тревога","усталость"], url:"https://cdn.freesound.org/previews/740/740609_5479102-lq.mp3" },
+  { id:"42933", name:"Флейта", genre:"Медитация", mood:"нежный", tags:["piano","грусть","одиночество"], url:"https://cdn.freesound.org/previews/42/42933_50371-lq.mp3" },
+  { id:"530217", name:"Атмосфера", genre:"Ambient", mood:"глубокий", tags:["ambient","рост","принятие"], url:"https://cdn.freesound.org/previews/530/530217_6628165-lq.mp3" },
+  { id:"786272", name:"Дзен", genre:"Медитация", mood:"дзен", tags:["ambient","страх","тревога"], url:"https://cdn.freesound.org/previews/786/786272_5479102-lq.mp3" },
+  { id:"789302", name:"Природа 2", genre:"Ambient", mood:"лесной", tags:["ambient","усталость","грусть"], url:"https://cdn.freesound.org/previews/789/789302_16936704-lq.mp3" },
 ];
 
 async function selectMusicTracks(text, count = 3) {
