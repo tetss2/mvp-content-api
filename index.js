@@ -192,15 +192,23 @@ async function publishToChannel(type, state) {
   }
 
   const text = state.lastFullAnswer || "";
-  const cleanText = text.replace(/[*_]/g, '').substring(0, 1024);
+  const cleanFull = text.replace(/[*_]/g, '');
+  const cleanCaption = cleanFull.length > 1024
+    ? cleanFull.substring(0, 1021) + "..."
+    : cleanFull;
 
   try {
     if (type === "text_photo" && state.lastImageUrl) {
-      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanText });
+      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanCaption });
+      if (cleanFull.length > 1024) {
+        await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
+      }
     } else if (type === "text_video" && state.lastVideoUrl) {
-      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanText });
+      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanCaption });
+      if (cleanFull.length > 1024) {
+        await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
+      }
     } else {
-      // text_only или fallback
       await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
     }
     return { ok: true };
