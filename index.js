@@ -193,15 +193,12 @@ async function publishToChannel(type, state) {
 
   const text = state.lastFullAnswer || "";
   const cleanFull = text.replace(/[*_]/g, '');
-  const cleanCaption = cleanFull.length > 1024
-    ? cleanFull.substring(0, 1021) + "..."
-    : cleanFull;
 
   try {
     if (type === "text_photo" && state.lastImageUrl) {
-      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanCaption });
+      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanFull });
     } else if (type === "text_video" && state.lastVideoUrl) {
-      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanCaption });
+      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanFull });
     } else {
       await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
     }
@@ -1045,12 +1042,12 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
     }
   }
 
-  const tokenLimits = { short: 280, normal: 560, long: 800 };
+  const tokenLimits = { short: 280, normal: 560, long: 450 };
   const maxTokens = tokenLimits[lengthMode] || 560;
   const lengthInstruction = {
     short: "Напиши КОРОТКИЙ пост: строго 2 абзаца, до 600 символов. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
     normal: "Напиши пост: строго 3-4 абзаца, до 1200 символов. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
-    long: "Напиши РАЗВЁРНУТЫЙ пост: 5-6 абзацев, до 1800 символов. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
+    long: "Напиши РАЗВЁРНУТЫЙ пост: 3-4 абзаца, СТРОГО до 1024 символов включая эмодзи. Текст должен быть смыслово завершён и не обрываться. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
   }[lengthMode] || "Напиши пост: 3-4 абзаца. ОБЯЗАТЕЛЬНО 10-15 эмодзи!";
 
   const systemPrompt = scenario === "sexologist"
