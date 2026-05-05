@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { tmpdir } from "os";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import ffmpegPath from "ffmpeg-static";
+const ffmpegPath = "ffmpeg";
 import ffmpeg from "fluent-ffmpeg";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
