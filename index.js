@@ -850,10 +850,10 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [
         [
+          { text: "⏭ Без музыки", callback_data: "music_skip" },
           { text: "✅ Выбрать", callback_data: `mc:${track.id}` },
           ...(currentIndex + 1 < total ? [{ text: "⏭ Следующий", callback_data: `mn:${currentIndex + 1}` }] : []),
         ],
-        [{ text: "⏭ Без музыки", callback_data: "music_skip" }],
       ]},
     }, { filename: `${track.id}.mp3`, contentType: "audio/mpeg" });
   } catch(err) {
@@ -864,10 +864,10 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
         chat_id: chatId, message_id: loadMsg.message_id, parse_mode: "Markdown",
         reply_markup: { inline_keyboard: [
           [
+            { text: "⏭ Без музыки", callback_data: "music_skip" },
             { text: "✅ Выбрать", callback_data: `mc:${track.id}` },
             ...(currentIndex + 1 < total ? [{ text: "⏭ Следующий", callback_data: `mn:${currentIndex + 1}` }] : []),
           ],
-          [{ text: "⏭ Без музыки", callback_data: "music_skip" }],
         ]},
       }
     ).catch(() => {});
