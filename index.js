@@ -978,6 +978,13 @@ bot.onText(/\/start/, async (msg) => {
   userState.set(chatId, {});
 
   // Проверяем есть ли демо-доступ
+  // Админ всегда получает полный доступ
+  if (chatId === ADMIN_TG_ID) {
+    userState.set(chatId, {});
+    await bot.sendMessage(chatId, `👋 Добро пожаловать, *Дмитрий*! 🔑 Полный доступ.\n\nНажмите кнопку чтобы начать 👇`, { parse_mode: "Markdown", reply_markup: START_KEYBOARD });
+    return;
+  }
+
   const demoUser = await getDemoUserByTgId(chatId);
   if (demoUser) {
     const access = await checkDemoAccess(chatId);
