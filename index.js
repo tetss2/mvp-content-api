@@ -1,4 +1,4 @@
-import TelegramBot from "node-telegram-bot-api";
+﻿import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { createRequire } from "module";
@@ -200,14 +200,8 @@ async function publishToChannel(type, state) {
   try {
     if (type === "text_photo" && state.lastImageUrl) {
       await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanCaption });
-      if (cleanFull.length > 1024) {
-        await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
-      }
     } else if (type === "text_video" && state.lastVideoUrl) {
       await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanCaption });
-      if (cleanFull.length > 1024) {
-        await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
-      }
     } else {
       await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
     }
@@ -543,14 +537,22 @@ async function selectMusicTracks(text, count = 3) {
 }
 
 async function downloadTrack(url) {
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      "Accept": "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.5",
-    },
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-  return Buffer.from(await res.arrayBuffer());
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "audio/mpeg,audio/webm,audio/ogg,audio/*;q=0.9,*/*;q=0.5",
+        "Referer": "https://mixkit.co/",
+      },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+    return Buffer.from(await res.arrayBuffer());
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function mixAudioWithMusic(voiceBuffer, musicUrl) {
@@ -560,7 +562,7 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
   const outputPath = join(tmp, `mixed_${Date.now()}.mp3`);
   try {
     await fs.writeFile(voicePath, voiceBuffer);
-    const musicBuffer = await downloadTrack(musicUrl);
+    const musicBuffer = await downloadTrack(musicUrl).catch(e => { throw new Error(`Загрузка трека: ${e.message}`); });
     await fs.writeFile(musicPath, musicBuffer);
     await new Promise((resolve, reject) => {
       ffmpeg()
@@ -1000,8 +1002,9 @@ async function processAudioWithTrack(chatId, trackId) {
     finalBuffer = await mixAudioWithMusic(voiceBuffer, track.url);
     await bot.editMessageText("✅ Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
   } catch(err) {
+    console.error("Ошибка микширования:", err.message);
     finalBuffer = voiceBuffer;
-    await bot.editMessageText("⚠️ Микширование не удалось.", { chat_id: chatId, message_id: statusMsg.message_id });
+    await bot.editMessageText(`⚠️ Микширование не удалось: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: statusMsg.message_id });
   }
   await bot.sendVoice(chatId, finalBuffer, {}, { filename: "voice_music.mp3", contentType: "audio/mpeg" });
   const uploadMsg = await bot.sendMessage(chatId, "🔄 Загружаю на сервер...");
@@ -1126,9 +1129,9 @@ async function sendGeneratedText(chatId, text, scenario) {
   await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
-      [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "✅ Текст готов", callback_data: "txt_ready" }],
+      [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
-      [{ text: "🔄 Новый запрос", callback_data: "new_topic" }],
+      [{ text: "✅ Текст готов", callback_data: "txt_ready" }],
     ]},
   });
 }
