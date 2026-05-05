@@ -434,48 +434,21 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   return url;
 }
 
-const MOOD_QUERIES = {
-  ambient:    "ambient meditation calm background",
-  piano:      "piano gentle soft instrumental",
-  тревога:    "anxiety tension dark suspense",
-  грусть:     "sad melancholy emotional slow",
-  одиночество:"lonely quiet minimal atmospheric",
-  отношения:  "romantic warm love tender",
-  рост:       "inspiring uplifting positive motivational",
-  усталость:  "tired slow calm drone",
-  принятие:   "peaceful acceptance calm serene",
-  страх:      "fear dark tense horror",
-};
-
-async function getFreesoundTracks(query, count = 3) {
-  if (!FREESOUND_API_KEY) { console.error("FREESOUND_API_KEY не задан"); return []; }
-  try {
-    const params = new URLSearchParams({ query, filter: "duration:[30 TO 300]", fields: "id,name,previews,tags", page_size: String(count * 4), token: FREESOUND_API_KEY });
-    const url = "https://freesound.org/apiv2/search/text/?" + params.toString();
-    console.log("Freesound query:", query);
-    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-    if (!res.ok) { const t = await res.text(); console.error("Freesound error:", res.status, t.substring(0,100)); return []; }
-    const data = await res.json();
-    console.log("Freesound results:", data.results?.length || 0);
-    const results = (data.results || []).filter(r => r.previews?.["preview-hq-mp3"] || r.previews?.["preview-lq-mp3"]);
-    if (!results.length) return [];
-    return shuffleArray(results).slice(0, count).map(r => ({ id: String(r.id), name: r.name.replace(/\.[^.]+$/,"").substring(0,30), url: r.previews["preview-hq-mp3"] || r.previews["preview-lq-mp3"], genre: "Ambient", mood: query, tags: [] }));
-  } catch(err) { console.error("getFreesoundTracks:", err.message); return []; }
-}
+const MUSIC_LIBRARY = [
+  { id:"789302", name:"Peaceful Nature", genre:"Ambient", mood:"спокойный", tags:["ambient","тревога","принятие"], url:"https://freesound.org/data/previews/789/789302_17549092-hq.mp3" },
+  { id:"797700", name:"Meditation Calm", genre:"Медитация", mood:"медитативный", tags:["ambient","страх","усталость"], url:"https://freesound.org/data/previews/797/797700_17549092-hq.mp3" },
+  { id:"795983", name:"Hypnotic Ambient", genre:"Ambient", mood:"гипнотический", tags:["ambient","рост","принятие"], url:"https://freesound.org/data/previews/795/795983_17549092-hq.mp3" },
+  { id:"712222", name:"For Meditation", genre:"Медитация", mood:"расслабляющий", tags:["piano","грусть","одиночество"], url:"https://freesound.org/data/previews/712/712222_14416977-hq.mp3" },
+  { id:"365659", name:"Dive Deep", genre:"Ambient", mood:"глубокий", tags:["ambient","отношения","принятие"], url:"https://freesound.org/data/previews/365/365659_5615960-hq.mp3" },
+  { id:"612095", name:"Calm Piano", genre:"Фортепиано", mood:"нежный", tags:["piano","грусть","одиночество"], url:"https://freesound.org/data/previews/612/612095_5674468-hq.mp3" },
+  { id:"728927", name:"Serene", genre:"Ambient", mood:"безмятежный", tags:["ambient","усталость","тревога"], url:"https://freesound.org/data/previews/728/728927_11861866-hq.mp3" },
+  { id:"741153", name:"Soft Ambient", genre:"Ambient", mood:"мягкий", tags:["ambient","рост","принятие"], url:"https://freesound.org/data/previews/741/741153_11861866-hq.mp3" },
+  { id:"798164", name:"Calm Background", genre:"Медитация", mood:"спокойный", tags:["ambient","страх","тревога"], url:"https://freesound.org/data/previews/798/798164_13819838-hq.mp3" },
+  { id:"105497", name:"Relaxation Music", genre:"Релакс", mood:"расслабляющий", tags:["piano","отношения","грусть"], url:"https://freesound.org/data/previews/105/105497_862210-hq.mp3" },
+];
 
 async function selectMusicTracks(text, count = 3) {
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: `Определи настроение текста. Текст:\n"${text.substring(0, 300)}"\n\nВыбери теги (через запятую): ambient, piano, тревога, грусть, одиночество, отношения, рост, усталость, принятие, страх\n\nТолько теги:` }],
-      temperature: 0.3, max_tokens: 50,
-    });
-    const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
-    const query = tags.map(t => MOOD_QUERIES[t]).filter(Boolean).join(' ') || 'calm ambient meditation';
-    return await getFreesoundTracks(query, count);
-  } catch(e) {
-    return await getFreesoundTracks('calm ambient meditation', count).catch(() => []);
-  }
+  return shuffleArray(MUSIC_LIBRARY).slice(0, count);
 }
 
 async function downloadTrack(url) {
@@ -1513,7 +1486,7 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.pendingVoiceBuffer = audioBuffer.toString('base64');
       s.pendingAudioCost = audioCost;
-      const tracks = state.suggestedTracks || await getFreesoundTracks('calm ambient meditation', 3).catch(() => []);
+      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
       s.previewTracks = tracks;
       userState.set(chatId, s);
       await sendTrackPreview(chatId, tracks, 0);
@@ -1579,7 +1552,7 @@ bot.on("callback_query", async (query) => {
       s.pendingAudioCost = 0;
       s.awaitingVoiceRecord = false;
       s.pendingVoices = [];
-      const tracks = state.suggestedTracks || await getFreesoundTracks('calm ambient meditation', 3).catch(() => []);
+      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
       s.previewTracks = tracks;
       userState.set(chatId, s);
       await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано!`);
