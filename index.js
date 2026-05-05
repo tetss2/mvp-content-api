@@ -452,6 +452,7 @@ async function getFreesoundTracks(query, count = 3) {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Freesound error: ${res.status}`);
   const data = await res.json();
+  console.log("Freesound response:", JSON.stringify(data).substring(0, 300));
   const results = data.results || [];
   console.log("Freesound:", results.length, "tracks for:", query);
   if (results.length === 0) return [];
