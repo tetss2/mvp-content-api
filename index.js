@@ -398,7 +398,7 @@ const MUSIC_LIBRARY = [
     genre: "Медитация",
     mood: "чистый, просветляющий",
     tags: ["ambient", "рост", "принятие", "страх"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-a-real-feeling-567.mp3",
+    url: "https://cdn.pixabay.com/audio/2023/11/13/audio_5d40a97cf8.mp3",
   },
   {
     id: "tender1",
@@ -406,7 +406,7 @@ const MUSIC_LIBRARY = [
     genre: "Cinematic",
     mood: "кинематографичный, эмоциональный",
     tags: ["piano", "грусть", "отношения", "усталость"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-life-is-a-dream-837.mp3",
+    url: "https://cdn.pixabay.com/audio/2023/08/22/audio_0c1c6a3e45.mp3",
   },
 ];
 
