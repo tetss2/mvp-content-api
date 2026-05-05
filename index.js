@@ -68,7 +68,6 @@ async function checkDemoAccess(chatId) {
 
   const now = new Date();
 
-  // Активация при первом использовании
   if (!user.activated_at) {
     const db = await loadDemoDB();
     const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -309,7 +308,16 @@ const MUSIC_LIBRARY = [
   { id: "crystal1", name: "Хрустальные звуки", genre: "Медитация", mood: "чистый, просветляющий", tags: ["ambient", "рост", "принятие", "страх"], url: "https://cdn.pixabay.com/download/audio/2021/10/25/audio_cca6d2b29e.mp3" },
 ];
 
-const QUICK_TOPICS = [
+// ─── ТЕМЫ ПО СЦЕНАРИЯМ ───────────────────────────────────────────────────────
+
+const QUICK_TOPICS_PSYCH = [
+  "тревога и страхи",
+  "отношения и любовь",
+  "выгорание и усталость",
+  "принятие себя",
+];
+
+const QUICK_TOPICS_SEX = [
   "либидо и как на него влиять",
   "оргазм: мифы и реальность",
   "сексуальные фантазии — норма или нет",
@@ -581,7 +589,7 @@ async function sendOnboarding(chatId, step = 1) {
     );
   } else if (step === 2) {
     await bot.sendMessage(chatId,
-      `💡 *Как это работает:*\n\n*1.* Напишите тему\n*2.* Психолог или Сексолог\n*3.* Длина и стиль\n*4.* Готовый текст\n*5.* Аудио, фото, видео\n*6.* Публикация ✅`,
+      `💡 *Как это работает:*\n\n*1.* Выберите сценарий: Психолог или Сексолог\n*2.* Выберите тему из списка или напишите свою\n*3.* Выберите длину и стиль\n*4.* Получите готовый текст\n*5.* Добавьте аудио, фото, видео\n*6.* Опубликуйте ✅`,
       {
         parse_mode: "Markdown",
         reply_markup: { inline_keyboard: [
@@ -595,19 +603,40 @@ async function sendOnboarding(chatId, step = 1) {
   }
 }
 
+// Стартовое меню — выбор сценария
 async function sendTopicMenu(chatId) {
   const state = userState.get(chatId) || {};
   const presets = state.presets || [];
   const keyboard = [
-    [{ text: "💊 Либидо", callback_data: "qt:0" }, { text: "🔥 Оргазм: мифы", callback_data: "qt:1" }],
-    [{ text: "💭 Сексуальные фантазии", callback_data: "qt:2" }, { text: "⚡ Боль во время секса", callback_data: "qt:3" }],
+    [
+      { text: "🧠 Психолог Динара", callback_data: "sc_psych" },
+      { text: "💜 Сексолог Динара", callback_data: "sc_sex" },
+    ],
     [{ text: "✏️ Своя тема", callback_data: "prompt_topic" }],
   ];
   if (presets.length > 0) {
     keyboard.push([{ text: "⭐ Мои пресеты", callback_data: "show_presets" }]);
   }
-  await bot.sendMessage(chatId, `🌟 *Выберите тему или напишите свою:*`, {
+  await bot.sendMessage(chatId, `🌟 *С чего начнём?*\n\nВыберите сценарий:`, {
     parse_mode: "Markdown",
+    reply_markup: { inline_keyboard: keyboard },
+  });
+}
+
+// Меню тем для конкретного сценария
+async function sendTopicsForScenario(chatId, scenario) {
+  const topics = scenario === "sexologist" ? QUICK_TOPICS_SEX : QUICK_TOPICS_PSYCH;
+  const prefix = scenario === "sexologist" ? "qs" : "qp";
+  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог Динара" : "🧠 Психолог Динара";
+
+  const keyboard = [
+    [{ text: topics[0], callback_data: `${prefix}:0` }, { text: topics[1], callback_data: `${prefix}:1` }],
+    [{ text: topics[2], callback_data: `${prefix}:2` }, { text: topics[3], callback_data: `${prefix}:3` }],
+    [{ text: "✏️ Своя тема", callback_data: `prompt_topic_sc:${scenario}` }],
+    [{ text: "← Назад", callback_data: "back_to_topics" }],
+  ];
+
+  await bot.sendMessage(chatId, `${scenarioLabel}\n\nВыберите тему или напишите свою:`, {
     reply_markup: { inline_keyboard: keyboard },
   });
 }
@@ -628,17 +657,17 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу:* тема → сценарий → длина → стиль → текст → аудио → фото → видео\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу:* сценарий → тема → длина → стиль → текст → аудио → фото → видео\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
-        { text: "📝 Написать тему", callback_data: "prompt_topic" },
-        { text: "🔄 Начать заново", callback_data: "onboard_1" },
+        { text: "🔄 Начать заново", callback_data: "back_to_topics" },
       ]]},
     }
   );
 }
 
+// Выбор сценария когда пользователь написал тему вручную без выбора сценария
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
@@ -646,8 +675,8 @@ async function sendScenarioChoice(chatId, topic) {
   await bot.sendMessage(chatId, `📝 Тема: *${topic}*\n\nКто будет отвечать?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [[
-      { text: "🧠 Психолог Динара", callback_data: "sc_psych" },
-      { text: "💜 Сексолог Динара", callback_data: "sc_sex" },
+      { text: "🧠 Психолог Динара", callback_data: "sc_psych_t" },
+      { text: "💜 Сексолог Динара", callback_data: "sc_sex_t" },
     ]]},
   });
 }
@@ -961,24 +990,19 @@ bot.onText(/\/start/, async (msg) => {
   const text = msg.text || "";
   const inviteCode = text.replace("/start", "").trim();
 
-  // Если пришёл с инвайт-кодом — проверяем и привязываем
   if (inviteCode) {
     const db = await loadDemoDB();
     const user = Object.values(db.users).find(u => u.invite_code === inviteCode);
     if (user) {
       if (user.tg_id !== chatId) {
-        // Код уже использован другим человеком
         await bot.sendMessage(chatId, "🔐 Этот инвайт-код уже использован. Обратитесь к @tetss2 для получения нового доступа.");
         return;
       }
-      // Уже этот же пользователь — просто пускаем
     }
   }
 
   userState.set(chatId, {});
 
-  // Проверяем есть ли демо-доступ
-  // Админ всегда получает полный доступ
   if (chatId === ADMIN_TG_ID) {
     userState.set(chatId, {});
     await bot.sendMessage(chatId, `👋 Добро пожаловать, *Дмитрий*! 🔑 Полный доступ.\n\nНажмите кнопку чтобы начать 👇`, { parse_mode: "Markdown", reply_markup: START_KEYBOARD });
@@ -1022,7 +1046,6 @@ bot.on("message", async (msg) => {
     if (msg.text && msg.text.startsWith('/')) return;
 
     if (msg.text === "\uD83D\uDE80 Старт") {
-      // Проверяем доступ перед стартом
       const access = await checkDemoAccess(chatId);
       if (!access.allowed) {
         if (access.reason === "expired") { await handleExpired(chatId, access.user); }
@@ -1107,6 +1130,16 @@ bot.on("message", async (msg) => {
       return;
     }
 
+    // Если сценарий уже выбран через prompt_topic_sc — сохраняем тему и идём к длине
+    if (state.pendingScenario && !state.pendingTopic) {
+      const s = userState.get(chatId) || {};
+      s.pendingTopic = text;
+      userState.set(chatId, s);
+      await sendLengthChoice(chatId, state.pendingScenario);
+      return;
+    }
+
+    // Пользователь написал тему без выбора сценария — спрашиваем сценарий
     console.log("New topic:", text);
     await sendScenarioChoice(chatId, text);
 
@@ -1126,7 +1159,6 @@ bot.on("callback_query", async (query) => {
   try {
     const state = userState.get(chatId) || {};
 
-    // Обработка запросов на увеличение лимита / продление
     if (data.startsWith("req_limit_")) {
       const limitType = data.replace("req_limit_", "");
       const user = await getDemoUserByTgId(chatId);
@@ -1170,18 +1202,65 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data === "show_help") { await sendHelp(chatId); return; }
-    if (data === "back_to_topics") { await sendTopicMenu(chatId); return; }
+    if (data === "back_to_topics") {
+      // Сбрасываем выбранный сценарий при возврате назад
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = null;
+      s.pendingTopic = null;
+      userState.set(chatId, s);
+      await sendTopicMenu(chatId);
+      return;
+    }
 
+    // Своя тема без сценария — предлагаем выбрать сценарий
     if (data === "prompt_topic") {
+      const s = userState.get(chatId) || {};
+      if (s.pendingScenario) {
+        await bot.sendMessage(chatId, "📝 Напишите тему:\n\nНапример: _тревога_, _выгорание_, _одиночество_", { parse_mode: "Markdown" });
+      } else {
+        await bot.sendMessage(chatId, "📝 Сначала выберите сценарий:", {
+          reply_markup: { inline_keyboard: [[
+            { text: "🧠 Психолог", callback_data: "sc_psych" },
+            { text: "💜 Сексолог", callback_data: "sc_sex" },
+          ]]},
+        });
+      }
+      return;
+    }
+
+    // Своя тема с уже выбранным сценарием
+    if (data.startsWith("prompt_topic_sc:")) {
+      const scenario = data.replace("prompt_topic_sc:", "");
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = scenario;
+      userState.set(chatId, s);
       await bot.sendMessage(chatId, "📝 Напишите тему:\n\nНапример: _тревога_, _выгорание_, _одиночество_", { parse_mode: "Markdown" });
       return;
     }
 
-    if (data.startsWith("qt:")) {
-      const idx = parseInt(data.replace("qt:", ""));
-      const topic = QUICK_TOPICS[idx];
+    // Быстрые темы психолога — qp:N
+    if (data.startsWith("qp:")) {
+      const idx = parseInt(data.replace("qp:", ""));
+      const topic = QUICK_TOPICS_PSYCH[idx];
       if (!topic) return;
-      await sendScenarioChoice(chatId, topic);
+      const s = userState.get(chatId) || {};
+      s.pendingTopic = topic;
+      s.pendingScenario = "psychologist";
+      userState.set(chatId, s);
+      await sendLengthChoice(chatId, "psychologist");
+      return;
+    }
+
+    // Быстрые темы сексолога — qs:N
+    if (data.startsWith("qs:")) {
+      const idx = parseInt(data.replace("qs:", ""));
+      const topic = QUICK_TOPICS_SEX[idx];
+      if (!topic) return;
+      const s = userState.get(chatId) || {};
+      s.pendingTopic = topic;
+      s.pendingScenario = "sexologist";
+      userState.set(chatId, s);
+      await sendLengthChoice(chatId, "sexologist");
       return;
     }
 
@@ -1218,8 +1297,31 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    if (data === "sc_psych" || data === "sc_sex") {
-      await sendLengthChoice(chatId, data === "sc_sex" ? "sexologist" : "psychologist");
+    // Выбор сценария из стартового меню → показываем темы этого сценария
+    if (data === "sc_psych") {
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = "psychologist";
+      s.pendingTopic = null;
+      userState.set(chatId, s);
+      await sendTopicsForScenario(chatId, "psychologist");
+      return;
+    }
+    if (data === "sc_sex") {
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = "sexologist";
+      s.pendingTopic = null;
+      userState.set(chatId, s);
+      await sendTopicsForScenario(chatId, "sexologist");
+      return;
+    }
+
+    // Выбор сценария после ручного ввода темы → сразу к длине
+    if (data === "sc_psych_t") {
+      await sendLengthChoice(chatId, "psychologist");
+      return;
+    }
+    if (data === "sc_sex_t") {
+      await sendLengthChoice(chatId, "sexologist");
       return;
     }
 
@@ -1271,7 +1373,6 @@ bot.on("callback_query", async (query) => {
     if (data.startsWith("pub:")) { await showFinalPost(chatId, data.replace("pub:", "")); return; }
 
     if (data.startsWith("rp:")) {
-      // Проверяем лимит фото
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -1401,7 +1502,6 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("mv:")) {
-      // Проверяем лимит видео
       const videoCheck = await checkLimit(chatId, "video");
       if (!videoCheck.ok) {
         if (videoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -1422,7 +1522,6 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data === "photo_topic") {
-      // Проверяем лимит фото
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -1464,7 +1563,6 @@ bot.on("callback_query", async (query) => {
 // ─── ГЕНЕРАЦИЯ ────────────────────────────────────────────────────────────────
 
 async function runGeneration(chatId, scenario, lengthMode, styleKey) {
-  // Проверяем лимит текста
   const textCheck = await checkLimit(chatId, "text");
   if (!textCheck.ok) {
     if (textCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -1487,7 +1585,6 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
   const fullAnswer = await generatePostText(topic, scenario, lengthMode, styleKey);
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
-  // Увеличиваем счётчик текста
   await incrementLimit(chatId, "text", scenario, lengthMode);
 
   const s = userState.get(chatId) || {};
