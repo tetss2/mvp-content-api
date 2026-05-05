@@ -1113,9 +1113,9 @@ async function sendGeneratedText(chatId, text, scenario) {
   await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
-      [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "✅ Текст готов", callback_data: "txt_ready" }],
-      [{ text: "🔄 Новый запрос", callback_data: "new_topic" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
-      [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }],
+      [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "✅ Текст готов", callback_data: "txt_ready" }],
+      [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
+      [{ text: "🔄 Новый запрос", callback_data: "new_topic" }],
     ]},
   });
 }
