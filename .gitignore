@@ -1,0 +1,8 @@
+node_modules/
+package-lock.json
+sources/sexologist/*.pdf
+sources/sexologist/*.docx
+*.pdf
+*.docx
+.env
+.env.local
