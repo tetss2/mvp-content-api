@@ -62,6 +62,7 @@ async function getDemoUserByTgId(tgId) {
 }
 
 async function checkDemoAccess(chatId) {
+  if (chatId === ADMIN_TG_ID) return { allowed: true, user: null };
   const user = await getDemoUserByTgId(chatId);
   if (!user) return { allowed: false, reason: "not_registered" };
 
