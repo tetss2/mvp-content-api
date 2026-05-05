@@ -453,6 +453,8 @@ async function getFreesoundTracks(query, count = 3) {
   if (!res.ok) throw new Error(`Freesound error: ${res.status}`);
   const data = await res.json();
   const results = data.results || [];
+  console.log("Freesound:", results.length, "tracks for:", query);
+  if (results.length === 0) return [];
   return shuffleArray(results).slice(0, count).map(r => ({
     id: String(r.id),
     name: r.name,
