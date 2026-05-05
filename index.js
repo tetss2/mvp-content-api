@@ -27,18 +27,14 @@ const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
-// Supabase клиент (опционально — если не настроен, падаем на старый поиск)
 const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
 console.log("Bot started in polling mode");
-console.log("ENV CHECK:");
 console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
 console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
 console.log(" SUPABASE:", !!supabase);
-console.log(" FISH_AUDIO_API_KEY:", !!FISH_AUDIO_API_KEY);
-console.log(" FALAI_KEY:", !!FAL_KEY);
 
 // --- ПРОМПТЫ ---
 
@@ -72,66 +68,59 @@ const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, пра
 — Иногда начинаешь с обращения: "Дорогие," / "Друзья,"
 — Риторические вопросы вовлекают читателя в диалог с собой
 — Используешь метафоры: "мы едим и перевариваем эту жизнь", "закопанные радиоактивные отходы", "смотримся в разные зеркала"
-— Можешь задать вопрос в середине и попросить: "не читайте дальше, ответьте себе сначала"
 
-ЭМОДЗИ:
-Используй 3-5 штук, по смыслу, не в каждом абзаце.
-Предпочтительные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶
+ЭМОДЗИ: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶 — 3-5 штук по смыслу.
 
 СТРУКТУРА:
-1. Принятие темы / эмпатия — покажи что слышишь
+1. Принятие темы / эмпатия
 2. Главная мысль — инсайт, метафора, разворот
 3. Личный угол или практическая деталь
 4. Мягкое завершение или вопрос читателю
 
-ЗАПРЕЩЕНО:
-— Нумерованные списки и списки с дефисами
-— Заголовки и подзаголовки
-— Слова: "безусловно", "следует отметить", "таким образом", "данный"
-— Повторять одну мысль дважды
+ЗАПРЕЩЕНО: нумерованные списки, заголовки, слова "безусловно/следует отметить/таким образом/данный", повторы мысли.
 
-ОФОРМЛЕНИЕ для Telegram Markdown:
-— *жирный* для одной ключевой фразы во 2-м абзаце
-— Эмодзи прямо в тексте где уместно`;
+ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы во 2-м абзаце. Эмодзи прямо в тексте.`;
 
-const SEXOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, психолог-сексолог. Пишешь о сексуальности научно, но живым человеческим языком — без стыда, без табу, с теплом и уважением к читателю.
+// Стили подачи для сексолога
+const SEXOLOGIST_STYLE_INSTRUCTIONS = {
+  scientific: `СТИЛЬ ПОДАЧИ: Научный. Опирайся на конкретные исследования, термины, статистику. Академичный но доступный язык. Ссылайся на науку: "исследования показывают", "с точки зрения физиологии".`,
+  friendly: `СТИЛЬ ПОДАЧИ: Простой разговорный. Пиши как будто объясняешь подруге — просто, без терминов, с примерами из жизни. Тепло и понятно.`,
+  girlfriends: `СТИЛЬ ПОДАЧИ: Разговор подружек. Очень неформально, с юмором, как будто болтаешь с близкой подругой за кофе. Можно лёгкие шутки, разговорные выражения. Никакой официальности.`,
+  educational: `СТИЛЬ ПОДАЧИ: Просветительский. Как интересная лекция — увлекательно, с историями, фактами, примерами. Читатель должен узнать что-то новое и удивиться.`,
+  auto: `СТИЛЬ ПОДАЧИ: Выбери сам наиболее подходящий стиль для данной темы — между научным и разговорным.`,
+};
+
+const SEXOLOGIST_SYSTEM_PROMPT_BASE = `Ты — Динара Качаева, психолог-сексолог. Пишешь о сексуальности научно, но живым человеческим языком — без стыда, без табу, с теплом и уважением к читателю.
 
 КТО ТЫ:
-Ты специалист по сексологии. Опираешься на научные знания, но говоришь как живой человек. Нормализуешь тему, снимаешь стыд и тревогу. Создаёшь безопасное пространство для разговора о сексуальности.
+Ты специалист по сексологии. Опираешься на научные знания. Нормализуешь тему, снимаешь стыд и тревогу. Создаёшь безопасное пространство для разговора о сексуальности.
 
-СТИЛЬ:
+БАЗОВЫЙ СТИЛЬ:
 — Профессиональный, но тёплый и человечный
 — Без стыда и осуждения — любая тема нормальна
-— Научные факты подаёшь через живые примеры
 — Короткие абзацы, разделённые пустой строкой
-— Многоточия для паузы и раздумья…
+— Многоточия для паузы…
 — Длинное тире — вместо короткого
 — Иногда начинаешь с "Дорогие," / "Друзья,"
-— Риторические вопросы вовлекают читателя
 
-ЭМОДЗИ:
-Используй 2-4 штуки, сдержанно и по смыслу.
-Предпочтительные: 💙 🌿 🌟 💫 🙏 ✨ 🫶 💜 🔬
+ЭМОДЗИ: 💙 🌿 🌟 💫 🙏 ✨ 🫶 💜 🔬 — 2-4 штуки сдержанно.
 
 СТРУКТУРА:
 1. Принятие темы — нормализация, снятие стыда
-2. Научный контекст — что говорит наука (из базы знаний)
-3. Практический взгляд — как это работает в жизни
+2. Научный контекст из базы знаний
+3. Практический взгляд — как работает в жизни
 4. Мягкое завершение или вопрос читателю
 
-ЗАПРЕЩЕНО:
-— Нумерованные списки и списки с дефисами
-— Заголовки и подзаголовки
-— Осуждение или морализаторство
-— Слова: "безусловно", "следует отметить", "таким образом"
-— Повторять одну мысль дважды
-— Явно эротический или порнографический контент
+ЗАПРЕЩЕНО: нумерованные списки, заголовки, осуждение, слова "безусловно/следует отметить/таким образом", повторы, явно эротический контент.
 
-ВАЖНО: Отвечай строго на основе предоставленного контекста из базы знаний по сексологии. Не выдумывай факты.
+ВАЖНО: Отвечай строго на основе предоставленного контекста из базы знаний. Не выдумывай факты.
 
-ОФОРМЛЕНИЕ для Telegram Markdown:
-— *жирный* для одной ключевой фразы во 2-м абзаце
-— Эмодзи прямо в тексте где уместно`;
+ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы во 2-м абзаце. Эмодзи прямо в тексте.`;
+
+function buildSexologistPrompt(styleKey = "auto") {
+  const styleInstruction = SEXOLOGIST_STYLE_INSTRUCTIONS[styleKey] || SEXOLOGIST_STYLE_INSTRUCTIONS.auto;
+  return `${SEXOLOGIST_SYSTEM_PROMPT_BASE}\n\n${styleInstruction}`;
+}
 
 // --- БИБЛИОТЕКА МУЗЫКИ ---
 const MUSIC_LIBRARY = [
@@ -147,12 +136,19 @@ const MUSIC_LIBRARY = [
   { id: "folk1", name: "Creative Minds", genre: "Folk / Acoustic", mood: "творческий, живой", tags: ["guitar", "отношения", "рост"], url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3" },
 ];
 
+// Темы для быстрого старта (сексология)
+const SEXOLOGY_QUICK_TOPICS = [
+  "либидо и как на него влиять",
+  "оргазм: мифы и реальность",
+  "сексуальные фантазии — норма или нет",
+  "боль во время секса — что делать",
+];
+
 const START_KEYBOARD = {
   keyboard: [[{ text: "\uD83D\uDE80 Старт" }]],
   resize_keyboard: true,
   one_time_keyboard: true,
 };
-
 const REMOVE_KEYBOARD = { remove_keyboard: true };
 
 function shuffleArray(arr) {
@@ -168,7 +164,6 @@ const userState = new Map();
 
 // --- ПОИСК ---
 
-// Старый поиск (fallback для психолога если нет Supabase)
 function scoreArticle(article, query) {
   const text = (article.title + " " + article.content).toLowerCase();
   const q = query.toLowerCase();
@@ -177,29 +172,20 @@ function scoreArticle(article, query) {
   return score;
 }
 
-// Векторный поиск через Supabase
 async function vectorSearch(query, scenario, limit = 5) {
   if (!supabase) return null;
   try {
-    // Получаем embedding запроса
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-3-small",
       input: query.slice(0, 8000),
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
-
-    // Ищем похожие чанки
     const { data, error } = await supabase.rpc("match_chunks", {
       query_embedding: queryEmbedding,
       match_scenario: scenario,
       match_count: limit,
     });
-
-    if (error) {
-      console.error("Vector search error:", error.message);
-      return null;
-    }
-
+    if (error) { console.error("Vector search error:", error.message); return null; }
     console.log(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
     return data;
   } catch (err) {
@@ -233,9 +219,7 @@ function writeMsgpack(val) {
 }
 
 async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
-  if (!CLOUDINARY_CLOUD || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    throw new Error("Cloudinary не настроен.");
-  }
+  if (!CLOUDINARY_CLOUD || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) throw new Error("Cloudinary не настроен.");
   const timestamp = Math.floor(Date.now() / 1000);
   const publicId = `audio_${timestamp}`;
   const crypto = await import('crypto');
@@ -248,14 +232,11 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   formData.append("timestamp", timestamp.toString());
   formData.append("api_key", CLOUDINARY_API_KEY);
   formData.append("signature", signature);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, {
-    method: "POST", body: formData,
-  });
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, { method: "POST", body: formData });
   const resText = await res.text();
   if (!res.ok) throw new Error(`Cloudinary error: ${resText}`);
   const url = JSON.parse(resText).secure_url;
   if (!url) throw new Error("Cloudinary: no URL");
-  console.log("Audio uploaded to Cloudinary:", url);
   return url;
 }
 
@@ -263,7 +244,7 @@ async function selectMusicTracks(text, count = 3) {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: `Определи настроение текста для подбора фоновой музыки. Текст:\n"${text.substring(0, 300)}"\n\nВыбери подходящие теги из списка (только из этого списка, через запятую):\nlofi, ambient, piano, guitar, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nВерни только теги, без пояснений. Пример: lofi,ambient,тревога` }],
+      messages: [{ role: "user", content: `Определи настроение текста для подбора фоновой музыки. Текст:\n"${text.substring(0, 300)}"\n\nВыбери подходящие теги из списка (только из этого списка, через запятую):\nlofi, ambient, piano, guitar, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nВерни только теги, без пояснений.` }],
       temperature: 0.3, max_tokens: 50,
     });
     const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
@@ -278,14 +259,13 @@ async function selectMusicTracks(text, count = 3) {
 async function downloadTrack(url) {
   const res = await fetch(url, {
     headers: {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       "Referer": "https://www.bensound.com/",
       "Accept": "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.5",
     },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
-  const buffer = Buffer.from(await res.arrayBuffer());
-  return buffer;
+  return Buffer.from(await res.arrayBuffer());
 }
 
 async function mixAudioWithMusic(voiceBuffer, musicUrl) {
@@ -310,8 +290,7 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
         .output(outputPath)
         .on('end', resolve).on('error', reject).run();
     });
-    const mixedBuffer = await fs.readFile(outputPath);
-    return mixedBuffer;
+    return await fs.readFile(outputPath);
   } finally {
     await fs.unlink(voicePath).catch(() => {});
     await fs.unlink(musicPath).catch(() => {});
@@ -390,10 +369,7 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     throw new Error(`Aurora JSON error: ${submitText}`);
   }
   const { request_id, status_url, response_url } = submitData;
-  if (!request_id) {
-    await bot.editMessageText(`Aurora не вернула request_id`, { chat_id: chatId, message_id: msgId });
-    throw new Error("Aurora: no request_id");
-  }
+  if (!request_id) { await bot.editMessageText(`Aurora не вернула request_id`, { chat_id: chatId, message_id: msgId }); throw new Error("Aurora: no request_id"); }
   await bot.editMessageText("\u2699\uFE0F Шаг 2/3 — Aurora обрабатывает видео...\n\u23F1 Обычно 2-4 минуты", { chat_id: chatId, message_id: msgId });
   const pollUrl = status_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}/status`;
   const resultUrl = response_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
@@ -411,12 +387,10 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     if (status.status === "COMPLETED") {
       await bot.editMessageText("\u2705 Шаг 3/3 — Видео готово!", { chat_id: chatId, message_id: msgId });
       const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
-      const resultText = await resultRes.text();
-      const result = JSON.parse(resultText);
+      const result = JSON.parse(await resultRes.text());
       const videoUrl = result.video?.url || result.data?.video?.url || result.output?.video_url;
-      if (!videoUrl) throw new Error(`Aurora: no video URL: ${resultText.substring(0, 200)}`);
-      let videoCost = result.cost ?? result.data?.cost ?? 1.47;
-      return { videoUrl, cost: videoCost };
+      if (!videoUrl) throw new Error(`Aurora: no video URL`);
+      return { videoUrl, cost: result.cost ?? result.data?.cost ?? 1.47 };
     }
     if (status.status === "FAILED") {
       const errMsg = JSON.stringify(status).substring(0, 300);
@@ -428,67 +402,88 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   throw new Error("Aurora timeout");
 }
 
-// --- UI ФУНКЦИИ ---
+// ─── UI ФУНКЦИИ ──────────────────────────────────────────────────────────────
 
+// ПРАВКА 1+2: онбординг с кнопками "Пропустить" и "Больше не показывать"
 async function sendOnboarding(chatId, step = 1) {
+  const skipRow = [
+    { text: "⏭ Пропустить", callback_data: "skip_onboarding" },
+    { text: "🚫 Больше не показывать", callback_data: "disable_onboarding" },
+  ];
+
   if (step === 1) {
     await bot.sendMessage(chatId,
-      `\u{1F331} *Привет! Я — контент-помощник Динары Качаевой*\n\nЯ помогаю создавать профессиональные посты для Instagram и Telegram в стиле психолога.\n\n*Что я умею:*\n\u2728 Генерирую текст в живом стиле психолога\n\uD83C\uDF99 Создаю аудио голосом Динары\n\uD83C\uDFB5 Подбираю фоновую музыку по настроению\n\uD83D\uDDBC Генерирую фото с ИИ\n\uD83C\uDFAC Создаю короткое видео (talking head)\n\uD83D\uDCE4 Готовлю пост к публикации`,
+      `\u{1F331} *Привет! Я — контент-помощник Динары Качаевой*\n\nЯ помогаю создавать профессиональные посты для Instagram и Telegram.\n\n*Что я умею:*\n✨ Генерирую текст в живом стиле психолога\n🎙 Создаю аудио голосом Динары\n🎵 Подбираю фоновую музыку по настроению\n🖼 Генерирую фото с ИИ\n🎬 Создаю короткое видео\n📤 Готовлю пост к публикации`,
       {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [[
-            { text: "\u27A1\uFE0F Как это работает?", callback_data: "onboard_step2" },
-          ]],
+          inline_keyboard: [
+            [{ text: "➡️ Как это работает?", callback_data: "onboard_step2" }],
+            skipRow,
+          ],
         },
       }
     );
   } else if (step === 2) {
     await bot.sendMessage(chatId,
-      `\uD83D\uDCA1 *Как это работает:*\n\n*1.* Напишите тему поста — любым словом или фразой\n_Например: "тревога", "страх одиночества", "выгорание"_\n\n*2.* Выберите сценарий: Психолог или Сексолог\n\n*3.* Я сгенерирую текст в стиле Динары\n\n*4.* Выберите голос и музыку для аудио\n\n*5.* Сгенерируйте фото или видео\n\n*6.* Опубликуйте готовый пост \u2705`,
+      `💡 *Как это работает:*\n\n*1.* Напишите тему поста\n*2.* Выберите сценарий: Психолог или Сексолог\n*3.* Выберите длину и стиль\n*4.* Получите готовый текст\n*5.* Добавьте голос, музыку, фото, видео\n*6.* Опубликуйте ✅`,
       {
         parse_mode: "Markdown",
         reply_markup: {
-          inline_keyboard: [[
-            { text: "\u2190 Назад", callback_data: "onboard_step1" },
-            { text: "\u27A1\uFE0F Попробовать", callback_data: "onboard_step3" },
-          ]],
+          inline_keyboard: [
+            [
+              { text: "← Назад", callback_data: "onboard_step1" },
+              { text: "➡️ Попробовать", callback_data: "onboard_step3" },
+            ],
+            skipRow,
+          ],
         },
       }
     );
   } else if (step === 3) {
-    await bot.sendMessage(chatId,
-      `\uD83C\uDF1F *Готово! Давайте начнём*\n\nПросто напишите тему — и я создам пост.\n\n*Примеры тем:*\n\u2022 страх одиночества\n\u2022 как справиться с тревогой\n\u2022 отношения с собой\n\u2022 выгорание на работе\n\u2022 принятие себя\n\nНапишите свою тему прямо сейчас \u{1F447}`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: [[
-            { text: "\u2190 Назад", callback_data: "onboard_step2" },
-            { text: "\u2139\uFE0F Помощь", callback_data: "show_help" },
-          ]],
-        },
-      }
-    );
+    await sendTopicMenu(chatId);
   }
+}
+
+// ПРАВКА 3: меню с темами вместо пустого поля
+async function sendTopicMenu(chatId) {
+  await bot.sendMessage(chatId,
+    `🌟 *Готово! Выберите тему или напишите свою:*`,
+    {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "💊 Либидо и как на него влиять", callback_data: "quick_topic:либидо и как на него влиять" },
+            { text: "🔥 Оргазм: мифы и реальность", callback_data: "quick_topic:оргазм мифы и реальность" },
+          ],
+          [
+            { text: "💭 Сексуальные фантазии", callback_data: "quick_topic:сексуальные фантазии норма или нет" },
+            { text: "⚡ Боль во время секса", callback_data: "quick_topic:боль во время секса что делать" },
+          ],
+          [{ text: "✏️ Своя тема", callback_data: "prompt_topic" }],
+        ],
+      },
+    }
+  );
 }
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `\u2139\uFE0F *Справка*\n\n*Как начать:*\nПросто напишите тему поста — слово или фразу\n\n*Что происходит дальше:*\n\uD83D\uDCDD Тема → выбор сценария → длина → текст → аудио → фото → видео → публикация\n\n*Вопросы?* Напишите @tetss2`,
+    `ℹ️ *Справка*\n\n*Как начать:*\nНапишите тему поста — слово или фразу\n\n*Флоу:*\nТема → сценарий → длина → стиль → текст → аудио → фото → видео → публикация\n\n*Вопросы?* Напишите @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [[
-          { text: "\uD83D\uDCDD Написать тему", callback_data: "prompt_topic" },
-          { text: "\uD83D\uDD04 Начать заново", callback_data: "onboard_step1" },
+          { text: "📝 Написать тему", callback_data: "prompt_topic" },
+          { text: "🔄 Начать заново", callback_data: "onboard_step1" },
         ]],
       },
     }
   );
 }
 
-// ─── НОВАЯ ФУНКЦИЯ: выбор сценария ───────────────────────────────────────────
-
+// Выбор сценария
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
@@ -505,6 +500,7 @@ async function sendScenarioChoice(chatId, topic) {
   });
 }
 
+// Выбор длины
 async function sendLengthChoice(chatId, scenario) {
   const state = userState.get(chatId) || {};
   state.pendingScenario = scenario;
@@ -523,38 +519,58 @@ async function sendLengthChoice(chatId, scenario) {
   });
 }
 
+// ПРАВКА 5: выбор стиля (только для сексолога)
+async function sendStyleChoice(chatId) {
+  await bot.sendMessage(chatId, `🎨 *Стиль подачи текста:*`, {
+    parse_mode: "Markdown",
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "🔬 Научный", callback_data: "style_scientific" },
+          { text: "💬 Простой", callback_data: "style_friendly" },
+        ],
+        [
+          { text: "👯 Разговор подружек", callback_data: "style_girlfriends" },
+          { text: "📚 Просветительский", callback_data: "style_educational" },
+        ],
+        [{ text: "✨ Авто (бот выберет)", callback_data: "style_auto" }],
+      ],
+    },
+  });
+}
+
 async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
   const track = tracks[currentIndex];
   const total = tracks.length;
-  const loadMsg = await bot.sendMessage(chatId, `\uD83C\uDFB5 Загружаю трек ${currentIndex + 1} из ${total}...`);
+  const loadMsg = await bot.sendMessage(chatId, `🎵 Загружаю трек ${currentIndex + 1} из ${total}...`);
   try {
     const trackBuffer = await downloadTrack(track.url);
     await bot.deleteMessage(chatId, loadMsg.message_id).catch(() => {});
     await bot.sendAudio(chatId, trackBuffer, {
-      caption: `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}`,
+      caption: `🎵 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}`,
       parse_mode: "Markdown",
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "\u2705 Выбрать этот трек", callback_data: `music_confirm:${track.id}` },
-            ...(currentIndex + 1 < total ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
+            { text: "✅ Выбрать этот трек", callback_data: `music_confirm:${track.id}` },
+            ...(currentIndex + 1 < total ? [{ text: "⏭ Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
           ],
-          [{ text: "\u23ED Без музыки", callback_data: "music_skip" }],
+          [{ text: "⏭ Без музыки", callback_data: "music_skip" }],
         ],
       },
     }, { filename: `${track.id}.mp3`, contentType: "audio/mpeg" });
   } catch(err) {
     await bot.editMessageText(
-      `\uD83C\uDFB5 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
+      `🎵 *${track.name}* — ${track.genre}\n_${track.mood}_\n\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
       {
         chat_id: chatId, message_id: loadMsg.message_id, parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "\u2705 Выбрать", callback_data: `music_confirm:${track.id}` },
-              ...(currentIndex + 1 < total ? [{ text: "\u23ED Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
+              { text: "✅ Выбрать", callback_data: `music_confirm:${track.id}` },
+              ...(currentIndex + 1 < total ? [{ text: "⏭ Следующий", callback_data: `music_next:${currentIndex + 1}` }] : []),
             ],
-            [{ text: "\u23ED Без музыки", callback_data: "music_skip" }],
+            [{ text: "⏭ Без музыки", callback_data: "music_skip" }],
           ],
         },
       }
@@ -571,14 +587,14 @@ async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
   state.lastScenePrompt = scenePrompt;
   userState.set(chatId, state);
   await bot.sendPhoto(chatId, imageUrl, {
-    caption: `\u2705 \uD83D\uDDBC Фото сгенерировано\n\uD83D\uDCB0 Стоимость: $${photoCost.toFixed(3)}`,
+    caption: `✅ 🖼 Фото сгенерировано\n💰 Стоимость: $${photoCost.toFixed(3)}`,
     reply_markup: {
       inline_keyboard: [
         [
-          { text: "\uD83D\uDD04 Ещё вариант", callback_data: `regen_photo:${photoKey}` },
-          { text: "\uD83C\uDFAC Видео", callback_data: `make_video:${photoKey}` },
+          { text: "🔄 Ещё вариант", callback_data: `regen_photo:${photoKey}` },
+          { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
         ],
-        [{ text: "\uD83D\uDCE4 Опубликовать", callback_data: "open_publish_menu" }],
+        [{ text: "📤 Опубликовать", callback_data: "open_publish_menu" }],
       ],
     },
   });
@@ -591,25 +607,25 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost) {
   state.videos[videoKey] = videoUrl;
   userState.set(chatId, state);
   await bot.sendVideo(chatId, videoUrl, {
-    caption: `\u2705 \uD83C\uDFAC Видео сгенерировано\n\uD83D\uDCB0 Стоимость: $${videoCost.toFixed(2)}`,
+    caption: `✅ 🎬 Видео сгенерировано\n💰 Стоимость: $${videoCost.toFixed(2)}`,
     reply_markup: {
       inline_keyboard: [
         [
-          { text: "\u2705 Выбрать", callback_data: `confirm_video:${videoKey}` },
-          { text: "\uD83D\uDD04 Ещё вариант", callback_data: "make_video_again" },
+          { text: "✅ Выбрать", callback_data: `confirm_video:${videoKey}` },
+          { text: "🔄 Ещё вариант", callback_data: "make_video_again" },
         ],
-        [{ text: "\uD83D\uDCE4 Опубликовать", callback_data: "open_publish_menu" }],
+        [{ text: "📤 Опубликовать", callback_data: "open_publish_menu" }],
       ],
     },
   });
 }
 
 function sendAudioChoiceButtons(chatId) {
-  return bot.sendMessage(chatId, "\uD83C\uDF99 Выберите аудио:", {
+  return bot.sendMessage(chatId, "🎙 Выберите аудио:", {
     reply_markup: {
       inline_keyboard: [[
-        { text: "\uD83E\uDD16 ИИ-аудио", callback_data: "audio_generate" },
-        { text: "\uD83C\uDF99 Своё голосовое", callback_data: "audio_record" },
+        { text: "🤖 ИИ-аудио", callback_data: "audio_generate" },
+        { text: "🎙 Своё голосовое", callback_data: "audio_record" },
       ]],
     },
   });
@@ -621,25 +637,25 @@ async function sendVoiceSelectionMenu(chatId) {
   if (voices.length === 0) { await bot.sendMessage(chatId, "Нет записанных голосовых."); return; }
   const rows = [];
   for (let i = 0; i < voices.length; i += 2) {
-    const row = [{ text: `\u2705 Голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }];
-    if (voices[i + 1]) row.push({ text: `\u2705 Голосовое ${i + 2}`, callback_data: `confirm_voice:${i + 1}` });
+    const row = [{ text: `✅ Голосовое ${i + 1}`, callback_data: `confirm_voice:${i}` }];
+    if (voices[i + 1]) row.push({ text: `✅ Голосовое ${i + 2}`, callback_data: `confirm_voice:${i + 1}` });
     rows.push(row);
   }
-  rows.push([{ text: "\u2795 Записать ещё", callback_data: "add_more_voice" }]);
-  await bot.sendMessage(chatId, `\uD83C\uDF99 Голосовых: ${voices.length}. Выберите нужное:`, { reply_markup: { inline_keyboard: rows } });
+  rows.push([{ text: "➕ Записать ещё", callback_data: "add_more_voice" }]);
+  await bot.sendMessage(chatId, `🎙 Голосовых: ${voices.length}. Выберите нужное:`, { reply_markup: { inline_keyboard: rows } });
 }
 
 function sendPhotoButtons(chatId) {
-  return bot.sendMessage(chatId, "\uD83D\uDCF8 Сгенерировать фото:", {
+  return bot.sendMessage(chatId, "📸 Сгенерировать фото:", {
     reply_markup: {
       inline_keyboard: [
         [
-          { text: "\uD83C\uDFAF По теме", callback_data: "photo_topic" },
-          { text: "\uD83C\uDFE0 Кабинет", callback_data: "photo_office" },
+          { text: "🎯 По теме", callback_data: "photo_topic" },
+          { text: "🏠 Кабинет", callback_data: "photo_office" },
         ],
         [
-          { text: "\u270F\uFE0F Свой вариант", callback_data: "photo_custom" },
-          { text: "\uD83D\uDCE4 Опубликовать", callback_data: "open_publish_menu" },
+          { text: "✏️ Свой вариант", callback_data: "photo_custom" },
+          { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
         ],
       ],
     },
@@ -649,10 +665,10 @@ function sendPhotoButtons(chatId) {
 function getPublishButtons(state) {
   const buttons = [];
   const row1 = [];
-  if (state.lastImageUrl && state.lastFullAnswer) row1.push({ text: "\uD83D\uDDBC Текст+Фото", callback_data: "publish:text_photo" });
-  if (state.lastVideoUrl && state.lastFullAnswer) row1.push({ text: "\uD83C\uDFAC Текст+Видео", callback_data: "publish:text_video" });
+  if (state.lastImageUrl && state.lastFullAnswer) row1.push({ text: "🖼 Текст+Фото", callback_data: "publish:text_photo" });
+  if (state.lastVideoUrl && state.lastFullAnswer) row1.push({ text: "🎬 Текст+Видео", callback_data: "publish:text_video" });
   if (row1.length > 0) buttons.push(row1);
-  if (state.lastFullAnswer) buttons.push([{ text: "\uD83D\uDCDD Только текст", callback_data: "publish:text_only" }]);
+  if (state.lastFullAnswer) buttons.push([{ text: "📝 Только текст", callback_data: "publish:text_only" }]);
   return buttons;
 }
 
@@ -660,7 +676,7 @@ async function sendPublishMenu(chatId) {
   const state = userState.get(chatId) || {};
   const buttons = getPublishButtons(state);
   if (buttons.length === 0) { await bot.sendMessage(chatId, "Нечего публиковать."); return; }
-  await bot.sendMessage(chatId, "\uD83D\uDCE4 Формат публикации:", { reply_markup: { inline_keyboard: buttons } });
+  await bot.sendMessage(chatId, "📤 Формат публикации:", { reply_markup: { inline_keyboard: buttons } });
 }
 
 async function showFinalPost(chatId, type) {
@@ -670,13 +686,13 @@ async function showFinalPost(chatId, type) {
   if (type === "text_photo") {
     if (!state.lastImageUrl) { await bot.sendMessage(chatId, "Нет фото."); return; }
     await bot.sendPhoto(chatId, state.lastImageUrl, { caption: cleanText });
-    await bot.sendMessage(chatId, "\u2705 Пост: Текст + Фото\nСкопируйте для Instagram/Telegram.");
+    await bot.sendMessage(chatId, "✅ Пост: Текст + Фото\nСкопируйте для Instagram/Telegram.");
   } else if (type === "text_video") {
     if (!state.lastVideoUrl) { await bot.sendMessage(chatId, "Нет видео."); return; }
     await bot.sendVideo(chatId, state.lastVideoUrl, { caption: cleanText });
-    await bot.sendMessage(chatId, "\u2705 Пост: Текст + Видео\nСкопируйте для Instagram/Telegram.");
+    await bot.sendMessage(chatId, "✅ Пост: Текст + Видео\nСкопируйте для Instagram/Telegram.");
   } else if (type === "text_only") {
-    await bot.sendMessage(chatId, `\uD83D\uDCDD Текст для публикации:\n\n${text}`);
+    await bot.sendMessage(chatId, `📝 Текст для публикации:\n\n${text}`);
   }
 }
 
@@ -686,21 +702,21 @@ async function processAudioWithTrack(chatId, trackId) {
   const voiceB64 = state.pendingVoiceBuffer;
   if (!voiceB64) { await bot.sendMessage(chatId, "Нет голоса. Попробуйте снова."); return; }
   const voiceBuffer = Buffer.from(voiceB64, 'base64');
-  const statusMsg = await bot.sendMessage(chatId, `\uD83C\uDFB5 Микширую с треком "${track?.name || trackId}"...`);
+  const statusMsg = await bot.sendMessage(chatId, `🎵 Микширую с треком "${track?.name || trackId}"...`);
   let finalBuffer;
   try {
     finalBuffer = await mixAudioWithMusic(voiceBuffer, track.url);
-    await bot.editMessageText("\u2705 Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
+    await bot.editMessageText("✅ Аудио с музыкой готово!", { chat_id: chatId, message_id: statusMsg.message_id });
   } catch(err) {
     finalBuffer = voiceBuffer;
-    await bot.editMessageText("\u26A0\uFE0F Микширование не удалось, используем голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
+    await bot.editMessageText("⚠️ Микширование не удалось, используем голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
   }
   await bot.sendVoice(chatId, finalBuffer, {}, { filename: "voice_music.mp3", contentType: "audio/mpeg" });
-  const uploadMsg = await bot.sendMessage(chatId, "\uD83D\uDD04 Загружаю на сервер...");
+  const uploadMsg = await bot.sendMessage(chatId, "🔄 Загружаю на сервер...");
   let audioUrl = null;
   try {
     audioUrl = await uploadAudioToCloudinary(finalBuffer);
-    await bot.editMessageText("\u2705 Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
+    await bot.editMessageText("✅ Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
   } catch(err) {
     await bot.editMessageText(`Ошибка загрузки: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
   }
@@ -709,28 +725,23 @@ async function processAudioWithTrack(chatId, trackId) {
   currentState.pendingVoiceBuffer = null;
   userState.set(chatId, currentState);
   const audioCost = state.pendingAudioCost || 0;
-  await bot.sendMessage(chatId, `\u2705 \uD83C\uDF99 Аудио ИИ готово\n\uD83D\uDCB0 Стоимость: $${audioCost.toFixed(4)}`);
+  await bot.sendMessage(chatId, `✅ 🎙 Аудио ИИ готово\n💰 Стоимость: $${audioCost.toFixed(4)}`);
   await sendPhotoButtons(chatId);
 }
 
 // --- ГЕНЕРАЦИЯ ТЕКСТА ---
 
-async function generatePostText(chatId, topic, scenario, lengthMode = "normal") {
+async function generatePostText(chatId, topic, scenario, lengthMode = "normal", styleKey = "auto") {
   let context = "";
-
-  // Векторный поиск для обоих сценариев
   const chunks = await vectorSearch(topic, scenario, 5);
   if (chunks && chunks.length > 0) {
     context = chunks.map(c => c.chunk_text).join("\n\n");
-    console.log(`Using vector search context: ${context.length} chars`);
   } else if (scenario === "psychologist") {
-    // Fallback на старый поиск для психолога
     const topArticles = articles
       .map(a => ({ ...a, score: scoreArticle(a, topic) }))
       .sort((a, b) => b.score - a.score)
       .slice(0, 3);
     context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
-    console.log("Using legacy article search");
   } else {
     context = "Используй общие знания по данной теме.";
   }
@@ -741,11 +752,11 @@ async function generatePostText(chatId, topic, scenario, lengthMode = "normal") 
   const lengthInstruction = {
     short: "Напиши КОРОТКИЙ пост: строго 2 абзаца, до 600 символов.",
     normal: "Напиши пост: строго 3-4 абзаца, до 1200 символов.",
-    long: "Напиши РАЗВЁРНУТЫЙ пост: 5-6 абзацев, до 1800 символов. Можно добавить личный пример или развернуть метафору.",
+    long: "Напиши РАЗВЁРНУТЫЙ пост: 5-6 абзацев, до 1800 символов.",
   }[lengthMode] || "Напиши пост: строго 3-4 абзаца, до 1200 символов.";
 
   const systemPrompt = scenario === "sexologist"
-    ? SEXOLOGIST_SYSTEM_PROMPT
+    ? buildSexologistPrompt(styleKey)
     : PSYCHOLOGIST_SYSTEM_PROMPT;
 
   const userPrompt = `Тема: "${topic}"\n\nКонтекст из базы знаний:\n${context}\n\n${lengthInstruction} С эмодзи и одной жирной фразой.`;
@@ -763,17 +774,30 @@ async function generatePostText(chatId, topic, scenario, lengthMode = "normal") 
   return completion.choices[0].message.content;
 }
 
-async function sendGeneratedText(chatId, text) {
+// ПРАВКА 4+6+7: кнопки после текста с метаданными сценария
+async function sendGeneratedText(chatId, text, scenario) {
+  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+
   await bot.sendMessage(chatId, text, { parse_mode: "Markdown" }).catch(async () => {
     await bot.sendMessage(chatId, text);
   });
 
-  await bot.sendMessage(chatId, "Что дальше?", {
+  // ПРАВКА 7: показываем какой сценарий использовался
+  await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
+    parse_mode: "Markdown",
     reply_markup: {
-      inline_keyboard: [[
-        { text: "✏️ Отредактировать", callback_data: "text_edit" },
-        { text: "✅ Текст готов", callback_data: "text_ready" },
-      ]],
+      inline_keyboard: [
+        [
+          { text: "✏️ Редактировать", callback_data: "text_edit" },
+          { text: "✅ Текст готов", callback_data: "text_ready" },
+        ],
+        [
+          // ПРАВКА 4: новый запрос
+          { text: "🔄 Новый запрос", callback_data: "new_topic" },
+          // ПРАВКА 6: тот же запрос другой текст
+          { text: "♻️ Другой текст", callback_data: "regen_text" },
+        ],
+      ],
     },
   });
 }
@@ -784,7 +808,7 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   userState.set(chatId, {});
   await bot.sendMessage(chatId,
-    `\uD83D\uDC4B Добро пожаловать!\n\nЯ — ИИ-помощник для создания контента.\n\nНажмите кнопку ниже чтобы начать \uD83D\uDC47`,
+    `👋 Добро пожаловать!\n\nЯ — ИИ-помощник для создания контента.\n\nНажмите кнопку ниже чтобы начать 👇`,
     { reply_markup: START_KEYBOARD }
   );
 });
@@ -803,8 +827,13 @@ bot.on("message", async (msg) => {
     if (msg.text && msg.text.startsWith('/')) return;
 
     if (msg.text === "\uD83D\uDE80 Старт") {
-      await bot.sendMessage(chatId, "\uD83C\uDF1F Отлично, начинаем!", { reply_markup: REMOVE_KEYBOARD });
-      await sendOnboarding(chatId, 1);
+      await bot.sendMessage(chatId, "🌟 Отлично, начинаем!", { reply_markup: REMOVE_KEYBOARD });
+      // Если онбординг отключён — сразу к меню тем
+      if (state.onboardingDisabled) {
+        await sendTopicMenu(chatId);
+      } else {
+        await sendOnboarding(chatId, 1);
+      }
       return;
     }
 
@@ -813,9 +842,9 @@ bot.on("message", async (msg) => {
       const fileId = msg.voice.file_id;
       const fileInfo = await bot.getFile(fileId);
       const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-      const processingMsg = await bot.sendMessage(chatId, "\u23F3 Загружаю голосовое...");
+      const processingMsg = await bot.sendMessage(chatId, "⏳ Загружаю голосовое...");
       const voiceBuffer = Buffer.from(await (await fetch(voiceFileUrl)).arrayBuffer());
-      await bot.editMessageText("\u2705 Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
+      await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
       const voices = state.pendingVoices || [];
       voices.push({ voiceBuffer: voiceBuffer.toString('base64') });
       state.pendingVoices = voices;
@@ -834,10 +863,10 @@ bot.on("message", async (msg) => {
       state.photos[photoKey] = { imageUrl, scenePrompt: null };
       state.lastImageUrl = imageUrl;
       userState.set(chatId, state);
-      await bot.sendMessage(chatId, "\uD83D\uDCF7 Фото получено!", {
+      await bot.sendMessage(chatId, "📷 Фото получено!", {
         reply_markup: { inline_keyboard: [[
-          { text: "\uD83C\uDFAC Видео", callback_data: `make_video:${photoKey}` },
-          { text: "\uD83D\uDCE4 Опубликовать", callback_data: "open_publish_menu" },
+          { text: "🎬 Видео", callback_data: `make_video:${photoKey}` },
+          { text: "📤 Опубликовать", callback_data: "open_publish_menu" },
         ]] },
       });
       return;
@@ -847,13 +876,12 @@ bot.on("message", async (msg) => {
     if (!text) return;
 
     if (state.awaitingTextEdit) {
-      const editedText = text;
       const currentState = userState.get(chatId) || {};
-      currentState.lastFullAnswer = editedText;
+      currentState.lastFullAnswer = text;
       currentState.awaitingTextEdit = false;
       userState.set(chatId, currentState);
       await bot.sendMessage(chatId, "✅ Текст обновлён!");
-      await sendGeneratedText(chatId, editedText);
+      await sendGeneratedText(chatId, text, currentState.lastScenario);
       return;
     }
 
@@ -869,7 +897,7 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Новая тема — показываем выбор сценария
+    // Новая тема
     console.log("New topic:", text);
     await sendScenarioChoice(chatId, text);
 
@@ -889,12 +917,36 @@ bot.on("callback_query", async (query) => {
   try {
     const state = userState.get(chatId) || {};
 
+    // ─── ОНБОРДИНГ ────────────────────────────────────────────────────────────
     if (data === "onboard_step1") { await sendOnboarding(chatId, 1); return; }
     if (data === "onboard_step2") { await sendOnboarding(chatId, 2); return; }
     if (data === "onboard_step3") { await sendOnboarding(chatId, 3); return; }
+
+    // ПРАВКА 1+2: пропустить / отключить онбординг
+    if (data === "skip_onboarding") {
+      await sendTopicMenu(chatId);
+      return;
+    }
+    if (data === "disable_onboarding") {
+      const currentState = userState.get(chatId) || {};
+      currentState.onboardingDisabled = true;
+      userState.set(chatId, currentState);
+      await bot.sendMessage(chatId, "✅ Обучение отключено. Теперь буду сразу показывать меню тем.");
+      await sendTopicMenu(chatId);
+      return;
+    }
+
     if (data === "show_help") { await sendHelp(chatId); return; }
+
     if (data === "prompt_topic") {
-      await bot.sendMessage(chatId, "\uD83D\uDCDD Напишите тему поста — слово или фразу:\n\nНапример: _тревога_, _страх одиночества_, _выгорание_", { parse_mode: "Markdown" });
+      await bot.sendMessage(chatId, "📝 Напишите тему поста — слово или фразу:\n\nНапример: _тревога_, _страх одиночества_, _выгорание_", { parse_mode: "Markdown" });
+      return;
+    }
+
+    // ПРАВКА 3: быстрые темы
+    if (data.startsWith("quick_topic:")) {
+      const topic = data.replace("quick_topic:", "");
+      await sendScenarioChoice(chatId, topic);
       return;
     }
 
@@ -905,59 +957,35 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // ─── ВЫБОР ДЛИНЫ ПОСТА ────────────────────────────────────────────────────
+    // ─── ВЫБОР ДЛИНЫ ──────────────────────────────────────────────────────────
     if (data === "length_short" || data === "length_normal" || data === "length_long") {
       const lengthMode = data.replace("length_", "");
-      const topic = state.pendingTopic;
-      const scenario = state.pendingScenario || "psychologist";
-
-      if (!topic) { await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново."); return; }
-
-      const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
-      const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
-      const genMsg = await bot.sendMessage(chatId, `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}] по теме "${topic}"...`);
-
-      const fullAnswer = await generatePostText(chatId, topic, scenario, lengthMode);
-
-      await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
-
-      const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.\n- До 160 символов\n- Спокойный тон, пауза через запятую или тире\n- Без вопроса, без эмодзи, только текст\n- Убери markdown символы (* и _)\n\nТекст:\n${fullAnswer}\n\nРезультат:`;
-
-      const shortCompletion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: shortPrompt }],
-        temperature: 0.4, max_tokens: 80,
-      });
-
-      let shortAnswer = shortCompletion.choices[0].message.content.trim().replace(/[*_]/g, '');
-      if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
-
       const currentState = userState.get(chatId) || {};
-      currentState.lastFullAnswer = fullAnswer;
-      currentState.lastShortText = shortAnswer;
-      currentState.lastTopic = topic;
-      currentState.lastScenario = scenario;
-      currentState.lastLengthMode = lengthMode;
-      currentState.lastAudioUrl = null;
-      currentState.lastVideoUrl = null;
-      currentState.pendingVoices = [];
-      currentState.awaitingVoiceRecord = false;
-      currentState.pendingVoiceBuffer = null;
-      currentState.suggestedTracks = null;
-      currentState.awaitingTextEdit = false;
+      currentState.pendingLengthMode = lengthMode;
       userState.set(chatId, currentState);
 
-      selectMusicTracks(fullAnswer).then(tracks => {
-        const s = userState.get(chatId) || {};
-        s.suggestedTracks = tracks;
-        userState.set(chatId, s);
-      }).catch(() => {});
+      const scenario = state.pendingScenario || "psychologist";
 
-      await sendGeneratedText(chatId, fullAnswer);
+      // ПРАВКА 5: для сексолога показываем выбор стиля
+      if (scenario === "sexologist") {
+        await sendStyleChoice(chatId);
+      } else {
+        // Для психолога — сразу генерируем
+        await runGeneration(chatId, scenario, lengthMode, "auto");
+      }
       return;
     }
 
-    // --- КНОПКИ ПОСЛЕ ГЕНЕРАЦИИ ТЕКСТА ---
+    // ПРАВКА 5: выбор стиля для сексолога
+    if (data.startsWith("style_")) {
+      const styleKey = data.replace("style_", "");
+      const scenario = state.pendingScenario || "sexologist";
+      const lengthMode = state.pendingLengthMode || "normal";
+      await runGeneration(chatId, scenario, lengthMode, styleKey);
+      return;
+    }
+
+    // ─── КНОПКИ ПОСЛЕ ТЕКСТА ──────────────────────────────────────────────────
 
     if (data === "text_edit") {
       const currentText = state.lastFullAnswer || "";
@@ -974,6 +1002,26 @@ bot.on("callback_query", async (query) => {
     if (data === "text_ready") {
       await bot.sendMessage(chatId, "✅ Отлично! Теперь выберите аудио для поста:");
       await sendAudioChoiceButtons(chatId);
+      return;
+    }
+
+    // ПРАВКА 4: новый запрос — сбросить и показать меню тем
+    if (data === "new_topic") {
+      const currentState = userState.get(chatId) || {};
+      const onboardingDisabled = currentState.onboardingDisabled;
+      userState.set(chatId, { onboardingDisabled });
+      await sendTopicMenu(chatId);
+      return;
+    }
+
+    // ПРАВКА 6: тот же запрос, другой текст
+    if (data === "regen_text") {
+      const topic = state.lastTopic;
+      const scenario = state.lastScenario || "psychologist";
+      const lengthMode = state.lastLengthMode || "normal";
+      const styleKey = state.lastStyleKey || "auto";
+      if (!topic) { await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново."); return; }
+      await runGeneration(chatId, scenario, lengthMode, styleKey);
       return;
     }
 
@@ -1006,11 +1054,11 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, currentState);
       const cleanText = (currentState.lastFullAnswer || "").replace(/[*_]/g, '').substring(0, 1024);
       await bot.sendVideo(chatId, videoUrl, { caption: cleanText });
-      await bot.sendMessage(chatId, "\u2705 Видео выбрано! Публиковать?", {
+      await bot.sendMessage(chatId, "✅ Видео выбрано! Публиковать?", {
         reply_markup: {
           inline_keyboard: [[
-            { text: "\uD83C\uDFAC Текст+Видео", callback_data: "publish:text_video" },
-            { text: "\uD83D\uDDBC Текст+Фото", callback_data: "publish:text_photo" },
+            { text: "🎬 Текст+Видео", callback_data: "publish:text_video" },
+            { text: "🖼 Текст+Фото", callback_data: "publish:text_photo" },
           ]],
         },
       });
@@ -1029,17 +1077,15 @@ bot.on("callback_query", async (query) => {
     if (data === "audio_generate") {
       const shortAnswer = state.lastShortText;
       if (!shortAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
-      const genMsg = await bot.sendMessage(chatId, "\u23F3 Генерирую голос...");
+      const genMsg = await bot.sendMessage(chatId, "⏳ Генерирую голос...");
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(shortAnswer);
-      await bot.editMessageText("\u2705 Голос готов! Выберите фоновую музыку:", { chat_id: chatId, message_id: genMsg.message_id });
+      await bot.editMessageText("✅ Голос готов! Выберите фоновую музыку:", { chat_id: chatId, message_id: genMsg.message_id });
       const currentState = userState.get(chatId) || {};
       currentState.pendingVoiceBuffer = audioBuffer.toString('base64');
       currentState.pendingAudioCost = audioCost;
-      userState.set(chatId, currentState);
       const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
-      const currentStateAfter = userState.get(chatId) || {};
-      currentStateAfter.previewTracks = tracks;
-      userState.set(chatId, currentStateAfter);
+      currentState.previewTracks = tracks;
+      userState.set(chatId, currentState);
       await sendTrackPreview(chatId, tracks, 0);
       return;
     }
@@ -1062,11 +1108,11 @@ bot.on("callback_query", async (query) => {
       if (!voiceB64) { await bot.sendMessage(chatId, "Нет голоса. Попробуйте снова."); return; }
       const voiceBuffer = Buffer.from(voiceB64, 'base64');
       await bot.sendVoice(chatId, voiceBuffer, {}, { filename: "voice.mp3", contentType: "audio/mpeg" });
-      const uploadMsg = await bot.sendMessage(chatId, "\uD83D\uDD04 Загружаю на сервер...");
+      const uploadMsg = await bot.sendMessage(chatId, "🔄 Загружаю на сервер...");
       let audioUrl = null;
       try {
         audioUrl = await uploadAudioToCloudinary(voiceBuffer);
-        await bot.editMessageText("\u2705 Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
+        await bot.editMessageText("✅ Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
       } catch(err) {
         await bot.editMessageText(`Ошибка загрузки: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
       }
@@ -1075,7 +1121,7 @@ bot.on("callback_query", async (query) => {
       currentState.pendingVoiceBuffer = null;
       userState.set(chatId, currentState);
       const audioCost = state.pendingAudioCost || 0;
-      await bot.sendMessage(chatId, `\u2705 \uD83C\uDF99 Аудио ИИ готово\n\uD83D\uDCB0 Стоимость: $${audioCost.toFixed(4)}`);
+      await bot.sendMessage(chatId, `✅ 🎙 Аудио ИИ готово\n💰 Стоимость: $${audioCost.toFixed(4)}`);
       await sendPhotoButtons(chatId);
       return;
     }
@@ -1085,7 +1131,7 @@ bot.on("callback_query", async (query) => {
       currentState.awaitingVoiceRecord = true;
       currentState.pendingVoices = [];
       userState.set(chatId, currentState);
-      await bot.sendMessage(chatId, "\uD83C\uDF99 Запишите голосовое.\nМожно несколько — потом выберете лучшее.");
+      await bot.sendMessage(chatId, "🎙 Запишите голосовое.\nМожно несколько — потом выберете лучшее.");
       return;
     }
 
@@ -1093,7 +1139,7 @@ bot.on("callback_query", async (query) => {
       const currentState = userState.get(chatId) || {};
       currentState.awaitingVoiceRecord = true;
       userState.set(chatId, currentState);
-      await bot.sendMessage(chatId, "\uD83C\uDF99 Запишите ещё одно голосовое:");
+      await bot.sendMessage(chatId, "🎙 Запишите ещё одно голосовое:");
       return;
     }
 
@@ -1107,12 +1153,10 @@ bot.on("callback_query", async (query) => {
       currentState.pendingAudioCost = 0;
       currentState.awaitingVoiceRecord = false;
       currentState.pendingVoices = [];
-      userState.set(chatId, currentState);
       const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
-      const stateAfter = userState.get(chatId) || {};
-      stateAfter.previewTracks = tracks;
-      userState.set(chatId, stateAfter);
-      await bot.sendMessage(chatId, `\u2705 Голосовое ${index + 1} выбрано! Выберите фоновую музыку:`);
+      currentState.previewTracks = tracks;
+      userState.set(chatId, currentState);
+      await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано! Выберите фоновую музыку:`);
       await sendTrackPreview(chatId, tracks, 0);
       return;
     }
@@ -1140,7 +1184,6 @@ bot.on("callback_query", async (query) => {
       newState.lastImageUrl = imageUrl;
       userState.set(chatId, newState);
       await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
-
     } else if (data === "photo_office") {
       const officeScene = `sitting in cozy therapist office, bookshelf background, soft warm lamp light, wooden furniture, indoor plants, shallow depth of field, bokeh background, warm cozy atmosphere, wearing elegant professional blouse, warm neutral colors`;
       const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
@@ -1148,10 +1191,9 @@ bot.on("callback_query", async (query) => {
       newState.lastImageUrl = imageUrl;
       userState.set(chatId, newState);
       await sendPhotoWithButtons(chatId, imageUrl, photoCost, officeScene);
-
     } else if (data === "photo_custom") {
       userState.set(chatId, { ...state, awaitingCustomScene: true });
-      await bot.sendMessage(chatId, "\u270F\uFE0F Опишите сцену на русском:\nНапример: \"набережная, весна, солнце, синее пальто\"");
+      await bot.sendMessage(chatId, "✏️ Опишите сцену на русском:\nНапример: \"набережная, весна, солнце, синее пальто\"");
     }
 
   } catch (error) {
@@ -1159,6 +1201,57 @@ bot.on("callback_query", async (query) => {
     try { bot.sendMessage(chatId, "Ошибка при генерации"); } catch(e) {}
   }
 });
+
+// ─── ВЫНЕСЕННАЯ ФУНКЦИЯ ГЕНЕРАЦИИ ────────────────────────────────────────────
+
+async function runGeneration(chatId, scenario, lengthMode, styleKey) {
+  const state = userState.get(chatId) || {};
+  const topic = state.pendingTopic;
+  if (!topic) { await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново."); return; }
+
+  const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
+  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+  const genMsg = await bot.sendMessage(chatId, `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}] по теме "${topic}"...`);
+
+  const fullAnswer = await generatePostText(chatId, topic, scenario, lengthMode, styleKey);
+
+  await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
+
+  const shortPrompt = `Возьми главную мысль из текста ниже и перефразируй в 1-2 коротких предложения.\n- До 160 символов\n- Спокойный тон, пауза через запятую или тире\n- Без вопроса, без эмодзи, только текст\n- Убери markdown символы (* и _)\n\nТекст:\n${fullAnswer}\n\nРезультат:`;
+
+  const shortCompletion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: shortPrompt }],
+    temperature: 0.4, max_tokens: 80,
+  });
+
+  let shortAnswer = shortCompletion.choices[0].message.content.trim().replace(/[*_]/g, '');
+  if (shortAnswer.length > 160) shortAnswer = shortAnswer.substring(0, 157) + "...";
+
+  const currentState = userState.get(chatId) || {};
+  currentState.lastFullAnswer = fullAnswer;
+  currentState.lastShortText = shortAnswer;
+  currentState.lastTopic = topic;
+  currentState.lastScenario = scenario;
+  currentState.lastLengthMode = lengthMode;
+  currentState.lastStyleKey = styleKey;
+  currentState.lastAudioUrl = null;
+  currentState.lastVideoUrl = null;
+  currentState.pendingVoices = [];
+  currentState.awaitingVoiceRecord = false;
+  currentState.pendingVoiceBuffer = null;
+  currentState.suggestedTracks = null;
+  currentState.awaitingTextEdit = false;
+  userState.set(chatId, currentState);
+
+  selectMusicTracks(fullAnswer).then(tracks => {
+    const s = userState.get(chatId) || {};
+    s.suggestedTracks = tracks;
+    userState.set(chatId, s);
+  }).catch(() => {});
+
+  await sendGeneratedText(chatId, fullAnswer, scenario);
+}
 
 process.on('uncaughtException', err => console.error('Uncaught:', err.message));
 process.on('unhandledRejection', err => console.error('Unhandled:', err));
