@@ -794,6 +794,11 @@ async function sendAudioChoiceButtons(chatId) {
 
 async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
   const track = tracks[currentIndex];
+  if (!track || !track.url) {
+    await bot.sendMessage(chatId, "🎵 Музыка недоступна. Продолжаем без неё.");
+    await sendPhotoButtons(chatId);
+    return;
+  }
   const total = tracks.length;
   const loadMsg = await bot.sendMessage(chatId, `🎵 Загружаю трек ${currentIndex + 1} из ${total}...`);
   try {
