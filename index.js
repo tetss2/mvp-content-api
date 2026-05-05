@@ -89,7 +89,10 @@ async function checkLimit(chatId, limitType) {
   const access = await checkDemoAccess(chatId);
   if (!access.allowed) return { ok: false, reason: access.reason, user: access.user };
 
+  // Админ — без лимитов
   const user = access.user;
+  if (!user) return { ok: true, user: null };
+
   const limit = user.limits[limitType];
   if (!limit) return { ok: true, user };
 
@@ -603,7 +606,6 @@ async function sendOnboarding(chatId, step = 1) {
   }
 }
 
-// Стартовое меню — выбор сценария
 async function sendTopicMenu(chatId) {
   const state = userState.get(chatId) || {};
   const presets = state.presets || [];
@@ -623,7 +625,6 @@ async function sendTopicMenu(chatId) {
   });
 }
 
-// Меню тем для конкретного сценария
 async function sendTopicsForScenario(chatId, scenario) {
   const topics = scenario === "sexologist" ? QUICK_TOPICS_SEX : QUICK_TOPICS_PSYCH;
   const prefix = scenario === "sexologist" ? "qs" : "qp";
@@ -667,7 +668,6 @@ async function sendHelp(chatId) {
   );
 }
 
-// Выбор сценария когда пользователь написал тему вручную без выбора сценария
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
@@ -1130,7 +1130,6 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Если сценарий уже выбран через prompt_topic_sc — сохраняем тему и идём к длине
     if (state.pendingScenario && !state.pendingTopic) {
       const s = userState.get(chatId) || {};
       s.pendingTopic = text;
@@ -1139,7 +1138,6 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Пользователь написал тему без выбора сценария — спрашиваем сценарий
     console.log("New topic:", text);
     await sendScenarioChoice(chatId, text);
 
@@ -1203,7 +1201,6 @@ bot.on("callback_query", async (query) => {
 
     if (data === "show_help") { await sendHelp(chatId); return; }
     if (data === "back_to_topics") {
-      // Сбрасываем выбранный сценарий при возврате назад
       const s = userState.get(chatId) || {};
       s.pendingScenario = null;
       s.pendingTopic = null;
@@ -1212,7 +1209,6 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Своя тема без сценария — предлагаем выбрать сценарий
     if (data === "prompt_topic") {
       const s = userState.get(chatId) || {};
       if (s.pendingScenario) {
@@ -1228,7 +1224,6 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Своя тема с уже выбранным сценарием
     if (data.startsWith("prompt_topic_sc:")) {
       const scenario = data.replace("prompt_topic_sc:", "");
       const s = userState.get(chatId) || {};
@@ -1238,7 +1233,6 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Быстрые темы психолога — qp:N
     if (data.startsWith("qp:")) {
       const idx = parseInt(data.replace("qp:", ""));
       const topic = QUICK_TOPICS_PSYCH[idx];
@@ -1251,7 +1245,6 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Быстрые темы сексолога — qs:N
     if (data.startsWith("qs:")) {
       const idx = parseInt(data.replace("qs:", ""));
       const topic = QUICK_TOPICS_SEX[idx];
@@ -1297,7 +1290,6 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Выбор сценария из стартового меню → показываем темы этого сценария
     if (data === "sc_psych") {
       const s = userState.get(chatId) || {};
       s.pendingScenario = "psychologist";
@@ -1315,15 +1307,8 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    // Выбор сценария после ручного ввода темы → сразу к длине
-    if (data === "sc_psych_t") {
-      await sendLengthChoice(chatId, "psychologist");
-      return;
-    }
-    if (data === "sc_sex_t") {
-      await sendLengthChoice(chatId, "sexologist");
-      return;
-    }
+    if (data === "sc_psych_t") { await sendLengthChoice(chatId, "psychologist"); return; }
+    if (data === "sc_sex_t") { await sendLengthChoice(chatId, "sexologist"); return; }
 
     if (data === "len_short" || data === "len_normal" || data === "len_long") {
       const lengthMode = data.replace("len_", "");
