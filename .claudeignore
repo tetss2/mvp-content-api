@@ -1,0 +1,5 @@
+node_modules/
+sources/sexologist/
+sources/psychologist/*.pdf
+*.docx
+package-lock.json
