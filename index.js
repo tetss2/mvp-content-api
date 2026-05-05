@@ -26,6 +26,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const LEADS_BOT_TOKEN = process.env.LEADS_BOT_TOKEN;
 const TG_CHANNEL = process.env.TG_CHANNEL; // chat_id канала, напр. -1001234567890
+const FREESOUND_API_KEY = process.env.FREESOUND_API_KEY;
 const ADMIN_TG_ID = 109664871;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
@@ -324,90 +325,6 @@ function savePreset(chatId, preset) {
   userState.set(chatId, state);
 }
 
-// ─── БИБЛИОТЕКА МУЗЫКИ (ПРАВКА 1: рабочие ссылки mixkit.co) ─────────────────
-// mixkit.co — бесплатные треки, без блокировок, прямые mp3
-const MUSIC_LIBRARY = [
-  {
-    id: "rain1",
-    name: "Дождь в лесу",
-    genre: "Звуки природы",
-    mood: "успокаивающий, медитативный",
-    tags: ["ambient", "тревога", "страх", "усталость", "принятие"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-valley-sunset-127.mp3",
-  },
-  {
-    id: "meditation1",
-    name: "Медитация",
-    genre: "Медитация",
-    mood: "глубокий, трансформирующий",
-    tags: ["ambient", "тревога", "страх", "принятие", "рост"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3",
-  },
-  {
-    id: "ocean1",
-    name: "Спокойствие",
-    genre: "Ambient",
-    mood: "расслабляющий, безмятежный",
-    tags: ["ambient", "усталость", "отношения", "принятие"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-dreaming-big-31.mp3",
-  },
-  {
-    id: "piano_soft1",
-    name: "Мягкое фортепиано",
-    genre: "Медитативное фортепиано",
-    mood: "нежный, созерцательный",
-    tags: ["piano", "грусть", "отношения", "одиночество"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3",
-  },
-  {
-    id: "zen1",
-    name: "Дзен",
-    genre: "Медитация",
-    mood: "спокойный, центрирующий",
-    tags: ["ambient", "тревога", "принятие", "рост"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3",
-  },
-  {
-    id: "ambient_soft1",
-    name: "Мягкий эмбиент",
-    genre: "Медитативный эмбиент",
-    mood: "обволакивающий, тёплый",
-    tags: ["ambient", "грусть", "усталость", "отношения"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-slow-motion-ambiance-492.mp3",
-  },
-  {
-    id: "hope1",
-    name: "Надежда",
-    genre: "Inspirational",
-    mood: "вдохновляющий, надежда",
-    tags: ["piano", "рост", "принятие"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-comforting-space-520.mp3",
-  },
-  {
-    id: "forest1",
-    name: "Природа",
-    genre: "Звуки природы",
-    mood: "свежий, умиротворяющий",
-    tags: ["ambient", "рост", "принятие", "одиночество"],
-    url: "https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3",
-  },
-  {
-    id: "crystal1",
-    name: "Хрустальный звук",
-    genre: "Медитация",
-    mood: "чистый, просветляющий",
-    tags: ["ambient", "рост", "принятие", "страх"],
-    url: "https://cdn.pixabay.com/audio/2023/11/13/audio_5d40a97cf8.mp3",
-  },
-  {
-    id: "tender1",
-    name: "Нежность",
-    genre: "Cinematic",
-    mood: "кинематографичный, эмоциональный",
-    tags: ["piano", "грусть", "отношения", "усталость"],
-    url: "https://cdn.pixabay.com/audio/2023/08/22/audio_0c1c6a3e45.mp3",
-  },
-];
 
 // ─── ТЕМЫ ПО СЦЕНАРИЯМ ───────────────────────────────────────────────────────
 
@@ -517,6 +434,35 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   return url;
 }
 
+const MOOD_QUERIES = {
+  ambient:    "ambient meditation calm background",
+  piano:      "piano gentle soft instrumental",
+  тревога:    "anxiety tension dark suspense",
+  грусть:     "sad melancholy emotional slow",
+  одиночество:"lonely quiet minimal atmospheric",
+  отношения:  "romantic warm love tender",
+  рост:       "inspiring uplifting positive motivational",
+  усталость:  "tired slow calm drone",
+  принятие:   "peaceful acceptance calm serene",
+  страх:      "fear dark tense horror",
+};
+
+async function getFreesoundTracks(query, count = 3) {
+  const url = `https://freesound.org/apiv2/search/text/?query=${encodeURIComponent(query)}&filter=duration:[10+TO+180]&fields=id,name,previews,tags&page_size=${count * 4}&token=${FREESOUND_API_KEY}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Freesound error: ${res.status}`);
+  const data = await res.json();
+  const results = data.results || [];
+  return shuffleArray(results).slice(0, count).map(r => ({
+    id: String(r.id),
+    name: r.name,
+    url: r.previews?.['preview-hq-mp3'] || r.previews?.['preview-lq-mp3'],
+    genre: (r.tags || []).slice(0, 2).join(', '),
+    mood: query,
+    tags: r.tags || [],
+  }));
+}
+
 async function selectMusicTracks(text, count = 3) {
   try {
     const completion = await openai.chat.completions.create({
@@ -525,11 +471,10 @@ async function selectMusicTracks(text, count = 3) {
       temperature: 0.3, max_tokens: 50,
     });
     const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
-    const matching = MUSIC_LIBRARY.filter(t => t.tags.some(tag => tags.includes(tag)));
-    const pool = matching.length >= count ? matching : MUSIC_LIBRARY;
-    return shuffleArray(pool).slice(0, count);
+    const query = tags.map(t => MOOD_QUERIES[t]).filter(Boolean).join(' ') || 'calm ambient meditation';
+    return await getFreesoundTracks(query, count);
   } catch(e) {
-    return shuffleArray(MUSIC_LIBRARY).slice(0, count);
+    return await getFreesoundTracks('calm ambient meditation', count).catch(() => []);
   }
 }
 
@@ -542,7 +487,7 @@ async function downloadTrack(url) {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "audio/mpeg,audio/webm,audio/ogg,audio/*;q=0.9,*/*;q=0.5",
-        "Referer": "https://mixkit.co/",
+        "Referer": "https://freesound.org/",
       },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
@@ -989,7 +934,7 @@ async function showFinalPost(chatId, type) {
 
 async function processAudioWithTrack(chatId, trackId) {
   const state = userState.get(chatId) || {};
-  const track = MUSIC_LIBRARY.find(t => t.id === trackId);
+  const track = (state.previewTracks || []).find(t => t.id === trackId);
   const voiceB64 = state.pendingVoiceBuffer;
   if (!voiceB64) { await bot.sendMessage(chatId, "Нет голоса."); return; }
   const voiceBuffer = Buffer.from(voiceB64, 'base64');
@@ -1563,7 +1508,7 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.pendingVoiceBuffer = audioBuffer.toString('base64');
       s.pendingAudioCost = audioCost;
-      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
+      const tracks = state.suggestedTracks || await getFreesoundTracks('calm ambient meditation', 3).catch(() => []);
       s.previewTracks = tracks;
       userState.set(chatId, s);
       await sendTrackPreview(chatId, tracks, 0);
@@ -1629,7 +1574,7 @@ bot.on("callback_query", async (query) => {
       s.pendingAudioCost = 0;
       s.awaitingVoiceRecord = false;
       s.pendingVoices = [];
-      const tracks = state.suggestedTracks || shuffleArray(MUSIC_LIBRARY).slice(0, 3);
+      const tracks = state.suggestedTracks || await getFreesoundTracks('calm ambient meditation', 3).catch(() => []);
       s.previewTracks = tracks;
       userState.set(chatId, s);
       await bot.sendMessage(chatId, `✅ Голосовое ${index + 1} выбрано!`);
