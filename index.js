@@ -25,6 +25,7 @@ const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const LEADS_BOT_TOKEN = process.env.LEADS_BOT_TOKEN;
+const TG_CHANNEL = process.env.TG_CHANNEL; // chat_id канала, напр. -1001234567890
 const ADMIN_TG_ID = 109664871;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
@@ -40,6 +41,7 @@ console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
 console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
 console.log(" SUPABASE:", !!supabase);
 console.log(" LEADS_BOT_TOKEN:", !!LEADS_BOT_TOKEN);
+console.log(" TG_CHANNEL:", TG_CHANNEL || "NOT SET");
 
 // ─── ДЕМО-ДОСТУП ─────────────────────────────────────────────────────────────
 
@@ -181,6 +183,33 @@ async function handleExpired(chatId, user) {
   );
 }
 
+// ─── ПУБЛИКАЦИЯ В КАНАЛ ───────────────────────────────────────────────────────
+
+async function publishToChannel(type, state) {
+  if (!TG_CHANNEL) {
+    console.error("TG_CHANNEL не задан в переменных Railway");
+    return { ok: false, error: "Канал не настроен" };
+  }
+
+  const text = state.lastFullAnswer || "";
+  const cleanText = text.replace(/[*_]/g, '').substring(0, 1024);
+
+  try {
+    if (type === "text_photo" && state.lastImageUrl) {
+      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanText });
+    } else if (type === "text_video" && state.lastVideoUrl) {
+      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanText });
+    } else {
+      // text_only или fallback
+      await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("Publish to channel error:", err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
 // ─── СИСТЕМНЫЕ ПРОМПТЫ ───────────────────────────────────────────────────────
 
 const AURORA_PROMPT = "4K studio interview, medium close-up. Solid light-grey seamless backdrop, uniform soft key-light. Presenter faces lens, steady eye-contact. Hands below frame, body still. Ultra-sharp.";
@@ -296,19 +325,89 @@ function savePreset(chatId, preset) {
   userState.set(chatId, state);
 }
 
-// ─── БИБЛИОТЕКА МУЗЫКИ ───────────────────────────────────────────────────────
-
+// ─── БИБЛИОТЕКА МУЗЫКИ (ПРАВКА 1: рабочие ссылки mixkit.co) ─────────────────
+// mixkit.co — бесплатные треки, без блокировок, прямые mp3
 const MUSIC_LIBRARY = [
-  { id: "rain1", name: "Дождь в лесу", genre: "Звуки природы", mood: "успокаивающий, медитативный", tags: ["ambient", "тревога", "страх", "усталость", "принятие"], url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749f4a0.mp3" },
-  { id: "forest1", name: "Утренний лес", genre: "Звуки природы", mood: "свежий, умиротворяющий", tags: ["ambient", "рост", "принятие", "одиночество"], url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bede7e.mp3" },
-  { id: "meditation1", name: "Тибетские чаши", genre: "Медитация", mood: "глубокий, трансформирующий", tags: ["ambient", "тревога", "страх", "принятие", "рост"], url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718ab41b.mp3" },
-  { id: "ocean1", name: "Шум волн", genre: "Звуки природы", mood: "расслабляющий, безмятежный", tags: ["ambient", "усталость", "отношения", "принятие"], url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_7fef00d10c.mp3" },
-  { id: "piano_soft1", name: "Мягкое фортепиано", genre: "Медитативное фортепиано", mood: "нежный, созерцательный", tags: ["piano", "грусть", "отношения", "одиночество"], url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3" },
-  { id: "wind1", name: "Ветер и природа", genre: "Звуки природы", mood: "воздушный, свободный", tags: ["ambient", "рост", "одиночество", "страх"], url: "https://cdn.pixabay.com/download/audio/2022/02/23/audio_d1718ab41b.mp3" },
-  { id: "zen1", name: "Дзен медитация", genre: "Медитация", mood: "спокойный, центрирующий", tags: ["ambient", "тревога", "принятие", "рост"], url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02fe.mp3" },
-  { id: "birds1", name: "Пение птиц", genre: "Звуки природы", mood: "радостный, пробуждающий", tags: ["ambient", "рост", "принятие"], url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_270f1e0d7f.mp3" },
-  { id: "ambient_soft1", name: "Мягкий эмбиент", genre: "Медитативный эмбиент", mood: "обволакивающий, тёплый", tags: ["ambient", "грусть", "усталость", "отношения"], url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b5da613.mp3" },
-  { id: "crystal1", name: "Хрустальные звуки", genre: "Медитация", mood: "чистый, просветляющий", tags: ["ambient", "рост", "принятие", "страх"], url: "https://cdn.pixabay.com/download/audio/2021/10/25/audio_cca6d2b29e.mp3" },
+  {
+    id: "rain1",
+    name: "Дождь в лесу",
+    genre: "Звуки природы",
+    mood: "успокаивающий, медитативный",
+    tags: ["ambient", "тревога", "страх", "усталость", "принятие"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-valley-sunset-127.mp3",
+  },
+  {
+    id: "meditation1",
+    name: "Медитация",
+    genre: "Медитация",
+    mood: "глубокий, трансформирующий",
+    tags: ["ambient", "тревога", "страх", "принятие", "рост"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-serene-view-443.mp3",
+  },
+  {
+    id: "ocean1",
+    name: "Спокойствие",
+    genre: "Ambient",
+    mood: "расслабляющий, безмятежный",
+    tags: ["ambient", "усталость", "отношения", "принятие"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-dreaming-big-31.mp3",
+  },
+  {
+    id: "piano_soft1",
+    name: "Мягкое фортепиано",
+    genre: "Медитативное фортепиано",
+    mood: "нежный, созерцательный",
+    tags: ["piano", "грусть", "отношения", "одиночество"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-a-very-happy-christmas-897.mp3",
+  },
+  {
+    id: "zen1",
+    name: "Дзен",
+    genre: "Медитация",
+    mood: "спокойный, центрирующий",
+    tags: ["ambient", "тревога", "принятие", "рост"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-relaxing-in-nature-522.mp3",
+  },
+  {
+    id: "ambient_soft1",
+    name: "Мягкий эмбиент",
+    genre: "Медитативный эмбиент",
+    mood: "обволакивающий, тёплый",
+    tags: ["ambient", "грусть", "усталость", "отношения"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-slow-motion-ambiance-492.mp3",
+  },
+  {
+    id: "hope1",
+    name: "Надежда",
+    genre: "Inspirational",
+    mood: "вдохновляющий, надежда",
+    tags: ["piano", "рост", "принятие"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-comforting-space-520.mp3",
+  },
+  {
+    id: "forest1",
+    name: "Природа",
+    genre: "Звуки природы",
+    mood: "свежий, умиротворяющий",
+    tags: ["ambient", "рост", "принятие", "одиночество"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-deep-meditation-109.mp3",
+  },
+  {
+    id: "crystal1",
+    name: "Хрустальный звук",
+    genre: "Медитация",
+    mood: "чистый, просветляющий",
+    tags: ["ambient", "рост", "принятие", "страх"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-a-real-feeling-567.mp3",
+  },
+  {
+    id: "tender1",
+    name: "Нежность",
+    genre: "Cinematic",
+    mood: "кинематографичный, эмоциональный",
+    tags: ["piano", "грусть", "отношения", "усталость"],
+    url: "https://assets.mixkit.co/music/preview/mixkit-life-is-a-dream-837.mp3",
+  },
 ];
 
 // ─── ТЕМЫ ПО СЦЕНАРИЯМ ───────────────────────────────────────────────────────
@@ -592,7 +691,7 @@ async function sendOnboarding(chatId, step = 1) {
     );
   } else if (step === 2) {
     await bot.sendMessage(chatId,
-      `💡 *Как это работает:*\n\n*1.* Выберите сценарий: Психолог или Сексолог\n*2.* Выберите тему из списка или напишите свою\n*3.* Выберите длину и стиль\n*4.* Получите готовый текст\n*5.* Добавьте аудио, фото, видео\n*6.* Опубликуйте ✅`,
+      `💡 *Как это работает:*\n\n*1.* Выберите сценарий: Психолог или Сексолог\n*2.* Выберите тему из списка или напишите свою\n*3.* Выберите длину и стиль\n*4.* Получите готовый текст\n*5.* Добавьте аудио, фото, видео\n*6.* Опубликуйте в канал ✅`,
       {
         parse_mode: "Markdown",
         reply_markup: { inline_keyboard: [
@@ -658,7 +757,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу:* сценарий → тема → длина → стиль → текст → аудио → фото → видео\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -758,6 +857,7 @@ async function sendTrackPreview(chatId, tracks, currentIndex = 0) {
       ]},
     }, { filename: `${track.id}.mp3`, contentType: "audio/mpeg" });
   } catch(err) {
+    console.error("Track preview error:", err.message);
     await bot.editMessageText(
       `🎵 *${track.name}* — ${track.genre}\n_${track.mood}_\nТрек ${currentIndex + 1} из ${total}\n_(превью недоступно)_`,
       {
@@ -786,7 +886,7 @@ async function sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt) {
     caption: `✅ 🖼 Фото сгенерировано\n💰 $${photoCost.toFixed(3)}`,
     reply_markup: { inline_keyboard: [
       [{ text: "🔄 Ещё вариант", callback_data: `rp:${photoKey}` }, { text: "🎬 Видео", callback_data: `mv:${photoKey}` }],
-      [{ text: "📤 Опубликовать", callback_data: "pub_menu" }],
+      [{ text: "📤 Опубликовать в канал", callback_data: "pub_menu" }],
     ]},
   });
 }
@@ -801,7 +901,7 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost) {
     caption: `✅ 🎬 Видео сгенерировано\n💰 $${videoCost.toFixed(2)}`,
     reply_markup: { inline_keyboard: [
       [{ text: "✅ Выбрать", callback_data: `cv:${videoKey}` }, { text: "🔄 Ещё вариант", callback_data: "vid_again" }],
-      [{ text: "📤 Опубликовать", callback_data: "pub_menu" }],
+      [{ text: "📤 Опубликовать в канал", callback_data: "pub_menu" }],
     ]},
   });
 }
@@ -824,7 +924,7 @@ function sendPhotoButtons(chatId) {
   return bot.sendMessage(chatId, "📸 Сгенерировать фото:", {
     reply_markup: { inline_keyboard: [
       [{ text: "🎯 По теме", callback_data: "photo_topic" }, { text: "🏠 Кабинет", callback_data: "photo_office" }],
-      [{ text: "✏️ Свой вариант", callback_data: "photo_custom" }, { text: "📤 Опубликовать", callback_data: "pub_menu" }],
+      [{ text: "✏️ Свой вариант", callback_data: "photo_custom" }, { text: "📤 Опубликовать в канал", callback_data: "pub_menu" }],
     ]},
   });
 }
@@ -832,10 +932,10 @@ function sendPhotoButtons(chatId) {
 function getPublishButtons(state) {
   const buttons = [];
   const row1 = [];
-  if (state.lastImageUrl && state.lastFullAnswer) row1.push({ text: "🖼 Текст+Фото", callback_data: "pub:text_photo" });
-  if (state.lastVideoUrl && state.lastFullAnswer) row1.push({ text: "🎬 Текст+Видео", callback_data: "pub:text_video" });
+  if (state.lastImageUrl && state.lastFullAnswer) row1.push({ text: "🖼 Текст+Фото → в канал", callback_data: "pub:text_photo" });
+  if (state.lastVideoUrl && state.lastFullAnswer) row1.push({ text: "🎬 Текст+Видео → в канал", callback_data: "pub:text_video" });
   if (row1.length > 0) buttons.push(row1);
-  if (state.lastFullAnswer) buttons.push([{ text: "📝 Только текст", callback_data: "pub:text_only" }]);
+  if (state.lastFullAnswer) buttons.push([{ text: "📝 Только текст → в канал", callback_data: "pub:text_only" }]);
   return buttons;
 }
 
@@ -843,23 +943,40 @@ async function sendPublishMenu(chatId) {
   const state = userState.get(chatId) || {};
   const buttons = getPublishButtons(state);
   if (buttons.length === 0) { await bot.sendMessage(chatId, "Нечего публиковать."); return; }
-  await bot.sendMessage(chatId, "📤 Формат публикации:", { reply_markup: { inline_keyboard: buttons } });
+  await bot.sendMessage(chatId, "📤 Выберите формат публикации в канал:", { reply_markup: { inline_keyboard: buttons } });
 }
 
+// ПРАВКА 3+4: публикация всегда идёт в TG_CHANNEL
 async function showFinalPost(chatId, type) {
   const state = userState.get(chatId) || {};
-  const text = state.lastFullAnswer || "";
-  const cleanText = text.replace(/[*_]/g, '').substring(0, 1024);
-  if (type === "text_photo") {
-    if (!state.lastImageUrl) { await bot.sendMessage(chatId, "Нет фото."); return; }
-    await bot.sendPhoto(chatId, state.lastImageUrl, { caption: cleanText });
-    await bot.sendMessage(chatId, "✅ Пост: Текст + Фото");
-  } else if (type === "text_video") {
-    if (!state.lastVideoUrl) { await bot.sendMessage(chatId, "Нет видео."); return; }
-    await bot.sendVideo(chatId, state.lastVideoUrl, { caption: cleanText });
-    await bot.sendMessage(chatId, "✅ Пост: Текст + Видео");
-  } else if (type === "text_only") {
-    await bot.sendMessage(chatId, `📝 Текст:\n\n${text}`);
+
+  if (!TG_CHANNEL) {
+    await bot.sendMessage(chatId, "⚠️ Канал не настроен. Добавьте переменную TG_CHANNEL в Railway.\n\nПоложительный числовой chat_id канала, например: -1001234567890");
+    return;
+  }
+
+  const publishMsg = await bot.sendMessage(chatId, "📤 Публикую в канал...");
+
+  const result = await publishToChannel(type, state);
+
+  await bot.deleteMessage(chatId, publishMsg.message_id).catch(() => {});
+
+  if (result.ok) {
+    const typeLabels = { text_photo: "Текст + Фото", text_video: "Текст + Видео", text_only: "Текст" };
+    await bot.sendMessage(chatId,
+      `✅ *Пост опубликован в канал!*\n\nФормат: ${typeLabels[type] || type}\n\n🔄 Создать новый пост?`,
+      {
+        parse_mode: "Markdown",
+        reply_markup: { inline_keyboard: [[
+          { text: "✏️ Новый пост", callback_data: "new_topic" },
+          { text: "♻️ Другой формат", callback_data: "pub_menu" },
+        ]]},
+      }
+    );
+  } else {
+    await bot.sendMessage(chatId,
+      `❌ Ошибка публикации: ${result.error}\n\nПроверьте что бот добавлен в канал как администратор.`
+    );
   }
 }
 
@@ -937,13 +1054,30 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
   return completion.choices[0].message.content;
 }
 
+// ПРАВКА 2: длина аудио — уменьшены лимиты для точного попадания в 13-15 сек
+// Скорость речи ~14-16 символов/сек → 13-15 сек = 182-240 символов
+// Ставим 200 симв для длинного (гарантированно 13-14 сек)
+// Для короткого — 120 симв (~8 сек)
 async function generateAudioText(fullAnswer, audioLength = "short") {
-  const maxChars = audioLength === "long" ? 500 : 160;
-  const maxTokens = audioLength === "long" ? 200 : 80;
+  const maxChars = audioLength === "long" ? 200 : 120;
+  const maxTokens = audioLength === "long" ? 90 : 55;
+
+  const wordLimit = audioLength === "long" ? "30-35 слов" : "18-20 слов";
 
   const instruction = audioLength === "long"
-    ? `Возьми 2-3 главные мысли из текста и перефразируй в ЗАКОНЧЕННЫЕ 2-3 предложения.\nТребования:\n- Строго до 500 символов\n- Каждое предложение должно быть ПОЛНЫМ и заканчиваться точкой\n- Спокойный тон, паузы через запятую или тире\n- Без вопросов, без эмодзи, без markdown символов (* _)\n- НЕЛЬЗЯ обрывать предложение на полуслове`
-    : `Возьми главную мысль из текста и перефразируй в ЗАКОНЧЕННОЕ 1-2 предложения.\nТребования:\n- Строго до 160 символов\n- Предложение должно быть ПОЛНЫМ и заканчиваться точкой\n- Без вопросов, без эмодзи, без markdown символов (* _)\n- НЕЛЬЗЯ обрывать на полуслове`;
+    ? `Возьми главную мысль из текста и перефразируй ровно в 2 ЗАКОНЧЕННЫХ предложения.
+Требования:
+- Ровно 2 предложения, каждое заканчивается точкой
+- Строго ${wordLimit} суммарно (не больше!)
+- Спокойный тон, без вопросов
+- Без эмодзи, без markdown (* _)
+- НЕЛЬЗЯ обрывать на полуслове`
+    : `Возьми главную мысль из текста и перефразируй в ОДНО ЗАКОНЧЕННОЕ предложение.
+Требования:
+- Ровно 1 предложение, заканчивается точкой
+- Строго ${wordLimit} (не больше!)
+- Спокойный тон, без вопросов
+- Без эмодзи, без markdown (* _)`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -954,12 +1088,15 @@ async function generateAudioText(fullAnswer, audioLength = "short") {
 
   let result = completion.choices[0].message.content.trim().replace(/[*_]/g, '');
 
+  // Жёсткая обрезка по последней точке если превысили лимит
   if (result.length > maxChars) {
     const lastDot = result.lastIndexOf('.', maxChars);
-    if (lastDot > maxChars * 0.5) {
+    if (lastDot > maxChars * 0.4) {
       result = result.substring(0, lastDot + 1);
     } else {
-      result = result.substring(0, maxChars - 3) + "...";
+      // Обрезаем по последнему пробелу перед лимитом
+      const lastSpace = result.lastIndexOf(' ', maxChars - 1);
+      result = result.substring(0, lastSpace > 0 ? lastSpace : maxChars) + ".";
     }
   }
 
@@ -1090,7 +1227,7 @@ bot.on("message", async (msg) => {
       await bot.sendMessage(chatId, "📷 Фото получено!", {
         reply_markup: { inline_keyboard: [[
           { text: "🎬 Видео", callback_data: `mv:${photoKey}` },
-          { text: "📤 Опубликовать", callback_data: "pub_menu" },
+          { text: "📤 Опубликовать в канал", callback_data: "pub_menu" },
         ]]},
       });
       return;
@@ -1383,10 +1520,10 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, s);
       const cleanText = (s.lastFullAnswer || "").replace(/[*_]/g, '').substring(0, 1024);
       await bot.sendVideo(chatId, videoUrl, { caption: cleanText });
-      await bot.sendMessage(chatId, "✅ Видео выбрано!", {
+      await bot.sendMessage(chatId, "✅ Видео выбрано! Публиковать в канал?", {
         reply_markup: { inline_keyboard: [[
-          { text: "🎬 Текст+Видео", callback_data: "pub:text_video" },
-          { text: "🖼 Текст+Фото", callback_data: "pub:text_photo" },
+          { text: "🎬 Текст+Видео → канал", callback_data: "pub:text_video" },
+          { text: "🖼 Текст+Фото → канал", callback_data: "pub:text_photo" },
         ]]},
       });
       return;
@@ -1407,6 +1544,7 @@ bot.on("callback_query", async (query) => {
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
       const genMsg = await bot.sendMessage(chatId, "⏳ Генерирую голос...");
       const audioText = await generateAudioText(fullAnswer, audioLength);
+      console.log(`Audio text (${audioLength}): ${audioText.length} chars: "${audioText}"`);
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText);
       await bot.editMessageText("✅ Голос готов! Выберите музыку:", { chat_id: chatId, message_id: genMsg.message_id });
       const s = userState.get(chatId) || {};
