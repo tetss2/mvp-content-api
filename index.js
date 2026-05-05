@@ -448,22 +448,19 @@ const MOOD_QUERIES = {
 };
 
 async function getFreesoundTracks(query, count = 3) {
-  const url = `https://freesound.org/apiv2/search/text/?query=${encodeURIComponent(query)}&filter=duration:[10+TO+180]&fields=id,name,previews,tags&page_size=${count * 4}&token=${FREESOUND_API_KEY}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Freesound error: ${res.status}`);
-  const data = await res.json();
-  console.log("Freesound response:", JSON.stringify(data).substring(0, 300));
-  const results = data.results || [];
-  console.log("Freesound:", results.length, "tracks for:", query);
-  if (results.length === 0) return [];
-  return shuffleArray(results).slice(0, count).map(r => ({
-    id: String(r.id),
-    name: r.name,
-    url: r.previews?.['preview-hq-mp3'] || r.previews?.['preview-lq-mp3'],
-    genre: (r.tags || []).slice(0, 2).join(', '),
-    mood: query,
-    tags: r.tags || [],
-  }));
+  if (!FREESOUND_API_KEY) { console.error("FREESOUND_API_KEY не задан"); return []; }
+  try {
+    const params = new URLSearchParams({ query, filter: "duration:[30 TO 300]", fields: "id,name,previews,tags", page_size: String(count * 4), token: FREESOUND_API_KEY });
+    const url = "https://freesound.org/apiv2/search/text/?" + params.toString();
+    console.log("Freesound query:", query);
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if (!res.ok) { const t = await res.text(); console.error("Freesound error:", res.status, t.substring(0,100)); return []; }
+    const data = await res.json();
+    console.log("Freesound results:", data.results?.length || 0);
+    const results = (data.results || []).filter(r => r.previews?.["preview-hq-mp3"] || r.previews?.["preview-lq-mp3"]);
+    if (!results.length) return [];
+    return shuffleArray(results).slice(0, count).map(r => ({ id: String(r.id), name: r.name.replace(/\.[^.]+$/,"").substring(0,30), url: r.previews["preview-hq-mp3"] || r.previews["preview-lq-mp3"], genre: "Ambient", mood: query, tags: [] }));
+  } catch(err) { console.error("getFreesoundTracks:", err.message); return []; }
 }
 
 async function selectMusicTracks(text, count = 3) {
@@ -1025,7 +1022,7 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
 // Ставим 200 симв для длинного (гарантированно 13-14 сек)
 // Для короткого — 120 симв (~8 сек)
 async function generateAudioText(fullAnswer, audioLength = "short") {
-  const maxChars = audioLength === "long" ? 200 : 120;
+  const maxChars = audioLength === "long" ? 190 : 125;
   const maxTokens = audioLength === "long" ? 90 : 55;
 
   const wordLimit = audioLength === "long" ? "30-35 слов" : "18-20 слов";
