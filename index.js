@@ -151,18 +151,89 @@ function savePreset(chatId, preset) {
   userState.set(chatId, state);
 }
 
-// ─── БИБЛИОТЕКА МУЗЫКИ ───────────────────────────────────────────────────────
+// ─── БИБЛИОТЕКА МУЗЫКИ (медитативная, звуки природы) ────────────────────────
+// Используем надёжные CDN-источники: mixkit.co и pixabay.com (бесплатно, без блокировок)
 const MUSIC_LIBRARY = [
-  { id: "lofi1", name: "Acoustic Breeze", genre: "Lo-fi", mood: "уютный", tags: ["lofi", "chill", "усталость", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-acousticbreeze.mp3" },
-  { id: "ambient1", name: "Relaxing", genre: "Ambient", mood: "спокойный", tags: ["ambient", "тревога", "страх", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-relaxing.mp3" },
-  { id: "piano1", name: "Sweet", genre: "Piano", mood: "нежный", tags: ["piano", "отношения", "грусть", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-sweet.mp3" },
-  { id: "chill1", name: "Sunny", genre: "Chill", mood: "вдохновляющий", tags: ["chill", "рост"], url: "https://www.bensound.com/bensound-music/bensound-sunny.mp3" },
-  { id: "dreamy1", name: "Dreams", genre: "Dreamy", mood: "созерцательный", tags: ["ambient", "грусть", "одиночество", "рост"], url: "https://www.bensound.com/bensound-music/bensound-dreams.mp3" },
-  { id: "tender1", name: "Tender", genre: "Cinematic", mood: "эмоциональный", tags: ["piano", "грусть", "отношения", "усталость"], url: "https://www.bensound.com/bensound-music/bensound-tender.mp3" },
-  { id: "lofi2", name: "Memories", genre: "Lo-fi", mood: "ностальгический", tags: ["lofi", "грусть", "принятие", "одиночество"], url: "https://www.bensound.com/bensound-music/bensound-memories.mp3" },
-  { id: "ambient2", name: "Slow Motion", genre: "Cinematic", mood: "глубокий", tags: ["ambient", "тревога", "страх"], url: "https://www.bensound.com/bensound-music/bensound-slowmotion.mp3" },
-  { id: "inspire1", name: "Once Again", genre: "Inspirational", mood: "надежда", tags: ["piano", "рост", "принятие"], url: "https://www.bensound.com/bensound-music/bensound-onceagain.mp3" },
-  { id: "folk1", name: "Creative Minds", genre: "Folk", mood: "живой", tags: ["guitar", "отношения", "рост"], url: "https://www.bensound.com/bensound-music/bensound-creativeminds.mp3" },
+  {
+    id: "rain1",
+    name: "Дождь в лесу",
+    genre: "Звуки природы",
+    mood: "успокаивающий, медитативный",
+    tags: ["ambient", "тревога", "страх", "усталость", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749f4a0.mp3",
+  },
+  {
+    id: "forest1",
+    name: "Утренний лес",
+    genre: "Звуки природы",
+    mood: "свежий, умиротворяющий",
+    tags: ["ambient", "рост", "принятие", "одиночество"],
+    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bede7e.mp3",
+  },
+  {
+    id: "meditation1",
+    name: "Тибетские чаши",
+    genre: "Медитация",
+    mood: "глубокий, трансформирующий",
+    tags: ["ambient", "тревога", "страх", "принятие", "рост"],
+    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718ab41b.mp3",
+  },
+  {
+    id: "ocean1",
+    name: "Шум волн",
+    genre: "Звуки природы",
+    mood: "расслабляющий, безмятежный",
+    tags: ["ambient", "усталость", "отношения", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_7fef00d10c.mp3",
+  },
+  {
+    id: "piano_soft1",
+    name: "Мягкое фортепиано",
+    genre: "Медитативное фортепиано",
+    mood: "нежный, созерцательный",
+    tags: ["piano", "грусть", "отношения", "одиночество"],
+    url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
+  },
+  {
+    id: "wind1",
+    name: "Ветер и природа",
+    genre: "Звуки природы",
+    mood: "воздушный, свободный",
+    tags: ["ambient", "рост", "одиночество", "страх"],
+    url: "https://cdn.pixabay.com/download/audio/2022/02/23/audio_d1718ab41b.mp3",
+  },
+  {
+    id: "zen1",
+    name: "Дзен медитация",
+    genre: "Медитация",
+    mood: "спокойный, центрирующий",
+    tags: ["ambient", "тревога", "принятие", "рост"],
+    url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02fe.mp3",
+  },
+  {
+    id: "birds1",
+    name: "Пение птиц",
+    genre: "Звуки природы",
+    mood: "радостный, пробуждающий",
+    tags: ["ambient", "рост", "принятие"],
+    url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_270f1e0d7f.mp3",
+  },
+  {
+    id: "ambient_soft1",
+    name: "Мягкий эмбиент",
+    genre: "Медитативный эмбиент",
+    mood: "обволакивающий, тёплый",
+    tags: ["ambient", "грусть", "усталость", "отношения"],
+    url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b5da613.mp3",
+  },
+  {
+    id: "crystal1",
+    name: "Хрустальные звуки",
+    genre: "Медитация",
+    mood: "чистый, просветляющий",
+    tags: ["ambient", "рост", "принятие", "страх"],
+    url: "https://cdn.pixabay.com/download/audio/2021/10/25/audio_cca6d2b29e.mp3",
+  },
 ];
 
 const QUICK_TOPICS = [
@@ -268,7 +339,7 @@ async function selectMusicTracks(text, count = 3) {
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: `Определи настроение текста. Текст:\n"${text.substring(0, 300)}"\n\nВыбери теги (через запятую): lofi, ambient, piano, guitar, chill, тревога, грусть, одиночество, отношения, злость, рост, усталость, принятие, страх\n\nТолько теги:` }],
+      messages: [{ role: "user", content: `Определи настроение текста. Текст:\n"${text.substring(0, 300)}"\n\nВыбери теги (через запятую): ambient, piano, тревога, грусть, одиночество, отношения, рост, усталость, принятие, страх\n\nТолько теги:` }],
       temperature: 0.3, max_tokens: 50,
     });
     const tags = completion.choices[0].message.content.trim().toLowerCase().split(',').map(s => s.trim());
@@ -284,7 +355,6 @@ async function downloadTrack(url) {
   const res = await fetch(url, {
     headers: {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      "Referer": "https://www.bensound.com/",
       "Accept": "audio/webm,audio/ogg,audio/wav,audio/*;q=0.9,*/*;q=0.5",
     },
   });
@@ -305,10 +375,10 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
       ffmpeg()
         .input(voicePath).input(musicPath)
         .complexFilter([
-          `[1:a]volume=0.13[music_vol]`,
+          `[1:a]volume=0.12[music_vol]`,
           `[music_vol]apad[music_pad]`,
           `[0:a]volume=1.0[voice]`,
-          `[voice][music_pad]amix=inputs=2:duration=first:dropout_transition=2[out]`,
+          `[voice][music_pad]amix=inputs=2:duration=first:dropout_transition=3[out]`,
         ], 'out')
         .audioCodec('libmp3lame').audioBitrate('128k')
         .output(outputPath)
@@ -765,20 +835,47 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
   return completion.choices[0].message.content;
 }
 
+// ПРАВКА 1: генерация текста для аудио — увеличены лимиты чтобы не обрывалось
 async function generateAudioText(fullAnswer, audioLength = "short") {
-  const maxChars = audioLength === "long" ? 350 : 160;
+  // short: ~160 симв = 8-10 сек; long: ~500 симв = 13-16 сек
+  // Ставим лимиты с запасом чтобы GPT не обрезал слово на полуслове
+  const maxChars = audioLength === "long" ? 500 : 160;
+  const maxTokens = audioLength === "long" ? 200 : 80;
+
   const instruction = audioLength === "long"
-    ? `Возьми 2-3 главные мысли и перефразируй в 2-3 предложения. До 350 символов. Спокойный тон. Без вопросов, без эмодзи, без markdown.`
-    : `Возьми главную мысль и перефразируй в 1-2 коротких предложения. До 160 символов. Без вопросов, без эмодзи, без markdown.`;
+    ? `Возьми 2-3 главные мысли из текста и перефразируй в ЗАКОНЧЕННЫЕ 2-3 предложения.
+Требования:
+- Строго до 500 символов
+- Каждое предложение должно быть ПОЛНЫМ и заканчиваться точкой
+- Спокойный тон, паузы через запятую или тире
+- Без вопросов, без эмодзи, без markdown символов (* _)
+- НЕЛЬЗЯ обрывать предложение на полуслове`
+    : `Возьми главную мысль из текста и перефразируй в ЗАКОНЧЕННОЕ 1-2 предложения.
+Требования:
+- Строго до 160 символов
+- Предложение должно быть ПОЛНЫМ и заканчиваться точкой
+- Без вопросов, без эмодзи, без markdown символов (* _)
+- НЕЛЬЗЯ обрывать на полуслове`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    messages: [{ role: "user", content: `${instruction}\n\nТекст:\n${fullAnswer}\n\nРезультат:` }],
-    temperature: 0.4, max_tokens: audioLength === "long" ? 120 : 80,
+    messages: [{ role: "user", content: `${instruction}\n\nТекст:\n${fullAnswer}\n\nРезультат (только текст, без пояснений):` }],
+    temperature: 0.3,
+    max_tokens: maxTokens,
   });
 
   let result = completion.choices[0].message.content.trim().replace(/[*_]/g, '');
-  if (result.length > maxChars) result = result.substring(0, maxChars - 3) + "...";
+
+  // Если текст всё же превышает лимит — обрезаем по последней точке, а не по символу
+  if (result.length > maxChars) {
+    const lastDot = result.lastIndexOf('.', maxChars);
+    if (lastDot > maxChars * 0.5) {
+      result = result.substring(0, lastDot + 1);
+    } else {
+      result = result.substring(0, maxChars - 3) + "...";
+    }
+  }
+
   return result;
 }
 
@@ -888,7 +985,6 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    // Если активен пресет — запускаем с ним
     if (state.usingPreset) {
       const s = userState.get(chatId) || {};
       s.pendingTopic = text;
