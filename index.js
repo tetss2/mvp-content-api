@@ -1026,7 +1026,12 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
       .slice(0, 3);
     context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
   } else {
-    context = "Используй общие знания по данной теме.";
+    const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
+    if (fallbackChunks && fallbackChunks.length > 0) {
+      context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
+    } else {
+      context = `Тема запроса: "${topic}". Отвечай на основе общих знаний психолога-сексолога, строго в рамках профессиональной этики. Не выдумывай исследования и статистику.`;
+    }
   }
 
   const tokenLimits = { short: 280, normal: 560, long: 800 };
