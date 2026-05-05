@@ -4,12 +4,14 @@ import { createClient } from "@supabase/supabase-js";
 import { createRequire } from "module";
 import { promises as fs } from "fs";
 import { tmpdir } from "os";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import ffmpegPath from "ffmpeg-static";
 import ffmpeg from "fluent-ffmpeg";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
@@ -22,6 +24,8 @@ const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
 const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
+const LEADS_BOT_TOKEN = process.env.LEADS_BOT_TOKEN;
+const ADMIN_TG_ID = 109664871;
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -35,6 +39,146 @@ console.log("Bot started");
 console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
 console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
 console.log(" SUPABASE:", !!supabase);
+console.log(" LEADS_BOT_TOKEN:", !!LEADS_BOT_TOKEN);
+
+// ─── ДЕМО-ДОСТУП ─────────────────────────────────────────────────────────────
+
+const DEMO_DB_PATH = join(__dirname, "demo-users.json");
+
+async function loadDemoDB() {
+  try {
+    const raw = await fs.readFile(DEMO_DB_PATH, "utf-8");
+    return JSON.parse(raw);
+  } catch { return { users: {} }; }
+}
+
+async function saveDemoDB(db) {
+  await fs.writeFile(DEMO_DB_PATH, JSON.stringify(db, null, 2), "utf-8");
+}
+
+async function getDemoUserByTgId(tgId) {
+  const db = await loadDemoDB();
+  return Object.values(db.users).find(u => u.tg_id === tgId) || null;
+}
+
+async function checkDemoAccess(chatId) {
+  const user = await getDemoUserByTgId(chatId);
+  if (!user) return { allowed: false, reason: "not_registered" };
+
+  const now = new Date();
+
+  // Активация при первом использовании
+  if (!user.activated_at) {
+    const db = await loadDemoDB();
+    const expires = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    db.users[user.phone].activated_at = now.toISOString();
+    db.users[user.phone].expires_at = expires.toISOString();
+    await saveDemoDB(db);
+    user.activated_at = now.toISOString();
+    user.expires_at = expires.toISOString();
+  }
+
+  if (user.expires_at && new Date(user.expires_at) < now) {
+    return { allowed: false, reason: "expired", user };
+  }
+
+  return { allowed: true, user };
+}
+
+async function checkLimit(chatId, limitType) {
+  const access = await checkDemoAccess(chatId);
+  if (!access.allowed) return { ok: false, reason: access.reason, user: access.user };
+
+  const user = access.user;
+  const limit = user.limits[limitType];
+  if (!limit) return { ok: true, user };
+
+  if (limit.used >= limit.max) {
+    return { ok: false, reason: "limit_exhausted", limitType, user };
+  }
+  return { ok: true, user };
+}
+
+async function incrementLimit(chatId, limitType, scenario, lengthMode) {
+  const db = await loadDemoDB();
+  const user = Object.values(db.users).find(u => u.tg_id === chatId);
+  if (!user) return;
+
+  db.users[user.phone].limits[limitType].used += 1;
+  if (!db.users[user.phone].events) db.users[user.phone].events = [];
+  db.users[user.phone].events.push({
+    ts: new Date().toISOString(),
+    scenario: scenario || "unknown",
+    action: `generate_${limitType}`,
+    length: lengthMode || null,
+  });
+  if (db.users[user.phone].events.length > 50) {
+    db.users[user.phone].events = db.users[user.phone].events.slice(-50);
+  }
+  await saveDemoDB(db);
+}
+
+async function notifyLeadsBot(text, keyboard = null) {
+  if (!LEADS_BOT_TOKEN) return;
+  try {
+    const body = { chat_id: ADMIN_TG_ID, text, parse_mode: "Markdown" };
+    if (keyboard) body.reply_markup = JSON.stringify(keyboard);
+    await fetch(`https://api.telegram.org/bot${LEADS_BOT_TOKEN}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (e) {
+    console.error("Leads bot notify error:", e.message);
+  }
+}
+
+async function handleLimitExhausted(chatId, limitType, user) {
+  const labelMap = { text: "📝 Тексты", photo: "🖼 Фото", video: "🎬 Видео" };
+  const label = labelMap[limitType] || limitType;
+
+  await bot.sendMessage(chatId,
+    `🚫 *Лимит исчерпан*\n\n${label}: использовано ${user.limits[limitType].used}/${user.limits[limitType].max}\n\nДля увеличения лимита нажмите кнопку:`,
+    {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: [[
+        { text: "📩 Запросить увеличение лимита", callback_data: `req_limit_${limitType}` },
+      ]]},
+    }
+  );
+
+  await notifyLeadsBot(
+    `⚠️ *Лимит исчерпан*\n\n👤 ${user.name}, ${user.city}\n📱 ${user.phone}\n🚫 Исчерпан: *${label}*`,
+    { inline_keyboard: [[{ text: "💬 Написать пользователю", url: `tg://user?id=${user.tg_id}` }]] }
+  );
+}
+
+async function handleNotRegistered(chatId) {
+  await bot.sendMessage(chatId,
+    `🔐 *Доступ закрыт*\n\nДля использования бота необходимо получить демо-доступ.\n\nОбратитесь к администратору: @tetss2`,
+    { parse_mode: "Markdown" }
+  );
+}
+
+async function handleExpired(chatId, user) {
+  await bot.sendMessage(chatId,
+    `⏰ *Срок демо-доступа истёк*\n\nВаш 7-дневный демо-период завершён.\n\n` +
+    `📊 Итого использовано:\n` +
+    `📝 Текст: ${user.limits.text.used}/${user.limits.text.max}\n` +
+    `🖼 Фото: ${user.limits.photo.used}/${user.limits.photo.max}\n` +
+    `🎬 Видео: ${user.limits.video.used}/${user.limits.video.max}\n\n` +
+    `Для продления обратитесь к администратору:`,
+    {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: [[
+        { text: "📩 Запросить продление", callback_data: "req_extend" },
+        { text: "💬 Написать @tetss2", url: "https://t.me/tetss2" },
+      ]]},
+    }
+  );
+}
+
+// ─── СИСТЕМНЫЕ ПРОМПТЫ ───────────────────────────────────────────────────────
 
 const AURORA_PROMPT = "4K studio interview, medium close-up. Solid light-grey seamless backdrop, uniform soft key-light. Presenter faces lens, steady eye-contact. Hands below frame, body still. Ultra-sharp.";
 
@@ -45,8 +189,6 @@ asian features, soft round face, small nose, almond eyes, upturned eye corners,
 subtle gentle closed-mouth smile, calm serene expression`;
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
-
-// ─── СИСТЕМНЫЕ ПРОМПТЫ ───────────────────────────────────────────────────────
 
 const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, практикующий психолог. Пишешь как живой человек — тепло, лично, с внутренней глубиной.
 
@@ -151,89 +293,19 @@ function savePreset(chatId, preset) {
   userState.set(chatId, state);
 }
 
-// ─── БИБЛИОТЕКА МУЗЫКИ (медитативная, звуки природы) ────────────────────────
-// Используем надёжные CDN-источники: mixkit.co и pixabay.com (бесплатно, без блокировок)
+// ─── БИБЛИОТЕКА МУЗЫКИ ───────────────────────────────────────────────────────
+
 const MUSIC_LIBRARY = [
-  {
-    id: "rain1",
-    name: "Дождь в лесу",
-    genre: "Звуки природы",
-    mood: "успокаивающий, медитативный",
-    tags: ["ambient", "тревога", "страх", "усталость", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749f4a0.mp3",
-  },
-  {
-    id: "forest1",
-    name: "Утренний лес",
-    genre: "Звуки природы",
-    mood: "свежий, умиротворяющий",
-    tags: ["ambient", "рост", "принятие", "одиночество"],
-    url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bede7e.mp3",
-  },
-  {
-    id: "meditation1",
-    name: "Тибетские чаши",
-    genre: "Медитация",
-    mood: "глубокий, трансформирующий",
-    tags: ["ambient", "тревога", "страх", "принятие", "рост"],
-    url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718ab41b.mp3",
-  },
-  {
-    id: "ocean1",
-    name: "Шум волн",
-    genre: "Звуки природы",
-    mood: "расслабляющий, безмятежный",
-    tags: ["ambient", "усталость", "отношения", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_7fef00d10c.mp3",
-  },
-  {
-    id: "piano_soft1",
-    name: "Мягкое фортепиано",
-    genre: "Медитативное фортепиано",
-    mood: "нежный, созерцательный",
-    tags: ["piano", "грусть", "отношения", "одиночество"],
-    url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3",
-  },
-  {
-    id: "wind1",
-    name: "Ветер и природа",
-    genre: "Звуки природы",
-    mood: "воздушный, свободный",
-    tags: ["ambient", "рост", "одиночество", "страх"],
-    url: "https://cdn.pixabay.com/download/audio/2022/02/23/audio_d1718ab41b.mp3",
-  },
-  {
-    id: "zen1",
-    name: "Дзен медитация",
-    genre: "Медитация",
-    mood: "спокойный, центрирующий",
-    tags: ["ambient", "тревога", "принятие", "рост"],
-    url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02fe.mp3",
-  },
-  {
-    id: "birds1",
-    name: "Пение птиц",
-    genre: "Звуки природы",
-    mood: "радостный, пробуждающий",
-    tags: ["ambient", "рост", "принятие"],
-    url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_270f1e0d7f.mp3",
-  },
-  {
-    id: "ambient_soft1",
-    name: "Мягкий эмбиент",
-    genre: "Медитативный эмбиент",
-    mood: "обволакивающий, тёплый",
-    tags: ["ambient", "грусть", "усталость", "отношения"],
-    url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b5da613.mp3",
-  },
-  {
-    id: "crystal1",
-    name: "Хрустальные звуки",
-    genre: "Медитация",
-    mood: "чистый, просветляющий",
-    tags: ["ambient", "рост", "принятие", "страх"],
-    url: "https://cdn.pixabay.com/download/audio/2021/10/25/audio_cca6d2b29e.mp3",
-  },
+  { id: "rain1", name: "Дождь в лесу", genre: "Звуки природы", mood: "успокаивающий, медитативный", tags: ["ambient", "тревога", "страх", "усталость", "принятие"], url: "https://cdn.pixabay.com/download/audio/2022/03/15/audio_8cb749f4a0.mp3" },
+  { id: "forest1", name: "Утренний лес", genre: "Звуки природы", mood: "свежий, умиротворяющий", tags: ["ambient", "рост", "принятие", "одиночество"], url: "https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bede7e.mp3" },
+  { id: "meditation1", name: "Тибетские чаши", genre: "Медитация", mood: "глубокий, трансформирующий", tags: ["ambient", "тревога", "страх", "принятие", "рост"], url: "https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718ab41b.mp3" },
+  { id: "ocean1", name: "Шум волн", genre: "Звуки природы", mood: "расслабляющий, безмятежный", tags: ["ambient", "усталость", "отношения", "принятие"], url: "https://cdn.pixabay.com/download/audio/2021/09/06/audio_7fef00d10c.mp3" },
+  { id: "piano_soft1", name: "Мягкое фортепиано", genre: "Медитативное фортепиано", mood: "нежный, созерцательный", tags: ["piano", "грусть", "отношения", "одиночество"], url: "https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3" },
+  { id: "wind1", name: "Ветер и природа", genre: "Звуки природы", mood: "воздушный, свободный", tags: ["ambient", "рост", "одиночество", "страх"], url: "https://cdn.pixabay.com/download/audio/2022/02/23/audio_d1718ab41b.mp3" },
+  { id: "zen1", name: "Дзен медитация", genre: "Медитация", mood: "спокойный, центрирующий", tags: ["ambient", "тревога", "принятие", "рост"], url: "https://cdn.pixabay.com/download/audio/2021/11/25/audio_91b32e02fe.mp3" },
+  { id: "birds1", name: "Пение птиц", genre: "Звуки природы", mood: "радостный, пробуждающий", tags: ["ambient", "рост", "принятие"], url: "https://cdn.pixabay.com/download/audio/2022/03/10/audio_270f1e0d7f.mp3" },
+  { id: "ambient_soft1", name: "Мягкий эмбиент", genre: "Медитативный эмбиент", mood: "обволакивающий, тёплый", tags: ["ambient", "грусть", "усталость", "отношения"], url: "https://cdn.pixabay.com/download/audio/2022/10/25/audio_946b5da613.mp3" },
+  { id: "crystal1", name: "Хрустальные звуки", genre: "Медитация", mood: "чистый, просветляющий", tags: ["ambient", "рост", "принятие", "страх"], url: "https://cdn.pixabay.com/download/audio/2021/10/25/audio_cca6d2b29e.mp3" },
 ];
 
 const QUICK_TOPICS = [
@@ -835,27 +907,13 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
   return completion.choices[0].message.content;
 }
 
-// ПРАВКА 1: генерация текста для аудио — увеличены лимиты чтобы не обрывалось
 async function generateAudioText(fullAnswer, audioLength = "short") {
-  // short: ~160 симв = 8-10 сек; long: ~500 симв = 13-16 сек
-  // Ставим лимиты с запасом чтобы GPT не обрезал слово на полуслове
   const maxChars = audioLength === "long" ? 500 : 160;
   const maxTokens = audioLength === "long" ? 200 : 80;
 
   const instruction = audioLength === "long"
-    ? `Возьми 2-3 главные мысли из текста и перефразируй в ЗАКОНЧЕННЫЕ 2-3 предложения.
-Требования:
-- Строго до 500 символов
-- Каждое предложение должно быть ПОЛНЫМ и заканчиваться точкой
-- Спокойный тон, паузы через запятую или тире
-- Без вопросов, без эмодзи, без markdown символов (* _)
-- НЕЛЬЗЯ обрывать предложение на полуслове`
-    : `Возьми главную мысль из текста и перефразируй в ЗАКОНЧЕННОЕ 1-2 предложения.
-Требования:
-- Строго до 160 символов
-- Предложение должно быть ПОЛНЫМ и заканчиваться точкой
-- Без вопросов, без эмодзи, без markdown символов (* _)
-- НЕЛЬЗЯ обрывать на полуслове`;
+    ? `Возьми 2-3 главные мысли из текста и перефразируй в ЗАКОНЧЕННЫЕ 2-3 предложения.\nТребования:\n- Строго до 500 символов\n- Каждое предложение должно быть ПОЛНЫМ и заканчиваться точкой\n- Спокойный тон, паузы через запятую или тире\n- Без вопросов, без эмодзи, без markdown символов (* _)\n- НЕЛЬЗЯ обрывать предложение на полуслове`
+    : `Возьми главную мысль из текста и перефразируй в ЗАКОНЧЕННОЕ 1-2 предложения.\nТребования:\n- Строго до 160 символов\n- Предложение должно быть ПОЛНЫМ и заканчиваться точкой\n- Без вопросов, без эмодзи, без markdown символов (* _)\n- НЕЛЬЗЯ обрывать на полуслове`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -866,7 +924,6 @@ async function generateAudioText(fullAnswer, audioLength = "short") {
 
   let result = completion.choices[0].message.content.trim().replace(/[*_]/g, '');
 
-  // Если текст всё же превышает лимит — обрезаем по последней точке, а не по символу
   if (result.length > maxChars) {
     const lastDot = result.lastIndexOf('.', maxChars);
     if (lastDot > maxChars * 0.5) {
@@ -900,8 +957,49 @@ async function sendGeneratedText(chatId, text, scenario) {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
+  const text = msg.text || "";
+  const inviteCode = text.replace("/start", "").trim();
+
+  // Если пришёл с инвайт-кодом — проверяем и привязываем
+  if (inviteCode) {
+    const db = await loadDemoDB();
+    const user = Object.values(db.users).find(u => u.invite_code === inviteCode);
+    if (user) {
+      if (user.tg_id !== chatId) {
+        // Код уже использован другим человеком
+        await bot.sendMessage(chatId, "🔐 Этот инвайт-код уже использован. Обратитесь к @tetss2 для получения нового доступа.");
+        return;
+      }
+      // Уже этот же пользователь — просто пускаем
+    }
+  }
+
   userState.set(chatId, {});
-  await bot.sendMessage(chatId, `👋 Добро пожаловать!\n\nЯ — ИИ-помощник для создания контента.\n\nНажмите кнопку чтобы начать 👇`, { reply_markup: START_KEYBOARD });
+
+  // Проверяем есть ли демо-доступ
+  const demoUser = await getDemoUserByTgId(chatId);
+  if (demoUser) {
+    const access = await checkDemoAccess(chatId);
+    if (!access.allowed) {
+      if (access.reason === "expired") {
+        await handleExpired(chatId, access.user);
+      } else {
+        await handleNotRegistered(chatId);
+      }
+      return;
+    }
+    await bot.sendMessage(chatId,
+      `👋 Добро пожаловать, *${demoUser.name}*!\n\n` +
+      `📊 Ваш демо-доступ:\n` +
+      `📝 Текст: ${demoUser.limits.text.used}/${demoUser.limits.text.max}\n` +
+      `🖼 Фото: ${demoUser.limits.photo.used}/${demoUser.limits.photo.max}\n` +
+      `🎬 Видео: ${demoUser.limits.video.used}/${demoUser.limits.video.max}\n\n` +
+      `Нажмите кнопку чтобы начать 👇`,
+      { parse_mode: "Markdown", reply_markup: START_KEYBOARD }
+    );
+  } else {
+    await handleNotRegistered(chatId);
+  }
 });
 
 bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
@@ -916,6 +1014,13 @@ bot.on("message", async (msg) => {
     if (msg.text && msg.text.startsWith('/')) return;
 
     if (msg.text === "\uD83D\uDE80 Старт") {
+      // Проверяем доступ перед стартом
+      const access = await checkDemoAccess(chatId);
+      if (!access.allowed) {
+        if (access.reason === "expired") { await handleExpired(chatId, access.user); }
+        else { await handleNotRegistered(chatId); }
+        return;
+      }
       await bot.sendMessage(chatId, "🌟 Начинаем!", { reply_markup: REMOVE_KEYBOARD });
       if (state.onboardingDisabled) {
         await sendTopicMenu(chatId);
@@ -1012,6 +1117,36 @@ bot.on("callback_query", async (query) => {
 
   try {
     const state = userState.get(chatId) || {};
+
+    // Обработка запросов на увеличение лимита / продление
+    if (data.startsWith("req_limit_")) {
+      const limitType = data.replace("req_limit_", "");
+      const user = await getDemoUserByTgId(chatId);
+      if (user) {
+        const labelMap = { text: "📝 Тексты", photo: "🖼 Фото", video: "🎬 Видео" };
+        await notifyLeadsBot(
+          `📩 *Запрос на увеличение лимита*\n\n👤 ${user.name}, ${user.city}\n📱 ${user.phone}\n📊 Хочет больше: *${labelMap[limitType] || limitType}*`,
+          { inline_keyboard: [[{ text: "💬 Написать пользователю", url: `tg://user?id=${user.tg_id}` }]] }
+        );
+      }
+      await bot.sendMessage(chatId, "✅ Запрос отправлен администратору. Он свяжется с вами в ближайшее время.");
+      return;
+    }
+
+    if (data === "req_extend") {
+      const user = await getDemoUserByTgId(chatId);
+      if (user) {
+        await notifyLeadsBot(
+          `📩 *Запрос на продление демо*\n\n👤 ${user.name}, ${user.city}\n📱 ${user.phone}\n📊 Текст: ${user.limits.text.used}/${user.limits.text.max} | Фото: ${user.limits.photo.used}/${user.limits.photo.max} | Видео: ${user.limits.video.used}/${user.limits.video.max}`,
+          { inline_keyboard: [[
+            { text: "💬 Написать", url: `tg://user?id=${user.tg_id}` },
+            { text: "➕ Продлить на 3 дня", callback_data: `extend_${user.phone}` },
+          ]] }
+        );
+      }
+      await bot.sendMessage(chatId, "✅ Запрос на продление отправлен. Администратор свяжется с вами.");
+      return;
+    }
 
     if (data === "onboard_1") { await sendOnboarding(chatId, 1); return; }
     if (data === "onboard_2") { await sendOnboarding(chatId, 2); return; }
@@ -1128,9 +1263,17 @@ bot.on("callback_query", async (query) => {
     if (data.startsWith("pub:")) { await showFinalPost(chatId, data.replace("pub:", "")); return; }
 
     if (data.startsWith("rp:")) {
+      // Проверяем лимит фото
+      const photoCheck = await checkLimit(chatId, "photo");
+      if (!photoCheck.ok) {
+        if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+        if (photoCheck.reason === "expired") { await handleExpired(chatId, photoCheck.user); return; }
+        await handleLimitExhausted(chatId, "photo", photoCheck.user); return;
+      }
       const scenePrompt = state.photos?.[data.replace("rp:", "")]?.scenePrompt || state.lastScenePrompt;
       if (!scenePrompt) { await bot.sendMessage(chatId, "Не могу воспроизвести сцену."); return; }
       const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
+      await incrementLimit(chatId, "photo", state.lastScenario, null);
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -1250,6 +1393,13 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("mv:")) {
+      // Проверяем лимит видео
+      const videoCheck = await checkLimit(chatId, "video");
+      if (!videoCheck.ok) {
+        if (videoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+        if (videoCheck.reason === "expired") { await handleExpired(chatId, videoCheck.user); return; }
+        await handleLimitExhausted(chatId, "video", videoCheck.user); return;
+      }
       const photoKey = data.replace("mv:", "");
       const imageUrl = state.photos?.[photoKey]?.imageUrl || null;
       if (!imageUrl) { await bot.sendMessage(chatId, "Фото не найдено."); return; }
@@ -1258,20 +1408,36 @@ bot.on("callback_query", async (query) => {
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, state.lastAudioUrl);
+      await incrementLimit(chatId, "video", state.lastScenario, null);
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
 
     if (data === "photo_topic") {
+      // Проверяем лимит фото
+      const photoCheck = await checkLimit(chatId, "photo");
+      if (!photoCheck.ok) {
+        if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+        if (photoCheck.reason === "expired") { await handleExpired(chatId, photoCheck.user); return; }
+        await handleLimitExhausted(chatId, "photo", photoCheck.user); return;
+      }
       const scenePrompt = await buildTopicScenePrompt(state.lastTopic || "психология");
       const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
+      await incrementLimit(chatId, "photo", state.lastScenario, null);
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
       await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
     } else if (data === "photo_office") {
+      const photoCheck = await checkLimit(chatId, "photo");
+      if (!photoCheck.ok) {
+        if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+        if (photoCheck.reason === "expired") { await handleExpired(chatId, photoCheck.user); return; }
+        await handleLimitExhausted(chatId, "photo", photoCheck.user); return;
+      }
       const officeScene = `sitting in cozy therapist office, bookshelf background, soft warm lamp light, wooden furniture, indoor plants, bokeh background`;
       const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
+      await incrementLimit(chatId, "photo", state.lastScenario, null);
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -1290,6 +1456,14 @@ bot.on("callback_query", async (query) => {
 // ─── ГЕНЕРАЦИЯ ────────────────────────────────────────────────────────────────
 
 async function runGeneration(chatId, scenario, lengthMode, styleKey) {
+  // Проверяем лимит текста
+  const textCheck = await checkLimit(chatId, "text");
+  if (!textCheck.ok) {
+    if (textCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+    if (textCheck.reason === "expired") { await handleExpired(chatId, textCheck.user); return; }
+    await handleLimitExhausted(chatId, "text", textCheck.user); return;
+  }
+
   const state = userState.get(chatId) || {};
   const topic = state.pendingTopic;
   if (!topic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
@@ -1304,6 +1478,9 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
 
   const fullAnswer = await generatePostText(topic, scenario, lengthMode, styleKey);
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
+
+  // Увеличиваем счётчик текста
+  await incrementLimit(chatId, "text", scenario, lengthMode);
 
   const s = userState.get(chatId) || {};
   s.lastFullAnswer = fullAnswer;
