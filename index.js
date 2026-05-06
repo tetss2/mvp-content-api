@@ -196,12 +196,17 @@ async function publishToChannel(type, state) {
 
   const text = state.lastFullAnswer || "";
   const cleanFull = text.replace(/[*_]/g, '');
+  const trimCaption = (t) => {
+    if (t.length <= 1024) return t;
+    const cut = t.lastIndexOf('.', 1020);
+    return cut > 500 ? t.substring(0, cut + 1) : t.substring(0, 1021) + "...";
+  };
 
   try {
     if (type === "text_photo" && state.lastImageUrl) {
-      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: cleanFull });
+      await bot.sendPhoto(TG_CHANNEL, state.lastImageUrl, { caption: trimCaption(cleanFull) });
     } else if (type === "text_video" && state.lastVideoUrl) {
-      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: cleanFull });
+      await bot.sendVideo(TG_CHANNEL, state.lastVideoUrl, { caption: trimCaption(cleanFull) });
     } else {
       await bot.sendMessage(TG_CHANNEL, text.substring(0, 4096));
     }
@@ -485,7 +490,7 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
       ffmpeg()
         .input(voicePath).input(musicPath)
         .complexFilter([
-          `[1:a]volume=0.12[music_vol]`,
+          `[1:a]volume=0.35[music_vol]`,
           `[music_vol]apad[music_pad]`,
           `[0:a]volume=1.0[voice]`,
           `[voice][music_pad]amix=inputs=2:duration=first:dropout_transition=3[out]`,
