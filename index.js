@@ -833,12 +833,13 @@ async function sendVideoWithButtons(chatId, videoUrl, videoCost) {
   const state = userState.get(chatId) || {};
   if (!state.videos) state.videos = {};
   state.videos[videoKey] = videoUrl;
+  state.lastVideoUrl = videoUrl;
   userState.set(chatId, state);
   await bot.sendVideo(chatId, videoUrl, {
     caption: `✅ 🎬 Видео сгенерировано\n💰 $${videoCost.toFixed(2)}`,
     reply_markup: { inline_keyboard: [
       [{ text: "✅ Выбрать", callback_data: `cv:${videoKey}` }, { text: "🔄 Ещё вариант", callback_data: "vid_again" }],
-      [{ text: "📤 Опубликовать в канал", callback_data: "pub_menu" }],
+      [{ text: "📢 Опубликовать видео+текст в канал", callback_data: "pub:text_video" }],
     ]},
   });
 }
