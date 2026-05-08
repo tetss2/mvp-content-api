@@ -1,0 +1,17 @@
+node_modules/
+
+.env
+.env.local
+.env.production
+
+.DS_Store
+Thumbs.db
+
+dist/
+build/
+
+coverage/
+
+.vscode/settings.json
+
+*.log
