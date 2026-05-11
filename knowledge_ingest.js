@@ -1,6 +1,7 @@
 import { mkdirSync, promises as fs } from "fs";
 import { createHash } from "crypto";
 import { spawnSync } from "child_process";
+import os from "os";
 import { dirname, isAbsolute, join, relative } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
@@ -470,9 +471,13 @@ async function embedChunks(chunks, apiKey) {
 }
 
 async function buildFaissIndex(stagingDir, vectorsPath) {
+  mkdirSync(dirname(stagingDir), { recursive: true });
   mkdirSync(stagingDir, { recursive: true });
+  const tempFaissDir = join(os.tmpdir(), "mvp-content-api-faiss", timestampId());
+  const tempIndexPath = join(tempFaissDir, "faiss.index");
+  mkdirSync(tempFaissDir, { recursive: true });
   const script = `
-import json, sys
+import json, sys, os
 from pathlib import Path
 import faiss
 import numpy as np
@@ -488,14 +493,20 @@ if arr.ndim != 2 or arr.shape[1] != ${EMBEDDING_DIM}:
 faiss.normalize_L2(arr)
 index = faiss.IndexFlatIP(${EMBEDDING_DIM})
 index.add(arr)
+os.makedirs(os.path.dirname(index_path), exist_ok=True)
 faiss.write_index(index, index_path)
 `;
-  const result = spawnSync("python", ["-c", script, vectorsPath, join(stagingDir, "faiss.index")], {
-    cwd: ROOT,
-    encoding: "utf-8",
-  });
-  if (result.status !== 0) {
-    throw new Error(`FAISS build failed: ${result.stderr || result.stdout}`);
+  try {
+    const result = spawnSync("python", ["-c", script, vectorsPath, tempIndexPath], {
+      cwd: ROOT,
+      encoding: "utf-8",
+    });
+    if (result.status !== 0) {
+      throw new Error(`FAISS build failed: ${result.stderr || result.stdout}`);
+    }
+    await fs.copyFile(tempIndexPath, join(stagingDir, "faiss.index"));
+  } finally {
+    await fs.rm(tempFaissDir, { recursive: true, force: true });
   }
 }
 
