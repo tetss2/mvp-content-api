@@ -1,0 +1,41 @@
+{
+  "original_path": "sorted_sources/good/Секс. обслед. Ж (1).docx",
+  "relative_input_path": "Секс. обслед. Ж (1).docx",
+  "planned_cleaned_path": "cleaned_corpus/good/Секс. обслед. Ж (1).cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/Секс. обслед. Ж (1).metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/Секс. обслед. Ж (1).rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/Секс. обслед. Ж (1).cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/Секс. обслед. Ж (1).metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/Секс. обслед. Ж (1).rejected.jsonl",
+  "chars_before": 4198,
+  "chars_after": 2601,
+  "blocks_total": 1,
+  "kept_blocks_count": 1,
+  "rejected_blocks_count": 0,
+  "removed_sections_count": 0,
+  "review_unclear_blocks_count": 0,
+  "cleaning_confidence": 0.82,
+  "categories_removed": {},
+  "categories_kept": {
+    "keep_theory": 1
+  },
+  "normalization": {
+    "page_markers_removed": 0,
+    "repeated_header_footer_lines": []
+  },
+  "warnings": [],
+  "removed_examples": [],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 2601,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Сексологическое обследования женщины (краткая карта) Заполнить СФЖ и карту эрогенных зон. Основные жалобы: Когда и при каких обстоятельствах впервые возникла мысль о наличии сексуальных проблем Особенности воспитания до школы (половое самосознание, ролевые игры, эмоциональная близость, родительские запреты) Отношения со сверстниками в младших классах, с како"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.327242+00:00",
+  "mode": "apply"
+}

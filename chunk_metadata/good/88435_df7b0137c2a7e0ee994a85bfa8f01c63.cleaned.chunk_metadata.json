@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt",
+  "chunks_file": "chunks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.chunks.jsonl",
+  "chunk_count": 200,
+  "tokens_total_estimate": 131146,
+  "avg_chunk_tokens": 655.7,
+  "min_chunk_tokens": 276,
+  "max_chunk_tokens": 1090,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 7,
+  "overlap_redundancy_avg": 0.007,
+  "semantic_continuity_avg": 0.81
+}

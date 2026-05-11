@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.cleaned.txt",
+  "chunks_file": "chunks/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.chunks.jsonl",
+  "chunk_count": 321,
+  "tokens_total_estimate": 212274,
+  "avg_chunk_tokens": 661.3,
+  "min_chunk_tokens": 176,
+  "max_chunk_tokens": 1139,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 16,
+  "overlap_redundancy_avg": 0.012,
+  "semantic_continuity_avg": 0.806
+}

@@ -1,0 +1,132 @@
+{
+  "generated_at": "2026-05-11T17:24:02.177521+00:00",
+  "mode": "apply",
+  "embedding_model": "text-embedding-3-small",
+  "embedding_dim": 1536,
+  "chunk_files": 13,
+  "chunks_total": 1560,
+  "embedded_total": 1560,
+  "skipped_existing_total": 0,
+  "errors_total": 0,
+  "partial_save_safe": true,
+  "vector_db_used": false,
+  "files": [
+    {
+      "chunk_file": "chunks/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.embeddings.jsonl",
+      "chunks": 178,
+      "estimated_tokens": 120270,
+      "embedded": 178,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.embeddings.jsonl",
+      "chunks": 200,
+      "estimated_tokens": 131146,
+      "embedded": 200,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.embeddings.jsonl",
+      "chunks": 281,
+      "estimated_tokens": 193130,
+      "embedded": 281,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/конс. жертв секс. насил..chunks.jsonl",
+      "output_file": "embeddings/good/конс. жертв секс. насил..embeddings.jsonl",
+      "chunks": 10,
+      "estimated_tokens": 6797,
+      "embedded": 10,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Любовь. ревность..chunks.jsonl",
+      "output_file": "embeddings/good/Любовь. ревность..embeddings.jsonl",
+      "chunks": 8,
+      "estimated_tokens": 6078,
+      "embedded": 8,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.embeddings.jsonl",
+      "chunks": 321,
+      "estimated_tokens": 212274,
+      "embedded": 321,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Нетипичный секс.chunks.jsonl",
+      "output_file": "embeddings/good/Нетипичный секс.embeddings.jsonl",
+      "chunks": 17,
+      "estimated_tokens": 12119,
+      "embedded": 17,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/секс дисф. начало (през).chunks.jsonl",
+      "output_file": "embeddings/good/секс дисф. начало (през).embeddings.jsonl",
+      "chunks": 12,
+      "estimated_tokens": 8287,
+      "embedded": 12,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Сексуальный интеллект.cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/Сексуальный интеллект.cleaned.embeddings.jsonl",
+      "chunks": 146,
+      "estimated_tokens": 95706,
+      "embedded": 146,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Супр. терапия (оконч).chunks.jsonl",
+      "output_file": "embeddings/good/Супр. терапия (оконч).embeddings.jsonl",
+      "chunks": 7,
+      "estimated_tokens": 5054,
+      "embedded": 7,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Х Каплан Сексуальная терапия.chunks.jsonl",
+      "output_file": "embeddings/good/Х Каплан Сексуальная терапия.embeddings.jsonl",
+      "chunks": 84,
+      "estimated_tokens": 58316,
+      "embedded": 84,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Яффе Секс в жизни женщины .cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/Яффе Секс в жизни женщины .cleaned.embeddings.jsonl",
+      "chunks": 157,
+      "estimated_tokens": 99870,
+      "embedded": 157,
+      "skipped_existing": 0,
+      "errors": []
+    },
+    {
+      "chunk_file": "chunks/good/Яффе Секс в жизни мужчины .cleaned.chunks.jsonl",
+      "output_file": "embeddings/good/Яффе Секс в жизни мужчины .cleaned.embeddings.jsonl",
+      "chunks": 139,
+      "estimated_tokens": 85951,
+      "embedded": 139,
+      "skipped_existing": 0,
+      "errors": []
+    }
+  ]
+}

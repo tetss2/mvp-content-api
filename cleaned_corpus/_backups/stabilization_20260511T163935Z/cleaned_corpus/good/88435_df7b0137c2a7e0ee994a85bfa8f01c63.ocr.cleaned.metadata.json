@@ -1,0 +1,83 @@
+{
+  "original_path": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+  "relative_input_path": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.rejected.jsonl",
+  "chars_before": 551578,
+  "chars_after": 549305,
+  "blocks_total": 55,
+  "kept_blocks_count": 55,
+  "rejected_blocks_count": 0,
+  "removed_sections_count": 0,
+  "review_unclear_blocks_count": 0,
+  "cleaning_confidence": 0.8,
+  "categories_removed": {},
+  "categories_kept": {
+    "keep_clinical": 8,
+    "keep_narrative": 4,
+    "keep_theory": 43
+  },
+  "normalization": {
+    "page_markers_removed": 3,
+    "repeated_header_footer_lines": [
+      "История возникновения и развития метода",
+      "Практические аспекты применения метода",
+      "Теоретическая основа и сущность метода"
+    ]
+  },
+  "warnings": [],
+  "removed_examples": [],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1838,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "=== PAGE 1 === | сн ¥ a y аб Доморацкий В. А. Краткосрочные методы психотерапии Москва Рецензенты: доктор медицинских наук, кандидат психологических наук, профессор М.Н.Гордеев, заведующий кафедрой психотерапии Российского государственного медицинского университета; доктор медицинских наук, профессор кафедры психиатрии и медицинской психологии Белорусского г"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1986,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "2.1 Эриксоновская психотерапия и эриксоновский гипноз 2.1.1 История возникновения и развития метода 2.1.2 Теоретическая основа и сущность метода 2.1.3 Практические аспекты применения метода Стадии гипнотического транса Признаки транса Виды внушений в гипнозе Гипнотическая рамка Основные стратегии работы 1. Укрепление Эго пациента ресурсами 2. Гипноанализ 3. "
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 7284,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "2.7.3 Практические аспекты применения метода 2.8 Краткосрочная мультимодальная психотерапия 2.8.1 История возникновения и развития метода 2.8.2 Теоретическая основа и сущность метода 2.8.3 Практические аспекты применения метода 2.9 Десенсибилизация и переработка движениями глаз (ДПДГ) 2.9.1 История возникновения и развития метода 2.9.2 Теоретическая основа и"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 16868,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Б. Д. Карвасарский (1985), выделяет три наиболее разработанных и получивших признание психотерапевтических направления: психоаналитическое (психодинамическое), бихевиоральное (поведенческое) и гуманистическое (экзистенциально-гуманистическое, опытное). В этих трех направлениях психотерапии, ориентированных на личностные изменения, а не на один лишь симптом, "
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 29731,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Проблема доступа и стратегии его облегчения Фактически, различные формы психотерапии возникли как следствие, нередко, безуспешных попыток людей контролировать свои или чужие эмоции и поведение путем использования рациональных аргументов, убеждения, директив или логического анализа. Человек может умом понимать, что ему следовало бы делать, но вот действовать "
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.241552+00:00",
+  "mode": "apply"
+}

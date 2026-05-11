@@ -1,0 +1,122 @@
+{
+  "original_path": "sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+  "relative_input_path": "126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.rejected.jsonl",
+  "chars_before": 537609,
+  "chars_after": 525814,
+  "blocks_total": 377,
+  "kept_blocks_count": 375,
+  "rejected_blocks_count": 2,
+  "removed_sections_count": 2,
+  "review_unclear_blocks_count": 108,
+  "cleaning_confidence": 0.79,
+  "categories_removed": {
+    "reject_toc": 2
+  },
+  "categories_kept": {
+    "keep_clinical": 30,
+    "keep_narrative": 29,
+    "keep_theory": 208,
+    "review_unclear": 108
+  },
+  "normalization": {
+    "page_markers_removed": 486,
+    "repeated_header_footer_lines": [
+      "КОНТРОЛЬНЫЕ ВОПРОСЫ"
+    ]
+  },
+  "warnings": [
+    "review_unclear_blocks:108"
+  ],
+  "removed_examples": [
+    {
+      "label": "reject_toc",
+      "confidence": 0.88,
+      "char_count": 690,
+      "reasons": [
+        "toc_ratio=0.00, toc_chapter_hits=3"
+      ],
+      "preview": "Глава 2. Этапы формирования сексуальиости Контрольные вопросы. Глава 3. Анатомическое обеспечение половой сферы Анатомия половых органов мужчины.. Анатомия половых органов женщины Наружные половые органы.... Современное понимание термина «нервный центр» Контрольные вопросы.... Глава 4. Физиологические основы сексуальиости мужчииы и женщины.. Эрекция.. Эякуля"
+    },
+    {
+      "label": "reject_toc",
+      "confidence": 0.88,
+      "char_count": 1776,
+      "reasons": [
+        "toc_ratio=0.03, toc_chapter_hits=5"
+      ],
+      "preview": "Глава 5. Личность и нарушение сексуального здоровья Контрольные вопросы.... Глава 6. Семейно-сексуальные дисгармонии Контрольные вопросы... Глава 7. Сексуальные расстройства у мужчин и женщин.. Инволюционное снижение половой активности.. Сексуальные расстройства, вызванные применением лекарств. при гормонотерапии и других веществ.. Врожденная патология полов"
+    }
+  ],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1246,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "УДК 613.8 ББК 57.0 B68 В68 Рецензенты: доктор мединииских наук L/L, Киорик доктор мединииских наук И.Ф. Мягков Володин В.С. Основы медицинской ссксологии (курс лекций): Учебное пособие. — М.- Логос. 2003.- 240 с. ISBN 5-94010-167-4 Освещаются этапы и направления развития отечественной сексопатологии н оргаиизанионные осповы сексологической службы. С coвремен"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1668,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Глава 10. Санитарно-просветительнал работа Контрольные вопросы. Глава 11. Деонтология в сексологии Контрольные вопросы. Список литературы.. Приложения.. ПРЕДИСЛОВИЕ Предлагаемая вниманию читателей книга является первой попыткой создания учебного пособия по сексологии для российских медицинских высших учебных заведений. Несмотря на многочисленные зарубежные п"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1603,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "В ходе этого курса студент должен усвоить основные понятия медицинской сексологии, ее терминологию, получить знания о формировании сексуальности и ее проявлениях в различные возрастные периоды. Автор посчитал необходимым включить в курс лекций дополнительный раздел, посвященный личности и сексуальному здоровью, тем самым нацелив будущих врачей на лечение тел"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1560,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "ОРГАНИЗАЦИЯ СЕКСОЛОГИЧЕСКОЙ СЛУЖБЫ «В чем повинен перед людьми половой акт — столь естественный, столь насущный и столь оправданный, что все как один не решаются говорить о нем без краски стыда на лице и не позволяют затрагивать эту тему в серьезной благопристойной беcee?» - спрашивал М. Монтень. В ero вопросе затронута сложная проблема нравственного отношен"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1546,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "в своей книге «Сексуальная жизнь нашего времени в ее отношениях к современной культуре» подчеркнул, что сексология должна синтезировать данные всех наук о человеке: биологию, этнологию, антропологию, философию, историю литературы и культуры, психологию и медицину. Медицинская сексология — это область медицины, занимающаяся изучением причин и условий развития"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.200907+00:00",
+  "mode": "apply",
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.444691+00:00",
+    "operation": "stabilize_in_place",
+    "logical_category": "explanatory_narrative",
+    "duplicate_status": "canonical_or_unique",
+    "duplicate_of": "",
+    "duplicate_similarity": "",
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": true,
+    "tail_remove_chars": 12398,
+    "tail_reasons": [
+      "bibliography_tail"
+    ],
+    "chunking_readiness_before": 1.0,
+    "chunking_readiness_after": 1.0
+  }
+}

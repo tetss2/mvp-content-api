@@ -1,0 +1,662 @@
+{
+  "generated_at": "2026-05-11T15:19:28.914736+00:00",
+  "apply": false,
+  "operations": [
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+      "target": "sorted_sources/surveys/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "target": "sorted_sources/surveys/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "target": "sorted_sources/bibliography/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "category": "bibliography",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "target": "sorted_sources/bibliography/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "category": "bibliography",
+      "confidence": "0.78"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "kb/sexologist/good/Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/Сексуальный интеллект.cleaned.txt",
+      "target": "sorted_sources/tests/Сексуальный интеллект.cleaned.txt",
+      "category": "test",
+      "confidence": "0.83"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "target": "sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "category": "exercise",
+      "confidence": "0.82"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/Яффе Секс в жизни женщины .cleaned.txt",
+      "target": "sorted_sources/bibliography/Яффе Секс в жизни женщины .cleaned.txt",
+      "category": "bibliography",
+      "confidence": "0.75"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/good/Яффе Секс в жизни мужчины .cleaned.txt",
+      "target": "sorted_sources/bibliography/Яффе Секс в жизни мужчины .cleaned.txt",
+      "category": "bibliography",
+      "confidence": "0.73"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/OCR_PREPROCESSING_REPORT.md",
+      "target": "sorted_sources/good/OCR_PREPROCESSING_REPORT.md",
+      "category": "article",
+      "confidence": "0.84"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt",
+      "target": "sorted_sources/surveys/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "target": "sorted_sources/surveys/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "target": "sorted_sources/bibliography/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "category": "bibliography",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "target": "sorted_sources/unclear/Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "category": "unclear",
+      "confidence": "0.50"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "target": "sorted_sources/bibliography/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "category": "bibliography",
+      "confidence": "0.78"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "kb/sexologist/ocr_raw/Медицинская_сексология_Психотерапия_сексуальных_расстройств.ocr.raw.txt",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "target": "sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Сексуальный интеллект.ocr.raw.txt",
+      "target": "sorted_sources/tests/Сексуальный интеллект.ocr.raw.txt",
+      "category": "test",
+      "confidence": "0.83"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt",
+      "target": "sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt",
+      "category": "exercise",
+      "confidence": "0.85"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Яффе Секс в жизни женщины .ocr.raw.txt",
+      "target": "sorted_sources/bibliography/Яффе Секс в жизни женщины .ocr.raw.txt",
+      "category": "bibliography",
+      "confidence": "0.74"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/ocr_raw/Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "target": "sorted_sources/bibliography/Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "category": "bibliography",
+      "confidence": "0.73"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "target": "sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "kb/sexologist/trash/Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "target": "sorted_sources/unclear/Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "category": "unclear",
+      "confidence": "0.50"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/psychologist/test-trevoga.txt",
+      "target": "sorted_sources/good/test-trevoga.txt",
+      "category": "article",
+      "confidence": "0.77"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "target": "sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "target": "sorted_sources/good/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "target": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "target": "sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "target": "sorted_sources/surveys/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Osoznannoe_vlechenie1.pdf",
+      "target": "sorted_sources/good/Osoznannoe_vlechenie1.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/seks-probl-i-dpdg.pdf",
+      "target": "sorted_sources/unclear/seks-probl-i-dpdg.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Sexopatologia_Spravochnik_1990.pdf",
+      "target": "sorted_sources/good/Sexopatologia_Spravochnik_1990.pdf",
+      "category": "book_theory",
+      "confidence": "0.68"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/statya-va-domorackogo (1).pdf",
+      "target": "sorted_sources/unclear/statya-va-domorackogo (1).pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "target": "sorted_sources/unclear/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/«Когда мы не ладим» Упражнение .docx",
+      "target": "sorted_sources/unclear/«Когда мы не ладим» Упражнение .docx",
+      "category": "unclear",
+      "confidence": "0.50"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Автостоп. Техника символдрамы.docx",
+      "target": "sorted_sources/exercises/Автостоп. Техника символдрамы.docx",
+      "category": "exercise",
+      "confidence": "0.70"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Аддикции отношений. Секс.docx",
+      "target": "sorted_sources/tests/Аддикции отношений. Секс.docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Анкета_для_пациентов_женского_пола.docx",
+      "target": "sorted_sources/surveys/Анкета_для_пациентов_женского_пола.docx",
+      "category": "questionnaire",
+      "confidence": "0.73"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Анкета_для_пациентов_мужского_пола.docx",
+      "target": "sorted_sources/surveys/Анкета_для_пациентов_мужского_пола.docx",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "sources/sexologist/Анкета_карты пац М и Ж.docx",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Введение в сексологию.docx",
+      "target": "sorted_sources/tests/Введение в сексологию.docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Женская психопатология Святоч.pdf",
+      "target": "sorted_sources/good/Женская психопатология Святоч.pdf",
+      "category": "book_theory",
+      "confidence": "0.84"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Женская сексуальность.docx",
+      "target": "sorted_sources/surveys/Женская сексуальность.docx",
+      "category": "questionnaire",
+      "confidence": "0.85"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Женские сексуальные дисфункции .docx",
+      "target": "sorted_sources/tests/Женские сексуальные дисфункции .docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Завис (през).docx",
+      "target": "sorted_sources/tests/Завис (през).docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.docx",
+      "target": "sorted_sources/tests/Индекс_женской_сексуальной_функции_ИЖСФ.docx",
+      "category": "test",
+      "confidence": "0.83"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Индекс_эректильной_функции_международный.docx",
+      "target": "sorted_sources/tests/Индекс_эректильной_функции_международный.docx",
+      "category": "test",
+      "confidence": "0.82"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/конс. жертв секс. насил..docx",
+      "target": "sorted_sources/good/конс. жертв секс. насил..docx",
+      "category": "good_source",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Куст розы. Символдрама.docx",
+      "target": "sorted_sources/exercises/Куст розы. Символдрама.docx",
+      "category": "exercise",
+      "confidence": "0.75"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Любовь. ревность..docx",
+      "target": "sorted_sources/good/Любовь. ревность..docx",
+      "category": "good_source",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/М половая конституция табл.docx",
+      "target": "sorted_sources/unclear/М половая конституция табл.docx",
+      "category": "unclear",
+      "confidence": "0.50"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "target": "sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "category": "book_theory",
+      "confidence": "0.82"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "sources/sexologist/Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.docx",
+      "target": "sorted_sources/tests/Международный_индекс_эректильной_функции_МИЭФ.docx",
+      "category": "test",
+      "confidence": "0.82"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Мужская сексуальность.docx",
+      "target": "sorted_sources/surveys/Мужская сексуальность.docx",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "target": "sorted_sources/exercises/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "category": "exercise",
+      "confidence": "0.72"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Нетипичный секс.docx",
+      "target": "sorted_sources/good/Нетипичный секс.docx",
+      "category": "good_source",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.docx",
+      "target": "sorted_sources/good/Опросник_Сексуальная_формула_мужская_СФМ.docx",
+      "category": "article",
+      "confidence": "0.77"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf",
+      "target": "sorted_sources/unclear/Опросник_социосексуальной_ориентации_SOI.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx",
+      "target": "sorted_sources/surveys/ПСР_психосексуальное_развитие_в_норме.docx",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx",
+      "target": "sorted_sources/exercises/Свядощ_Женская_Сексопатология_doc.docx",
+      "category": "exercise",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/секс дисф. начало (през).docx",
+      "target": "sorted_sources/good/секс дисф. начало (през).docx",
+      "category": "good_source",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Секс. обслед. Ж (1).docx",
+      "target": "sorted_sources/good/Секс. обслед. Ж (1).docx",
+      "category": "article",
+      "confidence": "0.74"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Сексуальные дисгармонии.docx",
+      "target": "sorted_sources/exercises/Сексуальные дисгармонии.docx",
+      "category": "exercise",
+      "confidence": "0.67"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Сексуальный интеллект.pdf",
+      "target": "sorted_sources/unclear/Сексуальный интеллект.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Стерн Д. - Глаз видит сам себя.pdf",
+      "target": "sorted_sources/unclear/Стерн Д. - Глаз видит сам себя.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "target": "sorted_sources/surveys/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Стыд и секс.docx",
+      "target": "sorted_sources/exercises/Стыд и секс.docx",
+      "category": "exercise",
+      "confidence": "0.70"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Супр. терапия (оконч).docx",
+      "target": "sorted_sources/good/Супр. терапия (оконч).docx",
+      "category": "good_source",
+      "confidence": "0.90"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "target": "sorted_sources/tests/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "target": "sorted_sources/surveys/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "category": "questionnaire",
+      "confidence": "0.77"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/СФМ секс формула М опросник .docx",
+      "target": "sorted_sources/surveys/СФМ секс формула М опросник .docx",
+      "category": "questionnaire",
+      "confidence": "0.77"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Тест_опросник_удовлетвореености_браком.docx",
+      "target": "sorted_sources/surveys/Тест_опросник_удовлетвореености_браком.docx",
+      "category": "questionnaire",
+      "confidence": "0.96"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Х Каплан Сексуальная терапия.docx",
+      "target": "sorted_sources/bibliography/Х Каплан Сексуальная терапия.docx",
+      "category": "bibliography",
+      "confidence": "0.73"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Шкала ПК для женщин.pdf",
+      "target": "sorted_sources/unclear/Шкала ПК для женщин.pdf",
+      "category": "unclear",
+      "confidence": "0.45"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/ЭГ в пт секс дисфункций.docx",
+      "target": "sorted_sources/tests/ЭГ в пт секс дисфункций.docx",
+      "category": "test",
+      "confidence": "0.95"
+    },
+    {
+      "status": "skipped",
+      "message": "duplicate_review_only",
+      "source": "sources/sexologist/ЭГ в секс дисфункциях.docx",
+      "target": "",
+      "category": "duplicate",
+      "confidence": "0.98"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf",
+      "target": "sorted_sources/good/Эмили Нагоски - Как хочет женщина.pdf",
+      "category": "book_theory",
+      "confidence": "0.84"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Яффе Секс в жизни женщины .pdf",
+      "target": "sorted_sources/good/Яффе Секс в жизни женщины .pdf",
+      "category": "book_theory",
+      "confidence": "0.82"
+    },
+    {
+      "status": "planned",
+      "message": "copy_file",
+      "source": "sources/sexologist/Яффе Секс в жизни мужчины .pdf",
+      "target": "sorted_sources/good/Яффе Секс в жизни мужчины .pdf",
+      "category": "book_theory",
+      "confidence": "0.82"
+    }
+  ]
+}

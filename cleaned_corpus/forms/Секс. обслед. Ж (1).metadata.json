@@ -1,0 +1,17 @@
+{
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.809230+00:00",
+    "operation": "moved_to_forms",
+    "logical_category": "form_card",
+    "duplicate_status": "canonical_or_unique",
+    "duplicate_of": "",
+    "duplicate_similarity": "",
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": false,
+    "tail_remove_chars": 0,
+    "tail_reasons": [],
+    "chunking_readiness_before": 0.62,
+    "chunking_readiness_after": 0.62
+  }
+}

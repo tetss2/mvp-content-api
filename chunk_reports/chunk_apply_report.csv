@@ -1,0 +1,22 @@
+﻿source_file,excluded,exclusion_reason,chunk_count,tokens_total_estimate,avg_chunk_tokens,min_chunk_tokens,max_chunk_tokens,oversized_chunks,orphan_paragraphs,overlap_redundancy_avg,semantic_continuity_avg
+cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt,False,,178,120270,675.7,195,1110,0,6,0.004,0.805
+cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt,False,,200,131146,655.7,276,1090,0,7,0.007,0.81
+cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.cleaned.txt,False,,281,193130,687.3,151,1139,0,12,0.009,0.806
+cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/конс. жертв секс. насил..cleaned.txt,False,,10,6797,679.7,321,947,0,2,0.0,0.796
+cleaned_corpus/good/Любовь. ревность..cleaned.txt,False,,8,6078,759.8,319,967,0,1,0.0,0.782
+"cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.cleaned.txt",False,,321,212274,661.3,176,1139,0,16,0.012,0.806
+"cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.cleaned.txt",True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/Нетипичный секс.cleaned.txt,False,,17,12119,712.9,147,949,0,4,0.0,0.792
+cleaned_corpus/good/секс дисф. начало (през).cleaned.txt,False,,12,8287,690.6,282,950,0,3,0.0,0.79
+cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt,False,,146,95706,655.5,261,1125,0,8,0.005,0.81
+cleaned_corpus/good/Сексуальный интеллект.ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/Супр. терапия (оконч).cleaned.txt,False,,7,5054,722.0,325,936,0,1,0.0,0.803
+cleaned_corpus/good/Х Каплан Сексуальная терапия.cleaned.txt,False,,84,58316,694.2,310,969,0,18,0.0,0.79
+cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt,False,,157,99870,636.1,135,1094,0,9,0.005,0.812
+cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,
+cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt,False,,139,85951,618.4,228,934,0,13,0.004,0.807
+cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.cleaned.txt,True,duplicate_candidate,0,,,,,,,,

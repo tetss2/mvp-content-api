@@ -1,0 +1,41 @@
+{
+  "original_path": "sorted_sources/good/Нетипичный секс.docx",
+  "relative_input_path": "Нетипичный секс.docx",
+  "planned_cleaned_path": "cleaned_corpus/good/Нетипичный секс.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/Нетипичный секс.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/Нетипичный секс.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/Нетипичный секс.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/Нетипичный секс.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/Нетипичный секс.rejected.jsonl",
+  "chars_before": 52033,
+  "chars_after": 50903,
+  "blocks_total": 1,
+  "kept_blocks_count": 1,
+  "rejected_blocks_count": 0,
+  "removed_sections_count": 0,
+  "review_unclear_blocks_count": 0,
+  "cleaning_confidence": 0.82,
+  "categories_removed": {},
+  "categories_kept": {
+    "keep_theory": 1
+  },
+  "normalization": {
+    "page_markers_removed": 0,
+    "repeated_header_footer_lines": []
+  },
+  "warnings": [],
+  "removed_examples": [],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 50903,
+      "reasons": [
+        "theory_score=0.93"
+      ],
+      "preview": "«Нетипичные» сексуальные отношения Доктор медицинских наук, профессор В. А. Доморацкий Критерии нетипичного секса: 1. Количественный – нетипичный секс касается меньшей части популяции. 2. Качественный – определяет нетипичность полового поведения, мотивов и потребностей индивида с учетом существующих в обществе социокультурных стандартов, моделей и эталонов п"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.315729+00:00",
+  "mode": "apply"
+}

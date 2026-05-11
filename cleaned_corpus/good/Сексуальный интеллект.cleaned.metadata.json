@@ -1,0 +1,109 @@
+{
+  "original_path": "sorted_sources/good/Сексуальный интеллект.cleaned.txt",
+  "relative_input_path": "Сексуальный интеллект.cleaned.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/Сексуальный интеллект.cleaned.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/Сексуальный интеллект.cleaned.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/Сексуальный интеллект.cleaned.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/Сексуальный интеллект.cleaned.rejected.jsonl",
+  "chars_before": 409577,
+  "chars_after": 399746,
+  "blocks_total": 230,
+  "kept_blocks_count": 229,
+  "rejected_blocks_count": 1,
+  "removed_sections_count": 1,
+  "review_unclear_blocks_count": 5,
+  "cleaning_confidence": 0.76,
+  "categories_removed": {
+    "reject_toc": 1
+  },
+  "categories_kept": {
+    "keep_clinical": 51,
+    "keep_narrative": 56,
+    "keep_theory": 117,
+    "review_unclear": 5
+  },
+  "normalization": {
+    "page_markers_removed": 242,
+    "repeated_header_footer_lines": []
+  },
+  "warnings": [
+    "review_unclear_blocks:5"
+  ],
+  "removed_examples": [
+    {
+      "label": "reject_toc",
+      "confidence": 0.88,
+      "char_count": 1621,
+      "reasons": [
+        "toc_ratio=0.00, toc_chapter_hits=9"
+      ],
+      "preview": "Часть | = Глава 1 . = Что говорят люди = О’кей, мы уделяем внимание совсем другим вещам. Почему? = Страх перформанса = Измените свое восприятие секса = Средство, а не цель = Глава 2 o0 0000 Что является «нормой» в сексе? Страх не соответствовать норме Две стороны «нормального» секса Ложь, наглая ложь и статистика = Глава 3 о Часть Ц Ценность Интеллекта Три с"
+    }
+  ],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1103,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "МАРТИ KNAWH СЕКСУАЛЬНЫЙ ИНТЕЛЛЕКТ как получить секс, который мы на самом деле хотим, 19+ Annotation Эта книга — He виагра в бумажном формате. Скорее операция на мозге, которая удалит из вашей жизни понятие сексуальной нормы. Миллионы женщин думают: если у мужчины не встает или он кончает слишком быстро, значит, я провалилась. И еще куча стереотипов, которые "
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1705,
+      "reasons": [
+        "theory_score=0.71"
+      ],
+      "preview": "Влияние алкоголя на сексуальность Примечание о хронической боли Образ поврежденного тела Чего можно ожидать от старения Миф о достижении нашего «пика сексуальной активности» о сексе (и вашем теле), История из личной жизни = Глава 10 He начинайте _ заниматься _ сексом, _ пока __ не почувствуете, что близки или готовы Учимся проявлять инициативу, Не торопитесь"
+    },
+    {
+      "label": "keep_clinical",
+      "confidence": 0.72,
+      "char_count": 1382,
+      "reasons": [
+        "theory_score=0.48, substantial narrative block"
+      ],
+      "preview": "Для этих нескончаемых разговоров у меня есть потрясающие собеседники, умные и опытные профессионалы, которые с энтузиазмом обсуждают со мной все мои идеи. Эта книга появилась благодаря десяткам, нет, сотням полуночных и утренних созидательных разговоров в стиле «а что, если?». Так что спасибо моим товарищам по раздумьям: Вене Бланшард, Дагу Брауну-Генри, Лар"
+    },
+    {
+      "label": "keep_clinical",
+      "confidence": 0.72,
+      "char_count": 1738,
+      "reasons": [
+        "theory_score=0.41, substantial narrative block"
+      ],
+      "preview": "(и великолепный писатель). Я знаю, что это получается ненамеренно, но он всегда требует, чтобы я четче выражал свои мысли, что именно я хочу сказать и почему. Неизменность этой привязанности и уважения ко мне, независимо от моих ответов, только повышает ценность его вопросов. А еще он больше, чем кто-либо другой, облегчил мое погружение в мир писательства. Д"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 3703,
+      "reasons": [
+        "theory_score=0.66"
+      ],
+      "preview": "Неудивительно, что у многих людей не получается Правда или ложь? (ответы тут) * Вибраторы, наручники, дилдо и анальные шарики теперь можно купить на amazon.com. * 86 % взрослых американцев признают, что мастурбируют. ¢ Ежегодно миллионам мужчин врачи выписывают рецепты на принятие курса «Виагры», «Сиалиса» и «Левитры», однако очень немногие из них продлевают"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.341461+00:00",
+  "mode": "apply",
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.833955+00:00",
+    "operation": "stabilize_in_place",
+    "logical_category": "explanatory_narrative",
+    "duplicate_status": "canonical_or_unique",
+    "duplicate_of": "",
+    "duplicate_similarity": "",
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": false,
+    "tail_remove_chars": 0,
+    "tail_reasons": [],
+    "chunking_readiness_before": 1.0,
+    "chunking_readiness_after": 1.0
+  }
+}

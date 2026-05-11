@@ -1,0 +1,115 @@
+{
+  "original_path": "sorted_sources/good/Яффе Секс в жизни женщины .cleaned.txt",
+  "relative_input_path": "Яффе Секс в жизни женщины .cleaned.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/Яффе Секс в жизни женщины .cleaned.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/Яффе Секс в жизни женщины .cleaned.rejected.jsonl",
+  "chars_before": 430427,
+  "chars_after": 420636,
+  "blocks_total": 269,
+  "kept_blocks_count": 268,
+  "rejected_blocks_count": 1,
+  "removed_sections_count": 1,
+  "review_unclear_blocks_count": 5,
+  "cleaning_confidence": 0.79,
+  "categories_removed": {
+    "reject_bibliography": 1
+  },
+  "categories_kept": {
+    "keep_clinical": 25,
+    "keep_narrative": 43,
+    "keep_theory": 195,
+    "review_unclear": 5
+  },
+  "normalization": {
+    "page_markers_removed": 341,
+    "repeated_header_footer_lines": [
+      "Оценка вашего успеха",
+      "ЧТО ВАМ ДЕЛАТЬ",
+      "Что вам делать"
+    ]
+  },
+  "warnings": [
+    "review_unclear_blocks:5"
+  ],
+  "removed_examples": [
+    {
+      "label": "reject_bibliography",
+      "confidence": 0.86,
+      "char_count": 1759,
+      "reasons": [
+        "bibliography_hits=2, reference_ratio=0.55"
+      ],
+      "preview": "имеет важное значение, поэтому всем, кто желает сделать анализ, мы рекомендуем проконсультироваться с врачом. Люди с антителами к ВИЧ должны сказать об этом тем, кто действительно дол. жен это знать — своему врачу, зубному врачу, близким друзьям и, конечно, половому партнеру. К сожалению, до сих пор существует множество неправильных представлений о СПИДе, а "
+    }
+  ],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 2112,
+      "reasons": [
+        "theory_score=0.95"
+      ],
+      "preview": "МОРИС ЯФФЕ - ЭЛИЗАБЕТ ФЕНВИК Редактор-консультант РЭЙМОНД РОУЗЕН MAURICE YAFFE Senior Clinical Psychologist, York Clinic, Guy’s Hospital, London ELIZABETH FENWICK Consultant editor RAYMOND C. ROSEN, Ph.D., Associate Professor of Pshychiatry, Rutgers Medical School, New Jersey SEXUAL HAPPINESS FOR WOMEN A Practical Approach Illustrated by Charles Raymond DORL"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 802,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "КАК УЛУЧШИТЬ ВАШУ СЕКСУАЛЬНУЮ ЖИЗНЬ... 50 Обогащение сексуальной жизн! 51 Приемы стимуляции. Сексуальные позы Как повысить удовольствие Как преодолеть скованность Как улучшить вашу самооценку. Изучение собственного тел: Доставьте себе удовольстви Диаграмма сексуального профиля Как повысить сексуальную отзывчивость 89 Как преодолеть полового члена во влагалищ"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 2125,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "ОДИНОКАЯ ЖЕНЩИНА... 148 Почему вы одиноки 149 \"Трудно найти партнер: 151 Трудно поддерживать отношения. 152 Какого партнера вы ищете. 153 Как построить длительные отношения. #55 Развивайте сек навыки общения. ... 158 Жизнь в одиночестве - 162 ПРИЛОЖЕНИЯ... ние. 166, Секс и здоровье. Болезни и секс Болезни, передаваемые половым путем.. Список литературы Преди"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1621,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "‘близости, поможет многим людям преодолеть распространенные затруднения без обращения к врачу, а для специалистов, работающих в семейных врачебно-психологических консультациях, явится надежным пособием для проведения так называемой библио- или либротерапии. Руководитель Всесоюзного научно-методического центра по вопросам сексопатологии профессор Г.С.Васильче"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 949,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Являстесь ли вы девушкой в расцвете лет ли человеком зрелого возраста, находиeC) ли вы на пороге вашего первого любовного свидания или располагаете опытом многочисленных сексуальных связей, в любом случае вы найдете в книге практический совет и поддержку. Некоторые наставления по сексологии из разряда «как это делается» предлагают неадекватные рещения читате"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.367426+00:00",
+  "mode": "apply",
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.916766+00:00",
+    "operation": "stabilize_in_place",
+    "logical_category": "explanatory_narrative",
+    "duplicate_status": "canonical_or_unique",
+    "duplicate_of": "",
+    "duplicate_similarity": "",
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": true,
+    "tail_remove_chars": 2922,
+    "tail_reasons": [
+      "bibliography_tail"
+    ],
+    "chunking_readiness_before": 1.0,
+    "chunking_readiness_after": 1.0
+  }
+}

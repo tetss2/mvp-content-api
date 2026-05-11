@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt",
+  "chunks_file": "chunks/good/Сексуальный интеллект.cleaned.chunks.jsonl",
+  "chunk_count": 146,
+  "tokens_total_estimate": 95706,
+  "avg_chunk_tokens": 655.5,
+  "min_chunk_tokens": 261,
+  "max_chunk_tokens": 1125,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 8,
+  "overlap_redundancy_avg": 0.005,
+  "semantic_continuity_avg": 0.81
+}

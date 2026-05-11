@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Нетипичный секс.cleaned.txt",
+  "chunks_file": "chunks/good/Нетипичный секс.chunks.jsonl",
+  "chunk_count": 17,
+  "tokens_total_estimate": 12119,
+  "avg_chunk_tokens": 712.9,
+  "min_chunk_tokens": 147,
+  "max_chunk_tokens": 949,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 4,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.792
+}

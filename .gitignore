@@ -6,3 +6,5 @@ sources/sexologist/*.docx
 *.docx
 .env
 .env.local
+kb/sexologist/test-ingestion/*.jsonl
+kb/sexologist/test-ingestion/*.manifest.json

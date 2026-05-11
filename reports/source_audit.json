@@ -1,0 +1,2206 @@
+{
+  "generated_at": "2026-05-11T15:19:04.860625+00:00",
+  "root": "C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api",
+  "protected_dirs_skipped": [
+    "cleaned",
+    "test-ingestion"
+  ],
+  "scan_roots": [
+    "sources",
+    "kb"
+  ],
+  "summary": {
+    "total_files_scanned": 85,
+    "document_candidates": 82,
+    "total_size_bytes": 923575121
+  },
+  "folders": [
+    {
+      "path": "kb/sexologist",
+      "file_count": 2,
+      "size_bytes": 22441,
+      "size_kb": 21.9
+    },
+    {
+      "path": "kb/sexologist/good",
+      "file_count": 9,
+      "size_bytes": 9286140,
+      "size_kb": 9068.5
+    },
+    {
+      "path": "kb/sexologist/ocr_raw",
+      "file_count": 11,
+      "size_bytes": 9295245,
+      "size_kb": 9077.4
+    },
+    {
+      "path": "kb/sexologist/surveys",
+      "file_count": 1,
+      "size_bytes": 7741,
+      "size_kb": 7.6
+    },
+    {
+      "path": "kb/sexologist/trash",
+      "file_count": 1,
+      "size_bytes": 32290,
+      "size_kb": 31.5
+    },
+    {
+      "path": "sources/psychologist",
+      "file_count": 2,
+      "size_bytes": 4622,
+      "size_kb": 4.5
+    },
+    {
+      "path": "sources/sexologist",
+      "file_count": 57,
+      "size_bytes": 902895550,
+      "size_kb": 881733.9
+    },
+    {
+      "path": "sources/sexologist/ocr",
+      "file_count": 2,
+      "size_bytes": 2031092,
+      "size_kb": 1983.5
+    }
+  ],
+  "extensions": [
+    {
+      "extension": ".docx",
+      "file_count": 36,
+      "size_bytes": 3310524,
+      "size_kb": 3232.9
+    },
+    {
+      "extension": ".txt",
+      "file_count": 25,
+      "size_bytes": 20657130,
+      "size_kb": 20173.0
+    },
+    {
+      "extension": ".pdf",
+      "file_count": 20,
+      "size_bytes": 899585026,
+      "size_kb": 878501.0
+    },
+    {
+      "extension": "<no_ext>",
+      "file_count": 2,
+      "size_bytes": 0,
+      "size_kb": 0.0
+    },
+    {
+      "extension": ".json",
+      "file_count": 1,
+      "size_bytes": 12624,
+      "size_kb": 12.3
+    },
+    {
+      "extension": ".md",
+      "file_count": 1,
+      "size_bytes": 9817,
+      "size_kb": 9.6
+    }
+  ],
+  "likely_books": [
+    {
+      "path": "sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "filename": "126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "extension": ".pdf",
+      "size_bytes": 87828767,
+      "size_kb": 85770.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "filename": "88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "extension": ".pdf",
+      "size_bytes": 28761920,
+      "size_kb": 28087.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "extension": ".pdf",
+      "size_bytes": 11596931,
+      "size_kb": 11325.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "extension": ".pdf",
+      "size_bytes": 23730321,
+      "size_kb": 23174.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Osoznannoe_vlechenie1.pdf",
+      "filename": "Osoznannoe_vlechenie1.pdf",
+      "extension": ".pdf",
+      "size_bytes": 5290952,
+      "size_kb": 5166.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Sexopatologia_Spravochnik_1990.pdf",
+      "filename": "Sexopatologia_Spravochnik_1990.pdf",
+      "extension": ".pdf",
+      "size_bytes": 277732279,
+      "size_kb": 271222.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Х Каплан Сексуальная терапия.docx",
+      "filename": "Х Каплан Сексуальная терапия.docx",
+      "extension": ".docx",
+      "size_bytes": 697950,
+      "size_kb": 681.6,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf",
+      "filename": "Эмили Нагоски - Как хочет женщина.pdf",
+      "extension": ".pdf",
+      "size_bytes": 2786132,
+      "size_kb": 2720.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни женщины .pdf",
+      "filename": "Яффе Секс в жизни женщины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 122657207,
+      "size_kb": 119782.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни мужчины .pdf",
+      "filename": "Яффе Секс в жизни мужчины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 119279354,
+      "size_kb": 116483.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    }
+  ],
+  "likely_tests_or_questionnaires": [
+    {
+      "path": "kb/sexologist/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1019577,
+      "size_kb": 995.7,
+      "line_count": 3568,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1549168,
+      "size_kb": 1512.9,
+      "line_count": 4171,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=6, numbered_items=177"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1733715,
+      "size_kb": 1693.1,
+      "line_count": 3774,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=126"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1733715,
+      "size_kb": 1693.1,
+      "line_count": 3774,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=126"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Сексуальный интеллект.cleaned.txt",
+      "filename": "Сексуальный интеллект.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 746135,
+      "size_kb": 728.6,
+      "line_count": 4846,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=5"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Яффе Секс в жизни женщины .cleaned.txt",
+      "filename": "Яффе Секс в жизни женщины .cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 791139,
+      "size_kb": 772.6,
+      "line_count": 5494,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=31, numbered_items=1"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Яффе Секс в жизни мужчины .cleaned.txt",
+      "filename": "Яффе Секс в жизни мужчины .cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 679256,
+      "size_kb": 663.3,
+      "line_count": 5180,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=27, numbered_items=7"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1019650,
+      "size_kb": 995.8,
+      "line_count": 3582,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1541231,
+      "size_kb": 1505.1,
+      "line_count": 5412,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=6, numbered_items=177"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1729105,
+      "size_kb": 1688.6,
+      "line_count": 5290,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=123"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Медицинская_сексология_Психотерапия_сексуальных_расстройств.ocr.raw.txt",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1729105,
+      "size_kb": 1688.6,
+      "line_count": 5290,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=123"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 7594,
+      "size_kb": 7.4,
+      "line_count": 156,
+      "char_count": 4589,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=5, numbered_items=9"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Сексуальный интеллект.ocr.raw.txt",
+      "filename": "Сексуальный интеллект.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 736610,
+      "size_kb": 719.3,
+      "line_count": 4971,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=5"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Яффе Секс в жизни женщины .ocr.raw.txt",
+      "filename": "Яффе Секс в жизни женщины .ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 789036,
+      "size_kb": 770.5,
+      "line_count": 7388,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=31, numbered_items=1"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "filename": "Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 677073,
+      "size_kb": 661.2,
+      "line_count": 7034,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=26, numbered_items=7"
+      ]
+    },
+    {
+      "path": "kb/sexologist/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 7741,
+      "size_kb": 7.6,
+      "line_count": 152,
+      "char_count": 4585,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=5, numbered_items=9"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1011442,
+      "size_kb": 987.7,
+      "line_count": 1364,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=74"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1019650,
+      "size_kb": 995.8,
+      "line_count": 3582,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    }
+  ],
+  "likely_useful_source_docs": [
+    {
+      "path": "kb/sexologist/ocr_raw/Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "filename": "Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 31767,
+      "size_kb": 31.0,
+      "line_count": 2844,
+      "char_count": 27157,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "kb/sexologist/trash/Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "filename": "Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 32290,
+      "size_kb": 31.5,
+      "line_count": 1685,
+      "char_count": 25996,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "filename": "126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "extension": ".pdf",
+      "size_bytes": 87828767,
+      "size_kb": 85770.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "filename": "88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "extension": ".pdf",
+      "size_bytes": 28761920,
+      "size_kb": 28087.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "extension": ".pdf",
+      "size_bytes": 11596931,
+      "size_kb": 11325.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "extension": ".pdf",
+      "size_bytes": 23730321,
+      "size_kb": 23174.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Osoznannoe_vlechenie1.pdf",
+      "filename": "Osoznannoe_vlechenie1.pdf",
+      "extension": ".pdf",
+      "size_bytes": 5290952,
+      "size_kb": 5166.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/seks-probl-i-dpdg.pdf",
+      "filename": "seks-probl-i-dpdg.pdf",
+      "extension": ".pdf",
+      "size_bytes": 209647,
+      "size_kb": 204.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Sexopatologia_Spravochnik_1990.pdf",
+      "filename": "Sexopatologia_Spravochnik_1990.pdf",
+      "extension": ".pdf",
+      "size_bytes": 277732279,
+      "size_kb": 271222.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/statya-va-domorackogo (1).pdf",
+      "filename": "statya-va-domorackogo (1).pdf",
+      "extension": ".pdf",
+      "size_bytes": 138796,
+      "size_kb": 135.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "filename": "Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "extension": ".pdf",
+      "size_bytes": 2478553,
+      "size_kb": 2420.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Автостоп. Техника символдрамы.docx",
+      "filename": "Автостоп. Техника символдрамы.docx",
+      "extension": ".docx",
+      "size_bytes": 244091,
+      "size_kb": 238.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Аддикции отношений. Секс.docx",
+      "filename": "Аддикции отношений. Секс.docx",
+      "extension": ".docx",
+      "size_bytes": 80099,
+      "size_kb": 78.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_для_пациентов_женского_пола.docx",
+      "filename": "Анкета_для_пациентов_женского_пола.docx",
+      "extension": ".docx",
+      "size_bytes": 25723,
+      "size_kb": 25.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_для_пациентов_мужского_пола.docx",
+      "filename": "Анкета_для_пациентов_мужского_пола.docx",
+      "extension": ".docx",
+      "size_bytes": 94084,
+      "size_kb": 91.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_карты пац М и Ж.docx",
+      "filename": "Анкета_карты пац М и Ж.docx",
+      "extension": ".docx",
+      "size_bytes": 94084,
+      "size_kb": 91.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Введение в сексологию.docx",
+      "filename": "Введение в сексологию.docx",
+      "extension": ".docx",
+      "size_bytes": 54430,
+      "size_kb": 53.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женская психопатология Святоч.pdf",
+      "filename": "Женская психопатология Святоч.pdf",
+      "extension": ".pdf",
+      "size_bytes": 1637524,
+      "size_kb": 1599.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женская сексуальность.docx",
+      "filename": "Женская сексуальность.docx",
+      "extension": ".docx",
+      "size_bytes": 32246,
+      "size_kb": 31.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женские сексуальные дисфункции .docx",
+      "filename": "Женские сексуальные дисфункции .docx",
+      "extension": ".docx",
+      "size_bytes": 69319,
+      "size_kb": 67.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Завис (през).docx",
+      "filename": "Завис (през).docx",
+      "extension": ".docx",
+      "size_bytes": 66397,
+      "size_kb": 64.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/конс. жертв секс. насил..docx",
+      "filename": "конс. жертв секс. насил..docx",
+      "extension": ".docx",
+      "size_bytes": 32977,
+      "size_kb": 32.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Куст розы. Символдрама.docx",
+      "filename": "Куст розы. Символдрама.docx",
+      "extension": ".docx",
+      "size_bytes": 228077,
+      "size_kb": 222.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Любовь. ревность..docx",
+      "filename": "Любовь. ревность..docx",
+      "extension": ".docx",
+      "size_bytes": 46226,
+      "size_kb": 45.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Мужская сексуальность.docx",
+      "filename": "Мужская сексуальность.docx",
+      "extension": ".docx",
+      "size_bytes": 83223,
+      "size_kb": 81.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "filename": "Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "extension": ".docx",
+      "size_bytes": 48646,
+      "size_kb": 47.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Нетипичный секс.docx",
+      "filename": "Нетипичный секс.docx",
+      "extension": ".docx",
+      "size_bytes": 89010,
+      "size_kb": 86.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.pdf",
+      "extension": ".pdf",
+      "size_bytes": 120109,
+      "size_kb": 117.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx",
+      "filename": "ПСР_психосексуальное_развитие_в_норме.docx",
+      "extension": ".docx",
+      "size_bytes": 99329,
+      "size_kb": 97.0,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx",
+      "filename": "Свядощ_Женская_Сексопатология_doc.docx",
+      "extension": ".docx",
+      "size_bytes": 260945,
+      "size_kb": 254.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/секс дисф. начало (през).docx",
+      "filename": "секс дисф. начало (през).docx",
+      "extension": ".docx",
+      "size_bytes": 70849,
+      "size_kb": 69.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сексуальные дисгармонии.docx",
+      "filename": "Сексуальные дисгармонии.docx",
+      "extension": ".docx",
+      "size_bytes": 36950,
+      "size_kb": 36.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сексуальный интеллект.pdf",
+      "filename": "Сексуальный интеллект.pdf",
+      "extension": ".pdf",
+      "size_bytes": 1408937,
+      "size_kb": 1375.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf",
+      "filename": "Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf",
+      "extension": ".pdf",
+      "size_bytes": 138796,
+      "size_kb": 135.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стерн Д. - Глаз видит сам себя.pdf",
+      "filename": "Стерн Д. - Глаз видит сам себя.pdf",
+      "extension": ".pdf",
+      "size_bytes": 489936,
+      "size_kb": 478.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "filename": "Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "extension": ".docx",
+      "size_bytes": 76561,
+      "size_kb": 74.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стыд и секс.docx",
+      "filename": "Стыд и секс.docx",
+      "extension": ".docx",
+      "size_bytes": 52109,
+      "size_kb": 50.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Супр. терапия (оконч).docx",
+      "filename": "Супр. терапия (оконч).docx",
+      "extension": ".docx",
+      "size_bytes": 27546,
+      "size_kb": 26.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "filename": "Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "extension": ".docx",
+      "size_bytes": 46900,
+      "size_kb": 45.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "filename": "СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "extension": ".docx",
+      "size_bytes": 333941,
+      "size_kb": 326.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Х Каплан Сексуальная терапия.docx",
+      "filename": "Х Каплан Сексуальная терапия.docx",
+      "extension": ".docx",
+      "size_bytes": 697950,
+      "size_kb": 681.6,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Шкала ПК для женщин.pdf",
+      "filename": "Шкала ПК для женщин.pdf",
+      "extension": ".pdf",
+      "size_bytes": 53057,
+      "size_kb": 51.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ЭГ в пт секс дисфункций.docx",
+      "filename": "ЭГ в пт секс дисфункций.docx",
+      "extension": ".docx",
+      "size_bytes": 106920,
+      "size_kb": 104.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ЭГ в секс дисфункциях.docx",
+      "filename": "ЭГ в секс дисфункциях.docx",
+      "extension": ".docx",
+      "size_bytes": 106920,
+      "size_kb": 104.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf",
+      "filename": "Эмили Нагоски - Как хочет женщина.pdf",
+      "extension": ".pdf",
+      "size_bytes": 2786132,
+      "size_kb": 2720.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни женщины .pdf",
+      "filename": "Яффе Секс в жизни женщины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 122657207,
+      "size_kb": 119782.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни мужчины .pdf",
+      "filename": "Яффе Секс в жизни мужчины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 119279354,
+      "size_kb": 116483.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    }
+  ],
+  "all_document_candidates": [
+    {
+      "path": "kb/sexologist/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+      "filename": "126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 990862,
+      "size_kb": 967.6,
+      "line_count": 3001,
+      "char_count": 200000,
+      "hint": "exercise_like",
+      "reasons": [
+        "exercise markers=8"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1019577,
+      "size_kb": 995.7,
+      "line_count": 3568,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1549168,
+      "size_kb": 1512.9,
+      "line_count": 4171,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=6, numbered_items=177"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1733715,
+      "size_kb": 1693.1,
+      "line_count": 3774,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=126"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1733715,
+      "size_kb": 1693.1,
+      "line_count": 3774,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=126"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Сексуальный интеллект.cleaned.txt",
+      "filename": "Сексуальный интеллект.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 746135,
+      "size_kb": 728.6,
+      "line_count": 4846,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=5"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "filename": "Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 42573,
+      "size_kb": 41.6,
+      "line_count": 435,
+      "char_count": 23033,
+      "hint": "exercise_like",
+      "reasons": [
+        "exercise markers=9"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Яффе Секс в жизни женщины .cleaned.txt",
+      "filename": "Яффе Секс в жизни женщины .cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 791139,
+      "size_kb": 772.6,
+      "line_count": 5494,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=31, numbered_items=1"
+      ]
+    },
+    {
+      "path": "kb/sexologist/good/Яффе Секс в жизни мужчины .cleaned.txt",
+      "filename": "Яффе Секс в жизни мужчины .cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 679256,
+      "size_kb": 663.3,
+      "line_count": 5180,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=27, numbered_items=7"
+      ]
+    },
+    {
+      "path": "kb/sexologist/OCR_PREPROCESSING_REPORT.md",
+      "filename": "OCR_PREPROCESSING_REPORT.md",
+      "extension": ".md",
+      "size_bytes": 9817,
+      "size_kb": 9.6,
+      "line_count": 84,
+      "char_count": 7414,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt",
+      "filename": "126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 990357,
+      "size_kb": 967.1,
+      "line_count": 4461,
+      "char_count": 200000,
+      "hint": "exercise_like",
+      "reasons": [
+        "exercise markers=7"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1019650,
+      "size_kb": 995.8,
+      "line_count": 3582,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1541231,
+      "size_kb": 1505.1,
+      "line_count": 5412,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=6, numbered_items=177"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "filename": "Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 31767,
+      "size_kb": 31.0,
+      "line_count": 2844,
+      "char_count": 27157,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1729105,
+      "size_kb": 1688.6,
+      "line_count": 5290,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=123"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Медицинская_сексология_Психотерапия_сексуальных_расстройств.ocr.raw.txt",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1729105,
+      "size_kb": 1688.6,
+      "line_count": 5290,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=16, numbered_items=123"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 7594,
+      "size_kb": 7.4,
+      "line_count": 156,
+      "char_count": 4589,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=5, numbered_items=9"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Сексуальный интеллект.ocr.raw.txt",
+      "filename": "Сексуальный интеллект.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 736610,
+      "size_kb": 719.3,
+      "line_count": 4971,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=5"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt",
+      "filename": "Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 43717,
+      "size_kb": 42.7,
+      "line_count": 465,
+      "char_count": 24032,
+      "hint": "exercise_like",
+      "reasons": [
+        "exercise markers=10"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Яффе Секс в жизни женщины .ocr.raw.txt",
+      "filename": "Яффе Секс в жизни женщины .ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 789036,
+      "size_kb": 770.5,
+      "line_count": 7388,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=31, numbered_items=1"
+      ]
+    },
+    {
+      "path": "kb/sexologist/ocr_raw/Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "filename": "Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 677073,
+      "size_kb": 661.2,
+      "line_count": 7034,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=26, numbered_items=7"
+      ]
+    },
+    {
+      "path": "kb/sexologist/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 7741,
+      "size_kb": 7.6,
+      "line_count": 152,
+      "char_count": 4585,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=5, numbered_items=9"
+      ]
+    },
+    {
+      "path": "kb/sexologist/trash/Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "filename": "Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 32290,
+      "size_kb": 31.5,
+      "line_count": 1685,
+      "char_count": 25996,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/psychologist/test-trevoga.txt",
+      "filename": "test-trevoga.txt",
+      "extension": ".txt",
+      "size_bytes": 4622,
+      "size_kb": 4.5,
+      "line_count": 29,
+      "char_count": 2515,
+      "hint": "exercise_like",
+      "reasons": [
+        "exercise markers=3"
+      ]
+    },
+    {
+      "path": "sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "filename": "126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "extension": ".pdf",
+      "size_bytes": 87828767,
+      "size_kb": 85770.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "filename": "88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "extension": ".pdf",
+      "size_bytes": 28761920,
+      "size_kb": 28087.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "extension": ".pdf",
+      "size_bytes": 11596931,
+      "size_kb": 11325.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "filename": "88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "extension": ".pdf",
+      "size_bytes": 23730321,
+      "size_kb": 23174.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "extension": ".txt",
+      "size_bytes": 1011442,
+      "size_kb": 987.7,
+      "line_count": 1364,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=74"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "filename": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "extension": ".txt",
+      "size_bytes": 1019650,
+      "size_kb": 995.8,
+      "line_count": 3582,
+      "char_count": 200000,
+      "hint": "test_or_questionnaire",
+      "reasons": [
+        "test/questionnaire markers=3, numbered_items=86"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Osoznannoe_vlechenie1.pdf",
+      "filename": "Osoznannoe_vlechenie1.pdf",
+      "extension": ".pdf",
+      "size_bytes": 5290952,
+      "size_kb": 5166.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/seks-probl-i-dpdg.pdf",
+      "filename": "seks-probl-i-dpdg.pdf",
+      "extension": ".pdf",
+      "size_bytes": 209647,
+      "size_kb": 204.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Sexopatologia_Spravochnik_1990.pdf",
+      "filename": "Sexopatologia_Spravochnik_1990.pdf",
+      "extension": ".pdf",
+      "size_bytes": 277732279,
+      "size_kb": 271222.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/statya-va-domorackogo (1).pdf",
+      "filename": "statya-va-domorackogo (1).pdf",
+      "extension": ".pdf",
+      "size_bytes": 138796,
+      "size_kb": 135.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "filename": "Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "extension": ".pdf",
+      "size_bytes": 2478553,
+      "size_kb": 2420.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/«Когда мы не ладим» Упражнение .docx",
+      "filename": "«Когда мы не ладим» Упражнение .docx",
+      "extension": ".docx",
+      "size_bytes": 19232,
+      "size_kb": 18.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Автостоп. Техника символдрамы.docx",
+      "filename": "Автостоп. Техника символдрамы.docx",
+      "extension": ".docx",
+      "size_bytes": 244091,
+      "size_kb": 238.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Аддикции отношений. Секс.docx",
+      "filename": "Аддикции отношений. Секс.docx",
+      "extension": ".docx",
+      "size_bytes": 80099,
+      "size_kb": 78.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_для_пациентов_женского_пола.docx",
+      "filename": "Анкета_для_пациентов_женского_пола.docx",
+      "extension": ".docx",
+      "size_bytes": 25723,
+      "size_kb": 25.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_для_пациентов_мужского_пола.docx",
+      "filename": "Анкета_для_пациентов_мужского_пола.docx",
+      "extension": ".docx",
+      "size_bytes": 94084,
+      "size_kb": 91.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Анкета_карты пац М и Ж.docx",
+      "filename": "Анкета_карты пац М и Ж.docx",
+      "extension": ".docx",
+      "size_bytes": 94084,
+      "size_kb": 91.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Введение в сексологию.docx",
+      "filename": "Введение в сексологию.docx",
+      "extension": ".docx",
+      "size_bytes": 54430,
+      "size_kb": 53.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женская психопатология Святоч.pdf",
+      "filename": "Женская психопатология Святоч.pdf",
+      "extension": ".pdf",
+      "size_bytes": 1637524,
+      "size_kb": 1599.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женская сексуальность.docx",
+      "filename": "Женская сексуальность.docx",
+      "extension": ".docx",
+      "size_bytes": 32246,
+      "size_kb": 31.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Женские сексуальные дисфункции .docx",
+      "filename": "Женские сексуальные дисфункции .docx",
+      "extension": ".docx",
+      "size_bytes": 69319,
+      "size_kb": 67.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Завис (през).docx",
+      "filename": "Завис (през).docx",
+      "extension": ".docx",
+      "size_bytes": 66397,
+      "size_kb": 64.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.docx",
+      "filename": "Индекс_женской_сексуальной_функции_ИЖСФ.docx",
+      "extension": ".docx",
+      "size_bytes": 10173,
+      "size_kb": 9.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Индекс_эректильной_функции_международный.docx",
+      "filename": "Индекс_эректильной_функции_международный.docx",
+      "extension": ".docx",
+      "size_bytes": 9750,
+      "size_kb": 9.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/конс. жертв секс. насил..docx",
+      "filename": "конс. жертв секс. насил..docx",
+      "extension": ".docx",
+      "size_bytes": 32977,
+      "size_kb": 32.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Куст розы. Символдрама.docx",
+      "filename": "Куст розы. Символдрама.docx",
+      "extension": ".docx",
+      "size_bytes": 228077,
+      "size_kb": 222.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Любовь. ревность..docx",
+      "filename": "Любовь. ревность..docx",
+      "extension": ".docx",
+      "size_bytes": 46226,
+      "size_kb": 45.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/М половая конституция табл.docx",
+      "filename": "М половая конституция табл.docx",
+      "extension": ".docx",
+      "size_bytes": 7303,
+      "size_kb": 7.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "filename": "Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "filename": "Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf",
+      "extension": ".pdf",
+      "size_bytes": 106622904,
+      "size_kb": 104123.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.docx",
+      "filename": "Международный_индекс_эректильной_функции_МИЭФ.docx",
+      "extension": ".docx",
+      "size_bytes": 9750,
+      "size_kb": 9.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Мужская сексуальность.docx",
+      "filename": "Мужская сексуальность.docx",
+      "extension": ".docx",
+      "size_bytes": 83223,
+      "size_kb": 81.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "filename": "Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "extension": ".docx",
+      "size_bytes": 48646,
+      "size_kb": 47.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Нетипичный секс.docx",
+      "filename": "Нетипичный секс.docx",
+      "extension": ".docx",
+      "size_bytes": 89010,
+      "size_kb": 86.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.docx",
+      "filename": "Опросник_Сексуальная_формула_мужская_СФМ.docx",
+      "extension": ".docx",
+      "size_bytes": 11754,
+      "size_kb": 11.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf",
+      "filename": "Опросник_социосексуальной_ориентации_SOI.pdf",
+      "extension": ".pdf",
+      "size_bytes": 120109,
+      "size_kb": 117.3,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx",
+      "filename": "ПСР_психосексуальное_развитие_в_норме.docx",
+      "extension": ".docx",
+      "size_bytes": 99329,
+      "size_kb": 97.0,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx",
+      "filename": "Свядощ_Женская_Сексопатология_doc.docx",
+      "extension": ".docx",
+      "size_bytes": 260945,
+      "size_kb": 254.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/секс дисф. начало (през).docx",
+      "filename": "секс дисф. начало (през).docx",
+      "extension": ".docx",
+      "size_bytes": 70849,
+      "size_kb": 69.2,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Секс. обслед. Ж (1).docx",
+      "filename": "Секс. обслед. Ж (1).docx",
+      "extension": ".docx",
+      "size_bytes": 15936,
+      "size_kb": 15.6,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сексуальные дисгармонии.docx",
+      "filename": "Сексуальные дисгармонии.docx",
+      "extension": ".docx",
+      "size_bytes": 36950,
+      "size_kb": 36.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сексуальный интеллект.pdf",
+      "filename": "Сексуальный интеллект.pdf",
+      "extension": ".pdf",
+      "size_bytes": 1408937,
+      "size_kb": 1375.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf",
+      "filename": "Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf",
+      "extension": ".pdf",
+      "size_bytes": 138796,
+      "size_kb": 135.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стерн Д. - Глаз видит сам себя.pdf",
+      "filename": "Стерн Д. - Глаз видит сам себя.pdf",
+      "extension": ".pdf",
+      "size_bytes": 489936,
+      "size_kb": 478.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "filename": "Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "extension": ".docx",
+      "size_bytes": 76561,
+      "size_kb": 74.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Стыд и секс.docx",
+      "filename": "Стыд и секс.docx",
+      "extension": ".docx",
+      "size_bytes": 52109,
+      "size_kb": 50.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Супр. терапия (оконч).docx",
+      "filename": "Супр. терапия (оконч).docx",
+      "extension": ".docx",
+      "size_bytes": 27546,
+      "size_kb": 26.9,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "filename": "Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "extension": ".docx",
+      "size_bytes": 46900,
+      "size_kb": 45.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "filename": "СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "extension": ".docx",
+      "size_bytes": 333941,
+      "size_kb": 326.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/СФМ секс формула М опросник .docx",
+      "filename": "СФМ секс формула М опросник .docx",
+      "extension": ".docx",
+      "size_bytes": 11754,
+      "size_kb": 11.5,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Тест_опросник_удовлетвореености_браком.docx",
+      "filename": "Тест_опросник_удовлетвореености_браком.docx",
+      "extension": ".docx",
+      "size_bytes": 9320,
+      "size_kb": 9.1,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "small_source_or_unclear",
+      "reasons": [
+        "small document candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Х Каплан Сексуальная терапия.docx",
+      "filename": "Х Каплан Сексуальная терапия.docx",
+      "extension": ".docx",
+      "size_bytes": 697950,
+      "size_kb": 681.6,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Шкала ПК для женщин.pdf",
+      "filename": "Шкала ПК для женщин.pdf",
+      "extension": ".pdf",
+      "size_bytes": 53057,
+      "size_kb": 51.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ЭГ в пт секс дисфункций.docx",
+      "filename": "ЭГ в пт секс дисфункций.docx",
+      "extension": ".docx",
+      "size_bytes": 106920,
+      "size_kb": 104.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/ЭГ в секс дисфункциях.docx",
+      "filename": "ЭГ в секс дисфункциях.docx",
+      "extension": ".docx",
+      "size_bytes": 106920,
+      "size_kb": 104.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "source_doc_like",
+      "reasons": [
+        "document-sized source candidate"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf",
+      "filename": "Эмили Нагоски - Как хочет женщина.pdf",
+      "extension": ".pdf",
+      "size_bytes": 2786132,
+      "size_kb": 2720.8,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "book/theory words in filename and substantial size"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни женщины .pdf",
+      "filename": "Яффе Секс в жизни женщины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 122657207,
+      "size_kb": 119782.4,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    },
+    {
+      "path": "sources/sexologist/Яффе Секс в жизни мужчины .pdf",
+      "filename": "Яффе Секс в жизни мужчины .pdf",
+      "extension": ".pdf",
+      "size_bytes": 119279354,
+      "size_kb": 116483.7,
+      "line_count": 0,
+      "char_count": 0,
+      "hint": "book_like",
+      "reasons": [
+        "large PDF, likely a book or scanned book"
+      ]
+    }
+  ]
+}

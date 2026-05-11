@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/конс. жертв секс. насил..cleaned.txt",
+  "chunks_file": "chunks/good/конс. жертв секс. насил..chunks.jsonl",
+  "chunk_count": 10,
+  "tokens_total_estimate": 6797,
+  "avg_chunk_tokens": 679.7,
+  "min_chunk_tokens": 321,
+  "max_chunk_tokens": 947,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 2,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.796
+}

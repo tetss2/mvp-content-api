@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Любовь. ревность..cleaned.txt",
+  "chunks_file": "chunks/good/Любовь. ревность..chunks.jsonl",
+  "chunk_count": 8,
+  "tokens_total_estimate": 6078,
+  "avg_chunk_tokens": 759.8,
+  "min_chunk_tokens": 319,
+  "max_chunk_tokens": 967,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 1,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.782
+}

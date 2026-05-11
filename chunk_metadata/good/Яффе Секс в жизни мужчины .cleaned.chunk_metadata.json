@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt",
+  "chunks_file": "chunks/good/Яффе Секс в жизни мужчины .cleaned.chunks.jsonl",
+  "chunk_count": 139,
+  "tokens_total_estimate": 85951,
+  "avg_chunk_tokens": 618.4,
+  "min_chunk_tokens": 228,
+  "max_chunk_tokens": 934,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 13,
+  "overlap_redundancy_avg": 0.004,
+  "semantic_continuity_avg": 0.807
+}

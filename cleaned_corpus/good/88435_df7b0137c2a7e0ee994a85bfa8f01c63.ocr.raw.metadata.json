@@ -1,0 +1,104 @@
+{
+  "original_path": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+  "relative_input_path": "88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.rejected.jsonl",
+  "chars_before": 552654,
+  "chars_after": 549857,
+  "blocks_total": 334,
+  "kept_blocks_count": 334,
+  "rejected_blocks_count": 0,
+  "removed_sections_count": 0,
+  "review_unclear_blocks_count": 20,
+  "cleaning_confidence": 0.78,
+  "categories_removed": {},
+  "categories_kept": {
+    "keep_clinical": 35,
+    "keep_narrative": 43,
+    "keep_theory": 236,
+    "review_unclear": 20
+  },
+  "normalization": {
+    "page_markers_removed": 5,
+    "repeated_header_footer_lines": [
+      "История возникновения и развития метода",
+      "Показания к использованию метода и его эффективность",
+      "Практические аспекты применения метода",
+      "Теоретическая основа и сущность метода"
+    ]
+  },
+  "warnings": [
+    "review_unclear_blocks:20"
+  ],
+  "removed_examples": [],
+  "kept_theory_examples": [
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1303,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "=== PAGE 1 === | сн ¥ a y аб Доморацкий В. А. Краткосрочные методы психотерапии Москва Рецензенты: доктор медицинских наук, кандидат психологических наук, профессор М.Н.Гордеев, заведующий кафедрой психотерапии Российского государственного медицинского университета; доктор медицинских наук, профессор кафедры психиатрии и медицинской психологии Белорусского г"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 994,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "Часть 2. Краткосрочные методы психотерапии === PAGE 2 === 2.1 Эриксоновская психотерапия и эриксоновский гипноз 2.1.1 История возникновения и развития метода 2.1.2 Теоретическая основа и сущность метода 2.1.3 Практические аспекты применения метода Стадии гипнотического транса Признаки транса Виды внушений в гипнозе Гипнотическая рамка Основные стратегии рабо"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1299,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "5. Разработка терапевтической программы и стратегии изменения Действия и терапевтическое общение Предписания поведения Прямые предписания Непрямые предписания Парадоксальные предписания 6. Завершение лечения 2.2.4 Показания к использованию метода и его эффективность 2.3 Краткосрочная позитивная психотерапия (КПП) 2.3.1 История возникновения и развития метода"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1665,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "2.7 Поведенческая психотерапия (О. М. Радюк) 2.7.2 Теоретическая основа и сущность метода === PAGE 3 === 2.7.3 Практические аспекты применения метода 2.7.4 Показания к использованию метода и его эффективность 2.8 Краткосрочная мультимодальная психотерапия 2.8.1 История возникновения и развития метода 2.8.2 Теоретическая основа и сущность метода 2.8.3 Практич"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1153,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "В первой части книги кратко изложены некоторые важные, по нашему мнению, общие вопросы психотерапии. Это - унифицирующие аспекты психотерапии, проблема доступа к бессознательному, оценка достигнутых изменений и др. Обсуждены качества, присущие эффективно работающему психотерапевту, а также проблема т. н. трудных клиентов. Во второй части рассмотрены различны"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.250131+00:00",
+  "mode": "apply",
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.592319+00:00",
+    "operation": "stabilize_in_place",
+    "logical_category": "explanatory_narrative",
+    "duplicate_status": "duplicate_candidate",
+    "duplicate_of": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt",
+    "duplicate_similarity": 1.0,
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": true,
+    "tail_remove_chars": 2776,
+    "tail_reasons": [
+      "bibliography_tail"
+    ],
+    "chunking_readiness_before": 0.75,
+    "chunking_readiness_after": 0.79
+  }
+}

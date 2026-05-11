@@ -1,0 +1,116 @@
+{
+  "original_path": "sorted_sources/good/Яффе Секс в жизни мужчины .cleaned.txt",
+  "relative_input_path": "Яффе Секс в жизни мужчины .cleaned.txt",
+  "planned_cleaned_path": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt",
+  "planned_metadata_path": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.metadata.json",
+  "planned_rejected_blocks_path": "rejected_blocks/good/Яффе Секс в жизни мужчины .cleaned.rejected.jsonl",
+  "cleaned_path": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt",
+  "metadata_path": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.metadata.json",
+  "rejected_blocks_path": "rejected_blocks/good/Яффе Секс в жизни мужчины .cleaned.rejected.jsonl",
+  "chars_before": 371532,
+  "chars_after": 362658,
+  "blocks_total": 236,
+  "kept_blocks_count": 235,
+  "rejected_blocks_count": 1,
+  "removed_sections_count": 1,
+  "review_unclear_blocks_count": 6,
+  "cleaning_confidence": 0.77,
+  "categories_removed": {
+    "reject_bibliography": 1
+  },
+  "categories_kept": {
+    "keep_clinical": 30,
+    "keep_narrative": 53,
+    "keep_theory": 146,
+    "review_unclear": 6
+  },
+  "normalization": {
+    "page_markers_removed": 275,
+    "repeated_header_footer_lines": [
+      "Критически оценивайте достигнутое",
+      "Низкий уровень (0-4)",
+      "ЧТО ВАМ ДЕЛАТЬ",
+      "Что вам делать"
+    ]
+  },
+  "warnings": [
+    "review_unclear_blocks:6"
+  ],
+  "removed_examples": [
+    {
+      "label": "reject_bibliography",
+      "confidence": 0.86,
+      "char_count": 1782,
+      "reasons": [
+        "bibliography_hits=2, reference_ratio=0.58"
+      ],
+      "preview": "Однако анализы не всегда дают категорическое заключение о том, будет или не будет развиваться СПИД. На анализы можно полагаться, но не во всех без исключения случаях. Анализ другого типа обычно выполняется на любом положительном образце с целью подтверждения результата. Более того, антите- ла против ВИЧ развиваются в течение нескольких нелель (или даже месяц"
+    }
+  ],
+  "kept_theory_examples": [
+    {
+      "label": "keep_narrative",
+      "confidence": 0.68,
+      "char_count": 782,
+      "reasons": [
+        "long narrative/explanatory block with low list density"
+      ],
+      "preview": "МОРИС ЯФФЕ - ЭЛИЗАБЕТ ФЕНВИК Редактор-конс: ультант РЭЙМОНД РОУЗЕН # ‚ще СЕКС В ЖИЗНИ МУЖЧИНЫ MAURICE УАЕЕЕ Senior Clinical Psychologist, York Clinic, Guy’s Hospital, London ELIZABETH FENWICK Consultant editor RAYMOND C. ROSEN, Ph.D., Associate Professor of Pshychiatry, Rutgers Medical School, New Jersey SEXUAL HAPPINESS FOR MEN A Practical Approach Illustra"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1550,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "1990. ISBN 5-225-00579 ISBN 0-86318-159-7 В книге освещены различные вопросы CeKcyanbHOCTH мужчин: от физиологических механизмов до методов устранения негативных проявлений сексуальности. Большое внимание уделено психологической стороне подготовки, проведения и завершения полового акта. Рассмотрена проблема \"секс и здоровье\". Для сексопатологов, невропатолог"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1310,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "AT МУЖЧИНА С ПОСТОЯННОЙ ПАРТНЕРШЕЙ... несе 101 Совместимость Удовлетворены ли вы сексуально. Что случилось с вашими отношениями Научитесь общаться Как относиться к расхождениям в половом влечении.. Надо понимать чувства женщины Как избежать сексуальной скуки 'Неверность: КАК УЛУЧШИТЬ ВАШУ СЕКСУАЛЬНУЮ ЖИЗНЬ... 48 Разнообразьте сексуальный репертуар.... Техник"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 1752,
+      "reasons": [
+        "theory_score=0.83"
+      ],
+      "preview": "(так называемым Marriage Manuals), настоящая книга представляет собой необычное явление прежде всего по замыслу. Строго товоря, она не является книгой в обычном понимании, то есть предназначенной просто для чтения. Это скорее пособие. Ознакомившись с кратким, в две страницы, BBCдением, читатель заполняет десяток опросников и, произведя простейший арифметичес"
+    },
+    {
+      "label": "keep_theory",
+      "confidence": 0.82,
+      "char_count": 2116,
+      "reasons": [
+        "theory_score=1.00"
+      ],
+      "preview": "‘библио- или либротерапии. Руководитель Всесоюзного научно-методического центра по вопросам сексопатологии профессор Г.С. Васильченко Введение Нужна ли еще одна книга о сексе? Сексуальные отношения и связанные с ними трудности играют важную роль в жизни людей. Однако только в течение по- ‘следних 15 лет появилась возможность получить удовлетворительное кратк"
+    }
+  ],
+  "generated_at": "2026-05-11T16:24:46.391056+00:00",
+  "mode": "apply",
+  "stabilization": {
+    "generated_at": "2026-05-11T16:39:35.963433+00:00",
+    "operation": "stabilize_in_place",
+    "logical_category": "explanatory_narrative",
+    "duplicate_status": "canonical_or_unique",
+    "duplicate_of": "",
+    "duplicate_similarity": "",
+    "paragraph_restore_applied": false,
+    "paragraph_restore_splits": 0,
+    "tail_cleanup_applied": true,
+    "tail_remove_chars": 2999,
+    "tail_reasons": [
+      "bibliography_tail"
+    ],
+    "chunking_readiness_before": 1.0,
+    "chunking_readiness_after": 1.0
+  }
+}

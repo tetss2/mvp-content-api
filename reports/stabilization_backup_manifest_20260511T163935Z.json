@@ -1,0 +1,316 @@
+{
+  "generated_at": "2026-05-11T16:39:35.986244+00:00",
+  "backup_dir": "cleaned_corpus/_backups/stabilization_20260511T163935Z",
+  "backups": [
+    {
+      "source": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/конс. жертв секс. насил..cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/конс. жертв секс. насил..cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/конс. жертв секс. насил..metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/конс. жертв секс. насил..metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Любовь. ревность..cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Любовь. ревность..cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Любовь. ревность..metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Любовь. ревность..metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Нетипичный секс.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Нетипичный секс.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Нетипичный секс.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Нетипичный секс.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/секс дисф. начало (през).cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/секс дисф. начало (през).cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/секс дисф. начало (през).metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/секс дисф. начало (през).metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Секс. обслед. Ж (1).cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Секс. обслед. Ж (1).cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Секс. обслед. Ж (1).metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Секс. обслед. Ж (1).metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Сексуальный интеллект.cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Сексуальный интеллект.cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Сексуальный интеллект.ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Сексуальный интеллект.ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Сексуальный интеллект.ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Сексуальный интеллект.ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Супр. терапия (оконч).cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Супр. терапия (оконч).cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Супр. терапия (оконч).metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Супр. терапия (оконч).metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Х Каплан Сексуальная терапия.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Х Каплан Сексуальная терапия.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Х Каплан Сексуальная терапия.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Х Каплан Сексуальная терапия.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.metadata.json"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.cleaned.txt",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.cleaned.txt"
+    },
+    {
+      "source": "cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.metadata.json",
+      "backup": "cleaned_corpus/_backups/stabilization_20260511T163935Z/cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.metadata.json"
+    }
+  ],
+  "operations": [
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/конс. жертв секс. насил..cleaned.txt",
+      "metadata": "cleaned_corpus/good/конс. жертв секс. насил..metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Любовь. ревность..cleaned.txt",
+      "metadata": "cleaned_corpus/good/Любовь. ревность..metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Нетипичный секс.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Нетипичный секс.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/секс дисф. начало (през).cleaned.txt",
+      "metadata": "cleaned_corpus/good/секс дисф. начало (през).metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "move_to_forms",
+      "source": "cleaned_corpus/good/Секс. обслед. Ж (1).cleaned.txt",
+      "target": "cleaned_corpus/forms/Секс. обслед. Ж (1).cleaned.txt",
+      "metadata": "cleaned_corpus/forms/Секс. обслед. Ж (1).metadata.json"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Сексуальный интеллект.cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Сексуальный интеллект.cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Сексуальный интеллект.ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Сексуальный интеллект.ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Супр. терапия (оконч).cleaned.txt",
+      "metadata": "cleaned_corpus/good/Супр. терапия (оконч).metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Х Каплан Сексуальная терапия.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Х Каплан Сексуальная терапия.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Яффе Секс в жизни женщины .cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Яффе Секс в жизни женщины .ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Яффе Секс в жизни мужчины .cleaned.metadata.json",
+      "duplicate_status": "canonical_or_unique"
+    },
+    {
+      "operation": "stabilize_in_place",
+      "target": "cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.cleaned.txt",
+      "metadata": "cleaned_corpus/good/Яффе Секс в жизни мужчины .ocr.raw.metadata.json",
+      "duplicate_status": "duplicate_candidate"
+    }
+  ]
+}

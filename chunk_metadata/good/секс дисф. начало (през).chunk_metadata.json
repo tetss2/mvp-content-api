@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/секс дисф. начало (през).cleaned.txt",
+  "chunks_file": "chunks/good/секс дисф. начало (през).chunks.jsonl",
+  "chunk_count": 12,
+  "tokens_total_estimate": 8287,
+  "avg_chunk_tokens": 690.6,
+  "min_chunk_tokens": 282,
+  "max_chunk_tokens": 950,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 3,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.79
+}

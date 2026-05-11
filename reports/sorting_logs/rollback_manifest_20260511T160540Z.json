@@ -1,0 +1,381 @@
+{
+  "generated_at": "2026-05-11T16:05:40.274434+00:00",
+  "note": "Rollback means deleting copied targets listed here. Originals were not changed.",
+  "entries": [
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt",
+      "source": "kb/sexologist/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt",
+      "source": "kb/sexologist/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt",
+      "source": "kb/sexologist/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt",
+      "source": "kb/sexologist/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Сексуальный интеллект.cleaned.txt",
+      "source": "kb/sexologist/good/Сексуальный интеллект.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "source": "kb/sexologist/good/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Яффе Секс в жизни женщины .cleaned.txt",
+      "source": "kb/sexologist/good/Яффе Секс в жизни женщины .cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Яффе Секс в жизни мужчины .cleaned.txt",
+      "source": "kb/sexologist/good/Яффе Секс в жизни мужчины .cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/unclear/OCR_PREPROCESSING_REPORT.md",
+      "source": "kb/sexologist/OCR_PREPROCESSING_REPORT.md"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/unclear/Sexopatologia_Spravochnik_1990.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Sexopatologia_Spravochnik_1990.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Опросник_социосексуальной_ориентации_SOI.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Сексуальный интеллект.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Сексуальный интеллект.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Яффе Секс в жизни женщины .ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Яффе Секс в жизни женщины .ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Яффе Секс в жизни мужчины .ocr.raw.txt",
+      "source": "kb/sexologist/ocr_raw/Яффе Секс в жизни мужчины .ocr.raw.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "source": "kb/sexologist/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/unclear/Sexopatologia_Spravochnik_1990.cleaned.txt",
+      "source": "kb/sexologist/trash/Sexopatologia_Spravochnik_1990.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/test-trevoga.txt",
+      "source": "sources/psychologist/test-trevoga.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/126920_4409ae397650cf3bad5ab99ba9787539.pdf",
+      "source": "sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf",
+      "source": "sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf",
+      "source": "sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/88436_f74ff498f23077badd28e1a443f537ab.pdf",
+      "source": "sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt",
+      "source": "sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Osoznannoe_vlechenie1.pdf",
+      "source": "sources/sexologist/Osoznannoe_vlechenie1.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/seks-probl-i-dpdg.pdf",
+      "source": "sources/sexologist/seks-probl-i-dpdg.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Sexopatologia_Spravochnik_1990.pdf",
+      "source": "sources/sexologist/Sexopatologia_Spravochnik_1990.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/statya-va-domorackogo (1).pdf",
+      "source": "sources/sexologist/statya-va-domorackogo (1).pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf",
+      "source": "sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/unclear/«Когда мы не ладим» Упражнение .docx",
+      "source": "sources/sexologist/«Когда мы не ладим» Упражнение .docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Автостоп. Техника символдрамы.docx",
+      "source": "sources/sexologist/Автостоп. Техника символдрамы.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Аддикции отношений. Секс.docx",
+      "source": "sources/sexologist/Аддикции отношений. Секс.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Анкета_для_пациентов_женского_пола.docx",
+      "source": "sources/sexologist/Анкета_для_пациентов_женского_пола.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Анкета_для_пациентов_мужского_пола.docx",
+      "source": "sources/sexologist/Анкета_для_пациентов_мужского_пола.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Введение в сексологию.docx",
+      "source": "sources/sexologist/Введение в сексологию.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Женская психопатология Святоч.pdf",
+      "source": "sources/sexologist/Женская психопатология Святоч.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Женская сексуальность.docx",
+      "source": "sources/sexologist/Женская сексуальность.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Женские сексуальные дисфункции .docx",
+      "source": "sources/sexologist/Женские сексуальные дисфункции .docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Завис (през).docx",
+      "source": "sources/sexologist/Завис (през).docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Индекс_женской_сексуальной_функции_ИЖСФ.docx",
+      "source": "sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Индекс_эректильной_функции_международный.docx",
+      "source": "sources/sexologist/Индекс_эректильной_функции_международный.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/конс. жертв секс. насил..docx",
+      "source": "sources/sexologist/конс. жертв секс. насил..docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Куст розы. Символдрама.docx",
+      "source": "sources/sexologist/Куст розы. Символдрама.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Любовь. ревность..docx",
+      "source": "sources/sexologist/Любовь. ревность..docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/unclear/М половая конституция табл.docx",
+      "source": "sources/sexologist/М половая конституция табл.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf",
+      "source": "sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Международный_индекс_эректильной_функции_МИЭФ.docx",
+      "source": "sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Мужская сексуальность.docx",
+      "source": "sources/sexologist/Мужская сексуальность.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx",
+      "source": "sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Нетипичный секс.docx",
+      "source": "sources/sexologist/Нетипичный секс.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Опросник_Сексуальная_формула_мужская_СФМ.docx",
+      "source": "sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Опросник_социосексуальной_ориентации_SOI.pdf",
+      "source": "sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/ПСР_психосексуальное_развитие_в_норме.docx",
+      "source": "sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Свядощ_Женская_Сексопатология_doc.docx",
+      "source": "sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/секс дисф. начало (през).docx",
+      "source": "sources/sexologist/секс дисф. начало (през).docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Секс. обслед. Ж (1).docx",
+      "source": "sources/sexologist/Секс. обслед. Ж (1).docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Сексуальные дисгармонии.docx",
+      "source": "sources/sexologist/Сексуальные дисгармонии.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Сексуальный интеллект.pdf",
+      "source": "sources/sexologist/Сексуальный интеллект.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Стерн Д. - Глаз видит сам себя.pdf",
+      "source": "sources/sexologist/Стерн Д. - Глаз видит сам себя.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx",
+      "source": "sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/exercises/Стыд и секс.docx",
+      "source": "sources/sexologist/Стыд и секс.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Супр. терапия (оконч).docx",
+      "source": "sources/sexologist/Супр. терапия (оконч).docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx",
+      "source": "sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx",
+      "source": "sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/surveys/СФМ секс формула М опросник .docx",
+      "source": "sources/sexologist/СФМ секс формула М опросник .docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/Тест_опросник_удовлетвореености_браком.docx",
+      "source": "sources/sexologist/Тест_опросник_удовлетвореености_браком.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/good/Х Каплан Сексуальная терапия.docx",
+      "source": "sources/sexologist/Х Каплан Сексуальная терапия.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Шкала ПК для женщин.pdf",
+      "source": "sources/sexologist/Шкала ПК для женщин.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/tests/ЭГ в пт секс дисфункций.docx",
+      "source": "sources/sexologist/ЭГ в пт секс дисфункций.docx"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Эмили Нагоски - Как хочет женщина.pdf",
+      "source": "sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Яффе Секс в жизни женщины .pdf",
+      "source": "sources/sexologist/Яффе Секс в жизни женщины .pdf"
+    },
+    {
+      "action": "delete_copied_file",
+      "target": "sorted_sources/ocr_required/Яффе Секс в жизни мужчины .pdf",
+      "source": "sources/sexologist/Яффе Секс в жизни мужчины .pdf"
+    }
+  ]
+}

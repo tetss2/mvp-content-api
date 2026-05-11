@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Х Каплан Сексуальная терапия.cleaned.txt",
+  "chunks_file": "chunks/good/Х Каплан Сексуальная терапия.chunks.jsonl",
+  "chunk_count": 84,
+  "tokens_total_estimate": 58316,
+  "avg_chunk_tokens": 694.2,
+  "min_chunk_tokens": 310,
+  "max_chunk_tokens": 969,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 18,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.79
+}

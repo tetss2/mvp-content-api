@@ -1,0 +1,13 @@
+{
+  "source_file": "cleaned_corpus/good/Супр. терапия (оконч).cleaned.txt",
+  "chunks_file": "chunks/good/Супр. терапия (оконч).chunks.jsonl",
+  "chunk_count": 7,
+  "tokens_total_estimate": 5054,
+  "avg_chunk_tokens": 722.0,
+  "min_chunk_tokens": 325,
+  "max_chunk_tokens": 936,
+  "oversized_chunks": 0,
+  "orphan_paragraphs": 1,
+  "overlap_redundancy_avg": 0.0,
+  "semantic_continuity_avg": 0.803
+}
