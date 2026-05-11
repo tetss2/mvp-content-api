@@ -1,0 +1,42 @@
+{
+  "session_id": "ki_1778536279894_d2be4064",
+  "user_id": "109664871",
+  "target_kb": "psychologist",
+  "session_status": "processed_needs_review",
+  "processed_at": "2026-05-11T21:51:27.005Z",
+  "summary": {
+    "accepted_sources": 1,
+    "extracted": 1,
+    "ocr_required": 0,
+    "url_pending": 0,
+    "unsupported": 0,
+    "needs_review": 0,
+    "ready_for_cleaning": 1,
+    "rejected": 0
+  },
+  "items": [
+    {
+      "item_id": "item_1778536279906_48eff09a",
+      "source_type": "text",
+      "extension": ".txt",
+      "extraction_status": "extracted",
+      "status": "ready_for_cleaning",
+      "char_count": 5796,
+      "estimated_tokens": 1449,
+      "detected_language": "en",
+      "quality_score": 1,
+      "garbage_signals": [],
+      "duplicate_risk": "low",
+      "recommended_action": "ready_for_cleaning",
+      "original_name": "telegram_note.txt",
+      "local_path": "knowledge_intake/psychologist/incoming/ki_1778536279894_d2be4064/item_1778536279906_48eff09a.note.txt",
+      "extracted_text_path": "knowledge_intake/psychologist/extracted/ki_1778536279894_d2be4064/item_1778536279906_48eff09a.txt",
+      "error": null
+    }
+  ],
+  "safety": {
+    "embeddings_started": false,
+    "faiss_rebuild_started": false,
+    "production_ingestion_started": false
+  }
+}

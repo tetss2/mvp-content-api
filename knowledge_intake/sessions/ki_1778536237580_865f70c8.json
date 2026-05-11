@@ -1,0 +1,32 @@
+{
+  "session_id": "ki_1778536237580_865f70c8",
+  "user_id": "109664871",
+  "target_kb": "psychologist",
+  "status": "cleaned_ready_for_ingestion",
+  "created_at": "2026-05-11T21:50:37.581Z",
+  "items": [
+    {
+      "item_id": "item_1778536237598_cf26258c",
+      "type": "text",
+      "original_name": "telegram_note.txt",
+      "local_path": "knowledge_intake/psychologist/incoming/ki_1778536237580_865f70c8/item_1778536237598_cf26258c.note.txt",
+      "status": "ready_for_cleaning",
+      "quality_status": "HIGH",
+      "created_at": "2026-05-11T21:50:37.601Z",
+      "processing_started_at": "2026-05-11T21:50:44.404Z",
+      "extraction_status": "extracted",
+      "extracted_text_path": "knowledge_intake/psychologist/extracted/ki_1778536237580_865f70c8/item_1778536237598_cf26258c.txt",
+      "processing_finished_at": "2026-05-11T21:50:44.409Z",
+      "cleaned_text_path": "knowledge_intake/psychologist/cleaned/ki_1778536237580_865f70c8/item_1778536237598_cf26258c.cleaned.txt",
+      "cleaning_status": "cleaned",
+      "recommended_action": "keep"
+    }
+  ],
+  "updated_at": "2026-05-11T21:50:44.600Z",
+  "processed_at": "2026-05-11T21:50:44.410Z",
+  "processing_report_json": "knowledge_intake/psychologist/reports/ki_1778536237580_865f70c8_processing_report.json",
+  "processing_report_md": "knowledge_intake/psychologist/reports/ki_1778536237580_865f70c8_processing_report.md",
+  "cleaned_at": "2026-05-11T21:50:44.600Z",
+  "cleaning_report_json": "knowledge_intake/psychologist/reports/ki_1778536237580_865f70c8_cleaning_report.json",
+  "cleaning_report_md": "knowledge_intake/psychologist/reports/ki_1778536237580_865f70c8_cleaning_report.md"
+}

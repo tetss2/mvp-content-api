@@ -1,0 +1,28 @@
+{
+  "session_id": "ki_1778529535243_3344c45e",
+  "user_id": "109664871",
+  "target_kb": "sexologist",
+  "status": "cancelled",
+  "created_at": "2026-05-11T19:58:55.243Z",
+  "items": [
+    {
+      "item_id": "item_1778529535253_260eb54c",
+      "type": "text",
+      "original_name": "telegram_note.txt",
+      "local_path": "knowledge_intake/sexologist/incoming/ki_1778529535243_3344c45e/item_1778529535253_260eb54c.note.txt",
+      "status": "received",
+      "quality_status": "not_processed",
+      "created_at": "2026-05-11T19:58:55.257Z"
+    },
+    {
+      "item_id": "item_1778529535260_d146c4fc",
+      "type": "url",
+      "original_name": "https://example.com/sexology",
+      "local_path": "knowledge_intake/sexologist/incoming/ki_1778529535243_3344c45e/item_1778529535260_d146c4fc.url.txt",
+      "status": "received",
+      "quality_status": "not_processed",
+      "created_at": "2026-05-11T19:58:55.268Z"
+    }
+  ],
+  "updated_at": "2026-05-11T19:58:55.281Z"
+}

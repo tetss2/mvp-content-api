@@ -1,0 +1,48 @@
+{
+  "session_id": "ki_1778536237580_865f70c8",
+  "user_id": "109664871",
+  "target_kb": "psychologist",
+  "session_status": "cleaned_ready_for_ingestion",
+  "cleaned_at": "2026-05-11T21:50:44.600Z",
+  "summary": {
+    "total_items": 1,
+    "cleaned": 1,
+    "rejected": 0,
+    "high_quality": 1,
+    "medium_quality": 0,
+    "low_quality": 0,
+    "estimated_chunks": 2,
+    "estimated_tokens": 1061
+  },
+  "items": [
+    {
+      "item_id": "item_1778536237598_cf26258c",
+      "source_type": "text",
+      "original_name": "telegram_note.txt",
+      "extraction_status": "extracted",
+      "input_path": "knowledge_intake/psychologist/extracted/ki_1778536237580_865f70c8/item_1778536237598_cf26258c.txt",
+      "cleaned_path": "knowledge_intake/psychologist/cleaned/ki_1778536237580_865f70c8/item_1778536237598_cf26258c.cleaned.txt",
+      "original_chars": 5796,
+      "cleaned_chars": 4243,
+      "estimated_tokens": 1061,
+      "estimated_chunks": 2,
+      "quality_score": 88,
+      "quality_label": "HIGH",
+      "garbage_signals": [
+        "repeated_lines"
+      ],
+      "recommended_action": "keep",
+      "cleaning_stats": {
+        "removed_empty_fragments": 55,
+        "removed_navigation_lines": 18,
+        "removed_repeated_lines": 16
+      }
+    }
+  ],
+  "safety": {
+    "embeddings_started": false,
+    "chunking_into_production_started": false,
+    "faiss_rebuild_started": false,
+    "production_ingestion_started": false
+  }
+}

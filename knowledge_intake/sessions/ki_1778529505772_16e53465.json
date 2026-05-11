@@ -1,0 +1,28 @@
+{
+  "session_id": "ki_1778529505772_16e53465",
+  "user_id": "109664871",
+  "target_kb": "psychologist",
+  "status": "cancelled",
+  "created_at": "2026-05-11T19:58:25.772Z",
+  "items": [
+    {
+      "item_id": "item_1778529505782_8bf3a22e",
+      "type": "text",
+      "original_name": "telegram_note.txt",
+      "local_path": "C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\knowledge_intake\\psychologist\\incoming\\ki_1778529505772_16e53465\\item_1778529505782_8bf3a22e.note.txt",
+      "status": "received",
+      "quality_status": "not_processed",
+      "created_at": "2026-05-11T19:58:25.789Z"
+    },
+    {
+      "item_id": "item_1778529505792_e07266fc",
+      "type": "url",
+      "original_name": "https://example.com/article",
+      "local_path": "C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\knowledge_intake\\psychologist\\incoming\\ki_1778529505772_16e53465\\item_1778529505792_e07266fc.url.txt",
+      "status": "received",
+      "quality_status": "not_processed",
+      "created_at": "2026-05-11T19:58:25.797Z"
+    }
+  ],
+  "updated_at": "2026-05-11T19:58:25.808Z"
+}

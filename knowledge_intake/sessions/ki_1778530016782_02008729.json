@@ -1,0 +1,39 @@
+{
+  "session_id": "ki_1778530016782_02008729",
+  "user_id": "109664871",
+  "target_kb": "sexologist",
+  "status": "processed_needs_review",
+  "created_at": "2026-05-11T20:06:56.783Z",
+  "items": [
+    {
+      "item_id": "item_1778530016794_83b2c8d6",
+      "type": "text",
+      "original_name": "telegram_note.txt",
+      "local_path": "knowledge_intake/sexologist/incoming/ki_1778530016782_02008729/item_1778530016794_83b2c8d6.note.txt",
+      "status": "ready_for_cleaning",
+      "quality_status": "ready_for_cleaning",
+      "created_at": "2026-05-11T20:06:56.796Z",
+      "processing_started_at": "2026-05-11T20:07:06.397Z",
+      "extraction_status": "extracted",
+      "extracted_text_path": "knowledge_intake/sexologist/extracted/ki_1778530016782_02008729/item_1778530016794_83b2c8d6.txt",
+      "processing_finished_at": "2026-05-11T20:07:06.403Z"
+    },
+    {
+      "item_id": "item_1778530016800_5bb3c824",
+      "type": "url",
+      "original_name": "https://example.com/intake-processing-test",
+      "local_path": "knowledge_intake/sexologist/incoming/ki_1778530016782_02008729/item_1778530016800_5bb3c824.url.txt",
+      "status": "url_pending",
+      "quality_status": "needs_review",
+      "created_at": "2026-05-11T20:06:56.806Z",
+      "processing_started_at": "2026-05-11T20:07:06.404Z",
+      "extraction_status": "url_pending",
+      "extracted_text_path": null,
+      "processing_finished_at": "2026-05-11T20:07:06.404Z"
+    }
+  ],
+  "updated_at": "2026-05-11T20:07:06.404Z",
+  "processed_at": "2026-05-11T20:07:06.404Z",
+  "processing_report_json": "knowledge_intake/sexologist/reports/ki_1778530016782_02008729_processing_report.json",
+  "processing_report_md": "knowledge_intake/sexologist/reports/ki_1778530016782_02008729_processing_report.md"
+}

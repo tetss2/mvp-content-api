@@ -7,6 +7,18 @@ import { tmpdir } from "os";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
+import {
+  addFileItem,
+  addTextItem,
+  addUrlItem,
+  canUseKnowledgeIntake,
+  createIntakeSession,
+  getActiveIntakeSession,
+  getTargetLabel,
+  isUrlText,
+  setSessionStatus,
+  summarizeSession,
+} from "./knowledge-intake.js";
 let ffmpegPath = "ffmpeg";
 try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
 import ffmpeg from "fluent-ffmpeg";
@@ -699,6 +711,101 @@ async function sendHelp(chatId) {
   );
 }
 
+const KNOWLEDGE_INTAKE_ACTIONS = {
+  reply_markup: { inline_keyboard: [
+    [{ text: "➕ Добавить еще", callback_data: "ki_more" }],
+    [{ text: "✅ Загрузка закончена", callback_data: "ki_done" }],
+    [{ text: "❌ Отменить", callback_data: "ki_cancel" }],
+  ]},
+};
+
+async function sendKnowledgeIntakeMenu(chatId, userId) {
+  if (!(await canUseKnowledgeIntake(userId))) {
+    await bot.sendMessage(chatId, "🔒 Режим пополнения базы знаний доступен только для admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, "📚 Выберите базу знаний для пополнения:", {
+    reply_markup: { inline_keyboard: [[
+      { text: "Психолог Динара", callback_data: "ki_kb:psychologist" },
+      { text: "Сексолог Динара", callback_data: "ki_kb:sexologist" },
+    ]]},
+  });
+}
+
+function intakeItemTypeLabel(type) {
+  return { file: "файл", url: "ссылка", text: "заметка" }[type] || type;
+}
+
+function buildIntakeSummary(session) {
+  const summary = summarizeSession(session);
+  const itemsText = summary.items.length
+    ? summary.items.map((item, index) =>
+        `${index + 1}. ${intakeItemTypeLabel(item.type)} — ${item.original_name || item.item_id}`
+      ).join("\n")
+    : "нет материалов";
+  return (
+    `📦 Сводка загрузки\n\n` +
+    `База знаний: ${summary.targetLabel}\n` +
+    `Файлы: ${summary.fileCount}\n` +
+    `Ссылки: ${summary.urlCount}\n` +
+    `Текстовые заметки: ${summary.textCount}\n\n` +
+    `Items:\n${itemsText}\n\n` +
+    `Статус: ожидает подтверждения`
+  );
+}
+
+async function sendIntakeSummary(chatId, session) {
+  await bot.sendMessage(chatId, buildIntakeSummary(session), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "✅ Подтвердить добавление в базу", callback_data: "ki_approve" }],
+      [{ text: "❌ Отклонить", callback_data: "ki_reject" }],
+    ]},
+  });
+}
+
+async function downloadTelegramDocument(fileId) {
+  const fileInfo = await bot.getFile(fileId);
+  const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
+  const response = await fetch(fileUrl);
+  if (!response.ok) throw new Error(`Telegram file download failed: ${response.status}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function handleKnowledgeIntakeMessage(msg) {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  const session = await getActiveIntakeSession(userId);
+  if (!session) return false;
+  if (session.status !== "collecting") {
+    await bot.sendMessage(chatId, "Сессия загрузки ожидает подтверждения. Используйте кнопки: подтвердить добавление или отклонить.");
+    return true;
+  }
+
+  if (msg.document) {
+    const buffer = await downloadTelegramDocument(msg.document.file_id);
+    const updated = await addFileItem(session, msg.document.file_name || "telegram_document", buffer);
+    await bot.sendMessage(
+      chatId,
+      `✅ Файл принят: ${msg.document.file_name || "telegram_document"}\nВсего items: ${updated.items.length}`,
+      KNOWLEDGE_INTAKE_ACTIONS
+    );
+    return true;
+  }
+
+  if (msg.text) {
+    const text = msg.text.trim();
+    const updated = isUrlText(text)
+      ? await addUrlItem(session, text)
+      : await addTextItem(session, text);
+    const kind = isUrlText(text) ? "Ссылка" : "Текстовая заметка";
+    await bot.sendMessage(chatId, `✅ ${kind} принята.\nВсего items: ${updated.items.length}`, KNOWLEDGE_INTAKE_ACTIONS);
+    return true;
+  }
+
+  await bot.sendMessage(chatId, "Пока в этом режиме принимаю document/file, ссылку или текстовую заметку.", KNOWLEDGE_INTAKE_ACTIONS);
+  return true;
+}
+
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
@@ -1117,6 +1224,10 @@ bot.onText(/\/start/, async (msg) => {
 
 bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
 
+bot.onText(/\/(?:knowledge|kb_intake)/, async (msg) => {
+  await sendKnowledgeIntakeMenu(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
 // ─── ОБРАБОТЧИК СООБЩЕНИЙ ────────────────────────────────────────────────────
 
 bot.on("message", async (msg) => {
@@ -1139,6 +1250,10 @@ bot.on("message", async (msg) => {
       } else {
         await sendOnboarding(chatId, 1);
       }
+      return;
+    }
+
+    if (await handleKnowledgeIntakeMessage(msg)) {
       return;
     }
 
@@ -1237,6 +1352,63 @@ bot.on("callback_query", async (query) => {
 
   try {
     const state = userState.get(chatId) || {};
+
+    if (data.startsWith("ki_kb:")) {
+      const userId = query.from?.id || chatId;
+      if (!(await canUseKnowledgeIntake(userId))) {
+        await bot.sendMessage(chatId, "🔒 Режим пополнения базы знаний доступен только для admin/full_access.");
+        return;
+      }
+      const targetKb = data.replace("ki_kb:", "");
+      const session = await createIntakeSession(userId, targetKb);
+      await bot.sendMessage(
+        chatId,
+        `📚 Сессия создана: ${session.session_id}\nБаза знаний: ${getTargetLabel(targetKb)}\n\nОтправляйте document/file, ссылку или текстовую заметку.`,
+        KNOWLEDGE_INTAKE_ACTIONS
+      );
+      return;
+    }
+
+    if (data === "ki_more") {
+      await bot.sendMessage(chatId, "➕ Отправьте следующий document/file, ссылку или текстовую заметку.", KNOWLEDGE_INTAKE_ACTIONS);
+      return;
+    }
+
+    if (data === "ki_done") {
+      const session = await getActiveIntakeSession(query.from?.id || chatId);
+      if (!session || session.status !== "collecting") {
+        await bot.sendMessage(chatId, "Активная сессия загрузки не найдена.");
+        return;
+      }
+      const updated = await setSessionStatus(session.session_id, "awaiting_confirmation");
+      await sendIntakeSummary(chatId, updated);
+      return;
+    }
+
+    if (data === "ki_approve") {
+      const session = await getActiveIntakeSession(query.from?.id || chatId);
+      if (!session || session.status !== "awaiting_confirmation") {
+        await bot.sendMessage(chatId, "Сессия, ожидающая подтверждения, не найдена.");
+        return;
+      }
+      await setSessionStatus(session.session_id, "approved_for_processing");
+      await bot.sendMessage(
+        chatId,
+        "Материалы приняты и поставлены в очередь обработки. Следующий этап — анализ качества и подготовка к ingestion."
+      );
+      return;
+    }
+
+    if (data === "ki_reject" || data === "ki_cancel") {
+      const session = await getActiveIntakeSession(query.from?.id || chatId);
+      if (!session) {
+        await bot.sendMessage(chatId, "Активная сессия загрузки не найдена.");
+        return;
+      }
+      await setSessionStatus(session.session_id, "cancelled");
+      await bot.sendMessage(chatId, "❌ Сессия пополнения базы знаний отменена. Файлы не удалены.");
+      return;
+    }
 
     if (data.startsWith("req_limit_")) {
       const limitType = data.replace("req_limit_", "");

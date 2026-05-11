@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "index": "node scripts/indexer.js",
+    "kb:ingest": "node knowledge_ingest.js",
     "kb:test:ingest": "node scripts/safe-cleaned-kb-ingest-test.js",
     "kb:test:ingest:dry": "node scripts/safe-cleaned-kb-ingest-test.js --dry-run",
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js"
