@@ -621,15 +621,23 @@ async function readJsonlRows(path) {
   return raw.split(/\r?\n/).filter(Boolean).map((line) => JSON.parse(line));
 }
 
-function readFaissCount(indexPath) {
+async function readFaissCount(indexPath) {
+  const tempFaissDir = join(os.tmpdir(), "mvp-content-api-faiss", timestampId());
+  const tempIndexPath = join(tempFaissDir, "faiss.index");
+  mkdirSync(tempFaissDir, { recursive: true });
   const script = `
 import faiss, sys
 index = faiss.read_index(sys.argv[1])
 print(index.ntotal)
 `;
-  const result = spawnSync("python", ["-c", script, indexPath], { cwd: ROOT, encoding: "utf-8" });
-  if (result.status !== 0) throw new Error(`FAISS validation failed: ${result.stderr || result.stdout}`);
-  return Number(result.stdout.trim());
+  try {
+    await fs.copyFile(indexPath, tempIndexPath);
+    const result = spawnSync("python", ["-c", script, tempIndexPath], { cwd: ROOT, encoding: "utf-8" });
+    if (result.status !== 0) throw new Error(`FAISS validation failed: ${result.stderr || result.stdout}`);
+    return Number(result.stdout.trim());
+  } finally {
+    await fs.rm(tempFaissDir, { recursive: true, force: true });
+  }
 }
 
 async function validateStaging(stagingDir) {
@@ -645,7 +653,7 @@ async function validateStaging(stagingDir) {
 
   const manifest = await readJson(manifestPath);
   const rows = await readJsonlRows(docstorePath);
-  const faissCount = readFaissCount(indexPath);
+  const faissCount = await readFaissCount(indexPath);
   const chunkIds = new Set();
   let emptyChunks = 0;
   let duplicateChunkIds = 0;
