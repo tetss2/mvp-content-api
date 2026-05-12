@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-05-11T23:15:16.069Z",
+  "kb_id": "psychologist",
+  "session_id": "ki_1778536279894_d2be4064",
+  "index_type": "faiss.IndexFlatIP",
+  "similarity": "cosine_similarity_via_l2_normalized_inner_product",
+  "embedding_model": "text-embedding-3-small",
+  "embedding_dim": 1536,
+  "vectors": 1,
+  "faiss_index": "faiss.index",
+  "docstore": "docstore.jsonl"
+}

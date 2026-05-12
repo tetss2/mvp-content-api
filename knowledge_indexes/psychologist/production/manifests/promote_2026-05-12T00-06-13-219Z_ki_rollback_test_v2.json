@@ -1,0 +1,171 @@
+{
+  "manifest_schema_version": 1,
+  "status": "promoted",
+  "promote_id": "promote_2026-05-12T00-06-13-219Z_ki_rollback_test_v2",
+  "promoted_at": "2026-05-12T00:06:14.706Z",
+  "source_candidate_id": "ki_rollback_test_v2",
+  "previous_production_version": "prod_2026-05-11T23-53-44-339Z",
+  "new_production_version": "prod_2026-05-12T00-06-13-220Z",
+  "backup_path": "knowledge_indexes/psychologist/production/backups/promote_2026-05-12T00-06-13-219Z_ki_rollback_test_v2_previous",
+  "old_production_path": "knowledge_indexes/psychologist/promote_tmp/swap_old_2026-05-12T00-06-14-356Z",
+  "validation_result": {
+    "pre_promote": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "faiss_vectors": 1,
+      "docstore_rows": 1,
+      "source_files": 1,
+      "embedding_dim": 1536,
+      "index_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "index_type": "faiss.IndexFlatIP",
+        "similarity": "cosine_similarity_via_l2_normalized_inner_product",
+        "embedding_model": "text-embedding-3-small",
+        "embedding_dim": 1536,
+        "vectors": 1,
+        "faiss_index": "faiss.index",
+        "docstore": "docstore.jsonl"
+      },
+      "ingestion_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "source_status": "cleaned_ready_for_ingestion",
+        "summary": {
+          "total_cleaning_items": 1,
+          "planned_sources": 1,
+          "planned_chunks": 1,
+          "rejected_or_skipped_items": 0,
+          "estimated_tokens": 220,
+          "estimated_embedding_cost_usd": 0.0000044,
+          "duplicate_candidates": 0,
+          "quality_summary": {
+            "high": 1,
+            "medium": 0,
+            "low": 0,
+            "reject": 0
+          }
+        },
+        "safeguards": {
+          "wrote_only_staging": true,
+          "current_index_modified": false,
+          "promoted_automatically": false
+        }
+      },
+      "content_hash": "63334a96d7e37ed364f0972c96d2395789f315a6",
+      "validation_status": {
+        "ok": true,
+        "source": "knowledge_indexes/psychologist/reports/ki_rollback_test_v2_ingestion_apply.json",
+        "checked_at": "2026-05-11T23:15:16.569Z"
+      }
+    },
+    "promote_temp": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "faiss_vectors": 1,
+      "docstore_rows": 1,
+      "source_files": 1,
+      "embedding_dim": 1536,
+      "index_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "index_type": "faiss.IndexFlatIP",
+        "similarity": "cosine_similarity_via_l2_normalized_inner_product",
+        "embedding_model": "text-embedding-3-small",
+        "embedding_dim": 1536,
+        "vectors": 1,
+        "faiss_index": "faiss.index",
+        "docstore": "docstore.jsonl"
+      },
+      "ingestion_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "source_status": "cleaned_ready_for_ingestion",
+        "summary": {
+          "total_cleaning_items": 1,
+          "planned_sources": 1,
+          "planned_chunks": 1,
+          "rejected_or_skipped_items": 0,
+          "estimated_tokens": 220,
+          "estimated_embedding_cost_usd": 0.0000044,
+          "duplicate_candidates": 0,
+          "quality_summary": {
+            "high": 1,
+            "medium": 0,
+            "low": 0,
+            "reject": 0
+          }
+        },
+        "safeguards": {
+          "wrote_only_staging": true,
+          "current_index_modified": false,
+          "promoted_automatically": false
+        }
+      },
+      "content_hash": "63334a96d7e37ed364f0972c96d2395789f315a6"
+    },
+    "post_promote": {
+      "ok": true,
+      "errors": [],
+      "warnings": [],
+      "faiss_vectors": 1,
+      "docstore_rows": 1,
+      "source_files": 1,
+      "embedding_dim": 1536,
+      "index_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "index_type": "faiss.IndexFlatIP",
+        "similarity": "cosine_similarity_via_l2_normalized_inner_product",
+        "embedding_model": "text-embedding-3-small",
+        "embedding_dim": 1536,
+        "vectors": 1,
+        "faiss_index": "faiss.index",
+        "docstore": "docstore.jsonl"
+      },
+      "ingestion_manifest": {
+        "generated_at": "2026-05-11T23:15:16.069Z",
+        "kb_id": "psychologist",
+        "session_id": "ki_rollback_test_v2",
+        "source_status": "cleaned_ready_for_ingestion",
+        "summary": {
+          "total_cleaning_items": 1,
+          "planned_sources": 1,
+          "planned_chunks": 1,
+          "rejected_or_skipped_items": 0,
+          "estimated_tokens": 220,
+          "estimated_embedding_cost_usd": 0.0000044,
+          "duplicate_candidates": 0,
+          "quality_summary": {
+            "high": 1,
+            "medium": 0,
+            "low": 0,
+            "reject": 0
+          }
+        },
+        "safeguards": {
+          "wrote_only_staging": true,
+          "current_index_modified": false,
+          "promoted_automatically": false
+        }
+      },
+      "content_hash": "63334a96d7e37ed364f0972c96d2395789f315a6"
+    }
+  },
+  "rollback_status": {
+    "attempted": false,
+    "ok": null
+  },
+  "manifest_path": "knowledge_indexes/psychologist/production/manifests/promote_2026-05-12T00-06-13-219Z_ki_rollback_test_v2.json",
+  "old_production_cleanup": {
+    "attempted": true,
+    "ok": true
+  }
+}

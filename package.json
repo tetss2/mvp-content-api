@@ -7,6 +7,11 @@
     "start": "node index.js",
     "index": "node scripts/indexer.js",
     "kb:ingest": "node knowledge_ingest.js",
+    "kb:promote:dry": "node knowledge_promote.js --dry-run",
+    "kb:promote": "node knowledge_promote.js --promote",
+    "kb:rollback:latest": "node knowledge_promote.js --rollback-latest",
+    "kb:validate:production": "node knowledge_promote.js --validate-production",
+    "kb:retrieve": "node knowledge_retrieval.js --retrieve",
     "kb:test:ingest": "node scripts/safe-cleaned-kb-ingest-test.js",
     "kb:test:ingest:dry": "node scripts/safe-cleaned-kb-ingest-test.js --dry-run",
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js"
@@ -17,8 +22,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "cheerio": "^1.0.0",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
-"fluent-ffmpeg": "^2.1.3",
+    "fluent-ffmpeg": "^2.1.3",
     "mammoth": "^1.6.0",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.61.0",

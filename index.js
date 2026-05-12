@@ -1,4 +1,5 @@
-﻿import TelegramBot from "node-telegram-bot-api";
+﻿import "dotenv/config";
+import TelegramBot from "node-telegram-bot-api";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { createRequire } from "module";
@@ -19,6 +20,7 @@ import {
   setSessionStatus,
   summarizeSession,
 } from "./knowledge-intake.js";
+import { retrieveGroundingContext } from "./retrieval_service.js";
 let ffmpegPath = "ffmpeg";
 try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
 import ffmpeg from "fluent-ffmpeg";
@@ -1062,21 +1064,30 @@ async function processAudioWithTrack(chatId, trackId) {
 
 async function generatePostText(topic, scenario, lengthMode = "normal", styleKey = "auto") {
   let context = "";
-  const chunks = await vectorSearch(topic, scenario, 5);
-  if (chunks && chunks.length > 0) {
-    context = chunks.map(c => c.chunk_text).join("\n\n");
-  } else if (scenario === "psychologist") {
-    const topArticles = articles
-      .map(a => ({ ...a, score: scoreArticle(a, topic) }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3);
-    context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
+  const retrieval = await retrieveGroundingContext(topic, scenario);
+
+  if (retrieval?.context) {
+    context = [
+      "Ниже релевантные фрагменты из production knowledge base. Используй их как grounding, не цитируй дословно без необходимости и не выдумывай факты за пределами контекста.",
+      retrieval.context,
+    ].join("\n\n");
   } else {
-    const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
-    if (fallbackChunks && fallbackChunks.length > 0) {
-      context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
+    const chunks = await vectorSearch(topic, scenario, 5);
+    if (chunks && chunks.length > 0) {
+      context = chunks.map(c => c.chunk_text).join("\n\n");
+    } else if (scenario === "psychologist") {
+      const topArticles = articles
+        .map(a => ({ ...a, score: scoreArticle(a, topic) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3);
+      context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
     } else {
-      context = `Тема запроса: "${topic}". Отвечай на основе общих знаний психолога-сексолога, строго в рамках профессиональной этики. Не выдумывай исследования и статистику.`;
+      const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
+      if (fallbackChunks && fallbackChunks.length > 0) {
+        context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
+      } else {
+        context = `Тема запроса: "${topic}". Отвечай на основе общих знаний психолога-сексолога, строго в рамках профессиональной этики. Не выдумывай исследования и статистику.`;
+      }
     }
   }
 

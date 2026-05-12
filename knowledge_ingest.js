@@ -53,7 +53,16 @@ async function readJson(path) {
   return JSON.parse(await fs.readFile(path, "utf-8"));
 }
 
+function assertNotProductionPath(path, operation) {
+  const resolved = resolvePath(path);
+  const relativePath = repoRelative(resolved);
+  if (relativePath.startsWith("knowledge_indexes/") && relativePath.includes("/production/")) {
+    throw new Error(`${operation} blocked: ingestion cannot write inside production (${relativePath}). Use knowledge_promote.js.`);
+  }
+}
+
 async function writeJson(path, value) {
+  assertNotProductionPath(path, "writeJson");
   await fs.mkdir(dirname(path), { recursive: true });
   await fs.writeFile(path, JSON.stringify(value, null, 2), "utf-8");
 }
@@ -69,7 +78,6 @@ function parseArgs(argv) {
     dryRun: false,
     apply: false,
     validateStaging: false,
-    promote: false,
     force: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -84,8 +92,6 @@ function parseArgs(argv) {
       args.apply = true;
     } else if (arg === "--validate-staging") {
       args.validateStaging = true;
-    } else if (arg === "--promote") {
-      args.promote = true;
     } else if (arg === "--force") {
       args.force = true;
     }
@@ -97,27 +103,26 @@ function validateArgs(args) {
   if (!args.kb) throw new Error("Missing required --kb.");
   if (!KNOWN_KBS.has(args.kb)) throw new Error(`Unknown kb "${args.kb}". Expected: psychologist or sexologist.`);
   if (!args.session) throw new Error("Missing required --session.");
-  const modes = [args.dryRun, args.apply, args.validateStaging, args.promote].filter(Boolean).length;
-  if (modes !== 1) throw new Error("Choose exactly one mode: --dry-run, --apply, --validate-staging, or --promote.");
+  const modes = [args.dryRun, args.apply, args.validateStaging].filter(Boolean).length;
+  if (modes !== 1) throw new Error("Choose exactly one mode: --dry-run, --apply, or --validate-staging. Production promote is handled by knowledge_promote.js.");
 }
 
 function kbPaths(kb, sessionId = null) {
   const base = join(INDEX_ROOT, kb);
+  const productionRoot = join(base, "production");
   return {
     base,
-    current: join(base, "current"),
+    productionRoot,
+    current: join(productionRoot, "current"),
     stagingRoot: join(base, "staging"),
     staging: sessionId ? join(base, "staging", sessionId) : null,
-    backups: join(base, "backups"),
     reports: join(base, "reports"),
   };
 }
 
 async function ensureKbDirs(kb) {
   const paths = kbPaths(kb);
-  await fs.mkdir(paths.current, { recursive: true });
   await fs.mkdir(paths.stagingRoot, { recursive: true });
-  await fs.mkdir(paths.backups, { recursive: true });
   await fs.mkdir(paths.reports, { recursive: true });
 }
 
@@ -377,6 +382,7 @@ async function writeReport(kb, sessionId, kind, report, markdown) {
   const jsonPath = join(reportsDir, `${sessionId}_${kind}.json`);
   const mdPath = join(reportsDir, `${sessionId}_${kind}.md`);
   await writeJson(jsonPath, report);
+  assertNotProductionPath(mdPath, "writeReport");
   await fs.writeFile(mdPath, markdown, "utf-8");
   return { json: repoRelative(jsonPath), markdown: repoRelative(mdPath) };
 }
@@ -534,6 +540,8 @@ async function applyIngestion(kb, sessionPath, session, cleaningReport, force) {
 
     const vectorsPath = join(tempStaging, "vectors.jsonl");
     const docstorePath = join(tempStaging, "docstore.jsonl");
+    assertNotProductionPath(vectorsPath, "applyIngestion");
+    assertNotProductionPath(docstorePath, "applyIngestion");
     const vectorLines = [];
     const docstoreLines = [];
     plan.plannedChunks.forEach((chunk, index) => {
@@ -701,87 +709,6 @@ async function validateStagingForSession(kb, session) {
   return report;
 }
 
-async function copyDir(src, dest) {
-  await fs.mkdir(dirname(dest), { recursive: true });
-  await fs.cp(src, dest, { recursive: true, force: false, errorOnExist: true });
-}
-
-async function promote(kb, sessionPath, session, force) {
-  if (session.status === "ingestion_completed" && !force) {
-    throw new Error("Session already ingestion_completed. Use --force to promote intentionally.");
-  }
-  if (session.status !== "ingestion_staged" && !force) {
-    throw new Error(`Promote requires ingestion_staged, got ${session.status}. Use --force only if intentional.`);
-  }
-  const paths = kbPaths(kb, session.session_id);
-  if (!(await exists(paths.staging))) throw new Error(`Cannot promote without staging: ${repoRelative(paths.staging)}`);
-  const validation = await validateStaging(paths.staging);
-  if (!validation.ok) {
-    throw new Error(`Staging validation failed: ${validation.errors.join("; ")}`);
-  }
-
-  await fs.mkdir(paths.backups, { recursive: true });
-  const currentExists = await exists(paths.current);
-  const currentEntries = currentExists ? await fs.readdir(paths.current).catch(() => []) : [];
-  let backupPath = null;
-  if (currentExists && currentEntries.length > 0) {
-    backupPath = join(paths.backups, timestampId());
-    await copyDir(paths.current, backupPath);
-    const backupEntries = await fs.readdir(backupPath);
-    if (!backupEntries.length) throw new Error("Backup verification failed: backup directory is empty.");
-  }
-
-  const oldCurrent = join(paths.base, `current_old_${timestampId()}`);
-  if (currentExists) {
-    await fs.rename(paths.current, oldCurrent);
-  }
-  try {
-    await fs.rename(paths.staging, paths.current);
-    await fs.rm(oldCurrent, { recursive: true, force: true });
-  } catch (err) {
-    if (await exists(oldCurrent)) await fs.rename(oldCurrent, paths.current);
-    throw err;
-  }
-
-  session.status = "ingestion_completed";
-  session.ingestion_completed_at = nowIso();
-  session.current_index_dir = repoRelative(paths.current);
-  if (backupPath) session.previous_index_backup = repoRelative(backupPath);
-  session.updated_at = session.ingestion_completed_at;
-  await writeJson(sessionPath, session);
-
-  const report = {
-    type: "ingestion_promote",
-    kb_id: kb,
-    session_id: session.session_id,
-    generated_at: nowIso(),
-    validation,
-    backup: backupPath ? repoRelative(backupPath) : null,
-    current: repoRelative(paths.current),
-    safeguards: {
-      staging_validated_before_promote: true,
-      backup_created_before_overwrite: Boolean(backupPath) || currentEntries.length === 0,
-      atomic_swap_attempted: true,
-      demo_users_touched: false,
-      data_users_written: false,
-    },
-  };
-  report.reports = await writeReport(kb, session.session_id, "ingestion_promote", report, [
-    `# Ingestion Promote`,
-    ``,
-    `KB: \`${kb}\``,
-    `Session: \`${session.session_id}\``,
-    `Current: \`${report.current}\``,
-    `Backup: \`${report.backup || "none (no previous current index)"}\``,
-    `Vectors: ${validation.faiss_vectors}`,
-    `Docstore rows: ${validation.docstore_rows}`,
-  ].join("\n"));
-  session.ingestion_promote_report_json = report.reports.json;
-  session.ingestion_promote_report_md = report.reports.markdown;
-  await writeJson(sessionPath, session);
-  return report;
-}
-
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   validateArgs(args);
@@ -797,8 +724,6 @@ async function main() {
     result = await applyIngestion(args.kb, sessionPath, session, cleaningReport, args.force);
   } else if (args.validateStaging) {
     result = await validateStagingForSession(args.kb, session);
-  } else if (args.promote) {
-    result = await promote(args.kb, sessionPath, session, args.force);
   }
 
   console.log(JSON.stringify({ ok: true, result }, null, 2));

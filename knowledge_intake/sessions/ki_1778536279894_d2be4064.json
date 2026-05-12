@@ -2,7 +2,7 @@
   "session_id": "ki_1778536279894_d2be4064",
   "user_id": "109664871",
   "target_kb": "psychologist",
-  "status": "ingestion_staged",
+  "status": "ingestion_promoted",
   "created_at": "2026-05-11T21:51:19.894Z",
   "items": [
     {
@@ -22,7 +22,7 @@
       "recommended_action": "keep"
     }
   ],
-  "updated_at": "2026-05-11T23:15:16.560Z",
+  "updated_at": "2026-05-11T23:53:45.470Z",
   "processed_at": "2026-05-11T21:51:27.005Z",
   "processing_report_json": "knowledge_intake/psychologist/reports/ki_1778536279894_d2be4064_processing_report.json",
   "processing_report_md": "knowledge_intake/psychologist/reports/ki_1778536279894_d2be4064_processing_report.md",
@@ -32,5 +32,7 @@
   "ingestion_staged_at": "2026-05-11T23:15:16.560Z",
   "ingestion_staging_dir": "knowledge_indexes/psychologist/staging/ki_1778536279894_d2be4064",
   "ingestion_apply_report_json": "knowledge_indexes/psychologist/reports/ki_1778536279894_d2be4064_ingestion_apply.json",
-  "ingestion_apply_report_md": "knowledge_indexes/psychologist/reports/ki_1778536279894_d2be4064_ingestion_apply.md"
+  "ingestion_apply_report_md": "knowledge_indexes/psychologist/reports/ki_1778536279894_d2be4064_ingestion_apply.md",
+  "promoted_at": "2026-05-11T23:53:45.470Z",
+  "production_index_dir": "knowledge_indexes/psychologist/production/current"
 }
