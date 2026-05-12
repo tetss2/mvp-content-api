@@ -12,6 +12,7 @@ const EMBEDDING_MODEL = "text-embedding-3-small";
 const EMBEDDING_DIM = 1536;
 const DEFAULT_TOP_K = 5;
 const RETRYABLE_EMBEDDING_STATUS = new Set([408, 409, 429, 500, 502, 503, 504]);
+const DEBUG = process.env.KB_RETRIEVAL_DEBUG === "1" || process.env.KB_RETRIEVAL_DEBUG === "true";
 
 function nowIso() {
   return new Date().toISOString();
@@ -23,6 +24,21 @@ function timestampId() {
 
 function repoRelative(path) {
   return relative(ROOT, path).replace(/\\/g, "/");
+}
+
+function debugLog(event, payload = {}) {
+  if (!DEBUG) return;
+  console.log("[retrieval-debug]", JSON.stringify({ event, ...payload }));
+}
+
+function errorPayload(err) {
+  if (!err) return null;
+  return {
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    json: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+  };
 }
 
 function productionPaths(kb) {
@@ -42,6 +58,15 @@ async function exists(path) {
     return true;
   } catch {
     return false;
+  }
+}
+
+async function fileSize(path) {
+  try {
+    const stat = await fs.stat(path);
+    return stat.size;
+  } catch {
+    return null;
   }
 }
 
@@ -87,15 +112,44 @@ function validateArgs(args) {
 
 async function loadProductionKb(kb) {
   const paths = productionPaths(kb);
-  if (!(await exists(paths.current))) throw new Error(`Production current not found: ${repoRelative(paths.current)}. Run a successful promote first.`);
-  if (!(await exists(paths.faissIndex))) throw new Error(`Missing production FAISS index: ${repoRelative(paths.faissIndex)}`);
-  if (!(await exists(paths.docstore))) throw new Error(`Missing production docstore: ${repoRelative(paths.docstore)}`);
-  if (!(await exists(paths.indexManifest))) throw new Error(`Missing production index manifest: ${repoRelative(paths.indexManifest)}`);
-  if (!(await exists(paths.productionManifest))) throw new Error(`Missing production manifest: ${repoRelative(paths.productionManifest)}`);
+  const checks = {
+    current: await exists(paths.current),
+    faissIndex: await exists(paths.faissIndex),
+    docstore: await exists(paths.docstore),
+    indexManifest: await exists(paths.indexManifest),
+    productionManifest: await exists(paths.productionManifest),
+  };
+
+  debugLog("production_paths", {
+    cwd: process.cwd(),
+    node_env: process.env.NODE_ENV || null,
+    kb_id: kb,
+    paths,
+    exists: checks,
+    sizes: {
+      faissIndex: await fileSize(paths.faissIndex),
+      docstore: await fileSize(paths.docstore),
+      productionManifest: await fileSize(paths.productionManifest),
+    },
+  });
+
+  if (!checks.current) throw new Error(`Production current not found: ${repoRelative(paths.current)}. Run a successful promote first.`);
+  if (!checks.faissIndex) throw new Error(`Missing production FAISS index: ${repoRelative(paths.faissIndex)}`);
+  if (!checks.docstore) throw new Error(`Missing production docstore: ${repoRelative(paths.docstore)}`);
+  if (!checks.indexManifest) throw new Error(`Missing production index manifest: ${repoRelative(paths.indexManifest)}`);
+  if (!checks.productionManifest) throw new Error(`Missing production manifest: ${repoRelative(paths.productionManifest)}`);
 
   const indexManifest = await readJson(paths.indexManifest);
   const productionManifest = await readJson(paths.productionManifest);
   const docstore = await readJsonlRows(paths.docstore);
+
+  debugLog("production_loaded", {
+    kb_id: kb,
+    docstore_rows: docstore.length,
+    index_vectors: indexManifest.vectors,
+    embedding_dim: indexManifest.embedding_dim,
+    production_version: productionManifest.new_production_version || productionManifest.production_version || null,
+  });
 
   if (indexManifest.embedding_dim !== EMBEDDING_DIM) {
     throw new Error(`Production index embedding_dim ${indexManifest.embedding_dim} != ${EMBEDDING_DIM}`);
@@ -155,11 +209,21 @@ function sleep(ms) {
 async function embedQuery(query, apiKey, retries = 5) {
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
+      debugLog("embedding_request", {
+        embedding_model: EMBEDDING_MODEL,
+        query_chars: query.length,
+        attempt: attempt + 1,
+      });
       const response = await openAiEmbeddingRequest(query, apiKey);
       const embedding = response.data?.[0]?.embedding;
       if (!Array.isArray(embedding) || embedding.length !== EMBEDDING_DIM) {
         throw new Error(`Query embedding dim mismatch: ${embedding?.length || 0} != ${EMBEDDING_DIM}`);
       }
+      debugLog("embedding_response", {
+        embedding_model: EMBEDDING_MODEL,
+        embedding_dim: embedding.length,
+        first_3_values: embedding.slice(0, 3),
+      });
       return embedding;
     } catch (err) {
       const retryable = RETRYABLE_EMBEDDING_STATUS.has(err.statusCode);
@@ -178,29 +242,103 @@ async function searchFaiss(indexPath, queryEmbedding, topK) {
   const queryPath = join(tempDir, "query.json");
   await fs.mkdir(tempDir, { recursive: true });
   const script = `
-import json, sys
-import faiss
-import numpy as np
+import json, sys, traceback
+debug_enabled = ${DEBUG ? "True" : "False"}
+def debug(payload):
+    if debug_enabled:
+        print(json.dumps(payload), file=sys.stderr)
+try:
+    import faiss
+    import numpy as np
+except Exception as exc:
+    debug({"debug_event": "faiss_import_error", "error_name": exc.__class__.__name__, "error_message": str(exc)})
+    raise
 index_path, query_path, top_k = sys.argv[1], sys.argv[2], int(sys.argv[3])
-index = faiss.read_index(index_path)
+debug({"debug_event": "before_faiss_load", "index_path": index_path, "top_k": top_k})
+try:
+    index = faiss.read_index(index_path)
+except Exception as exc:
+    debug({
+        "debug_event": "faiss_load_error",
+        "error_name": exc.__class__.__name__,
+        "error_message": str(exc),
+        "error_stack": traceback.format_exc(),
+    })
+    raise
+index_vectors = index.ntotal if hasattr(index, "ntotal") else None
+debug({"debug_event": "after_faiss_load", "index_vectors": index_vectors})
 with open(query_path, "r", encoding="utf-8") as handle:
     vector = json.load(handle)
 arr = np.array([vector], dtype="float32")
 if arr.ndim != 2 or arr.shape[1] != ${EMBEDDING_DIM}:
     raise SystemExit(f"Invalid query vector shape: {arr.shape}")
 faiss.normalize_L2(arr)
-scores, ids = index.search(arr, top_k)
-print(json.dumps({"scores": scores[0].tolist(), "ids": ids[0].tolist()}))
+try:
+    scores, ids = index.search(arr, top_k)
+except Exception as exc:
+    debug({
+        "debug_event": "faiss_search_error",
+        "error_name": exc.__class__.__name__,
+        "error_message": str(exc),
+        "error_stack": traceback.format_exc(),
+    })
+    raise
+result = {"scores": scores[0].tolist(), "ids": ids[0].tolist(), "index_vectors": index_vectors}
+print(json.dumps(result))
 `;
   try {
     await fs.copyFile(indexPath, tempIndexPath);
     await fs.writeFile(queryPath, JSON.stringify(queryEmbedding), "utf-8");
+    debugLog("faiss_search_start", {
+      topK,
+      indexPath,
+      tempDir,
+      tempIndexPath,
+      queryPath,
+      embedding_dim: queryEmbedding.length,
+      embedding_first_3_values: queryEmbedding.slice(0, 3),
+    });
     const result = spawnSync("python", ["-c", script, tempIndexPath, queryPath, String(topK)], {
       cwd: ROOT,
       encoding: "utf-8",
     });
-    if (result.status !== 0) throw new Error(`FAISS search failed: ${result.stderr || result.stdout}`);
-    return JSON.parse(result.stdout);
+    debugLog("faiss_spawn_result", {
+      status: result.status,
+      signal: result.signal,
+      error: errorPayload(result.error),
+      stdout_chars: result.stdout?.length || 0,
+      stderr_chars: result.stderr?.length || 0,
+      stdout_preview: result.stdout?.slice(0, 2000) || null,
+      stderr_preview: result.stderr?.slice(0, 4000) || null,
+    });
+    if (result.error) {
+      debugLog("faiss_spawn_error", errorPayload(result.error));
+    }
+    if (result.status !== 0) {
+      debugLog("faiss_search_failed", {
+        error: errorPayload(result.error),
+        status: result.status,
+        signal: result.signal,
+        stdout: result.stdout || null,
+        stderr: result.stderr || null,
+      });
+      throw new Error(`FAISS search failed: ${result.stderr || result.stdout}`);
+    }
+    const parsed = JSON.parse(result.stdout);
+    debugLog("faiss_search_result", {
+      topK,
+      raw_shape: {
+        scores_is_array: Array.isArray(parsed.scores),
+        ids_is_array: Array.isArray(parsed.ids),
+      },
+      scores_count: parsed.scores?.length || 0,
+      ids_count: parsed.ids?.length || 0,
+      index_vectors: parsed.index_vectors ?? null,
+    });
+    return parsed;
+  } catch (err) {
+    debugLog("faiss_search_throw", errorPayload(err));
+    throw err;
   } finally {
     await fs.rm(tempDir, { recursive: true, force: true });
   }
@@ -221,6 +359,12 @@ function sourceMetadata(metadata = {}) {
 }
 
 export async function retrieve(kb, query, topK) {
+  debugLog("retrieve_start", {
+    cwd: process.cwd(),
+    node_env: process.env.NODE_ENV || null,
+    kb_id: kb,
+    topK,
+  });
   const loaded = await loadProductionKb(kb);
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("OPENAI_API_KEY is required for query embeddings.");
@@ -244,6 +388,16 @@ export async function retrieve(kb, query, topK) {
       kb_id: kb,
       production_version: productionVersion,
     });
+  });
+
+  debugLog("search_mapping", {
+    kb_id: kb,
+    topK,
+    docstore_rows_count: loaded.docstore.length,
+    index_vectors_count: loaded.indexManifest.vectors,
+    scores_count: search.scores?.length || 0,
+    ids_count: search.ids?.length || 0,
+    result_count: results.length,
   });
 
   return {

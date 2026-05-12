@@ -76,6 +76,16 @@ function logDebug(payload) {
   console.log("[retrieval]", JSON.stringify(payload));
 }
 
+function errorPayload(err) {
+  if (!err) return null;
+  return {
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    json: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+  };
+}
+
 export async function retrieveGroundingContext(query, scenario, options = {}) {
   if (!isEnabled()) {
     logDebug({ event: "disabled", scenario });
@@ -88,6 +98,19 @@ export async function retrieveGroundingContext(query, scenario, options = {}) {
   const minScore = options.minScore ?? DEFAULT_MIN_SCORE;
   const contextLimitChars = options.contextLimitChars || DEFAULT_CONTEXT_LIMIT_CHARS;
   const chunkLimitChars = options.chunkLimitChars || DEFAULT_CHUNK_LIMIT_CHARS;
+
+  logDebug({
+    event: "service_start",
+    cwd: process.cwd(),
+    node_env: process.env.NODE_ENV || null,
+    scenario,
+    kb_id: kb,
+    topK,
+    timeout_ms: timeoutMs,
+    min_score: minScore,
+    context_limit_chars: contextLimitChars,
+    chunk_limit_chars: chunkLimitChars,
+  });
 
   try {
     const retrieval = await withTimeout(retrieveProductionKb(kb, query, topK), timeoutMs);
@@ -118,7 +141,13 @@ export async function retrieveGroundingContext(query, scenario, options = {}) {
     };
   } catch (err) {
     console.error("[retrieval] failed:", err.message);
-    logDebug({ event: "failed", scenario, query, error: err.message });
+    logDebug({
+      event: "failed",
+      scenario,
+      kb_id: kb,
+      query,
+      error: errorPayload(err),
+    });
     return null;
   }
 }
