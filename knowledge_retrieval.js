@@ -298,7 +298,7 @@ print(json.dumps(result))
       embedding_dim: queryEmbedding.length,
       embedding_first_3_values: queryEmbedding.slice(0, 3),
     });
-    const result = spawnSync("python", ["-c", script, tempIndexPath, queryPath, String(topK)], {
+    const result = spawnSync("python3", ["-c", script, tempIndexPath, queryPath, String(topK)], {
       cwd: ROOT,
       encoding: "utf-8",
     });
