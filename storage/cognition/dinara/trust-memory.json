@@ -3,12 +3,12 @@
   "expert_id": "dinara",
   "day": 35,
   "trust_state": {
-    "authorityGrowth": 0.652,
-    "emotionalTrustGrowth": 0.65,
-    "educationalTrust": 0.48,
-    "vulnerabilityTrust": 0.34,
-    "consistencyTrust": 0.66,
-    "audienceFamiliarity": 0.615,
+    "authorityGrowth": 0.772,
+    "emotionalTrustGrowth": 0.79,
+    "educationalTrust": 0.56,
+    "vulnerabilityTrust": 0.4,
+    "consistencyTrust": 0.84,
+    "audienceFamiliarity": 0.775,
     "trustTrajectory": [
       {
         "day": 1,
@@ -208,6 +208,56 @@
       {
         "day": 35,
         "score": 0.566,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "score": 0.578,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "score": 0.59,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "score": 0.603,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "score": 0.616,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "score": 0.628,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "score": 0.64,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "score": 0.651,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "score": 0.664,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "score": 0.678,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "score": 0.689,
         "topic": "boundaries in intimacy"
       }
     ],
@@ -411,8 +461,58 @@
         "day": 35,
         "score": 0.652,
         "domain": "communication"
+      },
+      {
+        "day": 31,
+        "score": 0.664,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 32,
+        "score": 0.676,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 33,
+        "score": 0.688,
+        "domain": "sex education"
+      },
+      {
+        "day": 34,
+        "score": 0.7,
+        "domain": "sexology"
+      },
+      {
+        "day": 35,
+        "score": 0.712,
+        "domain": "communication"
+      },
+      {
+        "day": 31,
+        "score": 0.724,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 32,
+        "score": 0.736,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 33,
+        "score": 0.748,
+        "domain": "sex education"
+      },
+      {
+        "day": 34,
+        "score": 0.76,
+        "domain": "sexology"
+      },
+      {
+        "day": 35,
+        "score": 0.772,
+        "domain": "communication"
       }
     ]
   },
-  "updated_at": "2026-05-13T19:23:40.115Z"
+  "updated_at": "2026-05-13T19:29:36.570Z"
 }

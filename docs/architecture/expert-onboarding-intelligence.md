@@ -514,6 +514,93 @@ The adapter is intentionally blocked from production use until separate validati
 
 Before Telegram runtime integration, the platform must validate exact Telegram payload shape, Markdown escaping, caption limits, runtime persistence failure behavior, real generated draft quality, duplicate-topic suppression, CTA escalation, and a human approval workflow.
 
+## Runtime Prompt Assembly Dry Run
+
+The runtime-generation adapter now performs real local prompt assembly without executing an LLM. The current mode is:
+
+```text
+llmExecutionMode: dry_run_prompt_only
+```
+
+This replaces the earlier mock-content bridge. The adapter no longer uses the mock generation adapter as the generation result. Instead, it assembles the full prompt package that a future LLM call would receive, then stops before execution.
+
+### How Prompt Assembly Works
+
+Current local flow:
+
+```text
+generation request
+  -> load persistent cognition
+  -> run unified runtime decisions
+  -> load local retrieval candidates from expert metadata
+  -> rerank retrieval candidates
+  -> assemble context pack
+  -> create generation orchestration plan
+  -> assemble final system/user prompt
+  -> build message payload
+  -> build config payload
+  -> validate prompt package
+  -> return dry-run generation package
+```
+
+The adapter reuses existing local builders:
+
+- `createLocalRetrievalCandidates()` from `scripts/expert-generation-sandbox.js`
+- `rerankRetrievalItems()` from `scripts/expert-retrieval-intelligence.js`
+- `assembleContextPack()` from `scripts/expert-context-assembly.js`
+- `createGenerationPlan()` from `scripts/expert-generation-orchestration.js`
+- `assembleFinalPrompt()` from `scripts/expert-generation-sandbox.js`
+
+### Data Used
+
+The prompt package contains:
+
+- Expert id and expert profile summary.
+- Original generation request.
+- Selected local context items.
+- Runtime cognition summary.
+- Runtime decisions.
+- Content length mode.
+- Style/tone mode.
+- Audience assumptions.
+- CTA policy.
+- Anti-repetition constraints.
+- Author voice constraints.
+- Final assembled prompt.
+- Chat-style message payload.
+- Config payload.
+- Prompt validation result.
+- Combined runtime/prompt quality score.
+
+The config payload explicitly marks:
+
+```text
+production_execution_allowed: false
+external_api_calls_allowed: false
+telegram_delivery_allowed: false
+```
+
+### What Remains Simulated
+
+Final content text remains unavailable in this dry run because the adapter intentionally does not call an LLM. Prompt package validation scores prompt readiness, context sufficiency, and runtime warning state. It does not claim that final generated copy has been tested.
+
+### Blocked From Production
+
+Still blocked:
+
+- Telegram runtime integration.
+- Live OpenAI or other LLM execution.
+- Auto-posting or publishing.
+- Railway deploy.
+- FAISS/index mutation.
+- Ingest/promote workflows.
+- Production database migrations.
+- Direct replacement of the existing Telegram generation path.
+
+### Next Step Toward Admin-Only Telegram Preview Mode
+
+The next safe step is an admin-only preview command that reads the dry-run prompt package and renders it as an internal preview artifact without publishing. That step should remain feature-flagged, should not send generated content to normal users, and should require explicit admin approval before any live LLM execution is introduced.
+
 Current local flow:
 
 ```text

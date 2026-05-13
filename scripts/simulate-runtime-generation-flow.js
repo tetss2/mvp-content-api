@@ -106,14 +106,14 @@ function reportHeader(title) {
 
 function resultRows(results) {
   return [
-    "| Run | Request | Length | Tone | Runtime Decision | Context | Score | Warnings |",
-    "| --- | --- | --- | --- | --- | ---: | ---: | --- |",
+    "| Run | Request | Length | Tone | Assembly | Mock Content | Context | Prompt Chars | Score | Warnings |",
+    "| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |",
     ...results.map((result) => {
       const req = result.request;
-      const decision = result.runtime.selected_generation_decisions;
       const context = result.generation_pipeline.assembled_context_summary;
+      const prompt = result.generation_pipeline.prompt_structure;
       const warnings = result.integrated_validation.warnings;
-      return `| ${req.runName || req.run_name || "run"} | ${req.topic} | ${req.length} | ${req.tone || "auto"} | ${decision.hook_type}/${decision.emotional_depth}/${decision.cta_strength} | ${context.selected_count} | ${result.integrated_validation.combined_quality_score} | ${warnings.length ? warnings.join(", ") : "none"} |`;
+      return `| ${req.runName || req.run_name || "run"} | ${req.topic} | ${req.length} | ${req.tone || "auto"} | ${result.generation_pipeline.real_local_prompt_assembly_used ? "real local" : "no"} | ${result.generation_pipeline.mock_content_generation_used ? "yes" : "no"} | ${context.selected_count} | ${prompt.total_prompt_chars} | ${result.integrated_validation.combined_quality_score} | ${warnings.length ? warnings.join(", ") : "none"} |`;
     }),
   ].join("\n");
 }
@@ -125,9 +125,10 @@ function renderFlowReport(results) {
 
 - Requests simulated: ${results.length}
 - Average combined quality: ${average(results.map((result) => result.integrated_validation.combined_quality_score))}
-- Average generation evaluation: ${average(results.map((result) => result.generation_pipeline.evaluation.overall_score))}
+- Average prompt assembly score: ${average(results.map((result) => result.generation_pipeline.validation.prompt_score))}
 - Adapter mode: \`${first.adapter_mode}\`
-- Generator used: \`mock\`
+- LLM execution mode: \`${first.generation_pipeline.llm_execution_mode}\`
+- Mock content generation used: \`${first.generation_pipeline.mock_content_generation_used}\`
 
 ## Simulation Runs
 
@@ -145,10 +146,16 @@ ${JSON.stringify(first.runtime.runtime_state, null, 2)}
 ${JSON.stringify(first.runtime.selected_generation_decisions, null, 2)}
 \`\`\`
 
-## Example Generated Content Structure
+## Example Prompt Structure
 
 \`\`\`json
-${JSON.stringify(first.generation_pipeline.generated_content_structure, null, 2)}
+${JSON.stringify(first.generation_pipeline.prompt_structure, null, 2)}
+\`\`\`
+
+## Example Message Payload
+
+\`\`\`json
+${JSON.stringify(first.generation_pipeline.prompt_package.messagePayload, null, 2).slice(0, 6000)}
 \`\`\`
 `;
 }
@@ -167,15 +174,16 @@ ${first.connected_files.map((file) => `- \`${file}\``).join("\n")}
 - Local metadata retrieval candidates from expert sidecars.
 - Local context assembly through \`expert-context-assembly.js\`.
 - Local generation orchestration through \`expert-generation-orchestration.js\`.
-- Local output evaluation through \`expert-output-evaluation.js\`.
-- Local artifact writing under expert report folders.
+- Local prompt assembly through \`expert-generation-sandbox.js\` exported builders.
+- Local prompt/package validation.
 
 ## What Remains Simulated
 
-- Final draft generation uses \`scripts/adapters/mock-generation-adapter.js\`.
+- Final draft/content execution is not performed.
+- \`llmExecutionMode\` is \`dry_run_prompt_only\`.
 - Production publishing is not connected.
 - Telegram handlers are not connected.
-- External model calls are intentionally blocked by adapter choice.
+- External model calls are intentionally disabled.
 
 ## State Loading Flow
 
@@ -183,10 +191,10 @@ ${first.connected_files.map((file) => `- \`${file}\``).join("\n")}
 ${JSON.stringify(first.cognition_loading, null, 2)}
 \`\`\`
 
-## Adapter Request Shape
+## Generation Package Request Shape
 
 \`\`\`json
-${JSON.stringify(first.generation_pipeline.sandbox_request, null, 2)}
+${JSON.stringify(first.generation_pipeline.generation_package_request, null, 2)}
 \`\`\`
 `;
 }
@@ -198,9 +206,9 @@ function renderValidationReport(results) {
 - Runtime repetition risk
 - Runtime trust and CTA pacing
 - Runtime author voice status
-- Generation sandbox output evaluation
+- Prompt assembly validation
 - Context assembly warnings
-- Mock adapter warnings
+- Dry-run execution boundary
 
 ## Per-Run Validation
 
@@ -209,11 +217,10 @@ ${results.map((result) => `- ${result.request.runName}: status \`${result.integr
 }
 
 function renderRiskReport(results) {
-  const artifactPaths = results.flatMap((result) => Object.values(result.generation_pipeline.generated_content_structure.artifact_paths || {}));
   return `${reportHeader("Runtime Integration Risks Report")}
 ## Integration Risks Before Production
 
-- Mock output is not representative enough for final author voice scoring.
+- Prompt packages are assembled locally, but final LLM output is not generated in this dry run.
 - Runtime and sandbox currently assemble context separately; production integration should decide whether runtime context becomes authoritative.
 - CTA pacing warnings must be reviewed before enabling any live consultation CTA.
 - Author voice drift should be tested against real generated drafts and human-reviewed samples.
@@ -238,9 +245,39 @@ function renderRiskReport(results) {
 - CTA escalation under real campaign state.
 - Human approval workflow before publishing.
 
-## Local Artifacts Written
+## Current Execution Boundary
 
-${artifactPaths.map((target) => `- \`${target}\``).join("\n")}
+- Real local prompt assembly: \`${results.every((result) => result.generation_pipeline.real_local_prompt_assembly_used)}\`
+- Mock content generation: \`${results.some((result) => result.generation_pipeline.mock_content_generation_used)}\`
+- LLM execution mode: \`${results[0].generation_pipeline.llm_execution_mode}\`
+- External API calls: \`false\`
+`;
+}
+
+function renderPromptAssemblyReport(results) {
+  const first = results[0];
+  return `${reportHeader("Runtime Prompt Assembly Report")}
+## Prompt Assembly Status
+
+- Real local assembly used for every request: \`${results.every((result) => result.generation_pipeline.real_local_prompt_assembly_used)}\`
+- Mock content generation used: \`${results.some((result) => result.generation_pipeline.mock_content_generation_used)}\`
+- LLM execution mode: \`${first.generation_pipeline.llm_execution_mode}\`
+
+## Per-Run Prompt Metrics
+
+${results.map((result) => `- ${result.request.runName}: ${result.generation_pipeline.prompt_structure.total_prompt_chars} chars, ${result.generation_pipeline.prompt_structure.message_count} messages, prompt score ${result.generation_pipeline.validation.prompt_score}, context ${result.generation_pipeline.assembled_context_summary.selected_count}.`).join("\n")}
+
+## Example Config Payload
+
+\`\`\`json
+${JSON.stringify(first.generation_pipeline.prompt_structure.config_payload, null, 2)}
+\`\`\`
+
+## Example Assembled Prompt Preview
+
+\`\`\`text
+${first.generation_pipeline.prompt_package.assembledPrompt.final_prompt.slice(0, 3500)}
+\`\`\`
 `;
 }
 
@@ -250,6 +287,7 @@ async function writeReports(results) {
     runtime_adapter_report: await writeReport("runtime_adapter_report.md", renderAdapterReport(results)),
     runtime_generation_validation_report: await writeReport("runtime_generation_validation_report.md", renderValidationReport(results)),
     runtime_integration_risks_report: await writeReport("runtime_integration_risks_report.md", renderRiskReport(results)),
+    runtime_prompt_assembly_report: await writeReport("runtime_prompt_assembly_report.md", renderPromptAssemblyReport(results)),
   };
 }
 
@@ -275,14 +313,21 @@ async function simulateRuntimeGenerationFlow() {
     simulated_requests: results.length,
     average_combined_quality: average(results.map((result) => result.integrated_validation.combined_quality_score)),
     generated_reports: Object.values(reports).map(rel),
-    generated_artifact_paths: results.map((result) => result.generation_pipeline.generated_content_structure.artifact_paths?.runSummary),
+    real_local_prompt_assembly_used: results.every((result) => result.generation_pipeline.real_local_prompt_assembly_used),
+    mock_content_generation_used: results.some((result) => result.generation_pipeline.mock_content_generation_used),
+    llmExecutionMode: results[0]?.generation_pipeline.llm_execution_mode,
     simulation_output_summary: results.map((result) => ({
       run_name: result.request.runName,
       topic: result.request.topic,
       length: result.request.length,
       tone: result.request.tone,
+      real_local_prompt_assembly_used: result.generation_pipeline.real_local_prompt_assembly_used,
+      mock_content_generation_used: result.generation_pipeline.mock_content_generation_used,
+      llmExecutionMode: result.generation_pipeline.llm_execution_mode,
       decisions: result.runtime.selected_generation_decisions,
       context_summary: result.generation_pipeline.assembled_context_summary,
+      prompt_length: result.generation_pipeline.prompt_structure.total_prompt_chars,
+      config_payload: result.generation_pipeline.prompt_structure.config_payload,
       validation_warnings: result.integrated_validation.warnings,
       quality_score: result.integrated_validation.combined_quality_score,
       repetition_risk: result.integrated_validation.repetition_risk,

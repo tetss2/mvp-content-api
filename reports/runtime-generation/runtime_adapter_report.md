@@ -1,8 +1,8 @@
 # Runtime Adapter Report
 
-Generated: 2026-05-13T19:23:40.238Z
+Generated: 2026-05-13T19:29:36.672Z
 
-Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_mock_only`.
+Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
 
 ## Connected Files
 
@@ -11,8 +11,7 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 - `scripts/expert-context-assembly.js`
 - `scripts/expert-generation-orchestration.js`
 - `scripts/expert-retrieval-intelligence.js`
-- `scripts/expert-output-evaluation.js`
-- `scripts/adapters/mock-generation-adapter.js`
+- `scripts/expert-generation-sandbox.js`
 
 ## What Is Real
 
@@ -21,15 +20,16 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 - Local metadata retrieval candidates from expert sidecars.
 - Local context assembly through `expert-context-assembly.js`.
 - Local generation orchestration through `expert-generation-orchestration.js`.
-- Local output evaluation through `expert-output-evaluation.js`.
-- Local artifact writing under expert report folders.
+- Local prompt assembly through `expert-generation-sandbox.js` exported builders.
+- Local prompt/package validation.
 
 ## What Remains Simulated
 
-- Final draft generation uses `scripts/adapters/mock-generation-adapter.js`.
+- Final draft/content execution is not performed.
+- `llmExecutionMode` is `dry_run_prompt_only`.
 - Production publishing is not connected.
 - Telegram handlers are not connected.
-- External model calls are intentionally blocked by adapter choice.
+- External model calls are intentionally disabled.
 
 ## State Loading Flow
 
@@ -48,7 +48,7 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 }
 ```
 
-## Adapter Request Shape
+## Generation Package Request Shape
 
 ```json
 {
@@ -71,7 +71,7 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
       "content_pacing": "insight_forward"
     }
   },
-  "adapter": "mock",
+  "adapter": "dry_run_prompt_only",
   "run_name": "short-instagram-post",
   "max_context_items": 6,
   "max_total_chars": 12000

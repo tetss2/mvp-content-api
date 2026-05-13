@@ -283,6 +283,76 @@
         "pressure": 0.55,
         "topic": "boundaries in intimacy",
         "audienceState": "considering_purchase"
+      },
+      {
+        "day": 31,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "relationship anxiety",
+        "audienceState": "warming"
+      },
+      {
+        "day": 32,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "topic": "emotional dependency",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 33,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "topic": "female sexuality myths",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 34,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "shame and desire",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 35,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "boundaries in intimacy",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 31,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "relationship anxiety",
+        "audienceState": "warming"
+      },
+      {
+        "day": 32,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "topic": "emotional dependency",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 33,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "topic": "female sexuality myths",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 34,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "shame and desire",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 35,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "boundaries in intimacy",
+        "audienceState": "considering_purchase"
       }
     ],
     "escalationPacing": [
@@ -525,9 +595,69 @@
         "ctaType": "dm_cta",
         "pressure": 0.55,
         "escalationLevel": "high"
+      },
+      {
+        "day": 31,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 32,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 33,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 34,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 35,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 31,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 32,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 33,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 34,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 35,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
       }
     ],
-    "consultationPressureAccumulation": 0.917,
+    "consultationPressureAccumulation": 1,
     "ctaDesensitizationRisk": 1,
     "conversionSequenceMemory": [
       {
@@ -729,8 +859,58 @@
         "day": 35,
         "stage": "direct_conversion",
         "ctaType": "dm_cta"
+      },
+      {
+        "day": 31,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 32,
+        "stage": "trust_or_education",
+        "ctaType": "emotional_cta"
+      },
+      {
+        "day": 33,
+        "stage": "trust_or_education",
+        "ctaType": "educational_cta"
+      },
+      {
+        "day": 34,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 35,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 31,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 32,
+        "stage": "trust_or_education",
+        "ctaType": "emotional_cta"
+      },
+      {
+        "day": 33,
+        "stage": "trust_or_education",
+        "ctaType": "educational_cta"
+      },
+      {
+        "day": 34,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 35,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
       }
     ]
   },
-  "updated_at": "2026-05-13T19:23:40.115Z"
+  "updated_at": "2026-05-13T19:29:36.570Z"
 }

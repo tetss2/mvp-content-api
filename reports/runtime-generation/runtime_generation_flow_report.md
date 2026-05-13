@@ -1,34 +1,35 @@
 # Runtime Generation Flow Report
 
-Generated: 2026-05-13T19:23:40.236Z
+Generated: 2026-05-13T19:29:36.670Z
 
-Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_mock_only`.
+Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
 
 ## Summary
 
 - Requests simulated: 5
-- Average combined quality: 0.734
-- Average generation evaluation: 0.808
-- Adapter mode: `local_runtime_to_generation_sandbox`
-- Generator used: `mock`
+- Average combined quality: 0.753
+- Average prompt assembly score: 0.85
+- Adapter mode: `local_runtime_to_prompt_assembly`
+- LLM execution mode: `dry_run_prompt_only`
+- Mock content generation used: `false`
 
 ## Simulation Runs
 
-| Run | Request | Length | Tone | Runtime Decision | Context | Score | Warnings |
-| --- | --- | --- | --- | --- | ---: | ---: | --- |
-| short-instagram-post | relationship anxiety | short | expert_warm | recognition_hook/moderate/medium | 4 | 0.752 | author_voice_drift, mock_adapter_used |
-| normal-telegram-post | emotional dependency | medium | empathetic | therapeutic_hook/moderate/medium | 5 | 0.732 | author_voice_drift, mock_adapter_used |
-| long-article-mode | female sexuality myths | long | calm | therapeutic_hook/deep/medium | 4 | 0.746 | author_voice_drift, mock_adapter_used |
-| direct-faq-answer | shame and desire | medium | direct | therapeutic_hook/deep/medium | 4 | 0.725 | author_voice_drift, missing_cta, mock_adapter_used |
-| soft-sales-consultation | boundaries in intimacy | medium | expert_warm | therapeutic_hook/moderate/medium | 5 | 0.717 | reduce_cta_strength, author_voice_drift, mock_adapter_used |
+| Run | Request | Length | Tone | Assembly | Mock Content | Context | Prompt Chars | Score | Warnings |
+| --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
+| short-instagram-post | relationship anxiety | short | expert_warm | real local | no | 4 | 4164 | 0.764 | author_voice_drift |
+| normal-telegram-post | emotional dependency | medium | empathetic | real local | no | 5 | 4979 | 0.765 | author_voice_drift |
+| long-article-mode | female sexuality myths | long | calm | real local | no | 4 | 4163 | 0.757 | author_voice_drift |
+| direct-faq-answer | shame and desire | medium | direct | real local | no | 4 | 4165 | 0.754 | author_voice_drift |
+| soft-sales-consultation | boundaries in intimacy | medium | expert_warm | real local | no | 5 | 5008 | 0.726 | reduce_cta_strength, author_voice_drift |
 
 ## Example Runtime State
 
 ```json
 {
   "schema_version": "2026-05-13.unified_generation_runtime.v1",
-  "run_id": "runtime_2026-05-13T19-23-39-196Z",
-  "created_at": "2026-05-13T19:23:39.196Z",
+  "run_id": "runtime_2026-05-13T19-29-35-964Z",
+  "created_at": "2026-05-13T19:29:35.964Z",
   "constraints": {
     "local_only": true,
     "no_deploy": true,
@@ -104,12 +105,12 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
   },
   "trust_progression": {
     "trust_state": {
-      "authorityGrowth": 0.604,
-      "emotionalTrustGrowth": 0.59,
-      "educationalTrust": 0.448,
-      "vulnerabilityTrust": 0.316,
-      "consistencyTrust": 0.588,
-      "audienceFamiliarity": 0.551,
+      "authorityGrowth": 0.724,
+      "emotionalTrustGrowth": 0.73,
+      "educationalTrust": 0.528,
+      "vulnerabilityTrust": 0.376,
+      "consistencyTrust": 0.768,
+      "audienceFamiliarity": 0.711,
       "trustTrajectory": [
         {
           "day": 1,
@@ -289,6 +290,56 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
         {
           "day": 31,
           "score": 0.516,
+          "topic": "relationship anxiety"
+        },
+        {
+          "day": 32,
+          "score": 0.528,
+          "topic": "emotional dependency"
+        },
+        {
+          "day": 33,
+          "score": 0.541,
+          "topic": "female sexuality myths"
+        },
+        {
+          "day": 34,
+          "score": 0.554,
+          "topic": "shame and desire"
+        },
+        {
+          "day": 35,
+          "score": 0.566,
+          "topic": "boundaries in intimacy"
+        },
+        {
+          "day": 31,
+          "score": 0.578,
+          "topic": "relationship anxiety"
+        },
+        {
+          "day": 32,
+          "score": 0.59,
+          "topic": "emotional dependency"
+        },
+        {
+          "day": 33,
+          "score": 0.603,
+          "topic": "female sexuality myths"
+        },
+        {
+          "day": 34,
+          "score": 0.616,
+          "topic": "shame and desire"
+        },
+        {
+          "day": 35,
+          "score": 0.628,
+          "topic": "boundaries in intimacy"
+        },
+        {
+          "day": 31,
+          "score": 0.64,
           "topic": "relationship anxiety"
         }
       ],
@@ -472,6 +523,56 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
           "day": 31,
           "score": 0.604,
           "domain": "attachment psychology"
+        },
+        {
+          "day": 32,
+          "score": 0.616,
+          "domain": "dependency patterns"
+        },
+        {
+          "day": 33,
+          "score": 0.628,
+          "domain": "sex education"
+        },
+        {
+          "day": 34,
+          "score": 0.64,
+          "domain": "sexology"
+        },
+        {
+          "day": 35,
+          "score": 0.652,
+          "domain": "communication"
+        },
+        {
+          "day": 31,
+          "score": 0.664,
+          "domain": "attachment psychology"
+        },
+        {
+          "day": 32,
+          "score": 0.676,
+          "domain": "dependency patterns"
+        },
+        {
+          "day": 33,
+          "score": 0.688,
+          "domain": "sex education"
+        },
+        {
+          "day": 34,
+          "score": 0.7,
+          "domain": "sexology"
+        },
+        {
+          "day": 35,
+          "score": 0.712,
+          "domain": "communication"
+        },
+        {
+          "day": 31,
+          "score": 0.724,
+          "domain": "attachment psychology"
         }
       ]
     },
@@ -512,22 +613,51 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 }
 ```
 
-## Example Generated Content Structure
+## Example Prompt Structure
 
 ```json
 {
-  "provider": "mock",
-  "model": "local-deterministic-mock",
-  "output_chars": 757,
-  "paragraph_count": 4,
-  "artifact_paths": {
-    "request": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/request.json",
-    "contextPack": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/context_pack.json",
-    "orchestrationPlan": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/orchestration_plan.json",
-    "finalPrompt": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/final_prompt.txt",
-    "generatedOutput": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/generated_output.md",
-    "evaluation": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/evaluation.json",
-    "runSummary": "expert_profiles/dinara/reports/generation_runs/2026-05-13T19-23-39-481Z_short-instagram-post/run_summary.md"
+  "system_prompt_chars": 531,
+  "user_prompt_chars": 3633,
+  "total_prompt_chars": 4164,
+  "message_count": 2,
+  "config_payload": {
+    "llmExecutionMode": "dry_run_prompt_only",
+    "intended_provider": "openai-compatible-chat",
+    "intended_model": "gpt-4o-mini",
+    "temperature": 0.65,
+    "max_tokens": 700,
+    "language": "ru",
+    "platform": "instagram",
+    "format": "post",
+    "length_mode": "short",
+    "tone_mode": "expert_warm",
+    "cta_style": "soft",
+    "production_execution_allowed": false,
+    "external_api_calls_allowed": false,
+    "telegram_delivery_allowed": false,
+    "safety_boundaries": {
+      "no_diagnosis": true,
+      "no_guaranteed_outcomes": true,
+      "no_private_case_details": true,
+      "no_suppressed_context": true,
+      "no_internal_trace_leakage": true
+    }
   }
 }
+```
+
+## Example Message Payload
+
+```json
+[
+  {
+    "role": "system",
+    "content": "You are preparing future Russian expert content for expert_id=dinara. Follow the generation plan exactly, but do not invent unsupported expert claims.\n\nUse the expert voice constraints: tone=expert_warm; priorities=clarity, authority, empathy. Preserve warmth, precision, and ethical boundaries.\n\nAvoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate."
+  },
+  {
+    "role": "user",
+    "content": "# Generation Task\nКороткий пост о тревоге в отношениях\n\n# Strategy\nIntent=educational_post. Goal: Create a useful expert explanation that helps the reader understand a psychological or sexological topic without overclaiming.. Recommended structure: hook -> problem framing -> expert explanation -> example -> soft CTA. CTA strategy: Soft invitation to reflect, save, comment, or book a consultation when appropriate..\n\n# Output Constraints\nPlatform=instagram; length=short; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.\n\n# Context Injection Rules\n- Use primary context for factual grounding and main expert position.\n- Use supporting context for nuance, objections, examples, or secondary angles.\n- Use tone/style context only to influence rhythm, warmth, and framing.\n- Do not copy long source fragments; quote only short fragments when attribution or wording matters.\n- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.\n- Prefer synthesized output over paraphrase.\n- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.\n\n# Curated Context\n### Primary context: Введение в сексологию.cleaned.txt\n- id: fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nВведение в сексологию Доктор мед. наук, профессор В. А. Доморацкий Секс и сексуальность В повседневной жизни слово «секс» в последнее время часто используют для обозначения полового акта («заниматься сексом»). Но сексуальность — больше, чем просто секс и способность человека к эр\n\n### Primary context: Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt\n- id: f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nНарушения оргазма у женщин и их коррекция Доктор медицинских наук, профессор В. А. Доморацкий Оргазм Физиологически оргазм представляет собой избавление от нарастающих в процессе сексуального возбуждения мышечного напряжения и переполнения кровью гениталий (миотонии и вазокогнест\n\n### Supporting context: секс дисф. начало (през).cleaned.txt\n- id: 31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10\n- source_type: approved_high_confidence\n- content_kind: therapeutic_case\n- confidence: high\n\nМужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотер\n\n### Supporting context: Стыд и секс.cleaned.txt\n- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1\n- source_type: approved_dataset\n- content_kind: faq\n- confidence: high\n\nСтыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч\n\nNo tone/style context selected.\n\n# Safety\nAvoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.\n\n# Produce Final Draft\nWrite the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids."
+  }
+]
 ```
