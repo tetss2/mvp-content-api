@@ -1,0 +1,8 @@
+{
+  "expert_id": "relationship_coach_demo",
+  "medical_sensitivity": "no_medical_claims",
+  "legal_sensitivity": "no_legal_advice",
+  "therapeutic_constraints": ["Do not frame coaching content as therapy.", "Do not diagnose partners or readers."],
+  "educational_constraints": ["Keep examples generalized.", "Avoid manipulative relationship advice."],
+  "forbidden_claims": ["guaranteed_relationship_repair", "diagnosis", "legal_instruction"]
+}

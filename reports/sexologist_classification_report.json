@@ -1,0 +1,962 @@
+{
+  "type": "sexologist_classification_report",
+  "generated_at": "2026-05-12T12:10:36.612Z",
+  "safety": {
+    "target_kb": "sexologist",
+    "copied_files_only": true,
+    "source_files_deleted": false,
+    "psychologist_touched": false,
+    "knowledge_indexes_touched": false,
+    "production_touched": false,
+    "ingestion_started": false,
+    "staging_started": false,
+    "promote_started": false
+  },
+  "input_dir": "sorted_sources/sexologist",
+  "output_dirs": {
+    "approved": "knowledge_intake/sexologist/approved",
+    "questionnaires": "knowledge_intake/sexologist/questionnaires",
+    "ocr_suspect": "knowledge_intake/sexologist/ocr_suspect",
+    "duplicates": "knowledge_intake/sexologist/duplicates",
+    "review": "knowledge_intake/sexologist/review"
+  },
+  "summary": {
+    "total_files": 45,
+    "approved_count": 4,
+    "questionnaires_count": 20,
+    "ocr_suspect_count": 1,
+    "duplicates_count": 2,
+    "review_count": 18,
+    "skipped_existing_count": 45,
+    "errors_count": 0
+  },
+  "items": [
+    {
+      "source_path": "sorted_sources/sexologist/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "category": "approved",
+      "raw_hash": "288bae4ab00cca764e5f8c5d1b1c513250416133d32a005d769214dd420df426",
+      "normalized_hash": "055b323bd2ebb03f5f133ec43d923bb91c76c0a63dd12a8e84e8acfb9b899389",
+      "size_chars": 5780,
+      "line_count": 136,
+      "questionnaire_score": 4,
+      "ocr_noise_score": 3,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "elevated non-letter ratio: 0.35"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt",
+      "category": "review",
+      "raw_hash": "36dd66a64f2bfa993bded0559b4d32211ab1e8018150792757316000160a15ad",
+      "normalized_hash": "ce2b8e1f3ba0de56bd516e7a3f91f204147a6a144e5238811c9a1131b232c80a",
+      "size_chars": 681383,
+      "line_count": 15478,
+      "questionnaire_score": 27,
+      "ocr_noise_score": 14,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 9",
+        "Likert-style answer options: 3",
+        "many numbered answer variants: 128",
+        "many numbered/question lines: 2730",
+        "many isolated characters: 73",
+        "many repeated spaces: 605",
+        "garbled fragments: 985"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Автостоп. Техника символдрамы.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Автостоп. Техника символдрамы.cleaned.txt",
+      "category": "review",
+      "raw_hash": "918efeba397bc061508c6d8c0968e1ce24e7f0ca2f82ebc40d51a46278e7db7b",
+      "normalized_hash": "91115dd01ea6e48986358da2d6612d9d0e4aa74fb6be6165ea2eae25ac6f4154",
+      "size_chars": 26059,
+      "line_count": 132,
+      "questionnaire_score": 7.5,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "low confidence or mixed weak signals",
+        "questionnaire/test terms: 1",
+        "Likert-style answer options: 3",
+        "garbled fragments: 41"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Аддикции отношений. Секс.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Аддикции отношений. Секс.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "d68b022c68b50f4ed91a8d2d5e59fb39459ba648bf352ddcfb272e331fe5f504",
+      "normalized_hash": "2cf2cf350bc378ad27909ea05147b5b9eaeae76b501305b61024812fc38de57b",
+      "size_chars": 46863,
+      "line_count": 618,
+      "questionnaire_score": 21,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 4",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 46",
+        "many numbered/question lines: 103"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Анкета_для_пациентов_женского_пола.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Анкета_для_пациентов_женского_пола.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "c98daa8e4a612bb47b602a4e4c728392bb8f9c0f964e2c8c1a6f8110e598c011",
+      "normalized_hash": "10bbf3febac8054f45ce83ae26201a1b2130ed92d22be47ef6d9ef8a7dce238d",
+      "size_chars": 19513,
+      "line_count": 622,
+      "questionnaire_score": 19.5,
+      "ocr_noise_score": 4,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: анкета",
+        "questionnaire/test terms: 3",
+        "Likert-style answer options: 3"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Анкета_для_пациентов_мужского_пола.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Анкета_для_пациентов_мужского_пола.cleaned.txt",
+      "category": "review",
+      "raw_hash": "9811730b071d59876515493b1e64e8b24df632376e29ba2d6c29c0911bcea6bc",
+      "normalized_hash": "756477e91c5d285f178ec0bec1dc11c23f262cfe8e097283928099c01d97825d",
+      "size_chars": 80509,
+      "line_count": 2768,
+      "questionnaire_score": 31,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "filename questionnaire indicators: анкета",
+        "questionnaire/test terms: 6",
+        "Likert-style answer options: 3",
+        "many numbered answer variants: 114",
+        "many repeated spaces: 479",
+        "garbled fragments: 70"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Введение в сексологию.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Введение в сексологию.cleaned.txt",
+      "category": "review",
+      "raw_hash": "f15b415e0b9259fa07dd3e3b5a3fe860bcb4e8314d550dcbdb6632db85f44583",
+      "normalized_hash": "387d8bb330a37708218ea3b1be2824f5f5cf5437f59751503981051e716f4021",
+      "size_chars": 47830,
+      "line_count": 468,
+      "questionnaire_score": 21,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 4",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 39",
+        "many numbered/question lines: 41",
+        "many repeated spaces: 81",
+        "garbled fragments: 73"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Женская психопатология Святоч.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Женская психопатология Святоч.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "2f5aeab5105bf3646b6ab3fc2b83e394e3d0d59f260901c7b49032e32a5fda49",
+      "normalized_hash": "e7d496cc5ce937267bf5115a5bf1c7df8dc84dc081ed0f25e8f9e23c91feb92a",
+      "size_chars": 480279,
+      "line_count": 7831,
+      "questionnaire_score": 19.5,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 3",
+        "Likert-style answer options: 4",
+        "numbered answer variants: 66",
+        "many numbered/question lines: 163"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Женская сексуальность.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+      "category": "approved",
+      "raw_hash": "6756be5be2fb60b6c32bd820f44610458279842390a6fd376fe1a73a42bb9f08",
+      "normalized_hash": "6c0d23bfa30ef3fc69d221f213495dcaf5ef09085946e69dea21acd139a91515",
+      "size_chars": 17969,
+      "line_count": 178,
+      "questionnaire_score": 4.5,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 1",
+        "some numbered/question lines: 15"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Женские сексуальные дисфункции .cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Женские сексуальные дисфункции .cleaned.txt",
+      "category": "review",
+      "raw_hash": "167031c902580839430649f8b71ec1cbab789196e617a062fe985032127274b8",
+      "normalized_hash": "dbda295395fbdb8ce27b26c2331c96e5f934418cf7a4273fab07fe29eab22cc5",
+      "size_chars": 75872,
+      "line_count": 702,
+      "questionnaire_score": 15,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 66",
+        "some numbered/question lines: 35",
+        "many repeated spaces: 135",
+        "garbled fragments: 118"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Завис (през).cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Завис (през).cleaned.txt",
+      "category": "review",
+      "raw_hash": "17caf682a912555a30567002e0ba73263d540463590275771df1e3e405e8f29d",
+      "normalized_hash": "edd000805456410cc5d3b2b2abaa13f79476813c30d4bf8ba5e0e62104bc687f",
+      "size_chars": 62457,
+      "line_count": 734,
+      "questionnaire_score": 23.5,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 3",
+        "Likert-style answer options: 3",
+        "many numbered answer variants: 80",
+        "many numbered/question lines: 61",
+        "many repeated spaces: 64",
+        "garbled fragments: 103"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "adaf9027b2e5d936e9a2305525f7a639e8b1e2531c56d8e0824db14270330395",
+      "normalized_hash": "deb6784bfabe03861df67f0d1d91fe886562500a263828164984207b4c6a5372",
+      "size_chars": 7858,
+      "line_count": 280,
+      "questionnaire_score": 35,
+      "ocr_noise_score": 4,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: индекс, ижсф",
+        "questionnaire/test terms: 6",
+        "Likert-style answer options: 5",
+        "many numbered answer variants: 118",
+        "some numbered/question lines: 19"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Индекс_эректильной_функции_международный.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "e5a0ca5e69949138004990eb532baaae84c9265b15da3b5299b918bcdb2e04b1",
+      "normalized_hash": "0cc86d2266dcc59a2b5552fff1a534f889a1c694db60a289d632f5971674efea",
+      "size_chars": 6042,
+      "line_count": 248,
+      "questionnaire_score": 31,
+      "ocr_noise_score": 4,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: индекс",
+        "questionnaire/test terms: 4",
+        "Likert-style answer options: 5",
+        "many numbered answer variants: 98",
+        "some numbered/question lines: 15"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/конс. жертв секс. насил..cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/конс. жертв секс. насил..cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "3e07f5f44b4ed20eb61f7e2f3fd7b32ab8e2c6f7c9fa138eaa166c4971c05464",
+      "normalized_hash": "970dc750822490d9cf8218b5a5c3716c501f83f899aafaf574bee8140de5b2a0",
+      "size_chars": 29438,
+      "line_count": 192,
+      "questionnaire_score": 15,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 4",
+        "numbered answer variants: 26",
+        "some numbered/question lines: 34"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Куст розы. Символдрама.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Куст розы. Символдрама.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "115695335954b8486675efd598568148fc1741d9b8a4ef53f19939d8c3b4bd0f",
+      "normalized_hash": "cdc8d3683766514418766a6a511d99d583ce36119d0ebf148e540c6ec7964976",
+      "size_chars": 28373,
+      "line_count": 202,
+      "questionnaire_score": 10,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 4",
+        "some numbered/question lines: 16"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Любовь. ревность..cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Любовь. ревность..cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "af6034c8e84c83c40b98e5390ff331c43bb723cc2092a32f9349a3de8f51dc96",
+      "normalized_hash": "e9ee72c753860225b6bd797ee89ed9c0f214fdf1e00db21fd50115236bfec40b",
+      "size_chars": 26075,
+      "line_count": 326,
+      "questionnaire_score": 15,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 26",
+        "some numbered/question lines: 36"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/М половая конституция табл.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/ocr_suspect/М половая конституция табл.cleaned.txt",
+      "category": "ocr_suspect",
+      "raw_hash": "4a36c0f7a12a6f13c73a555748052f03ebeb2a058af340187921b48774b3cae4",
+      "normalized_hash": "e54683fc68fbca730d9a17789ebda66f99de195d907a3645f27a618fa453b596",
+      "size_chars": 1061,
+      "line_count": 180,
+      "questionnaire_score": 3,
+      "ocr_noise_score": 11,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "short useful text: 1061 chars",
+        "short-line fragmentation: 34/90",
+        "abnormal line fragmentation avg=9.8"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/duplicates/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt",
+      "category": "duplicates",
+      "raw_hash": "e5a0ca5e69949138004990eb532baaae84c9265b15da3b5299b918bcdb2e04b1",
+      "normalized_hash": "0cc86d2266dcc59a2b5552fff1a534f889a1c694db60a289d632f5971674efea",
+      "size_chars": 6042,
+      "line_count": 248,
+      "questionnaire_score": 33,
+      "ocr_noise_score": 4,
+      "duplicate_status": "duplicate_of:sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt",
+      "reasons": [
+        "duplicate of sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt",
+        "duplicate hash detected",
+        "filename questionnaire indicators: индекс, миэф",
+        "questionnaire/test terms: 4",
+        "Likert-style answer options: 5",
+        "many numbered answer variants: 98",
+        "some numbered/question lines: 15",
+        "many repeated spaces: 91"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Мужская сексуальность.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Мужская сексуальность.cleaned.txt",
+      "category": "review",
+      "raw_hash": "a3c05dd8b2bf15908d641e78e77b32ce718d60347392fcc184f26c6928693d23",
+      "normalized_hash": "2895f907115da44c6e99e2352784477b5e5738970e0f6a74b856add8ea20b390",
+      "size_chars": 68595,
+      "line_count": 728,
+      "questionnaire_score": 23.5,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 5",
+        "Likert-style answer options: 3",
+        "many numbered answer variants: 109",
+        "some numbered/question lines: 30",
+        "many repeated spaces: 127",
+        "garbled fragments: 116"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "category": "review",
+      "raw_hash": "6eee58a43a6196983eeab479c3cb600cbeae6505448a117cd6a97cbc7d6466ae",
+      "normalized_hash": "cd7022d4e47ed2f7d8abf509219b3b663590590cb1d5b6e651f583e0454213ff",
+      "size_chars": 45255,
+      "line_count": 362,
+      "questionnaire_score": 11,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "numbered answer variants: 29",
+        "some numbered/question lines: 18",
+        "many repeated spaces: 84",
+        "garbled fragments: 47"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Нетипичный секс.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Нетипичный секс.cleaned.txt",
+      "category": "review",
+      "raw_hash": "7027a8eb8f1e5d912f32e82ec52d5f81e9d14a2cf9a4b664faac41898f0a8fbf",
+      "normalized_hash": "b25929833be5bb81a49637af4a6d55d7cef95bb1dd920cd4cfcce71baa9d51b9",
+      "size_chars": 51859,
+      "line_count": 316,
+      "questionnaire_score": 9,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "many repeated spaces: 77",
+        "garbled fragments: 31"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "c1c3ed1b1628444a315a0306b5a9bb65e6f346e13884bde582e37781e11ba859",
+      "normalized_hash": "59adf8abb673f89d8dd594e7aebfb3c464c2fc1151734f18b4e0562892b0a574",
+      "size_chars": 7378,
+      "line_count": 30,
+      "questionnaire_score": 24,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: опросник, сфм",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 63"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Опросник_социосексуальной_ориентации_SOI.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "47b6499471dd969db77d8aef0254f785bb1f6f5e344f04d2e46444c41a1a7a7a",
+      "normalized_hash": "bd7eacdae025908c4ee5f96cd28f2d02d3b096fde96a3bbafe45093b7753d251",
+      "size_chars": 4421,
+      "line_count": 106,
+      "questionnaire_score": 23.5,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: опросник, soi",
+        "questionnaire/test terms: 3",
+        "numbered answer variants: 28",
+        "some numbered/question lines: 15"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "category": "review",
+      "raw_hash": "86d106b50036a573a9c00e1846d714e03e84222f14e7ed20e7ae41b93a0fdde3",
+      "normalized_hash": "245580df4ad952832c0bd6b351827946d2de5f005ad4702e27329ea59a1159a4",
+      "size_chars": 108027,
+      "line_count": 718,
+      "questionnaire_score": 15,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 4",
+        "numbered answer variants: 55",
+        "some numbered/question lines: 27",
+        "many repeated spaces: 214",
+        "garbled fragments: 93"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Свядощ_Женская_Сексопатология_doc.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Свядощ_Женская_Сексопатология_doc.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "61567e78aa3a493a37d14fdd96d67d1784d553d6746d3d017ece3e8cb325e470",
+      "normalized_hash": "38a5d29038c84a81126a8504c14269f93aff4127eb36a983f9eb04725da328be",
+      "size_chars": 467748,
+      "line_count": 2296,
+      "questionnaire_score": 19.5,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 3",
+        "Likert-style answer options: 4",
+        "numbered answer variants: 66",
+        "many numbered/question lines: 149"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/секс дисф. начало (през).cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/секс дисф. начало (през).cleaned.txt",
+      "category": "review",
+      "raw_hash": "60a0b0e341dee16828e5dbda12136f5a10cc4d832ae60c3f0f302ef84c6b8856",
+      "normalized_hash": "f1a9ef0f18ce04909a5f0073fe6a9e3301974d21174de79142f55c25dd64214e",
+      "size_chars": 35653,
+      "line_count": 408,
+      "questionnaire_score": 15,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 49",
+        "some numbered/question lines: 27",
+        "many repeated spaces: 46",
+        "garbled fragments: 42"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Секс. обслед. Ж (1).cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+      "category": "approved",
+      "raw_hash": "60cbe7cb4f554cc766cf3637e2525247b710cbd42515d7ed6f7dcb68bd989fce",
+      "normalized_hash": "9e49a0e8af66b41b925c3072dd27946d5c3a59f807966c75df7f93b8f3c61b96",
+      "size_chars": 4183,
+      "line_count": 114,
+      "questionnaire_score": 3,
+      "ocr_noise_score": 3,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "elevated non-letter ratio: 0.37"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Сексуальные дисгармонии.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Сексуальные дисгармонии.cleaned.txt",
+      "category": "review",
+      "raw_hash": "fbb76267700a1510c99807665494b08587f5ab1efcfa183f8dd1ff53902ea92f",
+      "normalized_hash": "8061c67914bfea99ff7e7deb341181137352513a935e7da9923576846353f30c",
+      "size_chars": 31171,
+      "line_count": 224,
+      "questionnaire_score": 7,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "low confidence or mixed weak signals",
+        "questionnaire/test terms: 2",
+        "some numbered/question lines: 16",
+        "many repeated spaces: 42",
+        "garbled fragments: 48"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Сексуальный интеллект.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Сексуальный интеллект.cleaned.txt",
+      "category": "review",
+      "raw_hash": "e044f0da8369c705876f2d537ec722bdf366c02cb3200855a46e8dc0e8a93091",
+      "normalized_hash": "1c47748ab058346968c11058003350ce1a178fd92e23e43b839641aa7fd2c28d",
+      "size_chars": 426015,
+      "line_count": 7695,
+      "questionnaire_score": 14,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "many numbered/question lines: 161",
+        "many repeated spaces: 53",
+        "garbled fragments: 362"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "6b87d6b2b1a2068b51756d34d9a08c43bbbece7fb3a908f357f805c03c21eaf2",
+      "normalized_hash": "87df9de79ad6970bb50865ed5e15edca4a5468cb006db419939747c7fc9cec75",
+      "size_chars": 21313,
+      "line_count": 373,
+      "questionnaire_score": 9,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Стерн Д. - Глаз видит сам себя.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Стерн Д. - Глаз видит сам себя.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "5fbf01d7366c3983c1c421cc58fb374c984821f07a47f402f433ce455cab29ea",
+      "normalized_hash": "eed15f32bb5fedce31b450ca1109e85817ec0eddc6dc4ea9e3ef63394974f44c",
+      "size_chars": 105005,
+      "line_count": 1635,
+      "questionnaire_score": 11,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "some numbered/question lines: 12"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "category": "review",
+      "raw_hash": "03a34c04f2167d0e302e9d5fa70050d467704e83cab4096ac5376bc267decd02",
+      "normalized_hash": "ffe470e8c0a9a00d23875b2fecd16c9b1c4b0cfaaec6670664fa5325aa5a2fcc",
+      "size_chars": 38871,
+      "line_count": 524,
+      "questionnaire_score": 27,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 8",
+        "Likert-style answer options: 4",
+        "many numbered answer variants: 112",
+        "many numbered/question lines: 73",
+        "many repeated spaces: 51",
+        "garbled fragments: 60"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Стыд и секс.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+      "category": "approved",
+      "raw_hash": "26dd57cf2e2dc8a950e9e82957b902725896e277e9b8e0794b055b3dbf14a176",
+      "normalized_hash": "05ab6c2f3de2b58f86fa30039f5bc6583275289251925f835369fb98c4ddc469",
+      "size_chars": 25840,
+      "line_count": 128,
+      "questionnaire_score": 5,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "garbled fragments: 45"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Супр. терапия (оконч).cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Супр. терапия (оконч).cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "658a5ee55bd773bbc04cae5b1b8cfd1dd3eaecf6feb900342512a0bf39151a9c",
+      "normalized_hash": "c0623f9ef3ceba5532a52e41d3d1f108c6227273ec8cf73f1967c931bbe4e414",
+      "size_chars": 21570,
+      "line_count": 136,
+      "questionnaire_score": 11,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "numbered answer variants: 29",
+        "some numbered/question lines: 15"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "category": "review",
+      "raw_hash": "a195d6617c9953e34ab7624bd9765b05dc30f2c5355315c0e08f6f372f1514b3",
+      "normalized_hash": "da85acdf16eda90e8a49202e958de8aa9f6ac746123db5d2d8ce5ce99b1ba590",
+      "size_chars": 42163,
+      "line_count": 376,
+      "questionnaire_score": 12.5,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 3",
+        "numbered answer variants: 44",
+        "some numbered/question lines: 35",
+        "many repeated spaces: 56",
+        "garbled fragments: 43"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "89ccde16ba19e75ff4ddf613c4296c57bd3311602ac8e3b0abbef0920271cb90",
+      "normalized_hash": "7685a73f5a0204d85960d86df3c2fa3f419401388e3d56539017c6aa62afe65b",
+      "size_chars": 5879,
+      "line_count": 26,
+      "questionnaire_score": 19.5,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: сфж",
+        "questionnaire/test terms: 3",
+        "numbered answer variants: 40"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/СФМ секс формула М опросник .cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/duplicates/СФМ секс формула М опросник .cleaned.txt",
+      "category": "duplicates",
+      "raw_hash": "c1c3ed1b1628444a315a0306b5a9bb65e6f346e13884bde582e37781e11ba859",
+      "normalized_hash": "59adf8abb673f89d8dd594e7aebfb3c464c2fc1151734f18b4e0562892b0a574",
+      "size_chars": 7378,
+      "line_count": 30,
+      "questionnaire_score": 24,
+      "ocr_noise_score": 0,
+      "duplicate_status": "duplicate_of:sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt",
+      "reasons": [
+        "duplicate of sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt",
+        "duplicate hash detected",
+        "filename questionnaire indicators: опросник, сфм",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 3",
+        "numbered answer variants: 63"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Тест_опросник_удовлетвореености_браком.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Тест_опросник_удовлетвореености_браком.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "b8f7ad6e6629260b6d239f46cebf90a2cf8b4d695254768683ee2a4d5442a981",
+      "normalized_hash": "a1f108194e1c7034da7a472c0b12d89ea6e04d98033d4ea7cb64e4834da3edef",
+      "size_chars": 5191,
+      "line_count": 222,
+      "questionnaire_score": 22.5,
+      "ocr_noise_score": 0,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: опросник, тест",
+        "questionnaire/test terms: 5",
+        "some numbered/question lines: 24"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Х Каплан Сексуальная терапия.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Х Каплан Сексуальная терапия.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "96843278010f60d3c8ebf548ff4e20ef70ba044550224128c524eee13321933a",
+      "normalized_hash": "aafb36525aa0e1e94a2dd2f8ca3cc9778dbb522121854667ed1ce59af3e37992",
+      "size_chars": 246165,
+      "line_count": 1304,
+      "questionnaire_score": 17,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 4",
+        "Likert-style answer options: 3",
+        "many numbered/question lines: 56"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Шкала ПК для женщин.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Шкала ПК для женщин.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "6481965a2d5359173cd1393bd010e17347504396782496fc47de619973df4b75",
+      "normalized_hash": "cc8bf4fc053a1ba63a9437215027addc67f00d9d6d959efb94bba1c3791f1344",
+      "size_chars": 2267,
+      "line_count": 183,
+      "questionnaire_score": 10.5,
+      "ocr_noise_score": 4,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "filename questionnaire indicators: шкала",
+        "questionnaire/test terms: 1"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/ЭГ в пт секс дисфункций.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/ЭГ в пт секс дисфункций.cleaned.txt",
+      "category": "review",
+      "raw_hash": "20d0df39071fcf358587db5833dbb8bf7b6fa6486ba43f5558fc414acea4b0c8",
+      "normalized_hash": "f7f15185c9115d389bd920944f93663060765841e25d2d8e4e5f84b0058a40fb",
+      "size_chars": 105095,
+      "line_count": 984,
+      "questionnaire_score": 23.5,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 3",
+        "Likert-style answer options: 3",
+        "many numbered answer variants: 149",
+        "many numbered/question lines: 94",
+        "many repeated spaces: 194",
+        "garbled fragments: 118"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "category": "review",
+      "raw_hash": "1efd5875684707dea17a20702e36154464633524f12b4de8089973cf39af8cee",
+      "normalized_hash": "922dbe5b6f416433d92c3a7a23209188bc9b8e28523c09f8f54b3931681fa16c",
+      "size_chars": 764905,
+      "line_count": 13046,
+      "questionnaire_score": 22.5,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 5",
+        "Likert-style answer options: 4",
+        "numbered answer variants: 56",
+        "many numbered/question lines: 470",
+        "many repeated spaces: 120",
+        "garbled fragments: 531"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Osoznannoe_vlechenie1.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/Osoznannoe_vlechenie1.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "15a0a06c055e671bebf97632db87c055ad936afa05ee11191e7b7194ad45cffb",
+      "normalized_hash": "30ddbab97fdf5421b8fcb6a2986d75227d49cf35881bd80b12ca3c3b3fc1626a",
+      "size_chars": 515275,
+      "line_count": 10843,
+      "questionnaire_score": 9,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "numbered answer variants: 33",
+        "many numbered/question lines: 165"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/seks-probl-i-dpdg.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/questionnaires/seks-probl-i-dpdg.cleaned.txt",
+      "category": "questionnaires",
+      "raw_hash": "99b2afab3cc3cec8db294dafe131e6308a8642dceb3f925f62c14d935a27ec8f",
+      "normalized_hash": "5e0001c29f36105b7ed49c1d13cabef9f7025c1c60dd397489df38d549be104b",
+      "size_chars": 38727,
+      "line_count": 735,
+      "questionnaire_score": 9,
+      "ocr_noise_score": 5,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "questionnaire/test terms: 2",
+        "numbered answer variants: 39"
+      ],
+      "action": "skipped",
+      "error": null
+    },
+    {
+      "source_path": "sorted_sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "output_path": "knowledge_intake/sexologist/review/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "category": "review",
+      "raw_hash": "129a80b7c4d80ad84c0dd8194cc6a8234b5379d5c1890ab411709027fd8b7b7c",
+      "normalized_hash": "2d07f56cac1172c074e9bdb80f0bbbe91a643b45f1b18a254adf7d165ab530b7",
+      "size_chars": 742054,
+      "line_count": 16667,
+      "questionnaire_score": 14,
+      "ocr_noise_score": 9,
+      "duplicate_status": "existing_output",
+      "reasons": [
+        "mixed questionnaire and OCR/noise signals",
+        "questionnaire/test terms: 2",
+        "Likert-style answer options: 4",
+        "many numbered/question lines: 102",
+        "many repeated spaces: 100",
+        "garbled fragments: 742"
+      ],
+      "action": "skipped",
+      "error": null
+    }
+  ]
+}

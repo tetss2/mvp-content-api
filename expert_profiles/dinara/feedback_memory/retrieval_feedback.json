@@ -1,0 +1,181 @@
+{
+  "content_kind_performance": [
+    {
+      "pattern": "content_kind:educational+therapeutic_case+faq",
+      "usage_count": 1,
+      "average_score": 0.83,
+      "recent_trend": "stable",
+      "intents": {
+        "educational_post": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-448Z_educational-instagram-post"
+      ]
+    },
+    {
+      "pattern": "content_kind:therapeutic_case+educational+faq",
+      "usage_count": 1,
+      "average_score": 0.81,
+      "recent_trend": "stable",
+      "intents": {
+        "therapeutic_case": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-54-227Z_therapeutic-case-post"
+      ]
+    },
+    {
+      "pattern": "content_kind:faq+educational",
+      "usage_count": 1,
+      "average_score": 0.79,
+      "recent_trend": "stable",
+      "intents": {
+        "faq_answer": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-883Z_faq-answer"
+      ]
+    },
+    {
+      "pattern": "content_kind:storytelling+therapeutic_case+faq+educational",
+      "usage_count": 1,
+      "average_score": 0.78,
+      "recent_trend": "stable",
+      "intents": {
+        "storytelling": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-729Z_storytelling-telegram-post"
+      ]
+    },
+    {
+      "pattern": "content_kind:short_hook+faq+educational",
+      "usage_count": 1,
+      "average_score": 0.7,
+      "recent_trend": "stable",
+      "intents": {
+        "short_hook": 1
+      },
+      "warnings": {
+        "expert_tone_match_low": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-54-058Z_short-hook-list"
+      ]
+    }
+  ],
+  "source_type_performance": [
+    {
+      "pattern": "source_type:approved_high_confidence+approved_dataset",
+      "usage_count": 5,
+      "average_score": 0.782,
+      "recent_trend": "stable",
+      "intents": {
+        "educational_post": 1,
+        "storytelling": 1,
+        "faq_answer": 1,
+        "short_hook": 1,
+        "therapeutic_case": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 2,
+        "expert_tone_match_low": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-448Z_educational-instagram-post",
+        "2026-05-12T22-57-53-729Z_storytelling-telegram-post",
+        "2026-05-12T22-57-53-883Z_faq-answer",
+        "2026-05-12T22-57-54-058Z_short-hook-list",
+        "2026-05-12T22-57-54-227Z_therapeutic-case-post"
+      ]
+    }
+  ],
+  "context_signature_performance": [
+    {
+      "pattern": "kinds:educational+therapeutic_case+faq|sources:approved_high_confidence+approved_dataset",
+      "usage_count": 1,
+      "average_score": 0.83,
+      "recent_trend": "stable",
+      "intents": {
+        "educational_post": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-448Z_educational-instagram-post"
+      ]
+    },
+    {
+      "pattern": "kinds:therapeutic_case+educational+faq|sources:approved_high_confidence+approved_dataset",
+      "usage_count": 1,
+      "average_score": 0.81,
+      "recent_trend": "stable",
+      "intents": {
+        "therapeutic_case": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-54-227Z_therapeutic-case-post"
+      ]
+    },
+    {
+      "pattern": "kinds:faq+educational|sources:approved_high_confidence+approved_dataset",
+      "usage_count": 1,
+      "average_score": 0.79,
+      "recent_trend": "stable",
+      "intents": {
+        "faq_answer": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-883Z_faq-answer"
+      ]
+    },
+    {
+      "pattern": "kinds:storytelling+therapeutic_case+faq+educational|sources:approved_high_confidence+approved_dataset",
+      "usage_count": 1,
+      "average_score": 0.78,
+      "recent_trend": "stable",
+      "intents": {
+        "storytelling": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-729Z_storytelling-telegram-post"
+      ]
+    },
+    {
+      "pattern": "kinds:short_hook+faq+educational|sources:approved_high_confidence+approved_dataset",
+      "usage_count": 1,
+      "average_score": 0.7,
+      "recent_trend": "stable",
+      "intents": {
+        "short_hook": 1
+      },
+      "warnings": {
+        "expert_tone_match_low": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-54-058Z_short-hook-list"
+      ]
+    }
+  ],
+  "insights": [
+    "Best content-kind mix so far: content_kind:educational+therapeutic_case+faq average=0.83.",
+    "Best source-type mix so far: source_type:approved_high_confidence+approved_dataset average=0.782.",
+    "Best full context signature so far: kinds:educational+therapeutic_case+faq|sources:approved_high_confidence+approved_dataset average=0.83.",
+    "Watch weaker content-kind mix: content_kind:short_hook+faq+educational average=0.7."
+  ]
+}

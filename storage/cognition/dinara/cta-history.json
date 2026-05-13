@@ -1,0 +1,556 @@
+{
+  "schema_version": "2026-05-13.persistent_cognition.v1",
+  "expert_id": "dinara",
+  "day": 30,
+  "cta_memory": {
+    "history": [
+      {
+        "day": 1,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "topic": "relationship anxiety",
+        "audienceState": "warming"
+      },
+      {
+        "day": 2,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "emotional dependency",
+        "audienceState": "warming"
+      },
+      {
+        "day": 3,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "topic": "female sexuality myths",
+        "audienceState": "warming"
+      },
+      {
+        "day": 4,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "topic": "boundaries in intimacy",
+        "audienceState": "warming"
+      },
+      {
+        "day": 5,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "shame and desire",
+        "audienceState": "warming"
+      },
+      {
+        "day": 6,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "topic": "trust after conflict",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 7,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "body sensitivity",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 8,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "topic": "self-worth in relationships",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 9,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "adult attachment",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 10,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "topic": "soft communication",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 11,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "topic": "relationship anxiety",
+        "audienceState": "engaged"
+      },
+      {
+        "day": 12,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "emotional dependency",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 13,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "topic": "female sexuality myths",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 14,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "boundaries in intimacy",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 15,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "topic": "shame and desire",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 16,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "trust after conflict",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 17,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "topic": "body sensitivity",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 18,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "topic": "self-worth in relationships",
+        "audienceState": "trusting"
+      },
+      {
+        "day": 19,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "adult attachment",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 20,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "topic": "soft communication",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 21,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "relationship anxiety",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 22,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "emotional dependency",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 23,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "topic": "female sexuality myths",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 24,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "boundaries in intimacy",
+        "audienceState": "considering_purchase"
+      },
+      {
+        "day": 25,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "topic": "shame and desire",
+        "audienceState": "returning_reader"
+      },
+      {
+        "day": 26,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "topic": "trust after conflict",
+        "audienceState": "returning_reader"
+      },
+      {
+        "day": 27,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "topic": "body sensitivity",
+        "audienceState": "returning_reader"
+      },
+      {
+        "day": 28,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "topic": "self-worth in relationships",
+        "audienceState": "returning_reader"
+      },
+      {
+        "day": 29,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "topic": "adult attachment",
+        "audienceState": "returning_reader"
+      },
+      {
+        "day": 30,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "topic": "soft communication",
+        "audienceState": "returning_reader"
+      }
+    ],
+    "escalationPacing": [
+      {
+        "day": 1,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 2,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 3,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 4,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 5,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 6,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "escalationLevel": "medium"
+      },
+      {
+        "day": 7,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 8,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 9,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 10,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 11,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 12,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 13,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "escalationLevel": "medium"
+      },
+      {
+        "day": 14,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 15,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 16,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 17,
+        "ctaType": "educational_cta",
+        "pressure": 0.18,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 18,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 19,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 20,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "escalationLevel": "medium"
+      },
+      {
+        "day": 21,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 22,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 23,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "escalationLevel": "medium"
+      },
+      {
+        "day": 24,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 25,
+        "ctaType": "emotional_cta",
+        "pressure": 0.2,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 26,
+        "ctaType": "trust_cta",
+        "pressure": 0.28,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 27,
+        "ctaType": "soft_cta",
+        "pressure": 0.35,
+        "escalationLevel": "medium"
+      },
+      {
+        "day": 28,
+        "ctaType": "dm_cta",
+        "pressure": 0.55,
+        "escalationLevel": "high"
+      },
+      {
+        "day": 29,
+        "ctaType": "low_pressure_cta",
+        "pressure": 0.22,
+        "escalationLevel": "low"
+      },
+      {
+        "day": 30,
+        "ctaType": "save_share_cta",
+        "pressure": 0.1,
+        "escalationLevel": "low"
+      }
+    ],
+    "consultationPressureAccumulation": 0.74,
+    "ctaDesensitizationRisk": 0.823,
+    "conversionSequenceMemory": [
+      {
+        "day": 1,
+        "stage": "trust_or_education",
+        "ctaType": "low_pressure_cta"
+      },
+      {
+        "day": 2,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 3,
+        "stage": "trust_or_education",
+        "ctaType": "educational_cta"
+      },
+      {
+        "day": 4,
+        "stage": "trust_or_education",
+        "ctaType": "low_pressure_cta"
+      },
+      {
+        "day": 5,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 6,
+        "stage": "soft_conversion",
+        "ctaType": "soft_cta"
+      },
+      {
+        "day": 7,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 8,
+        "stage": "trust_or_education",
+        "ctaType": "low_pressure_cta"
+      },
+      {
+        "day": 9,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 10,
+        "stage": "trust_or_education",
+        "ctaType": "educational_cta"
+      },
+      {
+        "day": 11,
+        "stage": "trust_or_education",
+        "ctaType": "emotional_cta"
+      },
+      {
+        "day": 12,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 13,
+        "stage": "soft_conversion",
+        "ctaType": "soft_cta"
+      },
+      {
+        "day": 14,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 15,
+        "stage": "trust_or_education",
+        "ctaType": "low_pressure_cta"
+      },
+      {
+        "day": 16,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      },
+      {
+        "day": 17,
+        "stage": "trust_or_education",
+        "ctaType": "educational_cta"
+      },
+      {
+        "day": 18,
+        "stage": "trust_or_education",
+        "ctaType": "emotional_cta"
+      },
+      {
+        "day": 19,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 20,
+        "stage": "soft_conversion",
+        "ctaType": "soft_cta"
+      },
+      {
+        "day": 21,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 22,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 23,
+        "stage": "soft_conversion",
+        "ctaType": "soft_cta"
+      },
+      {
+        "day": 24,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 25,
+        "stage": "trust_or_education",
+        "ctaType": "emotional_cta"
+      },
+      {
+        "day": 26,
+        "stage": "trust_or_education",
+        "ctaType": "trust_cta"
+      },
+      {
+        "day": 27,
+        "stage": "soft_conversion",
+        "ctaType": "soft_cta"
+      },
+      {
+        "day": 28,
+        "stage": "direct_conversion",
+        "ctaType": "dm_cta"
+      },
+      {
+        "day": 29,
+        "stage": "trust_or_education",
+        "ctaType": "low_pressure_cta"
+      },
+      {
+        "day": 30,
+        "stage": "trust_or_education",
+        "ctaType": "save_share_cta"
+      }
+    ]
+  },
+  "updated_at": "2026-05-13T19:14:17.471Z"
+}

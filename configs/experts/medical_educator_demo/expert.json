@@ -1,0 +1,26 @@
+{
+  "expert_id": "medical_educator_demo",
+  "display_name": "Medical Educator Demo",
+  "status": "draft",
+  "primary_language": "ru",
+  "platforms": ["telegram", "instagram"],
+  "content_domains": ["medical_education", "health_literacy"],
+  "retrieval_namespace": "medical_educator_demo_placeholder",
+  "voice_profile_path": "configs/experts/medical_educator_demo/voice-profile.placeholder.json",
+  "feedback_memory_path": "configs/experts/medical_educator_demo/feedback-memory.placeholder.json",
+  "generation_policy_path": "configs/experts/medical_educator_demo/generation-policy.json",
+  "safety_policy_path": "configs/experts/medical_educator_demo/safety-policy.json",
+  "style_constraints_path": "configs/experts/medical_educator_demo/style-constraints.json",
+  "created_at": "2026-05-13T00:00:00.000Z",
+  "updated_at": "2026-05-13T00:00:00.000Z",
+  "runtime_config": {
+    "retrieval_settings_path": "configs/experts/medical_educator_demo/retrieval.json",
+    "generation_settings_path": "configs/experts/medical_educator_demo/generation-policy.json",
+    "tone_settings_path": "configs/experts/medical_educator_demo/tone.json",
+    "cta_settings_path": "configs/experts/medical_educator_demo/cta.json",
+    "safety_settings_path": "configs/experts/medical_educator_demo/safety-policy.json",
+    "style_settings_path": "configs/experts/medical_educator_demo/style-constraints.json",
+    "context_policy_path": "configs/experts/medical_educator_demo/context-policy.json",
+    "output_policy_path": "configs/experts/medical_educator_demo/output-policy.json"
+  }
+}

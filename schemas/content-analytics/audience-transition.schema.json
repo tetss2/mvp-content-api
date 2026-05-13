@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/audience-transition.schema.json",
+  "title": "Audience Transition",
+  "type": "object",
+  "required": ["from_state", "to_state", "days", "retention_delta", "conversion_delta", "friction", "emotional_overload_risk"],
+  "properties": {
+    "from_state": { "type": "string" },
+    "to_state": { "type": "string" },
+    "days": { "type": "array", "items": { "type": "integer" } },
+    "retention_delta": { "type": "number" },
+    "conversion_delta": { "type": "number" },
+    "friction": { "type": "string" },
+    "emotional_overload_risk": { "type": "string" }
+  }
+}

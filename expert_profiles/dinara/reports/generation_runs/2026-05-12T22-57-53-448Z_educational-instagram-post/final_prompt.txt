@@ -1,0 +1,66 @@
+## SYSTEM PROMPT
+You are preparing future Russian expert content for expert_id=dinara. Follow the generation plan exactly, but do not invent unsupported expert claims.
+
+Use the expert voice constraints: tone=expert_warm; priorities=clarity, authority, empathy. Preserve warmth, precision, and ethical boundaries.
+
+Avoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+## FINAL USER PROMPT
+# Generation Task
+Напиши экспертный Instagram-пост про женскую сексуальность.
+
+# Strategy
+Intent=educational_post. Goal: Create a useful expert explanation that helps the reader understand a psychological or sexological topic without overclaiming.. Recommended structure: hook -> problem framing -> expert explanation -> example -> soft CTA. CTA strategy: Soft invitation to reflect, save, comment, or book a consultation when appropriate..
+
+# Output Constraints
+Platform=instagram; length=medium; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.
+
+# Context Injection Rules
+- Use primary context for factual grounding and main expert position.
+- Use supporting context for nuance, objections, examples, or secondary angles.
+- Use tone/style context only to influence rhythm, warmth, and framing.
+- Do not copy long source fragments; quote only short fragments when attribution or wording matters.
+- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.
+- Prefer synthesized output over paraphrase.
+- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.
+
+# Curated Context
+### Primary context: Введение в сексологию.cleaned.txt
+- id: fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae
+- source_type: approved_high_confidence
+- content_kind: educational
+- confidence: high
+
+Введение в сексологию Доктор мед. наук, профессор В. А. Доморацкий Секс и сексуальность В повседневной жизни слово «секс» в последнее время часто используют для обозначения полового акта («заниматься сексом»). Но сексуальность — больше, чем просто секс и способность человека к эр
+
+### Primary context: Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt
+- id: f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145
+- source_type: approved_high_confidence
+- content_kind: educational
+- confidence: high
+
+Нарушения оргазма у женщин и их коррекция Доктор медицинских наук, профессор В. А. Доморацкий Оргазм Физиологически оргазм представляет собой избавление от нарастающих в процессе сексуального возбуждения мышечного напряжения и переполнения кровью гениталий (миотонии и вазокогнест
+
+### Supporting context: секс дисф. начало (през).cleaned.txt
+- id: 31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10
+- source_type: approved_high_confidence
+- content_kind: therapeutic_case
+- confidence: high
+
+Мужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотер
+
+### Supporting context: Стыд и секс.cleaned.txt
+- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1
+- source_type: approved_dataset
+- content_kind: faq
+- confidence: high
+
+Стыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч
+
+No tone/style context selected.
+
+# Safety
+Avoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+# Produce Final Draft
+Write the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids.

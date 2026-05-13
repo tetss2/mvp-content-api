@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/topic-cluster.schema.json",
+  "title": "Topic Cluster Graph",
+  "type": "object",
+  "required": ["nodes", "edges"],
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "topic", "intent", "platform", "audience_state"],
+        "properties": {
+          "id": { "type": "string" },
+          "topic": { "type": "string" },
+          "intent": { "type": "string" },
+          "platform": { "type": "string" },
+          "audience_state": { "$ref": "./audience-state.schema.json" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "relationship"],
+        "properties": {
+          "from": { "type": "string" },
+          "to": { "type": "string" },
+          "relationship": {
+            "type": "string",
+            "enum": [
+              "related_topic",
+              "prerequisite_topic",
+              "emotional_adjacency",
+              "cta_adjacency_repetition_risk",
+              "narrative_dependency",
+              "overlap_detection",
+              "repetition_risk"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

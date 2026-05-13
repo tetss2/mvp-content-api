@@ -1,0 +1,9 @@
+{
+  "supports_storytelling": false,
+  "supports_sales_posts": false,
+  "supports_therapeutic_content": false,
+  "supports_short_hooks": true,
+  "supports_long_articles": false,
+  "supports_reels_scripts": false,
+  "supports_cta_generation": false
+}

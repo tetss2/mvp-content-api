@@ -1,0 +1,363 @@
+# Dinara Source Path Inventory
+
+Generated: 2026-05-12T21:35:37.981Z
+
+## Discovered Directories
+
+- expert_profiles/dinara: 40 files (.json: 33, .md: 7)
+- data: 1 files (.json: 1)
+- sources: 62 files (.docx: 36, .pdf: 20, .txt: 4, (none): 2)
+- sorted_sources: 120 files (.txt: 67, .docx: 34, .pdf: 18, .md: 1)
+- knowledge_intake/sexologist: 72 files (.txt: 70, .json: 1, .md: 1)
+- cleaned_corpus: 88 files (.json: 44, .txt: 44)
+- kb/sexologist: 29 files (.txt: 24, .json: 2, .md: 2, .jsonl: 1)
+- author_profiles/dinara: 3 files (.md: 2, .json: 1)
+- knowledge_indexes/sexologist/reports: 15 files (.json: 12, .md: 3)
+
+## Likely Cleaned Files
+
+- sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt
+- sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt
+- sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt
+- sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt
+- sorted_sources/good/Сексуальный интеллект.cleaned.txt
+- sorted_sources/good/Яффе Секс в жизни женщины .cleaned.txt
+- sorted_sources/good/Яффе Секс в жизни мужчины .cleaned.txt
+- sorted_sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- sorted_sources/sexologist/Osoznannoe_vlechenie1.cleaned.txt
+- sorted_sources/sexologist/seks-probl-i-dpdg.cleaned.txt
+- sorted_sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- sorted_sources/sexologist/«Когда мы не ладим» Упражнение .cleaned.txt
+- sorted_sources/sexologist/Автостоп. Техника символдрамы.cleaned.txt
+- sorted_sources/sexologist/Аддикции отношений. Секс.cleaned.txt
+- sorted_sources/sexologist/Анкета_для_пациентов_женского_пола.cleaned.txt
+- sorted_sources/sexologist/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- sorted_sources/sexologist/Введение в сексологию.cleaned.txt
+- sorted_sources/sexologist/Женская психопатология Святоч.cleaned.txt
+- sorted_sources/sexologist/Женская сексуальность.cleaned.txt
+- sorted_sources/sexologist/Женские сексуальные дисфункции .cleaned.txt
+- sorted_sources/sexologist/Завис (през).cleaned.txt
+- sorted_sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt
+- sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt
+- sorted_sources/sexologist/конс. жертв секс. насил..cleaned.txt
+- sorted_sources/sexologist/Куст розы. Символдрама.cleaned.txt
+- sorted_sources/sexologist/Любовь. ревность..cleaned.txt
+- sorted_sources/sexologist/М половая конституция табл.cleaned.txt
+- sorted_sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt
+- sorted_sources/sexologist/Мужская сексуальность.cleaned.txt
+- sorted_sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt
+- sorted_sources/sexologist/Нетипичный секс.cleaned.txt
+- sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt
+- sorted_sources/sexologist/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- sorted_sources/sexologist/ПСР_психосексуальное_развитие_в_норме.cleaned.txt
+- sorted_sources/sexologist/Свядощ_Женская_Сексопатология_doc.cleaned.txt
+- sorted_sources/sexologist/секс дисф. начало (през).cleaned.txt
+- sorted_sources/sexologist/Секс. обслед. Ж (1).cleaned.txt
+- sorted_sources/sexologist/Сексуальные дисгармонии.cleaned.txt
+- sorted_sources/sexologist/Сексуальный интеллект.cleaned.txt
+- sorted_sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- sorted_sources/sexologist/Стерн Д. - Глаз видит сам себя.cleaned.txt
+- sorted_sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt
+- sorted_sources/sexologist/Стыд и секс.cleaned.txt
+- sorted_sources/sexologist/Супр. терапия (оконч).cleaned.txt
+- sorted_sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt
+- sorted_sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.cleaned.txt
+- sorted_sources/sexologist/СФМ секс формула М опросник .cleaned.txt
+- sorted_sources/sexologist/Тест_опросник_удовлетвореености_браком.cleaned.txt
+- sorted_sources/sexologist/Х Каплан Сексуальная терапия.cleaned.txt
+- sorted_sources/sexologist/Шкала ПК для женщин.cleaned.txt
+- sorted_sources/sexologist/ЭГ в пт секс дисфункций.cleaned.txt
+- sorted_sources/sexologist/Эмили Нагоски - Как хочет женщина.cleaned.txt
+- sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- sorted_sources/unclear/Sexopatologia_Spravochnik_1990.cleaned.txt
+- knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt
+- knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt
+- knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt
+- knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt
+- knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- knowledge_intake/sexologist/duplicates/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt
+- ...and 99 more
+
+## Likely Raw Files
+
+- expert_profiles/dinara/author_voice/voice_profile.md
+- expert_profiles/dinara/reports/batch_reports/2026-05-12T18-42-46-875Z_dinara_batch_report.md
+- expert_profiles/dinara/reports/batch_reports/2026-05-12T21-25-26-755Z_dinara_batch_report.md
+- expert_profiles/dinara/reports/onboarding/2026-05-12T18-38-46-690Z_inventory_report.md
+- expert_profiles/dinara/reports/onboarding/2026-05-12T18-38-57-338Z_inventory_report.md
+- expert_profiles/dinara/reports/onboarding/2026-05-12T18-42-43-698Z_inventory_report.md
+- expert_profiles/dinara/reports/onboarding/2026-05-12T21-25-22-081Z_inventory_report.md
+- sources/psychologist/test-trevoga.txt
+- sources/rollback_test_2.txt
+- sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf
+- sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf
+- sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf
+- sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf
+- sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt
+- sources/sexologist/Osoznannoe_vlechenie1.pdf
+- sources/sexologist/seks-probl-i-dpdg.pdf
+- sources/sexologist/Sexopatologia_Spravochnik_1990.pdf
+- sources/sexologist/statya-va-domorackogo (1).pdf
+- sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf
+- sources/sexologist/«Когда мы не ладим» Упражнение .docx
+- sources/sexologist/Автостоп. Техника символдрамы.docx
+- sources/sexologist/Аддикции отношений. Секс.docx
+- sources/sexologist/Анкета_для_пациентов_женского_пола.docx
+- sources/sexologist/Анкета_для_пациентов_мужского_пола.docx
+- sources/sexologist/Анкета_карты пац М и Ж.docx
+- sources/sexologist/Введение в сексологию.docx
+- sources/sexologist/Женская психопатология Святоч.pdf
+- sources/sexologist/Женская сексуальность.docx
+- sources/sexologist/Женские сексуальные дисфункции .docx
+- sources/sexologist/Завис (през).docx
+- sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.docx
+- sources/sexologist/Индекс_эректильной_функции_международный.docx
+- sources/sexologist/конс. жертв секс. насил..docx
+- sources/sexologist/Куст розы. Символдрама.docx
+- sources/sexologist/Любовь. ревность..docx
+- sources/sexologist/М половая конституция табл.docx
+- sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf
+- sources/sexologist/Медицинская_сексология_Психотерапия_сексуальных_расстройств.pdf
+- sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.docx
+- sources/sexologist/Мужская сексуальность.docx
+- sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx
+- sources/sexologist/Нетипичный секс.docx
+- sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.docx
+- sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf
+- sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx
+- sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx
+- sources/sexologist/секс дисф. начало (през).docx
+- sources/sexologist/Секс. обслед. Ж (1).docx
+- sources/sexologist/Сексуальные дисгармонии.docx
+- sources/sexologist/Сексуальный интеллект.pdf
+- sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.pdf
+- sources/sexologist/Стерн Д. - Глаз видит сам себя.pdf
+- sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.docx
+- sources/sexologist/Стыд и секс.docx
+- sources/sexologist/Супр. терапия (оконч).docx
+- sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.docx
+- sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.docx
+- sources/sexologist/СФМ секс формула М опросник .docx
+- sources/sexologist/Тест_опросник_удовлетвореености_браком.docx
+- sources/sexologist/Х Каплан Сексуальная терапия.docx
+- sources/sexologist/Шкала ПК для женщин.pdf
+- sources/sexologist/ЭГ в пт секс дисфункций.docx
+- sources/sexologist/ЭГ в секс дисфункциях.docx
+- sources/sexologist/Эмили Нагоски - Как хочет женщина.pdf
+- sources/sexologist/Яффе Секс в жизни женщины .pdf
+- sources/sexologist/Яффе Секс в жизни мужчины .pdf
+- sorted_sources/exercises/Автостоп. Техника символдрамы.docx
+- sorted_sources/exercises/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx
+- sorted_sources/exercises/Свядощ_Женская_Сексопатология_doc.docx
+- sorted_sources/exercises/Сексуальные дисгармонии.docx
+- sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.ocr.raw.txt
+- sorted_sources/exercises/Стыд и секс.docx
+- sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.ocr.raw.txt
+- sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt
+- sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.ocr.raw.txt
+- sorted_sources/good/конс. жертв секс. насил..docx
+- sorted_sources/good/Любовь. ревность..docx
+- sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.ocr.raw.txt
+- sorted_sources/good/Нетипичный секс.docx
+- sorted_sources/good/секс дисф. начало (през).docx
+- ...and 74 more
+
+## Duplicate-Looking Files By Filename
+
+- voice_profile.json: expert_profiles/dinara/author_voice/voice_profile.json; author_profiles/dinara/voice_profile.json
+- voice_profile.md: expert_profiles/dinara/author_voice/voice_profile.md; author_profiles/dinara/voice_profile.md
+- .gitkeep: sources/psychologist/.gitkeep; sources/sexologist/.gitkeep
+- test-trevoga.txt: sources/psychologist/test-trevoga.txt; sorted_sources/tests/test-trevoga.txt
+- 126920_4409ae397650cf3bad5ab99ba9787539.pdf: sources/sexologist/126920_4409ae397650cf3bad5ab99ba9787539.pdf; sorted_sources/ocr_required/126920_4409ae397650cf3bad5ab99ba9787539.pdf
+- 88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf: sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf; sorted_sources/ocr_required/88347_2fa12ba6d5ec12fffde3424f26c6009a.pdf
+- 88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf: sources/sexologist/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf; sorted_sources/ocr_required/88435_df7b0137c2a7e0ee994a85bfa8f01c63.pdf
+- 88436_f74ff498f23077badd28e1a443f537ab.pdf: sources/sexologist/88436_f74ff498f23077badd28e1a443f537ab.pdf; sorted_sources/ocr_required/88436_f74ff498f23077badd28e1a443f537ab.pdf
+- 88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt: sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt; sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- 88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt: sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt; sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt; kb/sexologist/ocr_raw/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.raw.txt
+- osoznannoe_vlechenie1.pdf: sources/sexologist/Osoznannoe_vlechenie1.pdf; sorted_sources/ocr_required/Osoznannoe_vlechenie1.pdf
+- seks-probl-i-dpdg.pdf: sources/sexologist/seks-probl-i-dpdg.pdf; sorted_sources/ocr_required/seks-probl-i-dpdg.pdf
+- sexopatologia_spravochnik_1990.pdf: sources/sexologist/Sexopatologia_Spravochnik_1990.pdf; sorted_sources/ocr_required/Sexopatologia_Spravochnik_1990.pdf
+- statya-va-domorackogo (1).pdf: sources/sexologist/statya-va-domorackogo (1).pdf; sorted_sources/ocr_required/statya-va-domorackogo (1).pdf
+- taormino_t_bibliya_bdsm_polnoe_rukova6.pdf: sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf; sorted_sources/ocr_required/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.pdf
+- «когда мы не ладим» упражнение .docx: sources/sexologist/«Когда мы не ладим» Упражнение .docx; sorted_sources/unclear/«Когда мы не ладим» Упражнение .docx
+- автостоп. техника символдрамы.docx: sources/sexologist/Автостоп. Техника символдрамы.docx; sorted_sources/exercises/Автостоп. Техника символдрамы.docx
+- аддикции отношений. секс.docx: sources/sexologist/Аддикции отношений. Секс.docx; sorted_sources/tests/Аддикции отношений. Секс.docx
+- анкета_для_пациентов_женского_пола.docx: sources/sexologist/Анкета_для_пациентов_женского_пола.docx; sorted_sources/surveys/Анкета_для_пациентов_женского_пола.docx
+- анкета_для_пациентов_мужского_пола.docx: sources/sexologist/Анкета_для_пациентов_мужского_пола.docx; sorted_sources/surveys/Анкета_для_пациентов_мужского_пола.docx
+- введение в сексологию.docx: sources/sexologist/Введение в сексологию.docx; sorted_sources/tests/Введение в сексологию.docx
+- женская психопатология святоч.pdf: sources/sexologist/Женская психопатология Святоч.pdf; sorted_sources/ocr_required/Женская психопатология Святоч.pdf
+- женская сексуальность.docx: sources/sexologist/Женская сексуальность.docx; sorted_sources/surveys/Женская сексуальность.docx
+- женские сексуальные дисфункции .docx: sources/sexologist/Женские сексуальные дисфункции .docx; sorted_sources/tests/Женские сексуальные дисфункции .docx
+- завис (през).docx: sources/sexologist/Завис (през).docx; sorted_sources/tests/Завис (през).docx
+- индекс_женской_сексуальной_функции_ижсф.docx: sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.docx; sorted_sources/tests/Индекс_женской_сексуальной_функции_ИЖСФ.docx
+- индекс_эректильной_функции_международный.docx: sources/sexologist/Индекс_эректильной_функции_международный.docx; sorted_sources/tests/Индекс_эректильной_функции_международный.docx
+- конс. жертв секс. насил..docx: sources/sexologist/конс. жертв секс. насил..docx; sorted_sources/good/конс. жертв секс. насил..docx
+- куст розы. символдрама.docx: sources/sexologist/Куст розы. Символдрама.docx; sorted_sources/surveys/Куст розы. Символдрама.docx
+- любовь. ревность..docx: sources/sexologist/Любовь. ревность..docx; sorted_sources/good/Любовь. ревность..docx
+- м половая конституция табл.docx: sources/sexologist/М половая конституция табл.docx; sorted_sources/unclear/М половая конституция табл.docx
+- медицинская сексология и психотерапия сексуальных расстройств, доморацкий в.а., 2020.pdf: sources/sexologist/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf; sorted_sources/ocr_required/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.pdf
+- международный_индекс_эректильной_функции_миэф.docx: sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.docx; sorted_sources/tests/Международный_индекс_эректильной_функции_МИЭФ.docx
+- мужская сексуальность.docx: sources/sexologist/Мужская сексуальность.docx; sorted_sources/surveys/Мужская сексуальность.docx
+- нарушение_оргазма_у_женщин_и_их_коррекция_.docx: sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx; sorted_sources/exercises/Нарушение_оргазма_у_женщин_и_их_коррекция_.docx
+- нетипичный секс.docx: sources/sexologist/Нетипичный секс.docx; sorted_sources/good/Нетипичный секс.docx
+- опросник_сексуальная_формула_мужская_сфм.docx: sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.docx; sorted_sources/surveys/Опросник_Сексуальная_формула_мужская_СФМ.docx
+- опросник_социосексуальной_ориентации_soi.pdf: sources/sexologist/Опросник_социосексуальной_ориентации_SOI.pdf; sorted_sources/ocr_required/Опросник_социосексуальной_ориентации_SOI.pdf
+- пср_психосексуальное_развитие_в_норме.docx: sources/sexologist/ПСР_психосексуальное_развитие_в_норме.docx; sorted_sources/surveys/ПСР_психосексуальное_развитие_в_норме.docx
+- свядощ_женская_сексопатология_doc.docx: sources/sexologist/Свядощ_Женская_Сексопатология_doc.docx; sorted_sources/exercises/Свядощ_Женская_Сексопатология_doc.docx
+
+## Duplicate-Looking Files By Content Hash
+
+- e936cab0852191687d9196ef0cca49f86b4c83101a7052aaac573bac3b511962: sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt; sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- 6b1607d719e708f70182a44f42489106d5b1efea6f7c4882e610c9d0df3e4ca9: sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt; kb/sexologist/good/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- 6d9ff3877483af7964cafceba7fd0fabdad627a3fe741189cd5864df7abaecd7: sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt; kb/sexologist/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt
+- 1a77187b97c936cfdcd04d613f31e65c22d959d206da7b4f3c7c7147993cdd51: sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt; kb/sexologist/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt
+- 44c8c0538379a95c58f82597ebbdebd2963ea8e48ca0a8822d338695d648739d: sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt; kb/sexologist/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt
+- cddd8307e7a3b1437025f2f347ffde7b62ee5dbea1647d15caa624f397a3ef8c: sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt; kb/sexologist/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt; kb/sexologist/good/Медицинская_сексология_Психотерапия_сексуальных_расстройств.cleaned.txt
+- 553604b98aecf874b40734bffdb61fe84841e66b9f388ec3d4ffb3e656ec11b6: sorted_sources/good/Сексуальный интеллект.cleaned.txt; kb/sexologist/good/Сексуальный интеллект.cleaned.txt
+- 55eebc2d640a500c0c6dda26d16895d61ec7fb096ea52835ef1290e44de47bf3: sorted_sources/good/Яффе Секс в жизни женщины .cleaned.txt; kb/sexologist/cleaned/Яффе Секс в жизни женщины .cleaned.txt; kb/sexologist/good/Яффе Секс в жизни женщины .cleaned.txt
+- bef1cfd4a4b9d69e3e600ef50d7ae2389f5aaf441c7b17c52076334800b21073: sorted_sources/good/Яффе Секс в жизни мужчины .cleaned.txt; kb/sexologist/cleaned/Яффе Секс в жизни мужчины .cleaned.txt; kb/sexologist/good/Яффе Секс в жизни мужчины .cleaned.txt
+- 36dd66a64f2bfa993bded0559b4d32211ab1e8018150792757316000160a15ad: sorted_sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt; knowledge_intake/sexologist/manual_review_rare/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt; knowledge_intake/sexologist/review/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- 15a0a06c055e671bebf97632db87c055ad936afa05ee11191e7b7194ad45cffb: sorted_sources/sexologist/Osoznannoe_vlechenie1.cleaned.txt; knowledge_intake/sexologist/questionnaires/Osoznannoe_vlechenie1.cleaned.txt
+- 99b2afab3cc3cec8db294dafe131e6308a8642dceb3f925f62c14d935a27ec8f: sorted_sources/sexologist/seks-probl-i-dpdg.cleaned.txt; knowledge_intake/sexologist/questionnaires/seks-probl-i-dpdg.cleaned.txt
+- 129a80b7c4d80ad84c0dd8194cc6a8234b5379d5c1890ab411709027fd8b7b7c: sorted_sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt; knowledge_intake/sexologist/review/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- 288bae4ab00cca764e5f8c5d1b1c513250416133d32a005d769214dd420df426: sorted_sources/sexologist/«Когда мы не ладим» Упражнение .cleaned.txt; knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt
+- 918efeba397bc061508c6d8c0968e1ce24e7f0ca2f82ebc40d51a46278e7db7b: sorted_sources/sexologist/Автостоп. Техника символдрамы.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt; knowledge_intake/sexologist/review/Автостоп. Техника символдрамы.cleaned.txt
+- d68b022c68b50f4ed91a8d2d5e59fb39459ba648bf352ddcfb272e331fe5f504: sorted_sources/sexologist/Аддикции отношений. Секс.cleaned.txt; knowledge_intake/sexologist/questionnaires/Аддикции отношений. Секс.cleaned.txt
+- c98daa8e4a612bb47b602a4e4c728392bb8f9c0f964e2c8c1a6f8110e598c011: sorted_sources/sexologist/Анкета_для_пациентов_женского_пола.cleaned.txt; knowledge_intake/sexologist/questionnaires/Анкета_для_пациентов_женского_пола.cleaned.txt
+- 9811730b071d59876515493b1e64e8b24df632376e29ba2d6c29c0911bcea6bc: sorted_sources/sexologist/Анкета_для_пациентов_мужского_пола.cleaned.txt; knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt; knowledge_intake/sexologist/questionnaires/Анкета_для_пациентов_мужского_пола.cleaned.txt; knowledge_intake/sexologist/review/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- f15b415e0b9259fa07dd3e3b5a3fe860bcb4e8314d550dcbdb6632db85f44583: sorted_sources/sexologist/Введение в сексологию.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt; knowledge_intake/sexologist/review/Введение в сексологию.cleaned.txt
+- 2f5aeab5105bf3646b6ab3fc2b83e394e3d0d59f260901c7b49032e32a5fda49: sorted_sources/sexologist/Женская психопатология Святоч.cleaned.txt; knowledge_intake/sexologist/questionnaires/Женская психопатология Святоч.cleaned.txt
+- 6756be5be2fb60b6c32bd820f44610458279842390a6fd376fe1a73a42bb9f08: sorted_sources/sexologist/Женская сексуальность.cleaned.txt; knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt
+- 167031c902580839430649f8b71ec1cbab789196e617a062fe985032127274b8: sorted_sources/sexologist/Женские сексуальные дисфункции .cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt; knowledge_intake/sexologist/review/Женские сексуальные дисфункции .cleaned.txt
+- 17caf682a912555a30567002e0ba73263d540463590275771df1e3e405e8f29d: sorted_sources/sexologist/Завис (през).cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt; knowledge_intake/sexologist/review/Завис (през).cleaned.txt
+- adaf9027b2e5d936e9a2305525f7a639e8b1e2531c56d8e0824db14270330395: sorted_sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt; knowledge_intake/sexologist/questionnaires/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt
+- e5a0ca5e69949138004990eb532baaae84c9265b15da3b5299b918bcdb2e04b1: sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt; sorted_sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt; knowledge_intake/sexologist/duplicates/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt; knowledge_intake/sexologist/questionnaires/Индекс_эректильной_функции_международный.cleaned.txt
+- 3e07f5f44b4ed20eb61f7e2f3fd7b32ab8e2c6f7c9fa138eaa166c4971c05464: sorted_sources/sexologist/конс. жертв секс. насил..cleaned.txt; knowledge_intake/sexologist/questionnaires/конс. жертв секс. насил..cleaned.txt
+- 115695335954b8486675efd598568148fc1741d9b8a4ef53f19939d8c3b4bd0f: sorted_sources/sexologist/Куст розы. Символдрама.cleaned.txt; knowledge_intake/sexologist/questionnaires/Куст розы. Символдрама.cleaned.txt
+- af6034c8e84c83c40b98e5390ff331c43bb723cc2092a32f9349a3de8f51dc96: sorted_sources/sexologist/Любовь. ревность..cleaned.txt; knowledge_intake/sexologist/questionnaires/Любовь. ревность..cleaned.txt
+- 4a36c0f7a12a6f13c73a555748052f03ebeb2a058af340187921b48774b3cae4: sorted_sources/sexologist/М половая конституция табл.cleaned.txt; knowledge_intake/sexologist/ocr_suspect/М половая конституция табл.cleaned.txt
+- a3c05dd8b2bf15908d641e78e77b32ce718d60347392fcc184f26c6928693d23: sorted_sources/sexologist/Мужская сексуальность.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt; knowledge_intake/sexologist/review/Мужская сексуальность.cleaned.txt
+- 6eee58a43a6196983eeab479c3cb600cbeae6505448a117cd6a97cbc7d6466ae: sorted_sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt; knowledge_intake/sexologist/review/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt
+- 7027a8eb8f1e5d912f32e82ec52d5f81e9d14a2cf9a4b664faac41898f0a8fbf: sorted_sources/sexologist/Нетипичный секс.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt; knowledge_intake/sexologist/review/Нетипичный секс.cleaned.txt
+- c1c3ed1b1628444a315a0306b5a9bb65e6f346e13884bde582e37781e11ba859: sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt; sorted_sources/sexologist/СФМ секс формула М опросник .cleaned.txt; knowledge_intake/sexologist/duplicates/СФМ секс формула М опросник .cleaned.txt; knowledge_intake/sexologist/questionnaires/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt
+- 47b6499471dd969db77d8aef0254f785bb1f6f5e344f04d2e46444c41a1a7a7a: sorted_sources/sexologist/Опросник_социосексуальной_ориентации_SOI.cleaned.txt; knowledge_intake/sexologist/questionnaires/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- 86d106b50036a573a9c00e1846d714e03e84222f14e7ed20e7ae41b93a0fdde3: sorted_sources/sexologist/ПСР_психосексуальное_развитие_в_норме.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt; knowledge_intake/sexologist/review/ПСР_психосексуальное_развитие_в_норме.cleaned.txt
+- 61567e78aa3a493a37d14fdd96d67d1784d553d6746d3d017ece3e8cb325e470: sorted_sources/sexologist/Свядощ_Женская_Сексопатология_doc.cleaned.txt; knowledge_intake/sexologist/questionnaires/Свядощ_Женская_Сексопатология_doc.cleaned.txt
+- 60a0b0e341dee16828e5dbda12136f5a10cc4d832ae60c3f0f302ef84c6b8856: sorted_sources/sexologist/секс дисф. начало (през).cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt; knowledge_intake/sexologist/review/секс дисф. начало (през).cleaned.txt
+- 60cbe7cb4f554cc766cf3637e2525247b710cbd42515d7ed6f7dcb68bd989fce: sorted_sources/sexologist/Секс. обслед. Ж (1).cleaned.txt; knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt
+- fbb76267700a1510c99807665494b08587f5ab1efcfa183f8dd1ff53902ea92f: sorted_sources/sexologist/Сексуальные дисгармонии.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt; knowledge_intake/sexologist/review/Сексуальные дисгармонии.cleaned.txt
+- e044f0da8369c705876f2d537ec722bdf366c02cb3200855a46e8dc0e8a93091: sorted_sources/sexologist/Сексуальный интеллект.cleaned.txt; knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt; knowledge_intake/sexologist/review/Сексуальный интеллект.cleaned.txt
+
+## Currently Ignored By Prepare Script
+
+- sources/sexologist/ocr/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- sorted_sources/exercises/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- sorted_sources/good/126920_4409ae397650cf3bad5ab99ba9787539.cleaned.txt
+- sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.cleaned.txt
+- sorted_sources/good/88435_df7b0137c2a7e0ee994a85bfa8f01c63.ocr.cleaned.txt
+- sorted_sources/good/88436_f74ff498f23077badd28e1a443f537ab.cleaned.txt
+- sorted_sources/good/Медицинская сексология и психотерапия сексуальных расстройств, Доморацкий В.А., 2020.cleaned.txt
+- sorted_sources/good/Сексуальный интеллект.cleaned.txt
+- sorted_sources/good/Яффе Секс в жизни женщины .cleaned.txt
+- sorted_sources/good/Яффе Секс в жизни мужчины .cleaned.txt
+- sorted_sources/sexologist/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- sorted_sources/sexologist/Osoznannoe_vlechenie1.cleaned.txt
+- sorted_sources/sexologist/seks-probl-i-dpdg.cleaned.txt
+- sorted_sources/sexologist/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- sorted_sources/sexologist/«Когда мы не ладим» Упражнение .cleaned.txt
+- sorted_sources/sexologist/Автостоп. Техника символдрамы.cleaned.txt
+- sorted_sources/sexologist/Аддикции отношений. Секс.cleaned.txt
+- sorted_sources/sexologist/Анкета_для_пациентов_женского_пола.cleaned.txt
+- sorted_sources/sexologist/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- sorted_sources/sexologist/Введение в сексологию.cleaned.txt
+- sorted_sources/sexologist/Женская психопатология Святоч.cleaned.txt
+- sorted_sources/sexologist/Женская сексуальность.cleaned.txt
+- sorted_sources/sexologist/Женские сексуальные дисфункции .cleaned.txt
+- sorted_sources/sexologist/Завис (през).cleaned.txt
+- sorted_sources/sexologist/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt
+- sorted_sources/sexologist/Индекс_эректильной_функции_международный.cleaned.txt
+- sorted_sources/sexologist/конс. жертв секс. насил..cleaned.txt
+- sorted_sources/sexologist/Куст розы. Символдрама.cleaned.txt
+- sorted_sources/sexologist/Любовь. ревность..cleaned.txt
+- sorted_sources/sexologist/М половая конституция табл.cleaned.txt
+- sorted_sources/sexologist/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt
+- sorted_sources/sexologist/Мужская сексуальность.cleaned.txt
+- sorted_sources/sexologist/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt
+- sorted_sources/sexologist/Нетипичный секс.cleaned.txt
+- sorted_sources/sexologist/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt
+- sorted_sources/sexologist/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- sorted_sources/sexologist/ПСР_психосексуальное_развитие_в_норме.cleaned.txt
+- sorted_sources/sexologist/Свядощ_Женская_Сексопатология_doc.cleaned.txt
+- sorted_sources/sexologist/секс дисф. начало (през).cleaned.txt
+- sorted_sources/sexologist/Секс. обслед. Ж (1).cleaned.txt
+- sorted_sources/sexologist/Сексуальные дисгармонии.cleaned.txt
+- sorted_sources/sexologist/Сексуальный интеллект.cleaned.txt
+- sorted_sources/sexologist/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- sorted_sources/sexologist/Стерн Д. - Глаз видит сам себя.cleaned.txt
+- sorted_sources/sexologist/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt
+- sorted_sources/sexologist/Стыд и секс.cleaned.txt
+- sorted_sources/sexologist/Супр. терапия (оконч).cleaned.txt
+- sorted_sources/sexologist/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt
+- sorted_sources/sexologist/СФЖ_сексуальная_формула_женская_Карта_эрогенных_зон_женская_.cleaned.txt
+- sorted_sources/sexologist/СФМ секс формула М опросник .cleaned.txt
+- sorted_sources/sexologist/Тест_опросник_удовлетвореености_браком.cleaned.txt
+- sorted_sources/sexologist/Х Каплан Сексуальная терапия.cleaned.txt
+- sorted_sources/sexologist/Шкала ПК для женщин.cleaned.txt
+- sorted_sources/sexologist/ЭГ в пт секс дисфункций.cleaned.txt
+- sorted_sources/sexologist/Эмили Нагоски - Как хочет женщина.cleaned.txt
+- sorted_sources/surveys/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- sorted_sources/unclear/Sexopatologia_Spravochnik_1990.cleaned.txt
+- knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- knowledge_intake/sexologist/duplicates/Международный_индекс_эректильной_функции_МИЭФ.cleaned.txt
+- knowledge_intake/sexologist/duplicates/СФМ секс формула М опросник .cleaned.txt
+- knowledge_intake/sexologist/manual_review_rare/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt
+- knowledge_intake/sexologist/ocr_suspect/М половая конституция табл.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Osoznannoe_vlechenie1.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/seks-probl-i-dpdg.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Аддикции отношений. Секс.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Анкета_для_пациентов_женского_пола.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Анкета_для_пациентов_мужского_пола.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Женская психопатология Святоч.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Индекс_женской_сексуальной_функции_ИЖСФ.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Индекс_эректильной_функции_международный.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/конс. жертв секс. насил..cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Куст розы. Символдрама.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Любовь. ревность..cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Опросник_Сексуальная_формула_мужская_СФМ.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Опросник_социосексуальной_ориентации_SOI.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Свядощ_Женская_Сексопатология_doc.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Сочетанное_использование_эриксоновского_гипноза_и_ДПДГ_в_клинической.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Стерн Д. - Глаз видит сам себя.cleaned.txt
+- knowledge_intake/sexologist/questionnaires/Супр. терапия (оконч).cleaned.txt
+- ...and 79 more
+
+## Recommended Canonical Source Folders
+
+- knowledge_intake/sexologist/approved (filtered to current production docstore names)
+- knowledge_intake/sexologist/approved_high_confidence (filtered to current production docstore names)
+- knowledge_intake/sexologist/approved_medium_confidence (filtered to current production docstore names)
+- expert_profiles/dinara/knowledge_sources/{website_vercel,b17_articles,telegram_channel} for future imported raw text
+- expert_profiles/dinara/author_voice/raw_samples for future author voice samples
+
+Current production source count detected from docstore: 20

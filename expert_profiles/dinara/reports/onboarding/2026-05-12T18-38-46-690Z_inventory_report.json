@@ -1,0 +1,106 @@
+{
+  "expert": "dinara",
+  "generated_at": "2026-05-12T18:38:46.687Z",
+  "expert_dir": "C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\expert_profiles\\dinara",
+  "profile": {
+    "path": "expert_profiles/dinara/profile.json",
+    "exists": true
+  },
+  "folders": [
+    {
+      "path": "knowledge_sources/website_vercel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/b17_articles",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/telegram_channel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "author_voice/raw_samples",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "reports/onboarding",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "reports/batch_reports",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "reports/feedback_reports",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    }
+  ],
+  "sources": [
+    {
+      "path": "knowledge_sources/website_vercel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/b17_articles",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/telegram_channel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    }
+  ],
+  "missing_folders": [],
+  "empty_folders": [
+    "knowledge_sources/website_vercel",
+    "knowledge_sources/b17_articles",
+    "knowledge_sources/telegram_channel",
+    "author_voice/raw_samples",
+    "reports/onboarding",
+    "reports/batch_reports",
+    "reports/feedback_reports"
+  ],
+  "warnings": [
+    "Source folder is empty: knowledge_sources/website_vercel",
+    "Source folder is empty: knowledge_sources/b17_articles",
+    "Source folder is empty: knowledge_sources/telegram_channel"
+  ],
+  "safety": {
+    "local_only": true,
+    "network_calls": false,
+    "production_mutation": false,
+    "faiss_mutation": false,
+    "ingestion": false,
+    "promote": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/campaign.schema.json",
+  "title": "Content Campaign",
+  "type": "object",
+  "required": ["campaign_id", "expert_id", "campaign_type", "duration_days", "planning_only", "nodes"],
+  "properties": {
+    "campaign_id": { "type": "string" },
+    "expert_id": { "type": "string" },
+    "campaign_type": {
+      "type": "string",
+      "enum": [
+        "warming_sequence",
+        "authority_building",
+        "launch_campaign",
+        "educational_series",
+        "emotional_storytelling_arc",
+        "conversion_sequence",
+        "faq_cluster",
+        "trust_building_flow"
+      ]
+    },
+    "campaign_label": { "type": "string" },
+    "duration_days": { "type": "integer", "minimum": 1 },
+    "planning_only": { "const": true },
+    "nodes": {
+      "type": "array",
+      "items": { "$ref": "./content-node.schema.json" }
+    }
+  }
+}

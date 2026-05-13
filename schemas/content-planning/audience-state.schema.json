@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/audience-state.schema.json",
+  "title": "Audience State",
+  "type": "string",
+  "enum": [
+    "cold",
+    "warming",
+    "engaged",
+    "trusting",
+    "considering_purchase",
+    "resistant",
+    "overwhelmed",
+    "returning_reader"
+  ]
+}

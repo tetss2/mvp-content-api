@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/cta.schema.json",
+  "title": "CTA Type",
+  "type": "string",
+  "enum": [
+    "soft_cta",
+    "educational_cta",
+    "emotional_cta",
+    "consultation_cta",
+    "dm_cta",
+    "save_share_cta",
+    "trust_cta",
+    "low_pressure_cta"
+  ]
+}

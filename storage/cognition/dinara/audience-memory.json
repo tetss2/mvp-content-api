@@ -1,0 +1,170 @@
+{
+  "schema_version": "2026-05-13.persistent_cognition.v1",
+  "expert_id": "dinara",
+  "day": 30,
+  "audience_state": {},
+  "identity_evolution": {
+    "positioning": "warm expert guide in psychology and sexology",
+    "dominantIdentityTraits": [
+      "warm",
+      "precise",
+      "nonjudgmental",
+      "therapeutic"
+    ],
+    "authorityArchetypeEvolution": [
+      {
+        "day": 1,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 2,
+        "archetype": "warm guide",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 3,
+        "archetype": "therapeutic narrator",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 4,
+        "archetype": "expert educator",
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 5,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 6,
+        "archetype": "warm guide",
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 7,
+        "archetype": "warm guide",
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 8,
+        "archetype": "warm guide",
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 9,
+        "archetype": "warm guide",
+        "topic": "adult attachment"
+      },
+      {
+        "day": 10,
+        "archetype": "warm guide",
+        "topic": "soft communication"
+      },
+      {
+        "day": 11,
+        "archetype": "therapeutic narrator",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 12,
+        "archetype": "expert educator",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 13,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 14,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 15,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 16,
+        "archetype": "warm guide",
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 17,
+        "archetype": "warm guide",
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 18,
+        "archetype": "warm guide",
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 19,
+        "archetype": "therapeutic narrator",
+        "topic": "adult attachment"
+      },
+      {
+        "day": 20,
+        "archetype": "expert educator",
+        "topic": "soft communication"
+      },
+      {
+        "day": 21,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 22,
+        "archetype": "warm guide",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 23,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 24,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 25,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 26,
+        "archetype": "warm guide",
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 27,
+        "archetype": "therapeutic narrator",
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 28,
+        "archetype": "expert educator",
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 29,
+        "archetype": "warm guide",
+        "topic": "adult attachment"
+      },
+      {
+        "day": 30,
+        "archetype": "warm guide",
+        "topic": "soft communication"
+      }
+    ],
+    "communicationDrift": 0.158,
+    "voiceConsistency": 0.842
+  },
+  "updated_at": "2026-05-13T19:14:17.471Z"
+}

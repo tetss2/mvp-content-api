@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/growth-pattern.schema.json",
+  "title": "Growth Pattern",
+  "type": "object",
+  "required": ["pattern", "pack_id", "driver", "signal"],
+  "properties": {
+    "pattern": {
+      "type": "string",
+      "enum": [
+        "viral_like_structure",
+        "high_retention_structure",
+        "trust_accelerator",
+        "authority_amplifier",
+        "conversion_pattern",
+        "high_save_pattern",
+        "high_share_pattern"
+      ]
+    },
+    "pack_id": { "type": "string" },
+    "driver": { "type": ["string", "number", "null"] },
+    "signal": { "type": "number" }
+  }
+}

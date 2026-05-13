@@ -1,0 +1,8 @@
+{
+  "expert_id": "finance_creator_demo",
+  "supports_cta_generation": true,
+  "allowed_cta_styles": ["none", "soft", "direct"],
+  "default_cta_style": "soft",
+  "cta_aggressiveness_limit": "medium",
+  "forbidden_cta_patterns": ["guaranteed_return", "fear_of_missing_out_pressure", "personalized_investment_push"]
+}

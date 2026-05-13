@@ -1,0 +1,21 @@
+{
+  "style_match_score": 0.74,
+  "structure_quality_score": 1,
+  "educational_clarity_score": 0.83,
+  "emotional_warmth_score": 0.53,
+  "redundancy_score": 1,
+  "hallucination_risk": "low",
+  "cta_quality": "weak",
+  "expert_tone_match_score": 0.77,
+  "context_utilization_quality_score": 0.65,
+  "overall_score": 0.79,
+  "warnings": [
+    "missing_cta"
+  ],
+  "metrics": {
+    "word_count": 82,
+    "repeated_line_ratio": 0,
+    "cta_present": false,
+    "forbidden_matches": []
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "expert_id": "dinara",
+  "style_memory_scope": "expert_profiles/dinara/voice",
+  "voice_profile_required": true,
+  "generic_ai_suppression_required": true,
+  "forbid_cross_expert_voice_examples": true,
+  "style_principles": ["warmth", "introspection", "metaphor_with_restraint", "reader_dignity", "soft_cta"],
+  "disallowed_style_sources": ["configs/experts/relationship_coach_demo", "configs/experts/medical_educator_demo", "configs/experts/finance_creator_demo"]
+}

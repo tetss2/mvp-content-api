@@ -1,0 +1,121 @@
+{
+  "rhetorical_questions": [
+    {
+      "value": "И тогда путь начинается не с требования к себе, а с внимательного исследования: где я теряю контакт с собой?",
+      "count": 3
+    },
+    {
+      "value": "Намного точнее спрашивать: что сейчас происходит с безопасностью, доверием, стыдом, усталостью и правом хотеть по-своему?",
+      "count": 3
+    },
+    {
+      "value": "Что я делаю из страха обидеть, потерять, не соответствовать?",
+      "count": 1
+    },
+    {
+      "value": "Что я хочу сама?",
+      "count": 1
+    }
+  ],
+  "reader_addressing": {
+    "formal_you_score": 0.464,
+    "informal_you_score": 0.557,
+    "shared_we_score": 0.186
+  },
+  "conversational_bridges": [
+    {
+      "value": "А если тема давно болит, ее можно бережно разобрать в консультации.",
+      "count": 3
+    },
+    {
+      "value": "Если откликается, сохраните этот текст и вернитесь к нему спокойно.",
+      "count": 3
+    },
+    {
+      "value": "И тогда путь начинается не с требования к себе, а с внимательного исследования: где я теряю контакт с собой?",
+      "count": 3
+    },
+    {
+      "value": "Намного точнее спрашивать: что сейчас происходит с безопасностью, доверием, стыдом, усталостью и правом хотеть по-своему?",
+      "count": 3
+    },
+    {
+      "value": "Например, снижение желания может быть не отказом от близости, а способом психики защититься от давления.",
+      "count": 3
+    },
+    {
+      "value": "У женской сексуальности много слоев: телесный, эмоциональный, relational, культурный.",
+      "count": 3
+    },
+    {
+      "value": "# Профиль голоса автора: dinara Сгенерировано: 2026-05-12T17:13:47.333Z Источник текстов пока пуст.",
+      "count": 1
+    },
+    {
+      "value": "# Voice profile: dinara Generated: 2026-05-12T21:46:23.283Z Status: empty_sources ## Tone Недостаточно данных: добавьте .txt или .md файлы в raw_samples или source folders.",
+      "count": 1
+    },
+    {
+      "value": "## Что сделать - Положите тексты автора в `C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\author_profiles\\dinara\\voice_sources` - Подойдут `.txt` и `.md`: посты с сайта, Telegram-канала, рассылок, заметок - После добавления файлов запустите `npm run author:analyze:dinara` ## Что будет проанализировано - typical tone - sentence length - paragraph length - common opening patterns - common closing patterns - common phrases - emoji usage - how author explains complex things - words/phrases to avoid - audience address style - formatting habits - examples of author-like phrasing Put Dinara's source texts here as .txt or .md files.",
+      "count": 1
+    },
+    {
+      "value": "## Common Phrases - Недостаточно данных.",
+      "count": 1
+    },
+    {
+      "value": "## CTA Style - Недостаточно данных.",
+      "count": 1
+    },
+    {
+      "value": "## Paragraph Rhythm - Average sentences: 0 - Average words: 0 - Blank lines between paragraphs: no ## Emoji Usage - Total: 0 - Per 1000 words: 0 - Common: none ## Taboo Patterns - Недостаточно данных.",
+      "count": 1
+    },
+    {
+      "value": "## Sentence Length - Average words: 0 - Short sentences: 0% - Long sentences: 0% ## Reader Addressing Style Недостаточно данных.",
+      "count": 1
+    },
+    {
+      "value": "## Topics And Recurring Motifs - Недостаточно данных.",
+      "count": 1
+    },
+    {
+      "value": "В сексологии мы не оцениваем человека по одной реакции.",
+      "count": 1
+    },
+    {
+      "value": "В условном примере женщина говорит: я понимаю головой, что хочу близости, но тело как будто закрывается.",
+      "count": 1
+    },
+    {
+      "value": "Важно смотреть на контекст: изменилось ли желание резко, есть ли боль, напряжение, стыд, усталость, конфликт в отношениях или страх близости.",
+      "count": 1
+    },
+    {
+      "value": "Если близость стала обязанностью, желание часто уходит первым.",
+      "count": 1
+    },
+    {
+      "value": "Иногда вопрос не в желании, а в безопасности рядом с ним.",
+      "count": 1
+    },
+    {
+      "value": "Иногда человек приходит не с готовым вопросом, а с ощущением: со мной что-то не так, хотя на самом деле внутри давно живет напряжение.",
+      "count": 1
+    }
+  ],
+  "warmth_markers": [
+    {
+      "value": "А если тема давно болит, ее можно бережно разобрать в консультации.",
+      "count": 3
+    },
+    {
+      "value": "Нежность к себе тоже часть сексуальности.",
+      "count": 1
+    },
+    {
+      "value": "Good inputs: - website posts - Telegram channel posts - newsletters - edited examples that Dinara approves Then run: ```bash npm run author:analyze:dinara ``` Разберем тему спокойно: что здесь важно понимать, где часто появляется путаница и какой первый бережный шаг можно сделать.",
+      "count": 1
+    }
+  ]
+}

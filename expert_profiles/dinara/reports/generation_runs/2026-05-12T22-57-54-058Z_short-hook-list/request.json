@@ -1,0 +1,14 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "short_hook",
+  "user_request": "Сделай короткие хуки про женскую сексуальность для Reels.",
+  "output_constraints": {
+    "platform": "instagram",
+    "length": "short",
+    "tone": "provocative",
+    "format": "hook_list",
+    "cta_style": "none"
+  },
+  "adapter": "mock",
+  "local_only": true
+}

@@ -1,0 +1,12 @@
+{
+  "expert_id": "relationship_coach_demo",
+  "allowed_platforms": ["telegram", "instagram"],
+  "allowed_formats": ["post", "hook_list", "reel_script"],
+  "default_output": {
+    "platform": "instagram",
+    "format": "reel_script",
+    "length": "short",
+    "language": "ru"
+  },
+  "simulation_only": true
+}

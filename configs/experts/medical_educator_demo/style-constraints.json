@@ -1,0 +1,9 @@
+{
+  "expert_id": "medical_educator_demo",
+  "style_memory_scope": "configs/experts/medical_educator_demo",
+  "voice_profile_required": true,
+  "generic_ai_suppression_required": true,
+  "forbid_cross_expert_voice_examples": true,
+  "style_principles": ["clarity", "precision", "calm_boundaries", "evidence_language"],
+  "disallowed_style_sources": ["expert_profiles/dinara", "configs/experts/relationship_coach_demo", "configs/experts/finance_creator_demo"]
+}

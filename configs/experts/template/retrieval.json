@@ -1,0 +1,9 @@
+{
+  "expert_id": "new_expert_id",
+  "retrieval_namespace": "new_expert_id_main",
+  "allowed_source_roots": ["expert_profiles/new_expert_id", "knowledge_intake/new_expert_id"],
+  "blocked_cross_expert_namespaces": [],
+  "default_match_count": 6,
+  "requires_namespace_filter": true,
+  "simulation_only": true
+}

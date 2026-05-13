@@ -1,0 +1,260 @@
+{
+  "type": "ingestion_dry_run",
+  "kb_id": "sexologist",
+  "session_id": "classified_2026-05-12T13-54-35-025Z",
+  "generated_at": "2026-05-12T13:54:35.567Z",
+  "summary": {
+    "total_cleaning_items": 20,
+    "planned_sources": 20,
+    "planned_chunks": 1179,
+    "rejected_or_skipped_items": 0,
+    "estimated_tokens": 668315,
+    "estimated_embedding_cost_usd": 0.0133663,
+    "duplicate_candidates": 0,
+    "duplicate_source_copies": 0,
+    "excluded_by_latest_reports": 2,
+    "quality_summary": {
+      "high": 20,
+      "medium": 0,
+      "low": 0,
+      "reject": 0
+    }
+  },
+  "planned_sources": [
+    {
+      "item_id": "classified_662765757eba97a7",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 3,
+      "estimated_tokens": 1445
+    },
+    {
+      "item_id": "classified_e2b902c207820907",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 7,
+      "estimated_tokens": 4493
+    },
+    {
+      "item_id": "classified_fb5966c0e363f807",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 2,
+      "estimated_tokens": 1046
+    },
+    {
+      "item_id": "classified_bf6a7cc3744efb69",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 11,
+      "estimated_tokens": 6460
+    },
+    {
+      "item_id": "classified_b77ea49d2cfd07d3",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 11,
+      "estimated_tokens": 6515
+    },
+    {
+      "item_id": "classified_b7d0078646ff5d5d",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 19,
+      "estimated_tokens": 11958
+    },
+    {
+      "item_id": "classified_39ae059536c19e9b",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 30,
+      "estimated_tokens": 18968
+    },
+    {
+      "item_id": "classified_866a19a73100046b",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 25,
+      "estimated_tokens": 15615
+    },
+    {
+      "item_id": "classified_000c5297ff22e35d",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 27,
+      "estimated_tokens": 17149
+    },
+    {
+      "item_id": "classified_5d6e57b85ae9cb0b",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 18,
+      "estimated_tokens": 11314
+    },
+    {
+      "item_id": "classified_250ba854eb4e51ff",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 21,
+      "estimated_tokens": 12965
+    },
+    {
+      "item_id": "classified_d71a68f98777e424",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 43,
+      "estimated_tokens": 27007
+    },
+    {
+      "item_id": "classified_4c0bb9e126e0c8d0",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 14,
+      "estimated_tokens": 8914
+    },
+    {
+      "item_id": "classified_657e310ef3566c8d",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 13,
+      "estimated_tokens": 7793
+    },
+    {
+      "item_id": "classified_db2d4bec6155132f",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 204,
+      "estimated_tokens": 106504
+    },
+    {
+      "item_id": "classified_20536fbf7e0715a5",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 15,
+      "estimated_tokens": 9718
+    },
+    {
+      "item_id": "classified_edcab2d6acac947d",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 17,
+      "estimated_tokens": 10541
+    },
+    {
+      "item_id": "classified_c45e292f6c737764",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 43,
+      "estimated_tokens": 26274
+    },
+    {
+      "item_id": "classified_27fada6f711ffeea",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 348,
+      "estimated_tokens": 191227
+    },
+    {
+      "item_id": "classified_631ee44d7bc89b0d",
+      "source_type": "classified_text",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "quality_label": "HIGH",
+      "quality_score": 0.96,
+      "recommended_action": "keep",
+      "planned_chunks": 308,
+      "estimated_tokens": 185514
+    }
+  ],
+  "duplicate_candidates": [],
+  "rejected_items": [],
+  "source_folders_included": [
+    "knowledge_intake/sexologist/approved",
+    "knowledge_intake/sexologist/approved_high_confidence",
+    "knowledge_intake/sexologist/approved_medium_confidence"
+  ],
+  "source_folders_excluded": [
+    "knowledge_intake/sexologist/questionnaires",
+    "knowledge_intake/sexologist/ocr_suspect",
+    "knowledge_intake/sexologist/duplicates",
+    "knowledge_intake/sexologist/review",
+    "knowledge_intake/sexologist/manual_review_rare"
+  ],
+  "duplicate_source_copies": [],
+  "excluded_by_latest_reports": [
+    {
+      "source_file": "knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt",
+      "latest_category": "manual_review_rare",
+      "latest_report": "reports/sexologist_reclassification_report.json",
+      "reason": "latest_classification_report_does_not_approve_this_hash"
+    },
+    {
+      "source_file": "knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt",
+      "latest_category": "questionnaires",
+      "latest_report": "reports/sexologist_reclassification_report.json",
+      "reason": "latest_classification_report_does_not_approve_this_hash"
+    }
+  ],
+  "safeguards": {
+    "openai_api_called": false,
+    "production_current_index_modified": false,
+    "faiss_rebuild_started": false,
+    "production_ingestion_started": false
+  }
+}

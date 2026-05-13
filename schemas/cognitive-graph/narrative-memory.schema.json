@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/narrative-memory.schema.json",
+  "title": "Long-Term Narrative Memory",
+  "type": "object",
+  "required": [
+    "arcs",
+    "recurringMotifs",
+    "unresolvedThreads",
+    "emotionalCallbacks",
+    "authorityProgression",
+    "audienceJourneyContinuity"
+  ],
+  "properties": {
+    "arcs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "cluster", "title", "startedDay", "lastUpdatedDay", "stage", "contentDays", "primaryTopics", "emotionalPath"],
+        "properties": {
+          "id": { "type": "string" },
+          "cluster": { "type": "string" },
+          "title": { "type": "string" },
+          "startedDay": { "type": "integer", "minimum": 1 },
+          "lastUpdatedDay": { "type": "integer", "minimum": 1 },
+          "stage": { "type": "string", "enum": ["opening", "building", "deepening", "resolving"] },
+          "contentDays": { "type": "array", "items": { "type": "integer", "minimum": 1 } },
+          "primaryTopics": { "type": "array", "items": { "type": "string" } },
+          "emotionalPath": { "type": "array", "items": { "type": "string" } },
+          "openThreads": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "recurringMotifs": { "type": "object", "additionalProperties": { "type": "number" } },
+    "unresolvedThreads": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "day", "topic", "question", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "day": { "type": "integer", "minimum": 1 },
+          "topic": { "type": "string" },
+          "question": { "type": "string" },
+          "status": { "type": "string", "enum": ["unresolved", "softly_resolved", "resolved"] }
+        },
+        "additionalProperties": false
+      }
+    },
+    "emotionalCallbacks": { "type": "array", "items": { "type": "object" } },
+    "authorityProgression": { "type": "array", "items": { "type": "object" } },
+    "audienceJourneyContinuity": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,11 @@
+{
+  "author": "dinara",
+  "generated_at": "2026-05-12T17:13:47.333Z",
+  "source_files": [],
+  "status": "empty_source_folder",
+  "instructions": [
+    "Положите тексты автора в C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\author_profiles\\dinara\\voice_sources",
+    "Подойдут .txt и .md файлы: посты с сайта, Telegram-канала, рассылок, заметок.",
+    "После добавления файлов запустите npm run author:analyze:dinara"
+  ]
+}

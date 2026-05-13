@@ -1,0 +1,17 @@
+{
+  "expert_id": "medical_educator_demo",
+  "allowed_content_kinds": ["educational_post", "faq_answer", "short_hook", "long_article", "reel_script"],
+  "forbidden_content_kinds": ["diagnosis", "treatment_plan", "prescription", "emergency_instruction", "legal_advice"],
+  "default_generation_intent": "educational_post",
+  "default_language": "ru",
+  "platform_defaults": {
+    "telegram": { "length": "long", "format": "post", "cta_style": "none" },
+    "instagram": { "length": "medium", "format": "carousel_script", "cta_style": "none" }
+  },
+  "prompt_isolation": {
+    "requires_expert_id": true,
+    "requires_voice_profile_path": true,
+    "forbid_shared_prompt_memory": true,
+    "forbid_unscoped_style_examples": true
+  }
+}

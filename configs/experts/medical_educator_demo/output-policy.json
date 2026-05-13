@@ -1,0 +1,12 @@
+{
+  "expert_id": "medical_educator_demo",
+  "allowed_platforms": ["telegram", "instagram"],
+  "allowed_formats": ["post", "answer", "carousel_script", "reel_script"],
+  "default_output": {
+    "platform": "telegram",
+    "format": "post",
+    "length": "long",
+    "language": "ru"
+  },
+  "simulation_only": true
+}

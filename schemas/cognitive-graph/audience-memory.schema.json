@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/audience-memory.schema.json",
+  "title": "Audience Memory Simulation State",
+  "type": "object",
+  "required": [
+    "heardTopics",
+    "topicSaturation",
+    "repetitionProbability",
+    "emotionalFatigue",
+    "trustFamiliarity",
+    "noveltyScores",
+    "reinforcementOpportunities"
+  ],
+  "properties": {
+    "heardTopics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["count", "lastHeardDay", "memoryStrength"],
+        "properties": {
+          "count": { "type": "integer", "minimum": 0 },
+          "lastHeardDay": { "type": "integer", "minimum": 1 },
+          "memoryStrength": { "type": "number", "minimum": 0, "maximum": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "topicSaturation": { "type": "object", "additionalProperties": { "type": "number" } },
+    "repetitionProbability": { "type": "object", "additionalProperties": { "type": "number" } },
+    "emotionalFatigue": { "type": "object", "additionalProperties": { "type": "number" } },
+    "trustFamiliarity": { "type": "object", "additionalProperties": { "type": "number" } },
+    "noveltyScores": { "type": "object", "additionalProperties": { "type": "number" } },
+    "reinforcementOpportunities": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

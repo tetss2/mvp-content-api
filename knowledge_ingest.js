@@ -2,7 +2,7 @@ import { mkdirSync, promises as fs } from "fs";
 import { createHash } from "crypto";
 import { spawnSync } from "child_process";
 import os from "os";
-import { dirname, isAbsolute, join, relative } from "path";
+import { basename, dirname, isAbsolute, join, relative } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 
@@ -18,6 +18,8 @@ const ESTIMATED_EMBEDDING_COST_PER_1M_TOKENS = Number(process.env.EMBEDDING_COST
 const MAX_CHUNK_TOKENS = 700;
 const CHUNK_OVERLAP_TOKENS = 80;
 const RETRYABLE_EMBEDDING_STATUS = new Set([408, 409, 429, 500, 502, 503, 504]);
+const CLASSIFIED_INCLUDED_FOLDERS = ["approved", "approved_high_confidence", "approved_medium_confidence"];
+const CLASSIFIED_EXCLUDED_FOLDERS = ["questionnaires", "ocr_suspect", "duplicates", "review", "manual_review_rare"];
 
 function nowIso() {
   return new Date().toISOString();
@@ -29,6 +31,10 @@ function timestampId() {
 
 function sha1(value) {
   return createHash("sha1").update(value).digest("hex");
+}
+
+function sha256(value) {
+  return createHash("sha256").update(value, "utf-8").digest("hex");
 }
 
 function repoRelative(path) {
@@ -78,6 +84,7 @@ function parseArgs(argv) {
     dryRun: false,
     apply: false,
     validateStaging: false,
+    classifiedIntake: false,
     force: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
@@ -92,6 +99,8 @@ function parseArgs(argv) {
       args.apply = true;
     } else if (arg === "--validate-staging") {
       args.validateStaging = true;
+    } else if (arg === "--classified-intake") {
+      args.classifiedIntake = true;
     } else if (arg === "--force") {
       args.force = true;
     }
@@ -102,9 +111,15 @@ function parseArgs(argv) {
 function validateArgs(args) {
   if (!args.kb) throw new Error("Missing required --kb.");
   if (!KNOWN_KBS.has(args.kb)) throw new Error(`Unknown kb "${args.kb}". Expected: psychologist or sexologist.`);
-  if (!args.session) throw new Error("Missing required --session.");
   const modes = [args.dryRun, args.apply, args.validateStaging].filter(Boolean).length;
   if (modes !== 1) throw new Error("Choose exactly one mode: --dry-run, --apply, or --validate-staging. Production promote is handled by knowledge_promote.js.");
+  if (args.classifiedIntake) {
+    if (args.kb !== "sexologist") throw new Error("--classified-intake is only allowed with --kb sexologist.");
+    if (args.session) throw new Error("--classified-intake generates its own internal session_id; do not pass --session.");
+    if (args.validateStaging) throw new Error("--classified-intake is only for --dry-run or --apply.");
+    return;
+  }
+  if (!args.session && !(args.kb === "sexologist" && args.validateStaging)) throw new Error("Missing required --session.");
 }
 
 function kbPaths(kb, sessionId = null) {
@@ -185,6 +200,175 @@ function chunkText(text, maxTokens = MAX_CHUNK_TOKENS, overlapTokens = CHUNK_OVE
 
   if (current.length) chunks.push(current.join("\n\n"));
   return chunks.filter((chunk) => chunk.trim().length > 0);
+}
+
+async function listTxtFiles(dir) {
+  if (!(await exists(dir))) return [];
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const path = join(dir, entry.name);
+    if (entry.isDirectory()) {
+      files.push(...await listTxtFiles(path));
+    } else if (entry.isFile() && entry.name.endsWith(".txt")) {
+      files.push(path);
+    }
+  }
+  return files;
+}
+
+function isInsideDir(path, dir) {
+  const rel = relative(resolvePath(dir), resolvePath(path));
+  return rel && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
+function classifiedIncludedDirs(kb) {
+  return CLASSIFIED_INCLUDED_FOLDERS.map((folder) => join(INTAKE_ROOT, kb, folder));
+}
+
+function classifiedExcludedDirs(kb) {
+  return CLASSIFIED_EXCLUDED_FOLDERS.map((folder) => join(INTAKE_ROOT, kb, folder));
+}
+
+function assertAllowedClassifiedSource(kb, path) {
+  const allowedDirs = classifiedIncludedDirs(kb);
+  if (!allowedDirs.some((dir) => isInsideDir(path, dir))) {
+    throw new Error(`Classified intake source outside allowed folders: ${repoRelative(path)}`);
+  }
+  if (classifiedExcludedDirs(kb).some((dir) => isInsideDir(path, dir))) {
+    throw new Error(`Classified intake source inside excluded folder: ${repoRelative(path)}`);
+  }
+}
+
+function normalizedTextHash(text) {
+  return sha1((text || "").toLowerCase().replace(/\s+/g, " ").trim());
+}
+
+function normalizedTextHashSha256(text) {
+  return sha256((text || "").toLowerCase().replace(/\r\n/g, "\n").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim());
+}
+
+async function loadClassifiedApprovalDecisionIndex() {
+  const reports = [
+    {
+      path: join(ROOT, "reports", "sexologist_classification_report.json"),
+      approvedCategories: new Set(["approved"]),
+    },
+    {
+      path: join(ROOT, "reports", "sexologist_reclassification_report.json"),
+      approvedCategories: new Set(["approved_high_confidence", "approved_medium_confidence"]),
+    },
+  ];
+  const byRawHash = new Map();
+  const byNormalizedHash = new Map();
+
+  for (const report of reports) {
+    if (!(await exists(report.path))) continue;
+    const data = await readJson(report.path);
+    for (const item of data.items || []) {
+      const category = item.category || null;
+      const approved = report.approvedCategories.has(category);
+      const decision = {
+        approved,
+        category,
+        report: repoRelative(report.path),
+      };
+      if (item.raw_hash) byRawHash.set(item.raw_hash, decision);
+      if (item.normalized_hash) byNormalizedHash.set(item.normalized_hash, decision);
+    }
+  }
+
+  return { byRawHash, byNormalizedHash };
+}
+
+async function buildClassifiedIntake(kb, sessionId = `classified_${timestampId()}`) {
+  if (kb !== "sexologist") throw new Error("Classified intake is only allowed for sexologist KB.");
+
+  const includedDirs = classifiedIncludedDirs(kb);
+  const excludedDirs = classifiedExcludedDirs(kb);
+  const decisionIndex = await loadClassifiedApprovalDecisionIndex();
+  const seenTextHashes = new Map();
+  const duplicateSourceCopies = [];
+  const excludedByLatestReports = [];
+  const items = [];
+
+  for (const folder of CLASSIFIED_INCLUDED_FOLDERS) {
+    const dir = join(INTAKE_ROOT, kb, folder);
+    const files = (await listTxtFiles(dir)).sort((a, b) => repoRelative(a).localeCompare(repoRelative(b)));
+    for (const path of files) {
+      assertAllowedClassifiedSource(kb, path);
+      const text = await fs.readFile(path, "utf-8");
+      const hash = normalizedTextHash(text);
+      const reportNormalizedHash = normalizedTextHashSha256(text);
+      const rawHash = sha256(text);
+      const latestDecision = decisionIndex.byNormalizedHash.get(reportNormalizedHash) || decisionIndex.byRawHash.get(rawHash) || null;
+      if (latestDecision && !latestDecision.approved) {
+        excludedByLatestReports.push({
+          source_file: repoRelative(path),
+          latest_category: latestDecision.category,
+          latest_report: latestDecision.report,
+          reason: "latest_classification_report_does_not_approve_this_hash",
+        });
+        continue;
+      }
+      if (seenTextHashes.has(hash)) {
+        duplicateSourceCopies.push({
+          source_file: repoRelative(path),
+          duplicate_of: seenTextHashes.get(hash),
+          reason: "same_normalized_text_hash_in_allowed_classified_folders",
+        });
+        continue;
+      }
+      seenTextHashes.set(hash, repoRelative(path));
+
+      const itemId = `classified_${sha1(repoRelative(path)).slice(0, 16)}`;
+      const qualityLabel = folder === "approved_medium_confidence" ? "MEDIUM" : "HIGH";
+      const qualityScore = folder === "approved_medium_confidence" ? 0.82 : 0.96;
+      items.push({
+        item_id: itemId,
+        source_type: "classified_text",
+        extension: ".txt",
+        extraction_status: "classified_approved",
+        status: "ready_for_ingestion",
+        char_count: text.length,
+        estimated_tokens: estimateTokens(text),
+        detected_language: "ru",
+        quality_label: qualityLabel,
+        quality_score: qualityScore,
+        recommended_action: "keep",
+        original_name: basename(path),
+        cleaned_path: repoRelative(path),
+        classified_source_folder: folder,
+        content_hash: hash,
+      });
+    }
+  }
+
+  const session = {
+    session_id: sessionId,
+    target_kb: kb,
+    status: "cleaned_ready_for_ingestion",
+    source_type: "classified_intake",
+    generated_at: nowIso(),
+  };
+  const cleaningReport = {
+    type: "classified_intake_cleaning_report",
+    kb_id: kb,
+    session_id: sessionId,
+    generated_at: nowIso(),
+    source_folders_included: includedDirs.map(repoRelative),
+    source_folders_excluded: excludedDirs.map(repoRelative),
+    duplicate_source_copies: duplicateSourceCopies,
+    excluded_by_latest_reports: excludedByLatestReports,
+    summary: {
+      source_files_included: items.length,
+      duplicate_source_copies: duplicateSourceCopies.length,
+      excluded_by_latest_reports: excludedByLatestReports.length,
+    },
+    items,
+  };
+
+  return { session, cleaningReport };
 }
 
 async function loadCurrentDocstoreHashes(kb) {
@@ -292,6 +476,8 @@ function summarizePlan(cleaningReport, plan) {
     estimated_tokens: estimatedTokens,
     estimated_embedding_cost_usd: Number((estimatedTokens / 1_000_000 * ESTIMATED_EMBEDDING_COST_PER_1M_TOKENS).toFixed(8)),
     duplicate_candidates: plan.duplicateCandidates.length,
+    duplicate_source_copies: cleaningReport.duplicate_source_copies?.length || 0,
+    excluded_by_latest_reports: cleaningReport.excluded_by_latest_reports?.length || 0,
     quality_summary: {
       high: (cleaningReport.items || []).filter((item) => item.quality_label === "HIGH").length,
       medium: (cleaningReport.items || []).filter((item) => item.quality_label === "MEDIUM").length,
@@ -316,7 +502,11 @@ function dryRunMarkdown(report) {
     `- Estimated tokens: ${report.summary.estimated_tokens}`,
     `- Estimated embedding cost USD: ${report.summary.estimated_embedding_cost_usd}`,
     `- Duplicate candidates: ${report.summary.duplicate_candidates}`,
+    `- Duplicate source copies skipped: ${report.summary.duplicate_source_copies || 0}`,
+    `- Excluded by latest classification reports: ${report.summary.excluded_by_latest_reports || 0}`,
     `- Rejected/skipped items: ${report.summary.rejected_or_skipped_items}`,
+    ...(report.source_folders_included?.length ? [`- Source folders included: ${report.source_folders_included.map((folder) => `\`${folder}\``).join(", ")}`] : []),
+    ...(report.source_folders_excluded?.length ? [`- Source folders excluded: ${report.source_folders_excluded.map((folder) => `\`${folder}\``).join(", ")}`] : []),
     ``,
     `## Quality Summary`,
     ``,
@@ -401,6 +591,10 @@ async function dryRun(kb, session, cleaningReport) {
     planned_sources: plan.plannedSources,
     duplicate_candidates: plan.duplicateCandidates,
     rejected_items: plan.rejectedItems,
+    source_folders_included: cleaningReport.source_folders_included || [],
+    source_folders_excluded: cleaningReport.source_folders_excluded || [],
+    duplicate_source_copies: cleaningReport.duplicate_source_copies || [],
+    excluded_by_latest_reports: cleaningReport.excluded_by_latest_reports || [],
     safeguards: {
       openai_api_called: false,
       production_current_index_modified: false,
@@ -580,6 +774,9 @@ async function applyIngestion(kb, sessionPath, session, cleaningReport, force) {
       kb_id: kb,
       session_id: session.session_id,
       source_status: session.status,
+      source_type: session.source_type || "session_intake",
+      source_folders_included: cleaningReport.source_folders_included || [],
+      source_folders_excluded: cleaningReport.source_folders_excluded || [],
       summary: summarizePlan(cleaningReport, plan),
       safeguards: {
         wrote_only_staging: true,
@@ -597,11 +794,13 @@ async function applyIngestion(kb, sessionPath, session, cleaningReport, force) {
     mkdirSync(dirname(paths.staging), { recursive: true });
     await fs.rename(tempStaging, paths.staging);
 
-    session.status = "ingestion_staged";
-    session.ingestion_staged_at = nowIso();
-    session.ingestion_staging_dir = repoRelative(paths.staging);
-    session.updated_at = session.ingestion_staged_at;
-    await writeJson(sessionPath, session);
+    if (sessionPath) {
+      session.status = "ingestion_staged";
+      session.ingestion_staged_at = nowIso();
+      session.ingestion_staging_dir = repoRelative(paths.staging);
+      session.updated_at = session.ingestion_staged_at;
+      await writeJson(sessionPath, session);
+    }
 
     const report = {
       type: "ingestion_apply",
@@ -610,13 +809,19 @@ async function applyIngestion(kb, sessionPath, session, cleaningReport, force) {
       generated_at: nowIso(),
       staging_dir: repoRelative(paths.staging),
       summary: ingestionManifest.summary,
+      source_folders_included: cleaningReport.source_folders_included || [],
+      source_folders_excluded: cleaningReport.source_folders_excluded || [],
+      duplicate_source_copies: cleaningReport.duplicate_source_copies || [],
+      excluded_by_latest_reports: cleaningReport.excluded_by_latest_reports || [],
       validation,
       safeguards: ingestionManifest.safeguards,
     };
     report.reports = await writeReport(kb, session.session_id, "ingestion_apply", report, applyMarkdown(report));
-    session.ingestion_apply_report_json = report.reports.json;
-    session.ingestion_apply_report_md = report.reports.markdown;
-    await writeJson(sessionPath, session);
+    if (sessionPath) {
+      session.ingestion_apply_report_json = report.reports.json;
+      session.ingestion_apply_report_md = report.reports.markdown;
+      await writeJson(sessionPath, session);
+    }
     return report;
   } catch (err) {
     await fs.rm(tempStaging, { recursive: true, force: true });
@@ -709,21 +914,54 @@ async function validateStagingForSession(kb, session) {
   return report;
 }
 
+async function latestStagingSessionId(kb) {
+  const stagingRoot = kbPaths(kb).stagingRoot;
+  const entries = await fs.readdir(stagingRoot, { withFileTypes: true }).catch(() => []);
+  const dirs = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const path = join(stagingRoot, entry.name);
+    const stat = await fs.stat(path);
+    dirs.push({ sessionId: entry.name, mtimeMs: stat.mtimeMs });
+  }
+  dirs.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return dirs[0]?.sessionId || null;
+}
+
+async function validateLatestStaging(kb) {
+  if (kb !== "sexologist") throw new Error("Sessionless --validate-staging is only allowed for --kb sexologist.");
+  const sessionId = await latestStagingSessionId(kb);
+  if (!sessionId) throw new Error(`No staging directories found under ${repoRelative(kbPaths(kb).stagingRoot)}`);
+  const session = { session_id: sessionId };
+  return validateStagingForSession(kb, session);
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   validateArgs(args);
   await ensureKbDirs(args.kb);
-  const { sessionPath, session } = await loadSession(args.kb, args.session);
 
   let result;
-  if (args.dryRun) {
-    const { report: cleaningReport } = await loadCleaningReport(args.kb, args.session);
-    result = await dryRun(args.kb, session, cleaningReport);
-  } else if (args.apply) {
-    const { report: cleaningReport } = await loadCleaningReport(args.kb, args.session);
-    result = await applyIngestion(args.kb, sessionPath, session, cleaningReport, args.force);
-  } else if (args.validateStaging) {
-    result = await validateStagingForSession(args.kb, session);
+  if (args.classifiedIntake) {
+    const { session, cleaningReport } = await buildClassifiedIntake(args.kb);
+    if (args.dryRun) {
+      result = await dryRun(args.kb, session, cleaningReport);
+    } else if (args.apply) {
+      result = await applyIngestion(args.kb, null, session, cleaningReport, args.force);
+    }
+  } else if (!args.session && args.validateStaging) {
+    result = await validateLatestStaging(args.kb);
+  } else {
+    const { sessionPath, session } = await loadSession(args.kb, args.session);
+    if (args.dryRun) {
+      const { report: cleaningReport } = await loadCleaningReport(args.kb, args.session);
+      result = await dryRun(args.kb, session, cleaningReport);
+    } else if (args.apply) {
+      const { report: cleaningReport } = await loadCleaningReport(args.kb, args.session);
+      result = await applyIngestion(args.kb, sessionPath, session, cleaningReport, args.force);
+    } else if (args.validateStaging) {
+      result = await validateStagingForSession(args.kb, session);
+    }
   }
 
   console.log(JSON.stringify({ ok: true, result }, null, 2));

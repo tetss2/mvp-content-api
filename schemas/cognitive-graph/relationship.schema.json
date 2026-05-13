@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/relationship.schema.json",
+  "title": "Cognitive Graph Relationship",
+  "type": "object",
+  "required": [
+    "id",
+    "source",
+    "target",
+    "relationshipType",
+    "weight",
+    "topicDistance",
+    "narrativeProximity",
+    "emotionalOverlap",
+    "trustOverlap"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "source": { "type": "string" },
+    "target": { "type": "string" },
+    "relationshipType": {
+      "type": "string",
+      "enum": ["cluster_affinity", "adjacent_memory", "authority_bridge", "conversion_bridge"]
+    },
+    "weight": { "type": "number", "minimum": 0, "maximum": 1 },
+    "topicDistance": { "type": "number", "minimum": 0, "maximum": 1 },
+    "narrativeProximity": { "type": "number", "minimum": 0, "maximum": 1 },
+    "emotionalOverlap": { "type": "number", "minimum": 0, "maximum": 1 },
+    "trustOverlap": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

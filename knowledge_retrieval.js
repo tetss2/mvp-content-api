@@ -236,7 +236,8 @@ async function embedQuery(query, apiKey, retries = 5) {
   throw new Error("OpenAI embeddings retry loop exited unexpectedly.");
 }
 
-async function searchFaiss(indexPath, queryEmbedding, topK) {
+async function searchFaiss(indexPath, queryEmbedding, topK, options = {}) {
+  const includeVectors = options.includeVectors === true;
   const tempDir = join(os.tmpdir(), "mvp-content-api-faiss", timestampId());
   const tempIndexPath = join(tempDir, "faiss.index");
   const queryPath = join(tempDir, "query.json");
@@ -284,6 +285,17 @@ except Exception as exc:
     })
     raise
 result = {"scores": scores[0].tolist(), "ids": ids[0].tolist(), "index_vectors": index_vectors}
+if ${includeVectors ? "True" : "False"}:
+    vectors = []
+    for vector_id in ids[0].tolist():
+        if vector_id < 0:
+            vectors.append(None)
+            continue
+        try:
+            vectors.append(index.reconstruct(int(vector_id)).tolist())
+        except Exception:
+            vectors.append(None)
+    result["vectors"] = vectors
 print(json.dumps(result))
 `;
   try {
@@ -298,17 +310,34 @@ print(json.dumps(result))
       embedding_dim: queryEmbedding.length,
       embedding_first_3_values: queryEmbedding.slice(0, 3),
     });
-    const result = spawnSync("python3", ["-c", script, tempIndexPath, queryPath, String(topK)], {
-      cwd: ROOT,
-      encoding: "utf-8",
-    });
+    const pythonCandidates = [
+      { command: "python3", args: [] },
+      { command: "python", args: [] },
+      { command: "py", args: ["-3"] },
+    ];
+    let result = null;
+    let commandLabel = null;
+    for (const candidate of pythonCandidates) {
+      commandLabel = [candidate.command, ...candidate.args].join(" ");
+      result = spawnSync(candidate.command, [...candidate.args, "-c", script, tempIndexPath, queryPath, String(topK)], {
+        cwd: ROOT,
+        encoding: "utf-8",
+      });
+      if (result.status === 0) break;
+      const canTryNext = result.error?.code === "ENOENT" || result.status === 9009;
+      if (!canTryNext) break;
+    }
+    const stdoutPreview = includeVectors && result.stdout
+      ? result.stdout.replace(/"vectors"\s*:\s*\[.*$/s, "\"vectors\": \"<omitted>\"}").slice(0, 2000)
+      : result.stdout?.slice(0, 2000) || null;
     debugLog("faiss_spawn_result", {
+      python_command: commandLabel,
       status: result.status,
       signal: result.signal,
       error: errorPayload(result.error),
       stdout_chars: result.stdout?.length || 0,
       stderr_chars: result.stderr?.length || 0,
-      stdout_preview: result.stdout?.slice(0, 2000) || null,
+      stdout_preview: stdoutPreview,
       stderr_preview: result.stderr?.slice(0, 4000) || null,
     });
     if (result.error) {
@@ -358,7 +387,7 @@ function sourceMetadata(metadata = {}) {
   };
 }
 
-export async function retrieve(kb, query, topK) {
+export async function retrieve(kb, query, topK, options = {}) {
   debugLog("retrieve_start", {
     cwd: process.cwd(),
     node_env: process.env.NODE_ENV || null,
@@ -370,7 +399,9 @@ export async function retrieve(kb, query, topK) {
   if (!apiKey) throw new Error("OPENAI_API_KEY is required for query embeddings.");
 
   const queryEmbedding = await embedQuery(query, apiKey);
-  const search = await searchFaiss(loaded.paths.faissIndex, queryEmbedding, topK);
+  const search = await searchFaiss(loaded.paths.faissIndex, queryEmbedding, topK, {
+    includeVectors: options.includeVectors === true,
+  });
   const productionVersion = loaded.productionManifest.new_production_version || loaded.productionManifest.production_version || null;
   const results = [];
 
@@ -387,6 +418,9 @@ export async function retrieve(kb, query, topK) {
       source: sourceMetadata(row.metadata || {}),
       kb_id: kb,
       production_version: productionVersion,
+      ...(options.includeVectors === true && Array.isArray(search.vectors?.[index])
+        ? { embedding: search.vectors[index] }
+        : {}),
     });
   });
 

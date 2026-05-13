@@ -1,0 +1,26 @@
+{
+  "expert_id": "dinara",
+  "display_name": "Dinara Kachaeva",
+  "status": "active",
+  "primary_language": "ru",
+  "platforms": ["telegram", "instagram"],
+  "content_domains": ["psychology", "sexology"],
+  "retrieval_namespace": "dinara_main",
+  "voice_profile_path": "expert_profiles/dinara/voice",
+  "feedback_memory_path": "expert_profiles/dinara/feedback_memory",
+  "generation_policy_path": "configs/experts/dinara/generation-policy.json",
+  "safety_policy_path": "configs/experts/dinara/safety-policy.json",
+  "style_constraints_path": "configs/experts/dinara/style-constraints.json",
+  "created_at": "2026-05-13T00:00:00.000Z",
+  "updated_at": "2026-05-13T00:00:00.000Z",
+  "runtime_config": {
+    "retrieval_settings_path": "configs/experts/dinara/retrieval.json",
+    "generation_settings_path": "configs/experts/dinara/generation-policy.json",
+    "tone_settings_path": "configs/experts/dinara/tone.json",
+    "cta_settings_path": "configs/experts/dinara/cta.json",
+    "safety_settings_path": "configs/experts/dinara/safety-policy.json",
+    "style_settings_path": "configs/experts/dinara/style-constraints.json",
+    "context_policy_path": "configs/experts/dinara/context-policy.json",
+    "output_policy_path": "configs/experts/dinara/output-policy.json"
+  }
+}

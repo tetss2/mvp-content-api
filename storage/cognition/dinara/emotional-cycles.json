@@ -1,0 +1,348 @@
+{
+  "schema_version": "2026-05-13.persistent_cognition.v1",
+  "expert_id": "dinara",
+  "day": 30,
+  "emotional_progression": {
+    "cycles": [
+      {
+        "day": 1,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 2,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 3,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 4,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 5,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 6,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 7,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 8,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 9,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 10,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "soft communication"
+      },
+      {
+        "day": 11,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 12,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 13,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 14,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 15,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 16,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 17,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 18,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 19,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 20,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "soft communication"
+      },
+      {
+        "day": 21,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 22,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 23,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 24,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 25,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 26,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 27,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 28,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 29,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 30,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "soft communication"
+      }
+    ],
+    "emotionalOverloadRisk": 0,
+    "pacingBalance": 1,
+    "therapeuticDepthProgression": [
+      {
+        "day": 1,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 2,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 3,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 4,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 5,
+        "depth": 0.382,
+        "note": "Therapeutic depth increased."
+      },
+      {
+        "day": 6,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 7,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 8,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 9,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 10,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 11,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 12,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 13,
+        "depth": 0.536,
+        "note": "Therapeutic depth increased."
+      },
+      {
+        "day": 14,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 15,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 16,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 17,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 18,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 19,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 20,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 21,
+        "depth": 0.382,
+        "note": "Therapeutic depth increased."
+      },
+      {
+        "day": 22,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 23,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 24,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 25,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 26,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 27,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 28,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 29,
+        "depth": 0.382,
+        "note": "Therapeutic depth increased."
+      },
+      {
+        "day": 30,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      }
+    ],
+    "audienceEmotionalSaturation": {
+      "calm": 0.667,
+      "recognition": 0.434
+    }
+  },
+  "updated_at": "2026-05-13T19:14:17.471Z"
+}

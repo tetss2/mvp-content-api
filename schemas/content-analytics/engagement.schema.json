@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/engagement.schema.json",
+  "title": "Simulated Engagement",
+  "type": "object",
+  "required": ["pack_id", "day", "platform", "hook_type", "cta_type", "metrics"],
+  "properties": {
+    "pack_id": { "type": "string" },
+    "day": { "type": "integer" },
+    "topic": { "type": "string" },
+    "theme": { "type": "string" },
+    "platform": { "type": "string" },
+    "hook_type": { "type": "string" },
+    "cta_type": { "type": "string" },
+    "audience_state": { "type": "string" },
+    "campaign_stage": { "type": "string" },
+    "metrics": {
+      "type": "object",
+      "required": ["views", "saves", "shares", "comments", "likes", "retention", "watch_time", "profile_clicks", "DM_conversion", "CTA_conversion", "consultation_interest"],
+      "properties": {
+        "views": { "type": "integer" },
+        "saves": { "type": "integer" },
+        "shares": { "type": "integer" },
+        "comments": { "type": "integer" },
+        "likes": { "type": "integer" },
+        "retention": { "type": "number" },
+        "watch_time": { "type": "number" },
+        "profile_clicks": { "type": "integer" },
+        "DM_conversion": { "type": "number" },
+        "CTA_conversion": { "type": "number" },
+        "consultation_interest": { "type": "number" },
+        "carousel_completion": { "type": ["number", "null"] },
+        "reels_completion": { "type": ["number", "null"] }
+      }
+    },
+    "fatigue": { "type": "object" }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "expert_id": "dinara",
+  "display_name": "Динара Качаева",
+  "roles": [
+    "psychologist",
+    "sexologist"
+  ],
+  "website": "https://dinara-kachaeva.vercel.app/",
+  "telegram_channel": "https://t.me/vkyc_jizni",
+  "current_kb_id": "sexologist",
+  "current_scenario": "sexologist",
+  "safety": {
+    "local_only": true,
+    "mutates_production": false,
+    "mutates_faiss": false,
+    "ingests": false,
+    "promotes": false
+  }
+}

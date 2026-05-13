@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/hook-performance.schema.json",
+  "title": "Hook Performance",
+  "type": "object",
+  "required": ["hook_type", "posts", "average_retention", "average_saves", "average_shares", "hook_fatigue", "insight"],
+  "properties": {
+    "hook_type": { "type": "string" },
+    "posts": { "type": "integer" },
+    "average_retention": { "type": "number" },
+    "average_saves": { "type": "number" },
+    "average_shares": { "type": "number" },
+    "hook_fatigue": { "type": "number" },
+    "insight": { "type": "string" }
+  }
+}

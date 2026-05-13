@@ -1,0 +1,14 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "storytelling",
+  "user_request": "Напиши теплый Telegram-пост через историю про стыд и близость.",
+  "output_constraints": {
+    "platform": "telegram",
+    "length": "medium",
+    "tone": "empathetic",
+    "format": "post",
+    "cta_style": "soft"
+  },
+  "adapter": "mock",
+  "local_only": true
+}

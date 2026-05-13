@@ -1,0 +1,75 @@
+{
+  "cta_patterns": [
+    {
+      "pattern": "cta:consultative|quality:good",
+      "usage_count": 1,
+      "average_score": 0.81,
+      "recent_trend": "stable",
+      "intents": {
+        "therapeutic_case": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-54-227Z_therapeutic-case-post"
+      ]
+    },
+    {
+      "pattern": "cta:soft|quality:good",
+      "usage_count": 2,
+      "average_score": 0.805,
+      "recent_trend": "stable",
+      "intents": {
+        "educational_post": 1,
+        "storytelling": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-448Z_educational-instagram-post",
+        "2026-05-12T22-57-53-729Z_storytelling-telegram-post"
+      ]
+    },
+    {
+      "pattern": "cta:consultative|quality:weak",
+      "usage_count": 1,
+      "average_score": 0.79,
+      "recent_trend": "stable",
+      "intents": {
+        "faq_answer": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-883Z_faq-answer"
+      ]
+    },
+    {
+      "pattern": "cta:none|quality:good",
+      "usage_count": 1,
+      "average_score": 0.7,
+      "recent_trend": "stable",
+      "intents": {
+        "short_hook": 1
+      },
+      "warnings": {
+        "expert_tone_match_low": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-54-058Z_short-hook-list"
+      ]
+    }
+  ],
+  "weak_cta_runs": [
+    {
+      "run_id": "2026-05-12T22-57-53-883Z_faq-answer",
+      "intent": "faq_answer",
+      "cta_style": "consultative",
+      "cta_quality": "weak",
+      "warnings": [
+        "missing_cta"
+      ]
+    }
+  ]
+}

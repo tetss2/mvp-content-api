@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/topic-node.schema.json",
+  "title": "Cognitive Graph Topic Node",
+  "type": "object",
+  "required": [
+    "id",
+    "label",
+    "cluster",
+    "semanticCluster",
+    "emotionalAssociations",
+    "authorityDomains",
+    "trustBuildingDomains",
+    "conversionDrivingDomains",
+    "occurrenceCount",
+    "saturation",
+    "noveltyScore",
+    "memoryStrength"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "label": { "type": "string" },
+    "cluster": { "type": "string" },
+    "semanticCluster": { "type": "string" },
+    "emotionalAssociations": { "type": "array", "items": { "type": "string" } },
+    "authorityDomains": { "type": "array", "items": { "type": "string" } },
+    "trustBuildingDomains": { "type": "array", "items": { "type": "string" } },
+    "conversionDrivingDomains": { "type": "array", "items": { "type": "string" } },
+    "occurrenceCount": { "type": "integer", "minimum": 0 },
+    "lastSeenDay": { "type": ["integer", "null"], "minimum": 1 },
+    "saturation": { "type": "number", "minimum": 0, "maximum": 1 },
+    "noveltyScore": { "type": "number", "minimum": 0, "maximum": 1 },
+    "memoryStrength": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": false
+}

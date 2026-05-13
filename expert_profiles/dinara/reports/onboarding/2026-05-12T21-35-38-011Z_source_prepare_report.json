@@ -1,0 +1,481 @@
+{
+  "expert": "dinara",
+  "generated_at": "2026-05-12T21:35:38.011Z",
+  "mode": "local_text_normalization_and_existing_prepared_provenance",
+  "clean_version": "v1",
+  "source_path_inventory_report": "expert_profiles/dinara/reports/onboarding/2026-05-12T21-35-37-982Z_source_path_inventory.md",
+  "source_folders": [
+    {
+      "source_folder": "knowledge_sources/website_vercel",
+      "source_type": "website_vercel",
+      "mode": "normalize_text",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "included_text_file_count": 0,
+      "ignored_text_file_count": 0,
+      "unsupported_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "knowledge_sources/b17_articles",
+      "source_type": "b17_article",
+      "mode": "normalize_text",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "included_text_file_count": 0,
+      "ignored_text_file_count": 0,
+      "unsupported_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "knowledge_sources/telegram_channel",
+      "source_type": "telegram_channel",
+      "mode": "normalize_text",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "included_text_file_count": 0,
+      "ignored_text_file_count": 0,
+      "unsupported_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "author_voice/raw_samples",
+      "source_type": "raw_sample",
+      "mode": "normalize_text",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "included_text_file_count": 0,
+      "ignored_text_file_count": 0,
+      "unsupported_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved",
+      "source_type": "unknown",
+      "mode": "existing_prepared",
+      "exists": true,
+      "file_count": 4,
+      "text_file_count": 4,
+      "included_text_file_count": 4,
+      "ignored_text_file_count": 0,
+      "unsupported_file_count": 0,
+      "empty": false
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "mode": "existing_prepared",
+      "exists": true,
+      "file_count": 17,
+      "text_file_count": 17,
+      "included_text_file_count": 16,
+      "ignored_text_file_count": 1,
+      "unsupported_file_count": 0,
+      "empty": false
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_medium_confidence",
+      "source_type": "unknown",
+      "mode": "existing_prepared",
+      "exists": true,
+      "file_count": 1,
+      "text_file_count": 1,
+      "included_text_file_count": 0,
+      "ignored_text_file_count": 1,
+      "unsupported_file_count": 0,
+      "empty": false
+    }
+  ],
+  "total_files_scanned": 22,
+  "total_files_prepared": 20,
+  "unsupported_files_skipped": 0,
+  "ignored_files_count": 2,
+  "duplicate_hashes_detected": 0,
+  "metadata_files_created": 20,
+  "source_type_breakdown": {
+    "website_vercel": 0,
+    "b17_article": 0,
+    "telegram_channel": 0,
+    "raw_sample": 0,
+    "unknown": 20
+  },
+  "unsupported_files": [],
+  "ignored_files": [
+    {
+      "source_type": "unknown",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt",
+      "reason": "not_in_current_production_docstore"
+    },
+    {
+      "source_type": "unknown",
+      "source_path": "knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt",
+      "reason": "not_in_current_production_docstore"
+    }
+  ],
+  "duplicate_hashes": [],
+  "files_processed": 20,
+  "files": [
+    {
+      "source_folder": "knowledge_intake/sexologist/approved",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_approved__«Когда мы не ладим» Упражнение .cleaned.txt.metadata.json",
+      "content_sha256": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+      "chars_before": 5780,
+      "chars_after": 5616,
+      "word_count": 559,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_approved__Женская сексуальность.cleaned.txt.metadata.json",
+      "content_sha256": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+      "chars_before": 17969,
+      "chars_after": 17731,
+      "word_count": 2110,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_approved__Секс. обслед. Ж (1).cleaned.txt.metadata.json",
+      "content_sha256": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+      "chars_before": 4183,
+      "chars_after": 4138,
+      "word_count": 320,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_approved__Стыд и секс.cleaned.txt.metadata.json",
+      "content_sha256": "f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1",
+      "chars_before": 25840,
+      "chars_after": 25504,
+      "word_count": 3742,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt.metadata.json",
+      "content_sha256": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+      "chars_before": 742054,
+      "chars_after": 729989,
+      "word_count": 109123,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Автостоп. Техника символдрамы.cleaned.txt.metadata.json",
+      "content_sha256": "af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65",
+      "chars_before": 26059,
+      "chars_after": 26058,
+      "word_count": 3350,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Введение в сексологию.cleaned.txt.metadata.json",
+      "content_sha256": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+      "chars_before": 47830,
+      "chars_after": 47169,
+      "word_count": 6203,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Женские сексуальные дисфункции .cleaned.txt.metadata.json",
+      "content_sha256": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+      "chars_before": 75872,
+      "chars_after": 74578,
+      "word_count": 9588,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Завис (през).cleaned.txt.metadata.json",
+      "content_sha256": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+      "chars_before": 62457,
+      "chars_after": 61399,
+      "word_count": 8035,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Мужская сексуальность.cleaned.txt.metadata.json",
+      "content_sha256": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+      "chars_before": 68595,
+      "chars_after": 67209,
+      "word_count": 8537,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt.metadata.json",
+      "content_sha256": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+      "chars_before": 45255,
+      "chars_after": 44425,
+      "word_count": 5639,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Нетипичный секс.cleaned.txt.metadata.json",
+      "content_sha256": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+      "chars_before": 51859,
+      "chars_after": 51185,
+      "word_count": 6762,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__ПСР_психосексуальное_развитие_в_норме.cleaned.txt.metadata.json",
+      "content_sha256": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+      "chars_before": 108027,
+      "chars_after": 106055,
+      "word_count": 13583,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__секс дисф. начало (през).cleaned.txt.metadata.json",
+      "content_sha256": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+      "chars_before": 35653,
+      "chars_after": 35121,
+      "word_count": 4436,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Сексуальные дисгармонии.cleaned.txt.metadata.json",
+      "content_sha256": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+      "chars_before": 31171,
+      "chars_after": 30733,
+      "word_count": 3989,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Сексуальный интеллект.cleaned.txt.metadata.json",
+      "content_sha256": "b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36",
+      "chars_before": 426015,
+      "chars_after": 400802,
+      "word_count": 59829,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt.metadata.json",
+      "content_sha256": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+      "chars_before": 38871,
+      "chars_after": 38069,
+      "word_count": 5026,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt.metadata.json",
+      "content_sha256": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+      "chars_before": 42163,
+      "chars_after": 41676,
+      "word_count": 5597,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__ЭГ в пт секс дисфункций.cleaned.txt.metadata.json",
+      "content_sha256": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+      "chars_before": 105095,
+      "chars_after": 103052,
+      "word_count": 13408,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    },
+    {
+      "source_folder": "knowledge_intake/sexologist/approved_high_confidence",
+      "source_type": "unknown",
+      "source_mode": "existing_prepared",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "metadata_path": "expert_profiles/dinara/knowledge_sources/cleaned/_metadata/current_kb_high__Эмили Нагоски - Как хочет женщина.cleaned.txt.metadata.json",
+      "content_sha256": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+      "chars_before": 764905,
+      "chars_after": 719497,
+      "word_count": 104283,
+      "empty_after_cleaning": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ]
+    }
+  ],
+  "warnings": [
+    "Source folder is empty: knowledge_sources/website_vercel",
+    "Source folder is empty: knowledge_sources/b17_articles",
+    "Source folder is empty: knowledge_sources/telegram_channel",
+    "Source folder is empty: author_voice/raw_samples",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+    "Ignored non-production prepared file: knowledge_intake/sexologist/approved_high_confidence/88347_2fa12ba6d5ec12fffde3424f26c6009a.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+    "existing_prepared_file_referenced_without_copy: knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+    "Ignored non-production prepared file: knowledge_intake/sexologist/approved_medium_confidence/Анкета_для_пациентов_мужского_пола.cleaned.txt"
+  ],
+  "safety": {
+    "local_only": true,
+    "network_calls": false,
+    "openai_calls": false,
+    "production_mutation": false,
+    "faiss_mutation": false,
+    "ingestion": false,
+    "promote": false,
+    "copied_existing_prepared_files": false
+  }
+}

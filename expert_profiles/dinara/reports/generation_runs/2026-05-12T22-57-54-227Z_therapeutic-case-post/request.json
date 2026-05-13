@@ -1,0 +1,14 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "therapeutic_case",
+  "user_request": "Напиши пост через анонимный терапевтический пример про избегание близости.",
+  "output_constraints": {
+    "platform": "instagram",
+    "length": "medium",
+    "tone": "expert_warm",
+    "format": "post",
+    "cta_style": "consultative"
+  },
+  "adapter": "mock",
+  "local_only": true
+}

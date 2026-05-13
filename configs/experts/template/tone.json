@@ -1,0 +1,11 @@
+{
+  "expert_id": "new_expert_id",
+  "primary_tone": "expert_warm",
+  "allowed_tones": ["expert_warm", "educational", "empathetic", "calm"],
+  "emotional_tone_limits": {
+    "max_pressure": "low",
+    "max_fear": "low",
+    "max_clinical_distance": "medium",
+    "required_warmth": "medium"
+  }
+}

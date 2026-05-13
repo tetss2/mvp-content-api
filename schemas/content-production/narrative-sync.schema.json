@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/narrative-sync.schema.json",
+  "title": "Narrative Sync",
+  "type": "object",
+  "required": ["cross_format_continuity", "emotional_tone", "cta_escalation_level", "audience_state", "storytelling_continuity"],
+  "properties": {
+    "cross_format_continuity": { "type": "boolean" },
+    "emotional_tone": { "type": "string" },
+    "cta_escalation_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "audience_state": { "type": "string" },
+    "storytelling_continuity": {
+      "type": "object",
+      "properties": {
+        "current_structure": { "type": "string" },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "previous_pack_id": { "type": ["string", "null"] }
+      }
+    },
+    "sync_notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

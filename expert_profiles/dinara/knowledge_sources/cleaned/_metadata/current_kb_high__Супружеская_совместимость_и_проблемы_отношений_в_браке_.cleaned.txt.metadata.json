@@ -1,0 +1,27 @@
+{
+  "expert_id": "dinara",
+  "source_type": "approved_high_confidence",
+  "confidence_level": "high",
+  "expert_signal_score": 0.96,
+  "content_kind": "educational",
+  "is_generation_safe": true,
+  "source_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+  "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+  "original_url": null,
+  "title": null,
+  "detected_date": null,
+  "cleaned_at": "2026-05-12T21:46:20.067Z",
+  "clean_version": "v1",
+  "content_sha256": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+  "char_count": 41676,
+  "word_count": 5597,
+  "status": "prepared",
+  "warnings": [
+    "existing_prepared_file_referenced_without_copy"
+  ],
+  "classification": {
+    "source_type_rule": "path_and_folder_heuristics",
+    "initial_source_type": "approved_high_confidence",
+    "suggested_retrieval_weight": 1
+  }
+}

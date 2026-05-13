@@ -1,0 +1,71 @@
+{
+  "average_sentence_words": 13.462,
+  "short_sentence_percent": 0.308,
+  "long_sentence_percent": 0.077,
+  "average_paragraph_sentences": 1.5,
+  "average_paragraph_words": 13.462,
+  "punctuation_style": {
+    "question_frequency": 0.154,
+    "exclamation_frequency": 0,
+    "ellipsis_frequency": 0,
+    "emoji_per_1000_words": 0
+  },
+  "hook_frequency": 0.75,
+  "contrast_structure_frequency": 0.143,
+  "cadence_patterns": [
+    "short emotional opener",
+    "medium explanation",
+    "soft conversational transition",
+    "warm CTA ending"
+  ],
+  "common_transitions": [
+    {
+      "value": "а если тема",
+      "count": 3
+    },
+    {
+      "value": "если откликается сохраните",
+      "count": 3
+    },
+    {
+      "value": "и тогда путь",
+      "count": 3
+    },
+    {
+      "value": "намного точнее спрашивать",
+      "count": 3
+    },
+    {
+      "value": "например снижение желания",
+      "count": 3
+    },
+    {
+      "value": "поэтому с ней",
+      "count": 3
+    },
+    {
+      "value": "у женской сексуальности",
+      "count": 3
+    },
+    {
+      "value": "в сексологии мы",
+      "count": 1
+    },
+    {
+      "value": "в условном примере",
+      "count": 1
+    },
+    {
+      "value": "важно смотреть на",
+      "count": 1
+    },
+    {
+      "value": "если близость стала",
+      "count": 1
+    },
+    {
+      "value": "иногда вопрос не",
+      "count": 1
+    }
+  ]
+}

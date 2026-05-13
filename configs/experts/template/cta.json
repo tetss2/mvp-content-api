@@ -1,0 +1,8 @@
+{
+  "expert_id": "new_expert_id",
+  "supports_cta_generation": false,
+  "allowed_cta_styles": ["none", "soft"],
+  "default_cta_style": "soft",
+  "cta_aggressiveness_limit": "low",
+  "forbidden_cta_patterns": ["guaranteed_result", "shaming", "panic_pressure"]
+}

@@ -1,0 +1,17 @@
+{
+  "expert_id": "dinara",
+  "medical_sensitivity": "refer_to_specialist_for_diagnosis_or_treatment",
+  "legal_sensitivity": "no_legal_advice",
+  "therapeutic_constraints": [
+    "Do not diagnose readers from social content.",
+    "Do not present posts as psychotherapy.",
+    "Protect confidentiality and avoid identifiable case details.",
+    "Use reflective and educational framing for sensitive topics."
+  ],
+  "educational_constraints": [
+    "Explain uncertainty where needed.",
+    "Avoid one-size-fits-all prescriptions.",
+    "Prefer grounded psychoeducation over absolute claims."
+  ],
+  "forbidden_claims": ["guaranteed_result", "clinical_diagnosis", "treatment_plan", "emergency_advice"]
+}

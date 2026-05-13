@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/structure.schema.json",
+  "title": "Content Structure",
+  "type": "object",
+  "required": ["structure_id", "beats"],
+  "properties": {
+    "structure_id": {
+      "type": "string",
+      "enum": [
+        "simple_insight",
+        "story_resolution",
+        "authority_trust",
+        "myth_reframe",
+        "therapeutic_validation",
+        "faq_clarification",
+        "objection_reframe"
+      ]
+    },
+    "beats": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "hook",
+          "insight",
+          "CTA",
+          "story",
+          "conflict",
+          "resolution",
+          "authority",
+          "education",
+          "trust CTA",
+          "myth",
+          "explanation",
+          "expert framing",
+          "emotional validation",
+          "therapeutic insight",
+          "FAQ",
+          "expert clarification",
+          "objection",
+          "reframe",
+          "low-pressure CTA"
+        ]
+      }
+    },
+    "structure_notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

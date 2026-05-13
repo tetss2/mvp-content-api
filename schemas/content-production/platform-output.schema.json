@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/platform-output.schema.json",
+  "title": "Platform Output",
+  "type": "object",
+  "properties": {
+    "output_id": { "type": "string" },
+    "output_format": {
+      "type": "string",
+      "enum": [
+        "instagram_post",
+        "telegram_longread",
+        "reels_script",
+        "carousel_script",
+        "story_sequence",
+        "faq_answer",
+        "authority_post",
+        "emotional_story",
+        "sales_post",
+        "educational_post",
+        "consultation_cta_post"
+      ]
+    },
+    "source_platform": { "type": "string" },
+    "title": { "type": "string" },
+    "ideal_length": { "type": "string" },
+    "pacing": { "type": "string" },
+    "paragraph_density": { "type": "string" },
+    "emotional_rhythm": { "type": "string" },
+    "cta_placement": { "type": "string" },
+    "readability": { "type": "string" },
+    "content_blocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["block_type", "text"],
+        "properties": {
+          "block_type": { "type": "string" },
+          "text": { "type": "string" },
+          "order": { "type": "integer" }
+        }
+      }
+    },
+    "adaptation_note": { "type": "string" },
+    "hook": { "type": "string" },
+    "cta": { "type": "string" }
+  }
+}

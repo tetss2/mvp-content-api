@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/cta-analytics.schema.json",
+  "title": "CTA Analytics",
+  "type": "object",
+  "required": ["cta_type", "uses", "average_CTA_conversion", "fatigue_risk", "recommendation"],
+  "properties": {
+    "cta_type": { "type": "string" },
+    "uses": { "type": "integer" },
+    "average_CTA_conversion": { "type": "number" },
+    "average_DM_conversion": { "type": "number" },
+    "average_consultation_interest": { "type": "number" },
+    "fatigue_risk": { "type": "number" },
+    "recommendation": { "type": "string" }
+  }
+}

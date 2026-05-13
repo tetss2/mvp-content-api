@@ -1,0 +1,12 @@
+{
+  "expert_id": "finance_creator_demo",
+  "allowed_platforms": ["telegram", "instagram"],
+  "allowed_formats": ["post", "hook_list", "reel_script", "carousel_script"],
+  "default_output": {
+    "platform": "instagram",
+    "format": "reel_script",
+    "length": "short",
+    "language": "ru"
+  },
+  "simulation_only": true
+}

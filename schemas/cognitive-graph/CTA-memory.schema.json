@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/CTA-memory.schema.json",
+  "title": "CTA Memory State",
+  "type": "object",
+  "required": [
+    "history",
+    "escalationPacing",
+    "consultationPressureAccumulation",
+    "ctaDesensitizationRisk",
+    "conversionSequenceMemory"
+  ],
+  "properties": {
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["day", "ctaType", "pressure", "topic", "audienceState"],
+        "properties": {
+          "day": { "type": "integer", "minimum": 1 },
+          "ctaType": { "type": "string" },
+          "pressure": { "type": "number", "minimum": 0, "maximum": 1 },
+          "topic": { "type": "string" },
+          "audienceState": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "escalationPacing": { "type": "array", "items": { "type": "object" } },
+    "consultationPressureAccumulation": { "type": "number", "minimum": 0, "maximum": 1 },
+    "ctaDesensitizationRisk": { "type": "number", "minimum": 0, "maximum": 1 },
+    "conversionSequenceMemory": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

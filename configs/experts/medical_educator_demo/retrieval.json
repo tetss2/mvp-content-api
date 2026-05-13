@@ -1,0 +1,9 @@
+{
+  "expert_id": "medical_educator_demo",
+  "retrieval_namespace": "medical_educator_demo_placeholder",
+  "allowed_source_roots": ["configs/experts/medical_educator_demo/placeholders"],
+  "blocked_cross_expert_namespaces": ["dinara_main", "relationship_coach_demo_placeholder", "finance_creator_demo_placeholder"],
+  "default_match_count": 4,
+  "requires_namespace_filter": true,
+  "simulation_only": true
+}

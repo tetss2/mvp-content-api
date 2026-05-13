@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/content-node.schema.json",
+  "title": "Content Node",
+  "type": "object",
+  "required": ["node_id", "expert_id", "day", "topic", "intent", "platform", "audience_state", "cta_type"],
+  "properties": {
+    "node_id": { "type": "string" },
+    "expert_id": { "type": "string" },
+    "day": { "type": "integer", "minimum": 1 },
+    "week": { "type": "integer", "minimum": 1 },
+    "campaign_id": { "type": "string" },
+    "campaign_stage": { "type": "string" },
+    "topic": { "type": "string" },
+    "theme": { "type": "string" },
+    "intent": {
+      "type": "string",
+      "enum": [
+        "educational",
+        "authority",
+        "therapeutic",
+        "engagement",
+        "sales",
+        "soft_sales",
+        "storytelling",
+        "FAQ",
+        "objection_handling",
+        "audience_warming",
+        "lead_magnet",
+        "reels_hook",
+        "carousel",
+        "longform_article"
+      ]
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "instagram_post",
+        "telegram_longread",
+        "reels_script",
+        "story_sequence",
+        "carousel_concept",
+        "mini_series",
+        "faq_thread"
+      ]
+    },
+    "audience_state": { "$ref": "./audience-state.schema.json" },
+    "cta_type": { "$ref": "./cta.schema.json" },
+    "hook_pattern": { "type": "string" },
+    "emotional_frame": { "type": "string" },
+    "storytelling_structure": { "type": "string" },
+    "sophistication_level": { "type": "integer", "minimum": 1, "maximum": 5 },
+    "expert_positioning": { "type": "string" },
+    "depends_on": { "type": "array", "items": { "type": "string" } },
+    "planning_notes": { "type": "array", "items": { "type": "string" } }
+  }
+}

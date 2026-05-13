@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-planning/narrative-arc.schema.json",
+  "title": "Narrative Arc",
+  "type": "object",
+  "required": ["repeated_themes", "emotional_progression", "cta_escalation", "storytelling_continuity", "expert_positioning_continuity"],
+  "properties": {
+    "repeated_themes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["theme", "count", "days"],
+        "properties": {
+          "theme": { "type": "string" },
+          "count": { "type": "integer" },
+          "days": { "type": "array", "items": { "type": "integer" } }
+        }
+      }
+    },
+    "emotional_progression": { "type": "array", "items": { "type": "object" } },
+    "cta_escalation": { "type": "array", "items": { "type": "object" } },
+    "storytelling_continuity": { "type": "array", "items": { "type": "object" } },
+    "expert_positioning_continuity": { "type": "array", "items": { "type": "object" } }
+  }
+}

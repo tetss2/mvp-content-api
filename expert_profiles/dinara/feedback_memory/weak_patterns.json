@@ -1,0 +1,57 @@
+{
+  "run_count": 2,
+  "patterns": [
+    {
+      "pattern": "short answer -> nuance -> practical recommendation -> when to seek specialist",
+      "usage_count": 1,
+      "average_score": 0.79,
+      "recent_trend": "stable",
+      "intents": {
+        "faq_answer": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-883Z_faq-answer"
+      ]
+    },
+    {
+      "pattern": "punchy statement -> contrast -> myth -> question",
+      "usage_count": 1,
+      "average_score": 0.7,
+      "recent_trend": "stable",
+      "intents": {
+        "short_hook": 1
+      },
+      "warnings": {
+        "expert_tone_match_low": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-54-058Z_short-hook-list"
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "run_id": "2026-05-12T22-57-53-883Z_faq-answer",
+      "intent": "faq_answer",
+      "score": 0.79,
+      "warnings": [
+        "missing_cta",
+        "low_emotional_warmth"
+      ]
+    },
+    {
+      "run_id": "2026-05-12T22-57-54-058Z_short-hook-list",
+      "intent": "short_hook",
+      "score": 0.7,
+      "warnings": [
+        "expert_tone_match_low",
+        "low_emotional_warmth"
+      ]
+    }
+  ]
+}

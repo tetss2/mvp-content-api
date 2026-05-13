@@ -21,6 +21,9 @@ import {
   summarizeSession,
 } from "./knowledge-intake.js";
 import { retrieveGroundingContext } from "./retrieval_service.js";
+import { buildSexologistPrompt, normalizeSexologistStyleKey, SEXOLOGIST_STYLE_META } from "./sexologist_prompt.js";
+import { buildAuthorVoicePrompt, loadAuthorVoiceProfile, logAuthorVoiceStatus } from "./author_voice.js";
+import { getLengthConfig } from "./generation_config.js";
 let ffmpegPath = "ffmpeg";
 try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
 import ffmpeg from "fluent-ffmpeg";
@@ -270,62 +273,6 @@ const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, пра
 ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы. Эмодзи щедро по всему тексту — минимум 10 штук!`;
 
 // ─── СТИЛИ СЕКСОЛОГА ─────────────────────────────────────────────────────────
-
-const SEXOLOGIST_STYLE_META = {
-  scientific: {
-    label: "🔬 Научный",
-    hint: "Термины, исследования, физиология — академично но доступно",
-    instruction: `СТИЛЬ: Строго научный. Используй термины, ссылайся на исследования: "исследования показывают", "с точки зрения физиологии", "согласно научным данным". Академичный тон. Структурированно. Никакого юмора — только факты и наука. Текст должен звучать как статья в научно-популярном журнале.`,
-  },
-  friendly: {
-    label: "💬 Простой",
-    hint: "Как объяснение подруге — без терминов, с примерами из жизни",
-    instruction: `СТИЛЬ: Максимально простой и понятный. Объясняй как будто подруге — никаких терминов, всё через примеры из жизни. "Представь что...", "Это как когда...". Тепло и просто. Никакой науки — только жизнь.`,
-  },
-  girlfriends: {
-    label: "👯 Разговор подружек",
-    hint: "Неформально, с юмором — как болтовня за кофе!",
-    instruction: `СТИЛЬ: Разговор близких подружек! Максимально неформально, живо, с юмором и восклицаниями! "Ой, это вообще огонь!", "Слушай, ну ты знаешь как это бывает!", "Девочки, давайте честно!", "Это вообще тема!". Смеёмся вместе, поддерживаем друг друга. Никакой официальности — только живой болтливый разговор за чашкой кофе! Можно использовать разговорные слова и лёгкий сленг.`,
-  },
-  educational: {
-    label: "📚 Просветительский",
-    hint: "Как интересный подкаст — увлекательно, с фактами и историями",
-    instruction: `СТИЛЬ: Просветительский — как захватывающий подкаст или TED-talk. "А знаешь ли ты что...", "Это удивительно, но...", "История об этом началась...". Увлекательно, с интересными фактами, историями, неожиданными поворотами. Читатель должен воскликнуть "Ого, я этого не знала!". Интригующее начало, интересные факты, вдохновляющий конец.`,
-  },
-  auto: {
-    label: "✨ Авто",
-    hint: "Бот выберет лучший стиль для темы",
-    instruction: `СТИЛЬ: Выбери наиболее подходящий стиль для данной темы.`,
-  },
-};
-
-const SEXOLOGIST_SYSTEM_PROMPT_BASE = `Ты — Динара Качаева, психолог-сексолог. Пишешь о сексуальности без стыда, без табу, с теплом и уважением.
-
-КТО ТЫ:
-Специалист по сексологии. Нормализуешь тему, снимаешь стыд. Создаёшь безопасное пространство.
-
-БАЗОВЫЙ СТИЛЬ:
-— Без осуждения — любая тема нормальна
-— Короткие абзацы, разделённые пустой строкой
-— Длинное тире — вместо короткого
-
-ЭМОДЗИ: Используй ОБЯЗАТЕЛЬНО 10-15 эмодзи, расставляй щедро по всему тексту!
-Доступные: 💙 🌿 🌟 💫 🙏 ✨ 🫶 💜 🔬 💝 🌸 🔥 👀 💭 💪 🎯 ❗️ 🤗 🌈
-
-СТРУКТУРА:
-1. Принятие темы — нормализация, снятие стыда
-2. Контекст из базы знаний
-3. Практический взгляд
-4. Мягкое завершение или вопрос
-
-ЗАПРЕЩЕНО: нумерованные списки, заголовки, осуждение, повторы, явно эротический контент.
-ВАЖНО: Отвечай строго на основе контекста из базы знаний. Не выдумывай факты.
-ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы. Минимум 10 эмодзи по всему тексту!`;
-
-function buildSexologistPrompt(styleKey = "auto") {
-  const style = SEXOLOGIST_STYLE_META[styleKey] || SEXOLOGIST_STYLE_META.auto;
-  return `${SEXOLOGIST_SYSTEM_PROMPT_BASE}\n\n${style.instruction}`;
-}
 
 // ─── ПРЕСЕТЫ ─────────────────────────────────────────────────────────────────
 
@@ -1063,14 +1010,93 @@ async function processAudioWithTrack(chatId, trackId) {
 // ─── ГЕНЕРАЦИЯ ТЕКСТА ─────────────────────────────────────────────────────────
 
 async function generatePostText(topic, scenario, lengthMode = "normal", styleKey = "auto") {
-  let context = "";
-  const retrieval = await retrieveGroundingContext(topic, scenario);
+  const result = await generatePostTextResult(topic, scenario, lengthMode, styleKey);
+  return result.text;
+}
 
-  if (retrieval?.context) {
-    context = [
-      "Ниже релевантные фрагменты из production knowledge base. Используй их как grounding, не цитируй дословно без необходимости и не выдумывай факты за пределами контекста.",
-      retrieval.context,
-    ].join("\n\n");
+function createAnswerId() {
+  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function feedbackLogPath(authorId = process.env.AUTHOR_PROFILE_ID || "dinara") {
+  const day = new Date().toISOString().slice(0, 10);
+  return join(process.cwd(), "feedback_reports", `${authorId}_feedback_${day}.jsonl`);
+}
+
+async function appendFeedbackItem(item) {
+  const filePath = feedbackLogPath();
+  await fs.mkdir(dirname(filePath), { recursive: true });
+  await fs.appendFile(filePath, `${JSON.stringify(item)}\n`, "utf-8");
+}
+
+function buildFeedbackPayload(query, answerId, feedbackType) {
+  const state = userState.get(query.message.chat.id) || {};
+  const retrievedSources = state.lastRetrievalMeta?.sources || [];
+  return {
+    timestamp: new Date().toISOString(),
+    telegram_user_id: query.from?.id || query.message.chat.id,
+    scenario: state.lastScenario || null,
+    topic: state.lastTopic || state.pendingTopic || null,
+    selected_length: state.lastLengthMode || state.pendingLengthMode || null,
+    selected_style: state.lastStyleKey || "auto",
+    generated_answer_id: answerId,
+    feedback_type: feedbackType,
+    retrieved_sources: retrievedSources,
+    production_version: state.lastRetrievalMeta?.productionVersion || null,
+  };
+}
+
+function feedbackKeyboard(answerId) {
+  return [
+    [
+      { text: "✅ ОК", callback_data: `feedback:ok:${answerId}` },
+      { text: "✏️ Исправить", callback_data: `feedback:edit:${answerId}` },
+    ],
+    [
+      { text: "❌ Плохо", callback_data: `feedback:bad:${answerId}` },
+      { text: "🧠 Не похоже на меня", callback_data: `feedback:not_voice:${answerId}` },
+    ],
+    [{ text: "📚 Слабая экспертность", callback_data: `feedback:weak_expertise:${answerId}` }],
+  ];
+}
+
+async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto") {
+  let context = "";
+  let retrievalMeta = null;
+  const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
+
+  if (scenario === "sexologist") {
+    const retrieval = await retrieveGroundingContext(topic, "sexologist");
+    if (retrieval?.context) {
+      context = retrieval.context;
+      retrievalMeta = {
+        sources: retrieval.sources || [],
+        chunksCount: retrieval.chunks?.length || 0,
+        estimatedTokens: retrieval.estimatedTokens || 0,
+        productionVersion: retrieval.productionVersion || null,
+      };
+    } else {
+      const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
+      if (fallbackChunks && fallbackChunks.length > 0) {
+        context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
+        retrievalMeta = {
+          sources: fallbackChunks.map((chunk) => chunk.source || chunk.filename || "legacy-vector-source"),
+          chunksCount: fallbackChunks.length,
+          estimatedTokens: Math.ceil(context.length / 3.5),
+          productionVersion: null,
+          warning: "Production retrieval unavailable; used legacy vector fallback.",
+        };
+      } else {
+        context = `Тема запроса: "${topic}". Отвечай на основе общих знаний психолога-сексолога, строго в рамках профессиональной этики. Не выдумывай исследования и статистику.`;
+        retrievalMeta = {
+          sources: [],
+          chunksCount: 0,
+          estimatedTokens: Math.ceil(context.length / 3.5),
+          productionVersion: null,
+          warning: "Retrieval unavailable; used generic professional fallback.",
+        };
+      }
+    }
   } else {
     const chunks = await vectorSearch(topic, scenario, 5);
     if (chunks && chunks.length > 0) {
@@ -1081,27 +1107,22 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
         .sort((a, b) => b.score - a.score)
         .slice(0, 3);
       context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
-    } else {
-      const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
-      if (fallbackChunks && fallbackChunks.length > 0) {
-        context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
-      } else {
-        context = `Тема запроса: "${topic}". Отвечай на основе общих знаний психолога-сексолога, строго в рамках профессиональной этики. Не выдумывай исследования и статистику.`;
-      }
     }
   }
 
-  const tokenLimits = { short: 280, normal: 560, long: 450 };
-  const maxTokens = tokenLimits[lengthMode] || 560;
-  const lengthInstruction = {
-    short: "Напиши КОРОТКИЙ пост: строго 2 абзаца, до 600 символов. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
-    normal: "Напиши пост: строго 3-4 абзаца, до 1200 символов. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
-    long: "Напиши РАЗВЁРНУТЫЙ пост: 3-4 абзаца, СТРОГО до 1024 символов включая эмодзи. Текст должен быть смыслово завершён и не обрываться. ОБЯЗАТЕЛЬНО 10-15 эмодзи!",
-  }[lengthMode] || "Напиши пост: 3-4 абзаца. ОБЯЗАТЕЛЬНО 10-15 эмодзи!";
+  const lengthConfig = getLengthConfig(scenario, lengthMode);
+  const maxTokens = lengthConfig.maxTokens;
+  const lengthInstruction = lengthConfig.instruction;
 
-  const systemPrompt = scenario === "sexologist"
-    ? buildSexologistPrompt(styleKey)
+  const baseSystemPrompt = scenario === "sexologist"
+    ? buildSexologistPrompt(normalizedStyleKey)
     : PSYCHOLOGIST_SYSTEM_PROMPT;
+  const authorVoice = scenario === "sexologist"
+    ? await loadAuthorVoiceProfile()
+    : { enabled: false, profileLoaded: false, content: "" };
+  if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
+  const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
+  const systemPrompt = [baseSystemPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -1113,7 +1134,18 @@ async function generatePostText(topic, scenario, lengthMode = "normal", styleKey
     max_tokens: maxTokens,
   });
 
-  return completion.choices[0].message.content;
+  return {
+    text: completion.choices[0].message.content,
+    retrieval: retrievalMeta,
+    authorVoice: {
+      enabled: authorVoice.enabled,
+      author: authorVoice.author,
+      profileLoaded: authorVoice.profileLoaded,
+      profilePath: authorVoice.profilePath,
+    },
+    styleKey: normalizedStyleKey,
+    lengthMode,
+  };
 }
 
 // ПРАВКА 2: длина аудио — уменьшены лимиты для точного попадания в 13-15 сек
@@ -1167,6 +1199,10 @@ async function generateAudioText(fullAnswer, audioLength = "short") {
 
 async function sendGeneratedText(chatId, text, scenario) {
   const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+  const state = userState.get(chatId) || {};
+  const answerId = state.lastAnswerId || createAnswerId();
+  state.lastAnswerId = answerId;
+  userState.set(chatId, state);
 
   await bot.sendMessage(chatId, text, { parse_mode: "Markdown" }).catch(async () => {
     await bot.sendMessage(chatId, text);
@@ -1175,6 +1211,7 @@ async function sendGeneratedText(chatId, text, scenario) {
   await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
+      ...feedbackKeyboard(answerId),
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
       [{ text: "✅ Текст готов", callback_data: "txt_ready" }],
@@ -1305,6 +1342,22 @@ bot.on("message", async (msg) => {
 
     const text = msg.text;
     if (!text) return;
+
+    if (state.awaitingFeedbackCorrection) {
+      const s = userState.get(chatId) || {};
+      const correction = {
+        ...(s.pendingFeedbackCorrection || {}),
+        timestamp: new Date().toISOString(),
+        telegram_user_id: msg.from?.id || chatId,
+        correction_text: text,
+      };
+      await appendFeedbackItem(correction);
+      s.awaitingFeedbackCorrection = false;
+      s.pendingFeedbackCorrection = null;
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId, "✅ Спасибо, комментарий сохранён.");
+      return;
+    }
 
     if (state.awaitingTextEdit) {
       const s = userState.get(chatId) || {};
@@ -1589,7 +1642,26 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("sty_")) {
-      await runGeneration(chatId, state.pendingScenario || "sexologist", state.pendingLengthMode || "normal", data.replace("sty_", ""));
+      await runGeneration(chatId, state.pendingScenario || "sexologist", state.pendingLengthMode || "normal", normalizeSexologistStyleKey(data.replace("sty_", "")));
+      return;
+    }
+
+    if (data.startsWith("feedback:")) {
+      const [, feedbackType, answerId] = data.split(":");
+      const payload = buildFeedbackPayload(query, answerId, feedbackType);
+      await appendFeedbackItem(payload);
+      if (feedbackType === "edit") {
+        const s = userState.get(chatId) || {};
+        s.awaitingFeedbackCorrection = true;
+        s.pendingFeedbackCorrection = {
+          ...payload,
+          feedback_type: "edit_comment",
+        };
+        userState.set(chatId, s);
+        await bot.sendMessage(chatId, "Напишите, что именно нужно поправить в этом ответе.");
+      } else {
+        await bot.sendMessage(chatId, "✅ Обратная связь сохранена.");
+      }
       return;
     }
 
@@ -1832,7 +1904,8 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
     `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}${styleLabel}]\nТема: "${topic}"...`
   );
 
-  const fullAnswer = await generatePostText(topic, scenario, lengthMode, styleKey);
+  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey);
+  const fullAnswer = generation.text;
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
   await incrementLimit(chatId, "text", scenario, lengthMode);
@@ -1842,7 +1915,10 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
   s.lastTopic = topic;
   s.lastScenario = scenario;
   s.lastLengthMode = lengthMode;
-  s.lastStyleKey = styleKey;
+  s.lastStyleKey = generation.styleKey || styleKey;
+  s.lastAnswerId = createAnswerId();
+  s.lastRetrievalMeta = generation.retrieval;
+  s.lastAuthorVoiceMeta = generation.authorVoice;
   s.lastAudioUrl = null;
   s.lastVideoUrl = null;
   s.pendingVoices = [];

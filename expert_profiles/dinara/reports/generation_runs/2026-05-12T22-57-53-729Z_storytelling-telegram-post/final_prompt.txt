@@ -1,0 +1,80 @@
+## SYSTEM PROMPT
+You are preparing future Russian expert content for expert_id=dinara. Follow the generation plan exactly, but do not invent unsupported expert claims.
+
+Use the expert voice constraints: tone=empathetic; priorities=human tone, empathy, narrative flow. Preserve warmth, precision, and ethical boundaries.
+
+Avoid: identifiable private details, melodrama, shaming, false intimacy, unearned certainty. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+## FINAL USER PROMPT
+# Generation Task
+Напиши теплый Telegram-пост через историю про стыд и близость.
+
+# Strategy
+Intent=storytelling. Goal: Create emotional identification and trust through a human narrative that leads to expert meaning.. Recommended structure: situation -> inner conflict -> insight -> expert meaning -> CTA. CTA strategy: Invite recognition, reflection, or a gentle next step without pressure..
+
+# Output Constraints
+Platform=telegram; length=medium; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.
+
+# Context Injection Rules
+- Use primary context for factual grounding and main expert position.
+- Use supporting context for nuance, objections, examples, or secondary angles.
+- Use tone/style context only to influence rhythm, warmth, and framing.
+- Do not copy long source fragments; quote only short fragments when attribution or wording matters.
+- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.
+- Prefer synthesized output over paraphrase.
+- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.
+
+# Curated Context
+### Primary context: Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- id: d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b
+- source_type: approved_high_confidence
+- content_kind: storytelling
+- confidence: high
+
+Тристан Таормино Библия БДСМ. Полное руководство Текст предоставлен правообладателем http://www.litres.ru/pages/biblio_book/?art=6881183 Библия БДСМ. Полное руководство / Тристан Таормино.: Эксмо; Москва; 2013 ISBN 978-5-699-67464-0 Аннотация Первое исчерпывающее пособие по БДСМ.
+
+### Primary context: секс дисф. начало (през).cleaned.txt
+- id: 31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10
+- source_type: approved_high_confidence
+- content_kind: therapeutic_case
+- confidence: high
+
+Мужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотер
+
+### Supporting context: Автостоп. Техника символдрамы.cleaned.txt
+- id: af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65
+- source_type: approved_high_confidence
+- content_kind: faq
+- confidence: high
+
+АВТОСТОП М.В. Маркова Из известных сегодня психотерапевтических методик и техник, использующих образы в лечебном процессе, метод символдрамы (известной как Кататимно-имагинативная психотерапия, Кататимное переживание образов (КПО) или метод «сновидений наяву») (Лёйнер Х., 1996; О
+
+### Supporting context: Женская сексуальность.cleaned.txt
+- id: 60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc
+- source_type: approved_dataset
+- content_kind: educational
+- confidence: high
+
+Женская сексуальность Доморацкий В. А. доктор медицинских наук, профессор Особенности женской сексуальности Женская сексуальность тесно связана с менструальным циклом. Сексуальная реактивность женщин различна на разных стадиях цикла. Так, наибольший интерес к эротическим фильмам 
+
+### Supporting context: Стыд и секс.cleaned.txt
+- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1
+- source_type: approved_dataset
+- content_kind: faq
+- confidence: high
+
+Стыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч
+
+### Tone/style context: Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt
+- id: d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b
+- source_type: approved_high_confidence
+- content_kind: storytelling
+- confidence: high
+
+Тристан Таормино Библия БДСМ. Полное руководство Текст предоставлен правообладателем http://www.litres.ru/pages/biblio_book/?art=6881183 Библия БДСМ. Полное руководство / Тристан Т
+
+# Safety
+Avoid: identifiable private details, melodrama, shaming, false intimacy, unearned certainty. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+# Produce Final Draft
+Write the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids.

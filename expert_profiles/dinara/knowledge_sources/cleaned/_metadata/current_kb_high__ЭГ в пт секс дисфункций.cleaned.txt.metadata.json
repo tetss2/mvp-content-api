@@ -1,0 +1,27 @@
+{
+  "expert_id": "dinara",
+  "source_type": "approved_high_confidence",
+  "confidence_level": "high",
+  "expert_signal_score": 0.96,
+  "content_kind": "therapeutic_case",
+  "is_generation_safe": true,
+  "source_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+  "cleaned_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+  "original_url": null,
+  "title": null,
+  "detected_date": null,
+  "cleaned_at": "2026-05-12T21:46:20.067Z",
+  "clean_version": "v1",
+  "content_sha256": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+  "char_count": 103052,
+  "word_count": 13408,
+  "status": "prepared",
+  "warnings": [
+    "existing_prepared_file_referenced_without_copy"
+  ],
+  "classification": {
+    "source_type_rule": "path_and_folder_heuristics",
+    "initial_source_type": "approved_high_confidence",
+    "suggested_retrieval_weight": 1
+  }
+}

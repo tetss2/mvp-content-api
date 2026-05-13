@@ -1,0 +1,8 @@
+{
+  "expert_id": "new_expert_id",
+  "medical_sensitivity": "review_required",
+  "legal_sensitivity": "review_required",
+  "therapeutic_constraints": [],
+  "educational_constraints": ["Avoid unsupported absolute claims.", "State boundaries for sensitive advice."],
+  "forbidden_claims": ["guaranteed_result"]
+}

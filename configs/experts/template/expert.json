@@ -1,0 +1,26 @@
+{
+  "expert_id": "new_expert_id",
+  "display_name": "New Expert",
+  "status": "draft",
+  "primary_language": "ru",
+  "platforms": ["telegram", "instagram"],
+  "content_domains": [],
+  "retrieval_namespace": "new_expert_id_main",
+  "voice_profile_path": "expert_profiles/new_expert_id/voice",
+  "feedback_memory_path": "expert_profiles/new_expert_id/feedback_memory",
+  "generation_policy_path": "configs/experts/new_expert_id/generation-policy.json",
+  "safety_policy_path": "configs/experts/new_expert_id/safety-policy.json",
+  "style_constraints_path": "configs/experts/new_expert_id/style-constraints.json",
+  "created_at": "YYYY-MM-DDTHH:mm:ss.sssZ",
+  "updated_at": "YYYY-MM-DDTHH:mm:ss.sssZ",
+  "runtime_config": {
+    "retrieval_settings_path": "configs/experts/new_expert_id/retrieval.json",
+    "generation_settings_path": "configs/experts/new_expert_id/generation-policy.json",
+    "tone_settings_path": "configs/experts/new_expert_id/tone.json",
+    "cta_settings_path": "configs/experts/new_expert_id/cta.json",
+    "safety_settings_path": "configs/experts/new_expert_id/safety-policy.json",
+    "style_settings_path": "configs/experts/new_expert_id/style-constraints.json",
+    "context_policy_path": "configs/experts/new_expert_id/context-policy.json",
+    "output_policy_path": "configs/experts/new_expert_id/output-policy.json"
+  }
+}

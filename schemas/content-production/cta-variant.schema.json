@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/cta-variant.schema.json",
+  "title": "CTA Variant",
+  "type": "object",
+  "required": ["cta_type", "text", "escalation_level"],
+  "properties": {
+    "cta_type": {
+      "type": "string",
+      "enum": [
+        "soft_cta",
+        "educational_cta",
+        "emotional_cta",
+        "consultation_cta",
+        "dm_cta",
+        "save_share_cta",
+        "trust_cta",
+        "low_pressure_cta"
+      ]
+    },
+    "text": { "type": "string" },
+    "escalation_level": { "type": "integer", "minimum": 1, "maximum": 5 }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-analytics/optimization.schema.json",
+  "title": "Optimization Recommendation",
+  "type": "object",
+  "required": ["area", "priority", "recommendation", "evidence"],
+  "properties": {
+    "area": { "type": "string" },
+    "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+    "recommendation": { "type": "string" },
+    "evidence": { "type": "string" }
+  }
+}

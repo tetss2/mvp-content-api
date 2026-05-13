@@ -1,0 +1,56 @@
+{
+  "expert": "dinara",
+  "generated_at": "2026-05-12T21:46:23.283Z",
+  "status": "empty_sources",
+  "source_files": [],
+  "source_folders": [
+    {
+      "folder": "author_voice/raw_samples",
+      "exists": true,
+      "text_file_count": 0,
+      "empty": true
+    },
+    {
+      "folder": "knowledge_sources/website_vercel",
+      "exists": true,
+      "text_file_count": 0,
+      "empty": true
+    },
+    {
+      "folder": "knowledge_sources/b17_articles",
+      "exists": true,
+      "text_file_count": 0,
+      "empty": true
+    },
+    {
+      "folder": "knowledge_sources/telegram_channel",
+      "exists": true,
+      "text_file_count": 0,
+      "empty": true
+    }
+  ],
+  "tone": "Недостаточно данных: добавьте .txt или .md файлы в raw_samples или source folders.",
+  "common_phrases": [],
+  "paragraph_rhythm": {
+    "average_sentences": 0,
+    "average_words": 0,
+    "note": "Недостаточно данных."
+  },
+  "emoji_usage": {
+    "total": 0,
+    "per_1000_words": 0,
+    "common": []
+  },
+  "taboo_patterns": [],
+  "cta_style": [],
+  "sentence_length": {
+    "average_words": 0,
+    "short_sentences_percent": 0,
+    "long_sentences_percent": 0
+  },
+  "reader_addressing_style": "Недостаточно данных.",
+  "topics_and_recurring_motifs": [],
+  "warnings": [
+    "No text files found for author voice intake."
+  ]
+}

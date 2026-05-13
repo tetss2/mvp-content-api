@@ -1,0 +1,14 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "faq_answer",
+  "user_request": "Ответь на вопрос: нормально ли, что сексуальное желание меняется в отношениях?",
+  "output_constraints": {
+    "platform": "generic",
+    "length": "short",
+    "tone": "calm",
+    "format": "answer",
+    "cta_style": "consultative"
+  },
+  "adapter": "mock",
+  "local_only": true
+}

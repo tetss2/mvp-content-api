@@ -1,0 +1,17 @@
+{
+  "expert_id": "relationship_coach_demo",
+  "allowed_content_kinds": ["educational_post", "storytelling", "sales_post", "short_hook", "reel_script"],
+  "forbidden_content_kinds": ["medical_diagnosis", "legal_advice", "financial_advice"],
+  "default_generation_intent": "storytelling",
+  "default_language": "ru",
+  "platform_defaults": {
+    "telegram": { "length": "medium", "format": "post", "cta_style": "soft" },
+    "instagram": { "length": "short", "format": "reel_script", "cta_style": "soft" }
+  },
+  "prompt_isolation": {
+    "requires_expert_id": true,
+    "requires_voice_profile_path": true,
+    "forbid_shared_prompt_memory": true,
+    "forbid_unscoped_style_examples": true
+  }
+}

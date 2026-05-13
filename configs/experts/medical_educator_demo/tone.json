@@ -1,0 +1,11 @@
+{
+  "expert_id": "medical_educator_demo",
+  "primary_tone": "calm_educational",
+  "allowed_tones": ["calm_educational", "precise", "neutral", "reassuring"],
+  "emotional_tone_limits": {
+    "max_pressure": "low",
+    "max_fear": "low",
+    "max_clinical_distance": "medium",
+    "required_warmth": "medium"
+  }
+}

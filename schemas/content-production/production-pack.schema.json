@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/production-pack.schema.json",
+  "title": "Production Pack",
+  "type": "object",
+  "required": [
+    "pack_id",
+    "expert_id",
+    "campaign_id",
+    "planning_only",
+    "pipeline_stages",
+    "strategy_node",
+    "hook_intelligence",
+    "structure_generation",
+    "cta_variants",
+    "primary_output",
+    "platform_adaptations",
+    "packaging",
+    "narrative_sync",
+    "quality_score"
+  ],
+  "properties": {
+    "pack_id": { "type": "string" },
+    "expert_id": { "type": "string" },
+    "campaign_id": { "type": "string" },
+    "planning_only": { "const": true },
+    "generated_at": { "type": "string" },
+    "pipeline_stages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["stage", "status"],
+        "properties": {
+          "stage": { "type": "string" },
+          "status": { "type": "string" }
+        }
+      }
+    },
+    "strategy_node": { "type": "object" },
+    "hook_intelligence": { "type": "object" },
+    "structure_generation": { "$ref": "./structure.schema.json" },
+    "cta_variants": { "type": "object" },
+    "primary_output": { "$ref": "./platform-output.schema.json" },
+    "platform_adaptations": {
+      "type": "array",
+      "items": { "$ref": "./platform-output.schema.json" }
+    },
+    "packaging": { "type": "object" },
+    "narrative_sync": { "$ref": "./narrative-sync.schema.json" },
+    "quality_score": { "type": "object" }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "expert_id": "new_expert_id",
+  "style_memory_scope": "expert_profiles/new_expert_id/voice",
+  "voice_profile_required": true,
+  "generic_ai_suppression_required": true,
+  "forbid_cross_expert_voice_examples": true,
+  "style_principles": [],
+  "disallowed_style_sources": []
+}

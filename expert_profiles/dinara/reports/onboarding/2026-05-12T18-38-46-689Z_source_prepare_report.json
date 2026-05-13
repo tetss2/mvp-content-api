@@ -1,0 +1,44 @@
+{
+  "expert": "dinara",
+  "generated_at": "2026-05-12T18:38:46.687Z",
+  "mode": "local_text_normalization_only",
+  "source_folders": [
+    {
+      "source_folder": "website_vercel",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "b17_articles",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "empty": true
+    },
+    {
+      "source_folder": "telegram_channel",
+      "exists": true,
+      "file_count": 0,
+      "text_file_count": 0,
+      "empty": true
+    }
+  ],
+  "files_processed": 0,
+  "files": [],
+  "warnings": [
+    "Source folder is empty: knowledge_sources/website_vercel",
+    "Source folder is empty: knowledge_sources/b17_articles",
+    "Source folder is empty: knowledge_sources/telegram_channel"
+  ],
+  "safety": {
+    "local_only": true,
+    "network_calls": false,
+    "openai_calls": false,
+    "production_mutation": false,
+    "faiss_mutation": false,
+    "ingestion": false,
+    "promote": false
+  }
+}

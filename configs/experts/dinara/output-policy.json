@@ -1,0 +1,13 @@
+{
+  "expert_id": "dinara",
+  "allowed_platforms": ["telegram", "instagram"],
+  "allowed_formats": ["post", "answer", "hook_list", "carousel_script"],
+  "default_output": {
+    "platform": "instagram",
+    "format": "post",
+    "length": "medium",
+    "language": "ru"
+  },
+  "caption_markdown_policy": "strip_risky_markdown_for_media_captions",
+  "simulation_only": true
+}

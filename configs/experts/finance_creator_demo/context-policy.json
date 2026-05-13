@@ -1,0 +1,9 @@
+{
+  "expert_id": "finance_creator_demo",
+  "max_context_items": 4,
+  "max_total_chars": 6500,
+  "exclude_unsafe_sources": true,
+  "exclude_questionnaires_from_general_generation": true,
+  "require_retrieval_namespace": true,
+  "require_context_trace": true
+}

@@ -1,0 +1,318 @@
+{
+  "schema_version": "2026-05-13.persistent_cognition.v1",
+  "expert_id": "dinara",
+  "day": 30,
+  "trust_state": {
+    "authorityGrowth": 0.532,
+    "emotionalTrustGrowth": 0.51,
+    "educationalTrust": 0.4,
+    "vulnerabilityTrust": 0.28,
+    "consistencyTrust": 0.49,
+    "audienceFamiliarity": 0.46,
+    "trustTrajectory": [
+      {
+        "day": 1,
+        "score": 0.131,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 2,
+        "score": 0.141,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 3,
+        "score": 0.15,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 4,
+        "score": 0.162,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 5,
+        "score": 0.171,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 6,
+        "score": 0.181,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 7,
+        "score": 0.19,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 8,
+        "score": 0.2,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 9,
+        "score": 0.209,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 10,
+        "score": 0.219,
+        "topic": "soft communication"
+      },
+      {
+        "day": 11,
+        "score": 0.229,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 12,
+        "score": 0.243,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 13,
+        "score": 0.255,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 14,
+        "score": 0.267,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 15,
+        "score": 0.279,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 16,
+        "score": 0.29,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 17,
+        "score": 0.302,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 18,
+        "score": 0.314,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 19,
+        "score": 0.324,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 20,
+        "score": 0.336,
+        "topic": "soft communication"
+      },
+      {
+        "day": 21,
+        "score": 0.347,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 22,
+        "score": 0.358,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 23,
+        "score": 0.368,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 24,
+        "score": 0.379,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 25,
+        "score": 0.39,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 26,
+        "score": 0.401,
+        "topic": "trust after conflict"
+      },
+      {
+        "day": 27,
+        "score": 0.411,
+        "topic": "body sensitivity"
+      },
+      {
+        "day": 28,
+        "score": 0.424,
+        "topic": "self-worth in relationships"
+      },
+      {
+        "day": 29,
+        "score": 0.435,
+        "topic": "adult attachment"
+      },
+      {
+        "day": 30,
+        "score": 0.445,
+        "topic": "soft communication"
+      }
+    ],
+    "authorityTrajectory": [
+      {
+        "day": 1,
+        "score": 0.132,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 2,
+        "score": 0.144,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 3,
+        "score": 0.156,
+        "domain": "sex education"
+      },
+      {
+        "day": 4,
+        "score": 0.181,
+        "domain": "communication"
+      },
+      {
+        "day": 5,
+        "score": 0.193,
+        "domain": "sexology"
+      },
+      {
+        "day": 6,
+        "score": 0.205,
+        "domain": "conflict repair"
+      },
+      {
+        "day": 7,
+        "score": 0.217,
+        "domain": "body awareness"
+      },
+      {
+        "day": 8,
+        "score": 0.229,
+        "domain": "self-worth"
+      },
+      {
+        "day": 9,
+        "score": 0.241,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 10,
+        "score": 0.253,
+        "domain": "communication"
+      },
+      {
+        "day": 11,
+        "score": 0.265,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 12,
+        "score": 0.29,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 13,
+        "score": 0.302,
+        "domain": "sex education"
+      },
+      {
+        "day": 14,
+        "score": 0.314,
+        "domain": "communication"
+      },
+      {
+        "day": 15,
+        "score": 0.326,
+        "domain": "sexology"
+      },
+      {
+        "day": 16,
+        "score": 0.338,
+        "domain": "conflict repair"
+      },
+      {
+        "day": 17,
+        "score": 0.35,
+        "domain": "body awareness"
+      },
+      {
+        "day": 18,
+        "score": 0.362,
+        "domain": "self-worth"
+      },
+      {
+        "day": 19,
+        "score": 0.374,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 20,
+        "score": 0.399,
+        "domain": "communication"
+      },
+      {
+        "day": 21,
+        "score": 0.411,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 22,
+        "score": 0.423,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 23,
+        "score": 0.435,
+        "domain": "sex education"
+      },
+      {
+        "day": 24,
+        "score": 0.447,
+        "domain": "communication"
+      },
+      {
+        "day": 25,
+        "score": 0.459,
+        "domain": "sexology"
+      },
+      {
+        "day": 26,
+        "score": 0.471,
+        "domain": "conflict repair"
+      },
+      {
+        "day": 27,
+        "score": 0.483,
+        "domain": "body awareness"
+      },
+      {
+        "day": 28,
+        "score": 0.508,
+        "domain": "self-worth"
+      },
+      {
+        "day": 29,
+        "score": 0.52,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 30,
+        "score": 0.532,
+        "domain": "communication"
+      }
+    ]
+  },
+  "updated_at": "2026-05-13T19:14:17.471Z"
+}

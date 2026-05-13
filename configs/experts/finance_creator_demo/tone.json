@@ -1,0 +1,11 @@
+{
+  "expert_id": "finance_creator_demo",
+  "primary_tone": "clear_practical",
+  "allowed_tones": ["clear_practical", "educational", "confident", "calm"],
+  "emotional_tone_limits": {
+    "max_pressure": "medium",
+    "max_fear": "low",
+    "max_clinical_distance": "low",
+    "required_warmth": "medium"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.mvp-content-api/schemas/content-production/hook.schema.json",
+  "title": "Hook Variant",
+  "type": "object",
+  "required": ["hook_id", "hook_type", "text", "fatigue_risk", "predicted_effectiveness"],
+  "properties": {
+    "hook_id": { "type": "string" },
+    "hook_type": {
+      "type": "string",
+      "enum": [
+        "emotional_hook",
+        "curiosity_hook",
+        "authority_hook",
+        "therapeutic_hook",
+        "pain_point_hook",
+        "controversial_hook",
+        "story_hook",
+        "short_form_hook",
+        "reels_hook"
+      ]
+    },
+    "text": { "type": "string" },
+    "fatigue_risk": { "type": "string", "enum": ["low", "medium", "high"] },
+    "predicted_effectiveness": { "type": "number", "minimum": 0, "maximum": 1 }
+  }
+}

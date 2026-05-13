@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/cognition-state.schema.json",
+  "title": "Central Expert Cognitive Graph State",
+  "type": "object",
+  "required": [
+    "expertId",
+    "generatedAt",
+    "day",
+    "topicGraph",
+    "narrativeMemory",
+    "audienceMemory",
+    "repetitionIntelligence",
+    "trustState",
+    "ctaMemory",
+    "emotionalProgression",
+    "identityEvolution",
+    "conceptReinforcement",
+    "recommendations"
+  ],
+  "properties": {
+    "expertId": { "type": "string" },
+    "generatedAt": { "type": "string" },
+    "day": { "type": "integer", "minimum": 0 },
+    "topicGraph": {
+      "type": "object",
+      "required": ["nodes", "relationships"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "./topic-node.schema.json" }
+        },
+        "relationships": {
+          "type": "array",
+          "items": { "$ref": "./relationship.schema.json" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "narrativeMemory": { "$ref": "./narrative-memory.schema.json" },
+    "audienceMemory": { "$ref": "./audience-memory.schema.json" },
+    "repetitionIntelligence": { "type": "object" },
+    "trustState": { "$ref": "./trust-state.schema.json" },
+    "ctaMemory": { "$ref": "./CTA-memory.schema.json" },
+    "emotionalProgression": { "$ref": "./emotional-cycle.schema.json" },
+    "identityEvolution": { "type": "object" },
+    "conceptReinforcement": { "type": "object" },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "priority", "target", "recommendation"],
+        "properties": {
+          "type": { "type": "string" },
+          "priority": { "type": "string", "enum": ["low", "medium", "high"] },
+          "target": { "type": "string" },
+          "recommendation": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

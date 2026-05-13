@@ -1,0 +1,8 @@
+{
+  "expert_id": "dinara",
+  "supports_cta_generation": true,
+  "allowed_cta_styles": ["none", "soft", "consultative"],
+  "default_cta_style": "soft",
+  "cta_aggressiveness_limit": "low",
+  "forbidden_cta_patterns": ["scarcity_pressure", "guaranteed_transformation", "shaming", "medical_promise"]
+}

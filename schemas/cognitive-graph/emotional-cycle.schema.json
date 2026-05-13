@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/emotional-cycle.schema.json",
+  "title": "Emotional Progression Cycle",
+  "type": "object",
+  "required": [
+    "cycles",
+    "emotionalOverloadRisk",
+    "pacingBalance",
+    "therapeuticDepthProgression",
+    "audienceEmotionalSaturation"
+  ],
+  "properties": {
+    "cycles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["day", "emotion", "intensity", "topic"],
+        "properties": {
+          "day": { "type": "integer", "minimum": 1 },
+          "emotion": { "type": "string" },
+          "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+          "topic": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "emotionalOverloadRisk": { "type": "number", "minimum": 0, "maximum": 1 },
+    "pacingBalance": { "type": "number", "minimum": 0, "maximum": 1 },
+    "therapeuticDepthProgression": { "type": "array", "items": { "type": "object" } },
+    "audienceEmotionalSaturation": { "type": "object", "additionalProperties": { "type": "number" } }
+  },
+  "additionalProperties": false
+}

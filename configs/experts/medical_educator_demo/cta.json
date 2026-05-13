@@ -1,0 +1,8 @@
+{
+  "expert_id": "medical_educator_demo",
+  "supports_cta_generation": false,
+  "allowed_cta_styles": ["none", "consult_specialist"],
+  "default_cta_style": "none",
+  "cta_aggressiveness_limit": "none",
+  "forbidden_cta_patterns": ["sales_pressure", "product_claim", "guaranteed_health_outcome"]
+}

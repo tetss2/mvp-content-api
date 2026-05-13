@@ -1,0 +1,8 @@
+{
+  "expert_id": "finance_creator_demo",
+  "medical_sensitivity": "not_applicable",
+  "legal_sensitivity": "no_legal_or_tax_advice",
+  "therapeutic_constraints": [],
+  "educational_constraints": ["Keep finance content educational.", "Do not provide personalized investment, tax, or legal advice.", "Avoid guaranteed return claims."],
+  "forbidden_claims": ["guaranteed_return", "risk_free_profit", "personalized_investment_advice", "tax_instruction"]
+}

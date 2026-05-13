@@ -1,0 +1,167 @@
+{
+  "style_patterns": [
+    {
+      "pattern": "tone:expert_warm|format:post",
+      "usage_count": 2,
+      "average_score": 0.82,
+      "recent_trend": "stable",
+      "intents": {
+        "educational_post": 1,
+        "therapeutic_case": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-448Z_educational-instagram-post",
+        "2026-05-12T22-57-54-227Z_therapeutic-case-post"
+      ]
+    },
+    {
+      "pattern": "tone:calm|format:answer",
+      "usage_count": 1,
+      "average_score": 0.79,
+      "recent_trend": "stable",
+      "intents": {
+        "faq_answer": 1
+      },
+      "warnings": {
+        "missing_cta": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-53-883Z_faq-answer"
+      ]
+    },
+    {
+      "pattern": "tone:empathetic|format:post",
+      "usage_count": 1,
+      "average_score": 0.78,
+      "recent_trend": "stable",
+      "intents": {
+        "storytelling": 1
+      },
+      "warnings": {},
+      "example_run_ids": [
+        "2026-05-12T22-57-53-729Z_storytelling-telegram-post"
+      ]
+    },
+    {
+      "pattern": "tone:provocative|format:hook_list",
+      "usage_count": 1,
+      "average_score": 0.7,
+      "recent_trend": "stable",
+      "intents": {
+        "short_hook": 1
+      },
+      "warnings": {
+        "expert_tone_match_low": 1,
+        "low_emotional_warmth": 1
+      },
+      "example_run_ids": [
+        "2026-05-12T22-57-54-058Z_short-hook-list"
+      ]
+    }
+  ],
+  "style_drift_warnings": [
+    {
+      "run_id": "2026-05-12T22-57-53-883Z_faq-answer",
+      "intent": "faq_answer",
+      "warnings": [
+        "low_emotional_warmth"
+      ],
+      "warmth": 0.53,
+      "tone_match": 0.77
+    },
+    {
+      "run_id": "2026-05-12T22-57-54-058Z_short-hook-list",
+      "intent": "short_hook",
+      "warnings": [
+        "expert_tone_match_low",
+        "low_emotional_warmth"
+      ],
+      "warmth": 0.45,
+      "tone_match": 0.62
+    }
+  ],
+  "overused_phrases": [
+    {
+      "phrase": "женской сексуальности много",
+      "count": 3
+    },
+    {
+      "phrase": "сексуальности много слоев",
+      "count": 3
+    },
+    {
+      "phrase": "много слоев телесный",
+      "count": 3
+    },
+    {
+      "phrase": "слоев телесный эмоциональный",
+      "count": 3
+    },
+    {
+      "phrase": "телесный эмоциональный relational",
+      "count": 3
+    },
+    {
+      "phrase": "эмоциональный relational культурный",
+      "count": 3
+    },
+    {
+      "phrase": "relational культурный поэтому",
+      "count": 3
+    },
+    {
+      "phrase": "культурный поэтому редко",
+      "count": 3
+    },
+    {
+      "phrase": "поэтому редко помогает",
+      "count": 3
+    },
+    {
+      "phrase": "редко помогает грубая",
+      "count": 3
+    },
+    {
+      "phrase": "помогает грубая инструкция",
+      "count": 3
+    },
+    {
+      "phrase": "грубая инструкция вроде",
+      "count": 3
+    },
+    {
+      "phrase": "инструкция вроде просто",
+      "count": 3
+    },
+    {
+      "phrase": "вроде просто расслабься",
+      "count": 3
+    },
+    {
+      "phrase": "просто расслабься намного",
+      "count": 3
+    },
+    {
+      "phrase": "расслабься намного точнее",
+      "count": 3
+    },
+    {
+      "phrase": "намного точнее спрашивать",
+      "count": 3
+    },
+    {
+      "phrase": "точнее спрашивать сейчас",
+      "count": 3
+    },
+    {
+      "phrase": "спрашивать сейчас происходит",
+      "count": 3
+    },
+    {
+      "phrase": "сейчас происходит безопасностью",
+      "count": 3
+    }
+  ]
+}

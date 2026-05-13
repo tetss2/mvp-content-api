@@ -1,0 +1,250 @@
+{
+  "expert": "dinara",
+  "generated_at": "2026-05-12T21:46:19.371Z",
+  "expert_dir": "C:\\Users\\Дмитрий\\Documents\\GitHub\\mvp-content-api\\expert_profiles\\dinara",
+  "profile": {
+    "path": "expert_profiles/dinara/profile.json",
+    "exists": true
+  },
+  "folders": [
+    {
+      "path": "knowledge_sources/website_vercel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/b17_articles",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/telegram_channel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "author_voice/raw_samples",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "reports/onboarding",
+      "exists": true,
+      "empty": false,
+      "file_count": 30,
+      "files": [
+        {
+          "path": "2026-05-12T18-38-46-689Z_source_prepare_report.json",
+          "bytes": 1037
+        },
+        {
+          "path": "2026-05-12T18-38-46-690Z_inventory_report.json",
+          "bytes": 2413
+        },
+        {
+          "path": "2026-05-12T18-38-46-690Z_inventory_report.md",
+          "bytes": 807
+        },
+        {
+          "path": "2026-05-12T18-38-57-338Z_inventory_report.json",
+          "bytes": 2735
+        },
+        {
+          "path": "2026-05-12T18-38-57-338Z_inventory_report.md",
+          "bytes": 811
+        },
+        {
+          "path": "2026-05-12T18-38-58-019Z_source_prepare_report.json",
+          "bytes": 1037
+        },
+        {
+          "path": "2026-05-12T18-42-43-698Z_inventory_report.json",
+          "bytes": 3288
+        },
+        {
+          "path": "2026-05-12T18-42-43-698Z_inventory_report.md",
+          "bytes": 815
+        },
+        {
+          "path": "2026-05-12T18-42-44-412Z_source_prepare_report.json",
+          "bytes": 1037
+        },
+        {
+          "path": "2026-05-12T21-25-13-526Z_source_prepare_report.json",
+          "bytes": 1957
+        },
+        {
+          "path": "2026-05-12T21-25-22-081Z_inventory_report.json",
+          "bytes": 3748
+        },
+        {
+          "path": "2026-05-12T21-25-22-081Z_inventory_report.md",
+          "bytes": 816
+        },
+        {
+          "path": "2026-05-12T21-25-23-425Z_source_prepare_report.json",
+          "bytes": 1957
+        },
+        {
+          "path": "2026-05-12T21-35-37-982Z_source_path_inventory.md",
+          "bytes": 45616
+        },
+        {
+          "path": "2026-05-12T21-35-38-011Z_source_prepare_report.json",
+          "bytes": 26198
+        },
+        {
+          "path": "2026-05-12T21-35-55-774Z_source_path_inventory.md",
+          "bytes": 45640
+        },
+        {
+          "path": "2026-05-12T21-35-55-822Z_source_prepare_report.json",
+          "bytes": 22839
+        },
+        {
+          "path": "2026-05-12T21-36-04-419Z_inventory_report.json",
+          "bytes": 4795
+        },
+        {
+          "path": "2026-05-12T21-36-04-419Z_inventory_report.md",
+          "bytes": 816
+        },
+        {
+          "path": "2026-05-12T21-36-07-791Z_source_path_inventory.md",
+          "bytes": 45578
+        },
+        {
+          "path": "2026-05-12T21-36-07-831Z_source_prepare_report.json",
+          "bytes": 22839
+        },
+        {
+          "path": "2026-05-12T21-44-58-808Z_source_path_inventory.md",
+          "bytes": 45638
+        },
+        {
+          "path": "2026-05-12T21-44-58-841Z_taxonomy_summary.md",
+          "bytes": 11226
+        },
+        {
+          "path": "2026-05-12T21-44-58-844Z_source_prepare_report.json",
+          "bytes": 34461
+        },
+        {
+          "path": "2026-05-12T21-45-48-624Z_source_path_inventory.md",
+          "bytes": 45675
+        },
+        {
+          "path": "2026-05-12T21-45-48-650Z_taxonomy_summary.md",
+          "bytes": 9415
+        },
+        {
+          "path": "2026-05-12T21-45-48-658Z_source_prepare_report.json",
+          "bytes": 29953
+        },
+        {
+          "path": "2026-05-12T21-46-05-663Z_source_path_inventory.md",
+          "bytes": 45731
+        },
+        {
+          "path": "2026-05-12T21-46-05-680Z_taxonomy_summary.md",
+          "bytes": 8654
+        },
+        {
+          "path": "2026-05-12T21-46-05-682Z_source_prepare_report.json",
+          "bytes": 28130
+        }
+      ]
+    },
+    {
+      "path": "reports/batch_reports",
+      "exists": true,
+      "empty": false,
+      "file_count": 6,
+      "files": [
+        {
+          "path": "2026-05-12T18-42-46-875Z_dinara_batch_report.md",
+          "bytes": 103424
+        },
+        {
+          "path": "2026-05-12T21-25-26-755Z_dinara_batch_report.md",
+          "bytes": 106472
+        },
+        {
+          "path": "2026-05-12T21-36-11-859Z_dinara_batch_report.md",
+          "bytes": 104522
+        },
+        {
+          "path": "dinara_batch_report_2026-05-12T18-42-46-875Z.json",
+          "bytes": 141653
+        },
+        {
+          "path": "dinara_batch_report_2026-05-12T21-25-26-755Z.json",
+          "bytes": 145294
+        },
+        {
+          "path": "dinara_batch_report_2026-05-12T21-36-11-859Z.json",
+          "bytes": 143596
+        }
+      ]
+    },
+    {
+      "path": "reports/feedback_reports",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    }
+  ],
+  "sources": [
+    {
+      "path": "knowledge_sources/website_vercel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/b17_articles",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    },
+    {
+      "path": "knowledge_sources/telegram_channel",
+      "exists": true,
+      "empty": true,
+      "file_count": 0,
+      "files": []
+    }
+  ],
+  "missing_folders": [],
+  "empty_folders": [
+    "knowledge_sources/website_vercel",
+    "knowledge_sources/b17_articles",
+    "knowledge_sources/telegram_channel",
+    "author_voice/raw_samples",
+    "reports/feedback_reports"
+  ],
+  "warnings": [
+    "Source folder is empty: knowledge_sources/website_vercel",
+    "Source folder is empty: knowledge_sources/b17_articles",
+    "Source folder is empty: knowledge_sources/telegram_channel"
+  ],
+  "safety": {
+    "local_only": true,
+    "network_calls": false,
+    "production_mutation": false,
+    "faiss_mutation": false,
+    "ingestion": false,
+    "promote": false
+  }
+}

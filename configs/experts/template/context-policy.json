@@ -1,0 +1,9 @@
+{
+  "expert_id": "new_expert_id",
+  "max_context_items": 6,
+  "max_total_chars": 10000,
+  "exclude_unsafe_sources": true,
+  "exclude_questionnaires_from_general_generation": true,
+  "require_retrieval_namespace": true,
+  "require_context_trace": true
+}

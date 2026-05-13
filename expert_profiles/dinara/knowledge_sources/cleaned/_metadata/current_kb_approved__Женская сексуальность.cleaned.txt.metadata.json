@@ -1,0 +1,27 @@
+{
+  "expert_id": "dinara",
+  "source_type": "approved_dataset",
+  "confidence_level": "high",
+  "expert_signal_score": 0.86,
+  "content_kind": "educational",
+  "is_generation_safe": true,
+  "source_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+  "cleaned_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+  "original_url": null,
+  "title": null,
+  "detected_date": null,
+  "cleaned_at": "2026-05-12T21:46:20.067Z",
+  "clean_version": "v1",
+  "content_sha256": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+  "char_count": 17731,
+  "word_count": 2110,
+  "status": "prepared",
+  "warnings": [
+    "existing_prepared_file_referenced_without_copy"
+  ],
+  "classification": {
+    "source_type_rule": "path_and_folder_heuristics",
+    "initial_source_type": "approved_dataset",
+    "suggested_retrieval_weight": 0.85
+  }
+}

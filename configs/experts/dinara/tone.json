@@ -1,0 +1,11 @@
+{
+  "expert_id": "dinara",
+  "primary_tone": "warm_expert",
+  "allowed_tones": ["warm_expert", "empathetic", "educational", "calm", "soft_direct"],
+  "emotional_tone_limits": {
+    "max_pressure": "low",
+    "max_fear": "low",
+    "max_clinical_distance": "medium",
+    "required_warmth": "high"
+  }
+}

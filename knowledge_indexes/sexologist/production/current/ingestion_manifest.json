@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-05-12T14:00:48.006Z",
+  "kb_id": "sexologist",
+  "session_id": "classified_2026-05-12T14-00-07-984Z",
+  "source_status": "cleaned_ready_for_ingestion",
+  "source_type": "classified_intake",
+  "source_folders_included": [
+    "knowledge_intake/sexologist/approved",
+    "knowledge_intake/sexologist/approved_high_confidence",
+    "knowledge_intake/sexologist/approved_medium_confidence"
+  ],
+  "source_folders_excluded": [
+    "knowledge_intake/sexologist/questionnaires",
+    "knowledge_intake/sexologist/ocr_suspect",
+    "knowledge_intake/sexologist/duplicates",
+    "knowledge_intake/sexologist/review",
+    "knowledge_intake/sexologist/manual_review_rare"
+  ],
+  "summary": {
+    "total_cleaning_items": 20,
+    "planned_sources": 20,
+    "planned_chunks": 1179,
+    "rejected_or_skipped_items": 0,
+    "estimated_tokens": 668315,
+    "estimated_embedding_cost_usd": 0.0133663,
+    "duplicate_candidates": 0,
+    "duplicate_source_copies": 0,
+    "excluded_by_latest_reports": 2,
+    "quality_summary": {
+      "high": 20,
+      "medium": 0,
+      "low": 0,
+      "reject": 0
+    }
+  },
+  "safeguards": {
+    "wrote_only_staging": true,
+    "current_index_modified": false,
+    "promoted_automatically": false
+  }
+}

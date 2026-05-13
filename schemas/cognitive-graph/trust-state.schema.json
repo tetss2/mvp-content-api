@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mvp-content-api.local/schemas/cognitive-graph/trust-state.schema.json",
+  "title": "Trust Accumulation State",
+  "type": "object",
+  "required": [
+    "authorityGrowth",
+    "emotionalTrustGrowth",
+    "educationalTrust",
+    "vulnerabilityTrust",
+    "consistencyTrust",
+    "audienceFamiliarity",
+    "trustTrajectory",
+    "authorityTrajectory"
+  ],
+  "properties": {
+    "authorityGrowth": { "type": "number", "minimum": 0, "maximum": 1 },
+    "emotionalTrustGrowth": { "type": "number", "minimum": 0, "maximum": 1 },
+    "educationalTrust": { "type": "number", "minimum": 0, "maximum": 1 },
+    "vulnerabilityTrust": { "type": "number", "minimum": 0, "maximum": 1 },
+    "consistencyTrust": { "type": "number", "minimum": 0, "maximum": 1 },
+    "audienceFamiliarity": { "type": "number", "minimum": 0, "maximum": 1 },
+    "trustTrajectory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["day", "score", "topic"],
+        "properties": {
+          "day": { "type": "integer", "minimum": 1 },
+          "score": { "type": "number", "minimum": 0, "maximum": 1 },
+          "topic": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "authorityTrajectory": { "type": "array", "items": { "type": "object" } }
+  },
+  "additionalProperties": false
+}

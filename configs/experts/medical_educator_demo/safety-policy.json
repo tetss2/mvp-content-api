@@ -1,0 +1,8 @@
+{
+  "expert_id": "medical_educator_demo",
+  "medical_sensitivity": "high",
+  "legal_sensitivity": "no_legal_advice",
+  "therapeutic_constraints": ["Do not provide diagnosis or treatment plans.", "Always separate education from personal medical advice."],
+  "educational_constraints": ["Mention emergency and specialist boundaries when relevant.", "Avoid dosage, prescription, or individualized care instructions."],
+  "forbidden_claims": ["cure", "guaranteed_result", "prescription", "diagnosis", "treatment_plan"]
+}

@@ -1,0 +1,26 @@
+{
+  "expert_id": "finance_creator_demo",
+  "display_name": "Finance Creator Demo",
+  "status": "draft",
+  "primary_language": "ru",
+  "platforms": ["telegram", "instagram"],
+  "content_domains": ["personal_finance", "financial_literacy"],
+  "retrieval_namespace": "finance_creator_demo_placeholder",
+  "voice_profile_path": "configs/experts/finance_creator_demo/voice-profile.placeholder.json",
+  "feedback_memory_path": "configs/experts/finance_creator_demo/feedback-memory.placeholder.json",
+  "generation_policy_path": "configs/experts/finance_creator_demo/generation-policy.json",
+  "safety_policy_path": "configs/experts/finance_creator_demo/safety-policy.json",
+  "style_constraints_path": "configs/experts/finance_creator_demo/style-constraints.json",
+  "created_at": "2026-05-13T00:00:00.000Z",
+  "updated_at": "2026-05-13T00:00:00.000Z",
+  "runtime_config": {
+    "retrieval_settings_path": "configs/experts/finance_creator_demo/retrieval.json",
+    "generation_settings_path": "configs/experts/finance_creator_demo/generation-policy.json",
+    "tone_settings_path": "configs/experts/finance_creator_demo/tone.json",
+    "cta_settings_path": "configs/experts/finance_creator_demo/cta.json",
+    "safety_settings_path": "configs/experts/finance_creator_demo/safety-policy.json",
+    "style_settings_path": "configs/experts/finance_creator_demo/style-constraints.json",
+    "context_policy_path": "configs/experts/finance_creator_demo/context-policy.json",
+    "output_policy_path": "configs/experts/finance_creator_demo/output-policy.json"
+  }
+}

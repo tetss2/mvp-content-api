@@ -1,0 +1,12 @@
+{
+  "expert_id": "new_expert_id",
+  "allowed_platforms": ["telegram", "instagram"],
+  "allowed_formats": ["post", "answer", "hook_list"],
+  "default_output": {
+    "platform": "instagram",
+    "format": "post",
+    "length": "medium",
+    "language": "ru"
+  },
+  "simulation_only": true
+}

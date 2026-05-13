@@ -1,0 +1,1224 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "therapeutic_case",
+  "selected_items": [
+    {
+      "id": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+      "title": "секс дисф. начало (през).cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/секс дисф. начало (през).cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "therapeutic_case",
+      "confidence_level": "high",
+      "expert_signal_score": 0.96,
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+      "content": "Мужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотерапия сексуальных расстройств», которая вышла в свет в 2009 году и была переиздана в 2020 году. В её основе лежит концепция технического эклектизма – А. Лазаруса - практика выбора наиболее эффективных методов психотерапии для решения конкретных проблем конкретного пациента. Используются приемы и техники из арсеналов супружеской терапии, КБТ и секс-терапии, НЛП, ДПДГ и гипноза. Интегративная психотерапия сексуальных расстройств Особенности авторской интегративной модели психотерапии сексуальных дисфункций Ориентация на решение основных психологических проблем пациентов, препятствующих полноценным интимным отношениям. Выявление и психотерапевтическая коррекция психологических факторов сексуальной дезадаптации. Терапевтический прагматизм и систематизация используемых техник психотерапии в зависимости от мишеней для их воздействия; гибкость в выборе психотерапевтических вмешательств; краткосрочность, экономичность и клиническая эффективность. Критерии выявления ключевых психологических факторовсексуальной дезадаптации мужчины 1.Задержки психосексуального развития а) отставание в сроках становления сексуальности по данным сексологического анамнеза; б) трудности в установлении и поддержании коммуникаций с лицами противоположного пола; в) платоническое и эротическое фантазирование без желания достигнуть сек",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7428,
+        "final_score": 2.4728,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "selected_because": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "selection_rank": 1
+    },
+    {
+      "id": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+      "title": "Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "therapeutic_case",
+      "confidence_level": "high",
+      "expert_signal_score": 0.96,
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+      "content": "Стратегии работы с неврозами (невротическими расстройствами) Доктор медицинских наук, профессор В. А. Доморацкий Чем быстрее ты движешься за целью, тем быстрее цель уходит от тебя. И преградой является путь. Убери путь и всё будет хорошо… Куда надо идти, чтобы не было пути? - К СЕБЕ! Дзэн Основные критерии невротических расстройств 1) ведущая роль психогенных факторов в возникновении и декомпенсации (усилении) болезненных проявлений; 2) функциональный (обратимый) характер психических расстройств, 3) отсутствие психотических симптомов, слабоумия, нарастающих изменений личности; 4) сохранение больным критического отношения к своему состоянию, что отличает неврозы от психопатий (расстройств личности). Определение неврозов В его основу могут быть положены 6 критериев. 3 этиопатогенетических критерия: 1) Неврозы – психогенные (как правило конфликтогенные) заболевания. 2) Неврозы – личностные заболевания (удар по системе личностных ценностей). 3) Неврозы – функциональные (обратимые, без грубых органических поражений) заболевания. 3 клинических критерия – неврозы проявляются: 4) аффективными (эмоциональными) нарушениями; 5) поведенческими (пациенты неправильно строят своё ролевое поведение); 6) нарушениями нейровегетативной регуляции. Негативная и позитивная диагностика неврозов Негативная диагностика – когда мы исключаем все другие заболевания и на основе этого говорим о невротической природе расстройства (только этого недостаточно для правильного диагноза). Позитивная диагностика – на основе выявления патогномоничных (характерных) признаков: 1. Психологическое содержание имеющих",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7068,
+        "final_score": 2.4368,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "selected_because": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "selection_rank": 2
+    },
+    {
+      "id": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+      "title": "Введение в сексологию.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Введение в сексологию.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "expert_signal_score": 0.96,
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+      "content": "Введение в сексологию Доктор мед. наук, профессор В. А. Доморацкий Секс и сексуальность В повседневной жизни слово «секс» в последнее время часто используют для обозначения полового акта («заниматься сексом»). Но сексуальность — больше, чем просто секс и способность человека к эротическим реакциям. ВОЗ определяет сексуальность как «стержневой аспект человеческого бытия на всем протяжении жизни…» Она характеризует различные психологические и физиологические процессы, связанные с половой жизнью человека. Составляющие здоровой сексуальности Способность получать от секса удовольствие в рамках социальных норм. Здоровые сексуальные взаимоотношения, лишенные чувства вины, страха перед половым актом, освобожденные от стыда и ложных представлений о сексе. Отсутствие заболеваний, психических расстройств, мешающих проявлению сексуальности. Секс и сексуальность В зависимости от ведущего мотива половой близости выделяют: 1) прокреативный секс (имеющий целью деторождение); 2) рекреативный (с единственной целью — получить удовольствие); 3) релятивный секс («любовь-дружба», возможность общения с близким человеком). Сексуальность сегодня Крылатая фраза про СССР, в котором нет секса обрела реальность в США. По данным исследования общественного мнения, проводимого с 1972 года на базе Чикагского университета, — число американцев, занимающихся сексом хотя бы один раз в неделю, сократилось с 45% (2000 год) до 36% (2016 год). По полученным данным американские миллениалы (поколение Y - родились между 1980 и 2000 гг.) в два раза реже, чем предыдущее поколение, ведут половую жизнь после 20 лет. Это ",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8268,
+        "final_score": 2.4268,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "selected_because": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "selection_rank": 3
+    },
+    {
+      "id": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+      "title": "Женская сексуальность.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+      "source_type": "approved_dataset",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "expert_signal_score": 0.86,
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+      "content": "Женская сексуальность Доморацкий В. А. доктор медицинских наук, профессор Особенности женской сексуальности Женская сексуальность тесно связана с менструальным циклом. Сексуальная реактивность женщин различна на разных стадиях цикла. Так, наибольший интерес к эротическим фильмам появляется у молодых женщин сразу после окончания менструации, а в первые семь дней второй половины цикла интерес к эротике снижается. Также наблюдаются циклические колебания либидо и способности испытывать оргастические переживания. Уделом примерно половины женщин является предменструальный синдром, который проявляется раздражительностью, эмоциональной и вегетативной лабильностью. Женская сексуальность отличается большей психологичностью, результатом чего являются большие индивидуальные различия в сексуальном поведении женщин и сексуальных переживаниях. Испытывать оргазм и удовлетворение от близости, женщине нередко, мешают опасения, что она не может положиться на любимого человека или страх потерять его. Д. Бэнкрофт (2003), опираясь на опрос 987 американских женщин от 20 до 65 лет, утверждает, что женская сексуальность качественно отличается от мужской. Сексуальная неудовлетворенность женщин зависит не столько от телесных реакций, таких как возбуждение, любрикация, оргазм, сколько от психологических факторов, включая чувство общего эмоционального благополучия и хорошие отношения с партнером. Ведущую роль в формировании полового поведения женщины играет не сексуальное либидо (стремление к коитусу), а эротическое, тесно связанное с оценкой личностных качеств партнера. Поэтому женская сексуальность п",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8668,
+        "final_score": 2.2668,
+        "boosts": [
+          "approved_dataset:+0.85",
+          "confidence_high:+0.25",
+          "expert_signal_0.86:+0.18",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_dataset",
+        "confidence_level": "high"
+      },
+      "selected_because": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity"
+      ],
+      "selection_rank": 4
+    },
+    {
+      "id": "f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1",
+      "title": "Стыд и секс.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+      "source_type": "approved_dataset",
+      "content_kind": "faq",
+      "confidence_level": "high",
+      "expert_signal_score": 0.86,
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1",
+      "content": "Стыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, что сама заходила в комнату к отчиму, который трогал её интимные места; мужчина винит себя за то, что унижал свою жену, когда она не хотела с ним секса… Виноватому человеку кажется, что он несет тяжкий груз. Но он, в отличие от того, кто испытывает стыд, может освободиться от чувства вины посредством самых разных действий: раскаяния, исповеди, он может принять наказание, возместить причиненный ущерб или «отдать вину обратно» тому, кто ее передал... Субъект, говорящий о вине, говорит таким образом о проступке или правонарушении, а это значит, что референтом для него является сфера морального. Если есть объективный проступок, признанный таковым общепринятой моралью, говорят о реальной вине. Человек обращает свой взор на себя самого, понимает, что совершил ошибку, и объективно он будет прав. Это здоровое чувство вины, оно заставляет человека стремиться к возмещению причиненного ущерба, а именно, к переходу от внутреннего понимания того, что «Я виноват и сам себя порицаю за совершенный проступок» к реальным поступкам в отношении окружающих: « Я несу ответственность за причиненный ущерб и постараюсь найти способ, которым я могу его возместить». ПРИМЕР №1: Мужчина заявляет терапевту: «Я сам разрушаю свою семью, и в этом только моя вина...», а потом говорит: «Когда вчера моя жена отказала мне в сексе, сказа",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8428,
+        "final_score": 2.1228,
+        "boosts": [
+          "approved_dataset:+0.85",
+          "confidence_high:+0.25",
+          "expert_signal_0.86:+0.18"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_dataset",
+        "confidence_level": "high"
+      },
+      "selected_because": [
+        "high_final_score",
+        "generation_safe",
+        "content_kind_diversity"
+      ],
+      "selection_rank": 5
+    }
+  ],
+  "suppressed_items": [
+    {
+      "id": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+      "title": "ЭГ в пт секс дисфункций.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/ЭГ в пт секс дисфункций.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "therapeutic_case",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.6828,
+        "final_score": 2.4128,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "content_kind_limit",
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+      "title": "Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7788,
+        "final_score": 2.3788,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+      "title": "Нетипичный секс.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Нетипичный секс.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7668,
+        "final_score": 2.3668,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+      "title": "ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7548,
+        "final_score": 2.3548,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+      "title": "Сексуальные дисгармонии.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальные дисгармонии.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7308,
+        "final_score": 2.3308,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65",
+      "title": "Автостоп. Техника символдрамы.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "faq",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8388,
+        "final_score": 2.3188,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+      "title": "Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "educational",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.6948,
+        "final_score": 2.2948,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+      "title": "Женские сексуальные дисфункции .cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Женские сексуальные дисфункции .cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "faq",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8148,
+        "final_score": 2.2948,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+      "title": "Завис (през).cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Завис (през).cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "faq",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.8028,
+        "final_score": 2.2828,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+      "title": "Мужская сексуальность.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "short_hook",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7908,
+        "final_score": 2.2708,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "short_hook",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+      "title": "Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "storytelling",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.6588,
+        "final_score": 2.2188,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "storytelling_match:+0.08"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "storytelling",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36",
+      "title": "Сексуальный интеллект.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "sales",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.7188,
+        "final_score": 2.1988,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "sales",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+      "title": "Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved_high_confidence/Эмили Нагоски - Как хочет женщина.cleaned.txt",
+      "source_type": "approved_high_confidence",
+      "content_kind": "faq",
+      "confidence_level": "high",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.6708,
+        "final_score": 2.1508,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      },
+      "suppressed_because": [
+        "source_type_limit"
+      ]
+    },
+    {
+      "id": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+      "title": "Секс. обслед. Ж (1).cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved/Секс. обслед. Ж (1).cleaned.txt",
+      "source_type": "questionnaire",
+      "content_kind": "questionnaire",
+      "confidence_level": "low",
+      "is_generation_safe": true,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy"
+      ],
+      "content_sha256": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.676,
+        "final_score": -0.924,
+        "boosts": [],
+        "penalties": [
+          "questionnaire:-1",
+          "confidence_low:-0.35",
+          "expert_signal_0:-0.25"
+        ],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "questionnaire",
+        "source_type": "questionnaire",
+        "confidence_level": "low"
+      },
+      "suppressed_because": [
+        "questionnaire_context",
+        "low_final_score"
+      ]
+    },
+    {
+      "id": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+      "title": "«Когда мы не ладим» Упражнение .cleaned.txt",
+      "source_path": "knowledge_intake/sexologist/approved/«Когда мы не ладим» Упражнение .cleaned.txt",
+      "source_type": "questionnaire",
+      "content_kind": "storytelling",
+      "confidence_level": "low",
+      "is_generation_safe": false,
+      "warnings": [
+        "existing_prepared_file_referenced_without_copy",
+        "probable_questionnaire"
+      ],
+      "content_sha256": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+      "char_count": 1600,
+      "retrieval_trace": {
+        "base_score": 0.59,
+        "final_score": -3.05,
+        "boosts": [
+          "storytelling_match:+0.08"
+        ],
+        "penalties": [
+          "questionnaire:-1",
+          "confidence_low:-0.35",
+          "expert_signal_0:-0.25",
+          "generation_unsafe:-2",
+          "warning_probable_questionnaire:-0.12"
+        ],
+        "generation_safe": false,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "storytelling",
+        "source_type": "questionnaire",
+        "confidence_level": "low"
+      },
+      "suppressed_because": [
+        "generation_unsafe",
+        "questionnaire_context",
+        "noisy_warnings",
+        "low_final_score"
+      ]
+    }
+  ],
+  "context_summary": {
+    "selected_count": 5,
+    "suppressed_count": 15,
+    "candidate_count": 20,
+    "total_selected_chars": 8000,
+    "max_context_items": 6,
+    "max_total_chars": 12000,
+    "content_kind_counts": {
+      "therapeutic_case": 2,
+      "educational": 2,
+      "faq": 1
+    },
+    "source_type_counts": {
+      "approved_high_confidence": 3,
+      "approved_dataset": 2
+    },
+    "safe_candidate_count": 19,
+    "warnings": []
+  },
+  "assembly_trace": [
+    {
+      "id": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+      "action": "selected",
+      "selection_rank": 1,
+      "final_score": 2.4728,
+      "reasons": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7428,
+        "final_score": 2.4728,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+      "action": "selected",
+      "selection_rank": 2,
+      "final_score": 2.4368,
+      "reasons": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7068,
+        "final_score": 2.4368,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+      "action": "selected",
+      "selection_rank": 3,
+      "final_score": 2.4268,
+      "reasons": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity",
+        "content_kind_diversity"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8268,
+        "final_score": 2.4268,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+      "action": "suppressed",
+      "final_score": 2.4128,
+      "reasons": [
+        "content_kind_limit",
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.6828,
+        "final_score": 2.4128,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "therapeutic_case_match:+0.25"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "therapeutic_case",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+      "action": "suppressed",
+      "final_score": 2.3788,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7788,
+        "final_score": 2.3788,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+      "action": "suppressed",
+      "final_score": 2.3668,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7668,
+        "final_score": 2.3668,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+      "action": "suppressed",
+      "final_score": 2.3548,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7548,
+        "final_score": 2.3548,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+      "action": "suppressed",
+      "final_score": 2.3308,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7308,
+        "final_score": 2.3308,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65",
+      "action": "suppressed",
+      "final_score": 2.3188,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8388,
+        "final_score": 2.3188,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+      "action": "suppressed",
+      "final_score": 2.2948,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.6948,
+        "final_score": 2.2948,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+      "action": "suppressed",
+      "final_score": 2.2948,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8148,
+        "final_score": 2.2948,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+      "action": "suppressed",
+      "final_score": 2.2828,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8028,
+        "final_score": 2.2828,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+      "action": "suppressed",
+      "final_score": 2.2708,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7908,
+        "final_score": 2.2708,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "short_hook",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+      "action": "selected",
+      "selection_rank": 4,
+      "final_score": 2.2668,
+      "reasons": [
+        "high_final_score",
+        "intent_content_match",
+        "generation_safe",
+        "source_diversity"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8668,
+        "final_score": 2.2668,
+        "boosts": [
+          "approved_dataset:+0.85",
+          "confidence_high:+0.25",
+          "expert_signal_0.86:+0.18",
+          "educational_match:+0.12"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "educational",
+        "source_type": "approved_dataset",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+      "action": "suppressed",
+      "final_score": 2.2188,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.6588,
+        "final_score": 2.2188,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23",
+          "storytelling_match:+0.08"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "storytelling",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36",
+      "action": "suppressed",
+      "final_score": 2.1988,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.7188,
+        "final_score": 2.1988,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "sales",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+      "action": "suppressed",
+      "final_score": 2.1508,
+      "reasons": [
+        "source_type_limit"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.6708,
+        "final_score": 2.1508,
+        "boosts": [
+          "approved_high_confidence:+1",
+          "confidence_high:+0.25",
+          "expert_signal_0.96:+0.23"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_high_confidence",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1",
+      "action": "selected",
+      "selection_rank": 5,
+      "final_score": 2.1228,
+      "reasons": [
+        "high_final_score",
+        "generation_safe",
+        "content_kind_diversity"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.8428,
+        "final_score": 2.1228,
+        "boosts": [
+          "approved_dataset:+0.85",
+          "confidence_high:+0.25",
+          "expert_signal_0.86:+0.18"
+        ],
+        "penalties": [],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "faq",
+        "source_type": "approved_dataset",
+        "confidence_level": "high"
+      }
+    },
+    {
+      "id": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+      "action": "suppressed",
+      "final_score": -0.924,
+      "reasons": [
+        "questionnaire_context",
+        "low_final_score"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.676,
+        "final_score": -0.924,
+        "boosts": [],
+        "penalties": [
+          "questionnaire:-1",
+          "confidence_low:-0.35",
+          "expert_signal_0:-0.25"
+        ],
+        "generation_safe": true,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "questionnaire",
+        "source_type": "questionnaire",
+        "confidence_level": "low"
+      }
+    },
+    {
+      "id": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+      "action": "suppressed",
+      "final_score": -3.05,
+      "reasons": [
+        "generation_unsafe",
+        "questionnaire_context",
+        "noisy_warnings",
+        "low_final_score"
+      ],
+      "retrieval_trace": {
+        "base_score": 0.59,
+        "final_score": -3.05,
+        "boosts": [
+          "storytelling_match:+0.08"
+        ],
+        "penalties": [
+          "questionnaire:-1",
+          "confidence_low:-0.35",
+          "expert_signal_0:-0.25",
+          "generation_unsafe:-2",
+          "warning_probable_questionnaire:-0.12"
+        ],
+        "generation_safe": false,
+        "generation_intent": "therapeutic_case",
+        "content_kind": "storytelling",
+        "source_type": "questionnaire",
+        "confidence_level": "low"
+      }
+    }
+  ]
+}
