@@ -1,0 +1,273 @@
+{
+  "totals": {
+    "runs": 10,
+    "before_average_quality": 0.753,
+    "after_average_quality": 0.831,
+    "author_voice_before": 0.681,
+    "author_voice_after": 0.761,
+    "cta_pressure_before": 0.119,
+    "cta_pressure_after": 0.032,
+    "generic_ai_risk_before": 0.336,
+    "generic_ai_risk_after": 0.196,
+    "emotional_pacing_before": 0.622,
+    "emotional_pacing_after": 0.682,
+    "continuity_before": 0.725,
+    "continuity_after": 0.795,
+    "repetition_risk_before": 0.028,
+    "repetition_risk_after": 0.004
+  },
+  "rows": [
+    {
+      "run": "relationship-anxiety",
+      "topic": "тревога в отношениях",
+      "before_score": 0.77,
+      "after_score": 0.847,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "emotional-dependency",
+      "topic": "эмоциональная зависимость",
+      "before_score": 0.745,
+      "after_score": 0.822,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.42,
+      "generic_after": 0.28,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0.07,
+      "repetition_after": 0.01,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "ai_like_paragraph_structure",
+        "repeated_paragraph_openings",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": [
+        "repeated_paragraph_openings"
+      ]
+    },
+    {
+      "run": "sexuality-myths",
+      "topic": "мифы о женской сексуальности",
+      "before_score": 0.77,
+      "after_score": 0.847,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "shame-and-desire",
+      "topic": "стыд и желание",
+      "before_score": 0.759,
+      "after_score": 0.836,
+      "author_before": 0.638,
+      "author_after": 0.718,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "author_voice_drift",
+        "low_warmth_markers",
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "boundaries-intimacy",
+      "topic": "границы в близости",
+      "before_score": 0.721,
+      "after_score": 0.804,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.26,
+      "cta_after": 0.14,
+      "generic_before": 0.42,
+      "generic_after": 0.28,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.732,
+      "continuity_after": 0.802,
+      "repetition_before": 0.07,
+      "repetition_after": 0.01,
+      "warnings_before": [
+        "reduce_cta_strength",
+        "generic_ai_patterns",
+        "ai_like_paragraph_structure",
+        "repeated_paragraph_openings",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": [
+        "repeated_paragraph_openings"
+      ]
+    },
+    {
+      "run": "body-safety",
+      "topic": "безопасность в теле",
+      "before_score": 0.776,
+      "after_score": 0.854,
+      "author_before": 0.71,
+      "author_after": 0.79,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.638,
+      "emotional_after": 0.698,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "avoidance-close",
+      "topic": "избегание близости",
+      "before_score": 0.745,
+      "after_score": 0.822,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.42,
+      "generic_after": 0.28,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0.07,
+      "repetition_after": 0.01,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "ai_like_paragraph_structure",
+        "repeated_paragraph_openings",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": [
+        "repeated_paragraph_openings"
+      ]
+    },
+    {
+      "run": "conflict-after-sex",
+      "topic": "конфликты после секса",
+      "before_score": 0.755,
+      "after_score": 0.833,
+      "author_before": 0.62,
+      "author_after": 0.7,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "author_voice_drift",
+        "low_warmth_markers",
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "low-desire",
+      "topic": "снижение желания",
+      "before_score": 0.77,
+      "after_score": 0.847,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.08,
+      "cta_after": 0,
+      "generic_before": 0.28,
+      "generic_after": 0.14,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.723,
+      "continuity_after": 0.793,
+      "repetition_before": 0,
+      "repetition_after": 0,
+      "warnings_before": [
+        "generic_ai_patterns",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": []
+    },
+    {
+      "run": "consultation-soft",
+      "topic": "как понять что нужна консультация",
+      "before_score": 0.716,
+      "after_score": 0.799,
+      "author_before": 0.692,
+      "author_after": 0.772,
+      "cta_before": 0.295,
+      "cta_after": 0.175,
+      "generic_before": 0.42,
+      "generic_after": 0.28,
+      "emotional_before": 0.62,
+      "emotional_after": 0.68,
+      "continuity_before": 0.732,
+      "continuity_after": 0.802,
+      "repetition_before": 0.07,
+      "repetition_after": 0.01,
+      "warnings_before": [
+        "reduce_cta_strength",
+        "generic_ai_patterns",
+        "ai_like_paragraph_structure",
+        "repeated_paragraph_openings",
+        "weak_idea_continuity"
+      ],
+      "warnings_after": [
+        "repeated_paragraph_openings"
+      ]
+    }
+  ]
+}

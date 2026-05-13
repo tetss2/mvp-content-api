@@ -24,6 +24,7 @@ import { retrieveGroundingContext } from "./retrieval_service.js";
 import { buildSexologistPrompt, normalizeSexologistStyleKey, SEXOLOGIST_STYLE_META } from "./sexologist_prompt.js";
 import { buildAuthorVoicePrompt, loadAuthorVoiceProfile, logAuthorVoiceStatus } from "./author_voice.js";
 import { getLengthConfig } from "./generation_config.js";
+import { runRuntimeGenerationAdapter } from "./scripts/runtime-generation-adapter.js";
 let ffmpegPath = "ffmpeg";
 try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
 import ffmpeg from "fluent-ffmpeg";
@@ -940,6 +941,178 @@ async function sendPublishMenu(chatId) {
   await bot.sendMessage(chatId, "📤 Выберите формат публикации в канал:", { reply_markup: { inline_keyboard: buttons } });
 }
 
+// ─── ADMIN-ONLY RUNTIME PREVIEW (LOCAL DRY RUN) ──────────────────────────────
+
+async function canUseRuntimePreview(userId) {
+  if (Number(userId) === ADMIN_TG_ID) return true;
+  return canUseKnowledgeIntake(userId);
+}
+
+function truncatePreview(value, limit = 900) {
+  const text = String(value || "").replace(/\s+\n/g, "\n").trim();
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit - 20)}\n... [truncated]`;
+}
+
+function compactJson(value, limit = 900) {
+  return truncatePreview(JSON.stringify(value || {}, null, 2), limit);
+}
+
+function runtimePreviewReportDir() {
+  return join(process.cwd(), "reports", "runtime-preview");
+}
+
+function runtimePreviewFileStem() {
+  return new Date().toISOString().replace(/[:.]/g, "-");
+}
+
+async function storeRuntimePreviewRun({ chatId, topic, result }) {
+  const dir = runtimePreviewReportDir();
+  await fs.mkdir(dir, { recursive: true });
+  const stem = `${runtimePreviewFileStem()}_runtime_preview`;
+  const jsonPath = join(dir, `${stem}.json`);
+  const mdPath = join(dir, `${stem}.md`);
+  const promptPackage = result.generation_pipeline?.prompt_package || {};
+  const payload = {
+    timestamp: new Date().toISOString(),
+    chat_id: chatId,
+    expert_id: result.expert_id,
+    topic,
+    llmExecutionMode: result.generation_pipeline?.llm_execution_mode,
+    real_local_prompt_assembly_used: result.generation_pipeline?.real_local_prompt_assembly_used,
+    mock_content_generation_used: result.generation_pipeline?.mock_content_generation_used,
+    runtime_decisions: result.runtime?.selected_generation_decisions,
+    selected_context_count: result.generation_pipeline?.assembled_context_summary?.selected_count,
+    quality_score: result.integrated_validation?.combined_quality_score,
+    stabilization: result.integrated_validation?.stabilization,
+    stabilization_improvement: result.integrated_validation?.stabilization_improvement,
+    warnings: result.integrated_validation?.warnings || [],
+    prompt_preview: promptPackage.assembledPrompt?.final_prompt?.slice(0, 2200) || "",
+    config_payload: promptPackage.configPayload,
+  };
+  await fs.writeFile(jsonPath, JSON.stringify(payload, null, 2), "utf-8");
+  await fs.writeFile(mdPath, [
+    "# Runtime Preview",
+    "",
+    `Generated: ${payload.timestamp}`,
+    `Expert: ${payload.expert_id}`,
+    `Topic: ${topic}`,
+    `LLM execution mode: ${payload.llmExecutionMode}`,
+    `Quality score: ${payload.quality_score}`,
+    `Stabilization score: ${payload.stabilization?.stabilization_score ?? "n/a"}`,
+    `Author voice confidence: ${payload.stabilization?.author_voice_confidence ?? "n/a"}`,
+    `CTA pressure score: ${payload.stabilization?.cta_pressure_score ?? "n/a"}`,
+    `Generic AI risk score: ${payload.stabilization?.generic_ai_risk_score ?? "n/a"}`,
+    `Warnings: ${payload.warnings.length ? payload.warnings.join(", ") : "none"}`,
+    "",
+    "## Stabilization",
+    "```json",
+    JSON.stringify({
+      stabilization: payload.stabilization,
+      improvement: payload.stabilization_improvement,
+    }, null, 2),
+    "```",
+    "",
+    "## Runtime Decisions",
+    "```json",
+    JSON.stringify(payload.runtime_decisions, null, 2),
+    "```",
+    "",
+    "## Config Payload",
+    "```json",
+    JSON.stringify(payload.config_payload, null, 2),
+    "```",
+    "",
+    "## Prompt Preview",
+    "```text",
+    payload.prompt_preview,
+    "```",
+  ].join("\n"), "utf-8");
+  return { jsonPath, mdPath };
+}
+
+function formatRuntimePreviewMessage(result, topic) {
+  const runtimeState = result.runtime?.runtime_state || {};
+  const promptPackage = result.generation_pipeline?.prompt_package || {};
+  const promptStructure = result.generation_pipeline?.prompt_structure || {};
+  const contextSummary = result.generation_pipeline?.assembled_context_summary || {};
+  const validation = result.integrated_validation || {};
+  const stabilization = validation.stabilization || {};
+  const cognition = promptPackage.runtimeCognitionState || {};
+  const promptPreview = promptPackage.assembledPrompt?.final_prompt || "";
+  const configSummary = {
+    llmExecutionMode: result.generation_pipeline?.llm_execution_mode,
+    intended_model: promptPackage.configPayload?.intended_model,
+    max_tokens: promptPackage.configPayload?.max_tokens,
+    temperature: promptPackage.configPayload?.temperature,
+    platform: promptPackage.configPayload?.platform,
+    format: promptPackage.configPayload?.format,
+    production_execution_allowed: promptPackage.configPayload?.production_execution_allowed,
+    external_api_calls_allowed: promptPackage.configPayload?.external_api_calls_allowed,
+    telegram_delivery_allowed: promptPackage.configPayload?.telegram_delivery_allowed,
+  };
+
+  return [
+    "🧪 Runtime preview (admin-only, dry run)",
+    "",
+    `Expert: ${result.expert_id}`,
+    `Topic: ${topic}`,
+    `Mode: ${result.generation_pipeline?.llm_execution_mode}`,
+    `Context selected: ${contextSummary.selected_count || 0}`,
+    `Quality: ${validation.combined_quality_score}`,
+    `Stabilization: ${stabilization.stabilization_score ?? "n/a"}`,
+    `Author voice confidence: ${stabilization.author_voice_confidence ?? "n/a"}`,
+    `Emotional pacing: ${stabilization.emotional_pacing_score ?? "n/a"}`,
+    `CTA pressure: ${stabilization.cta_pressure_score ?? "n/a"}`,
+    `Generic AI risk: ${stabilization.generic_ai_risk_score ?? "n/a"}`,
+    `Continuity: ${stabilization.continuity_score ?? "n/a"}`,
+    "",
+    "Runtime decisions:",
+    compactJson(result.runtime?.selected_generation_decisions, 700),
+    "",
+    "Cognition summary:",
+    compactJson({
+      trust_score: runtimeState.trust_progression?.trust_score,
+      audience_stage: runtimeState.audience_state?.stage,
+      recent_topics: runtimeState.narrative_continuity?.recent_topics,
+      recent_ctas: runtimeState.cta_pacing?.recent_ctas,
+      persisted_after_run: result.cognition_loading?.persisted_after_run,
+      cognition_loaded_from_disk: result.cognition_loading?.loaded_from_disk,
+      runtime_cognition_keys: Object.keys(cognition),
+    }, 700),
+    "",
+    "CTA pacing:",
+    compactJson(validation.trust_cta_pacing, 650),
+    "",
+    "Repetition risk:",
+    compactJson(validation.repetition_risk, 650),
+    "",
+    "Author voice:",
+    compactJson(validation.author_voice_status, 700),
+    "",
+    `Warnings: ${validation.warnings?.length ? validation.warnings.join(", ") : "none"}`,
+    "",
+    "Config summary:",
+    compactJson(configSummary, 750),
+    "",
+    `Prompt chars: ${promptStructure.total_prompt_chars || 0}`,
+    "Prompt preview:",
+    truncatePreview(promptPreview, 900),
+  ].join("\n");
+}
+
+async function sendLongPlainText(chatId, text) {
+  const chunks = [];
+  let rest = text;
+  while (rest.length > 0) {
+    chunks.push(rest.slice(0, 3900));
+    rest = rest.slice(3900);
+  }
+  for (const chunk of chunks) {
+    await bot.sendMessage(chatId, chunk);
+  }
+}
+
 // ПРАВКА 3+4: публикация всегда идёт в TG_CHANNEL
 async function showFinalPost(chatId, type) {
   const state = userState.get(chatId) || {};
@@ -1271,6 +1444,66 @@ bot.onText(/\/start/, async (msg) => {
 });
 
 bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
+
+bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canUseRuntimePreview(userId))) {
+    await bot.sendMessage(chatId, "🔒 Runtime preview доступен только admin/full_access.");
+    return;
+  }
+
+  const topic = (match?.[1] || "").trim();
+  if (!topic) {
+    await bot.sendMessage(chatId, [
+      "🧪 Runtime preview работает только как dry run.",
+      "",
+      "Использование:",
+      "/runtime_preview тема поста",
+      "",
+      "LLM не вызывается, публикации нет, Telegram production flow не меняется.",
+    ].join("\n"));
+    return;
+  }
+
+  const status = await bot.sendMessage(chatId, "🧪 Собираю runtime preview без LLM и без публикации...");
+  try {
+    const result = await runRuntimeGenerationAdapter({
+      expertId: "dinara",
+      topic,
+      userRequest: topic,
+      intent: "educational_post",
+      platform: "telegram_longread",
+      length: "medium",
+      format: "post",
+      tone: "expert_warm",
+      audienceState: "warming",
+      ctaType: "low_pressure_cta",
+    }, {
+      persistRuntime: false,
+      initializeStorage: false,
+    });
+
+    const logPaths = await storeRuntimePreviewRun({ chatId, topic, result });
+    await bot.editMessageText("✅ Runtime preview готов. Отправляю краткий отчёт...", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    await sendLongPlainText(chatId, [
+      formatRuntimePreviewMessage(result, topic),
+      "",
+      `Local log: ${logPaths.mdPath.replace(process.cwd(), "").replace(/^[\\/]/, "")}`,
+    ].join("\n"));
+  } catch (err) {
+    console.error("Runtime preview error:", err);
+    await bot.editMessageText(`❌ Runtime preview error: ${String(err.message || err).slice(0, 700)}`, {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(async () => {
+      await bot.sendMessage(chatId, `❌ Runtime preview error: ${String(err.message || err).slice(0, 700)}`);
+    });
+  }
+});
 
 bot.onText(/\/(?:knowledge|kb_intake)/, async (msg) => {
   await sendKnowledgeIntakeMenu(msg.chat.id, msg.from?.id || msg.chat.id);

@@ -9,6 +9,7 @@ import { assembleContextPack } from "./expert-context-assembly.js";
 import { createGenerationPlan } from "./expert-generation-orchestration.js";
 import { rerankRetrievalItems } from "./expert-retrieval-intelligence.js";
 import { assembleFinalPrompt, createLocalRetrievalCandidates } from "./expert-generation-sandbox.js";
+import { analyzeRuntimeQuality, stabilizePromptPackage } from "./runtime-quality-analyzer.js";
 
 const ROOT = process.cwd();
 const DEFAULT_EXPERT_ID = "dinara";
@@ -349,16 +350,20 @@ function summarizeContext(contextPack = {}) {
 function buildIntegratedValidation({ runtimeResult, promptPackage }) {
   const runtimeWarnings = runtimeResult.validation?.warnings || [];
   const promptWarnings = promptPackage.validationResult?.warnings || [];
-  const warnings = [...new Set([...runtimeWarnings, ...promptWarnings])];
+  const stabilizationWarnings = promptPackage.runtimeQualityStabilization?.after?.warnings || [];
+  const warnings = [...new Set([...runtimeWarnings, ...promptWarnings, ...stabilizationWarnings])];
   const runtimeQuality = runtimeResult.quality_score?.final_quality_score || 0;
   const promptQuality = promptPackage.qualityScore || 0;
+  const stabilizationQuality = promptPackage.runtimeQualityStabilization?.after?.stabilization_score
+    || analyzeRuntimeQuality({ promptPackage }).stabilization_score;
   return {
     status: warnings.length ? "pass_with_warnings" : "pass",
     runtime_validation_status: runtimeResult.validation?.status || "unknown",
     prompt_assembly_validation_status: promptPackage.validationResult?.status || "unknown",
     prompt_assembly_score: promptQuality,
     runtime_quality_score: runtimeQuality,
-    combined_quality_score: Number(((runtimeQuality * 0.55) + (promptQuality * 0.45)).toFixed(3)),
+    stabilization_quality_score: stabilizationQuality,
+    combined_quality_score: Number(((runtimeQuality * 0.45) + (promptQuality * 0.3) + (stabilizationQuality * 0.25)).toFixed(3)),
     repetition_risk: runtimeResult.validation?.repetition_risk || runtimeResult.runtime_state?.repetition_risk,
     trust_cta_pacing: runtimeResult.trust_pacing,
     author_voice_status: {
@@ -366,6 +371,8 @@ function buildIntegratedValidation({ runtimeResult, promptPackage }) {
       generic_ai_risk: runtimeResult.author_voice_validation?.generic_ai_risk,
       recommendations: runtimeResult.author_voice_validation?.recommendations || [],
     },
+    stabilization: promptPackage.runtimeQualityStabilization?.after || null,
+    stabilization_improvement: promptPackage.runtimeQualityStabilization?.improvement || null,
     warnings,
   };
 }
@@ -405,8 +412,27 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     generationPackageRequest,
     runtimeResult,
   });
+  const stabilization = stabilizePromptPackage(promptPackage);
+  const stabilizedPromptPackage = {
+    ...stabilization.promptPackage,
+    runtimeQualityStabilization: {
+      before: stabilization.before,
+      after: stabilization.after,
+      improvement: stabilization.improvement,
+    },
+    validationResult: buildPromptQuality({
+      promptAssembly: stabilization.promptPackage.assembledPrompt,
+      contextPack: {
+        selected_items: stabilization.promptPackage.selectedLocalContextItems,
+        context_summary: stabilization.promptPackage.assembledContextSummary,
+      },
+      runtimeResult,
+    }),
+  };
+  stabilizedPromptPackage.messagePayload = buildMessagePayload(stabilizedPromptPackage.assembledPrompt);
+  stabilizedPromptPackage.qualityScore = stabilizedPromptPackage.validationResult.prompt_score;
 
-  const integratedValidation = buildIntegratedValidation({ runtimeResult, promptPackage });
+  const integratedValidation = buildIntegratedValidation({ runtimeResult, promptPackage: stabilizedPromptPackage });
   return {
     schema_version: ADAPTER_SCHEMA_VERSION,
     generated_at: new Date().toISOString(),
@@ -445,17 +471,18 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       real_local_prompt_assembly_used: promptPackage.realLocalPromptAssemblyUsed,
       mock_content_generation_used: promptPackage.mockContentGenerationUsed,
       llm_execution_mode: promptPackage.llmExecutionMode,
-      assembled_context_summary: promptPackage.assembledContextSummary,
-      orchestration_plan: promptPackage.orchestrationPlan,
-      prompt_package: promptPackage,
+      assembled_context_summary: stabilizedPromptPackage.assembledContextSummary,
+      orchestration_plan: stabilizedPromptPackage.orchestrationPlan,
+      prompt_package: stabilizedPromptPackage,
       prompt_structure: {
-        system_prompt_chars: promptPackage.validationResult.system_prompt_chars,
-        user_prompt_chars: promptPackage.validationResult.user_prompt_chars,
-        total_prompt_chars: promptPackage.validationResult.total_prompt_chars,
-        message_count: promptPackage.messagePayload.length,
-        config_payload: promptPackage.configPayload,
+        system_prompt_chars: stabilizedPromptPackage.validationResult.system_prompt_chars,
+        user_prompt_chars: stabilizedPromptPackage.validationResult.user_prompt_chars,
+        total_prompt_chars: stabilizedPromptPackage.validationResult.total_prompt_chars,
+        message_count: stabilizedPromptPackage.messagePayload.length,
+        config_payload: stabilizedPromptPackage.configPayload,
       },
-      validation: promptPackage.validationResult,
+      validation: stabilizedPromptPackage.validationResult,
+      runtime_quality_stabilization: stabilizedPromptPackage.runtimeQualityStabilization,
     },
     integrated_validation: integratedValidation,
     final_generation_result: {
@@ -467,10 +494,10 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       ingest_or_promote: false,
       production_database_migration: false,
       auto_posting: false,
-      llmExecutionMode: promptPackage.llmExecutionMode,
-      assembledPrompt: promptPackage.assembledPrompt,
-      messagePayload: promptPackage.messagePayload,
-      configPayload: promptPackage.configPayload,
+      llmExecutionMode: stabilizedPromptPackage.llmExecutionMode,
+      assembledPrompt: stabilizedPromptPackage.assembledPrompt,
+      messagePayload: stabilizedPromptPackage.messagePayload,
+      configPayload: stabilizedPromptPackage.configPayload,
       content: null,
       content_execution_status: "not_executed_prompt_only",
       quality_score: integratedValidation.combined_quality_score,
