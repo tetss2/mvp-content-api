@@ -1,0 +1,978 @@
+{
+  "schema_version": "2026-05-13.campaign_memory_state.v1",
+  "expert_id": "dinara",
+  "local_only": true,
+  "admin_only": true,
+  "production_activation_allowed": false,
+  "created_at": "2026-05-13T20:24:41.166Z",
+  "updated_at": "2026-05-13T20:24:44.945Z",
+  "run_count": 20,
+  "topic_history": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "topic": "стыд и близость",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "topic": "страх желания",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "topic": "почему тело закрывается",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:42.375Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "topic": "как говорить о сексе без давления",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "topic": "женское желание и усталость",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "topic": "границы в близости",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "topic": "стыд после конфликта",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "topic": "почему пропадает желание",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "topic": "безопасность в разговоре с партнером",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "topic": "как возвращать контакт с телом",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "topic": "желание и тревога",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "topic": "когда нужна консультация сексолога",
+      "intent": "sales_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "topic": "как не давить на себя в близости",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "topic": "стыд и близость без давления",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "topic": "интимность после паузы",
+      "intent": "educational_post",
+      "freshness": 0.827,
+      "repetition_risk": 0.107
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "topic": "как просить о нежности",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:44.478Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "topic": "сексологическая консультация без стыда",
+      "intent": "sales_post",
+      "freshness": 0.845,
+      "repetition_risk": 0.08
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "topic": "отношения и телесная безопасность",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "topic": "как замечать свои границы",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "topic": "мягкий путь к разговору о сексе",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    }
+  ],
+  "cta_history": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.064
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "cta_type": "save_share_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.119
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "cta_type": "educational_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.174
+    },
+    {
+      "at": "2026-05-13T20:24:42.376Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.25
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "cta_type": "emotional_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.3
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "cta_type": "trust_cta",
+      "cta_strength": "medium",
+      "intensity": 3,
+      "fatigue_score": 0.365
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.437
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "cta_type": "save_share_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.486
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "cta_type": "educational_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.536
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.544
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "cta_type": "emotional_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.544
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "cta_type": "consultation_cta",
+      "cta_strength": "medium",
+      "intensity": 5,
+      "fatigue_score": 0.624
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "cta_type": "save_share_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.656
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.648
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "cta_type": "trust_cta",
+      "cta_strength": "medium",
+      "intensity": 3,
+      "fatigue_score": 0.632
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "cta_type": "emotional_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.648
+    },
+    {
+      "at": "2026-05-13T20:24:44.479Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "cta_type": "consultation_cta",
+      "cta_strength": "medium",
+      "intensity": 5,
+      "fatigue_score": 0.736
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "cta_type": "educational_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.76
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "cta_type": "low_pressure_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.768
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "cta_type": "save_share_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.76
+    }
+  ],
+  "narrative_arcs": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.376Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.479Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    }
+  ],
+  "content_sequence": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "sequence_index": 1,
+      "topic": "стыд и близость",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "sequence_index": 2,
+      "topic": "страх желания",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "sequence_index": 3,
+      "topic": "почему тело закрывается",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "carousel_script",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.376Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "sequence_index": 4,
+      "topic": "как говорить о сексе без давления",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "sequence_index": 5,
+      "topic": "женское желание и усталость",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "sequence_index": 6,
+      "topic": "границы в близости",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "answer",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "sequence_index": 7,
+      "topic": "стыд после конфликта",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "sequence_index": 8,
+      "topic": "почему пропадает желание",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "reel_script",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "sequence_index": 9,
+      "topic": "безопасность в разговоре с партнером",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "sequence_index": 10,
+      "topic": "как возвращать контакт с телом",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "carousel_script",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "sequence_index": 11,
+      "topic": "желание и тревога",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "sequence_index": 12,
+      "topic": "когда нужна консультация сексолога",
+      "intent": "sales_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "sequence_index": 13,
+      "topic": "как не давить на себя в близости",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "answer",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "sequence_index": 14,
+      "topic": "стыд и близость без давления",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "sequence_index": 15,
+      "topic": "интимность после паузы",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "sequence_index": 16,
+      "topic": "как просить о нежности",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.479Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "sequence_index": 17,
+      "topic": "сексологическая консультация без стыда",
+      "intent": "sales_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "sequence_index": 18,
+      "topic": "отношения и телесная безопасность",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "carousel_script",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "sequence_index": 19,
+      "topic": "как замечать свои границы",
+      "intent": "educational_post",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "sequence_index": 20,
+      "topic": "мягкий путь к разговору о сексе",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "light_educational_reset"
+    }
+  ],
+  "audience_fatigue_signals": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.185,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.185,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.23,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:42.376Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.185,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.23,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.275,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.204,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.204,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.23,
+      "fatigue_risk": "low"
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.325,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.389,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.505,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.389,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.389,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.479,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.46,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-13T20:24:44.479Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.654,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.55,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.55,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.595,
+      "fatigue_risk": "high"
+    }
+  ],
+  "format_distribution": {
+    "post": 14,
+    "carousel_script": 3,
+    "answer": 2,
+    "reel_script": 1
+  },
+  "expert_positioning_history": [
+    {
+      "at": "2026-05-13T20:24:41.592Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:41.859Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:42.104Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:42.376Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:42.551Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:42.715Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.78
+    },
+    {
+      "at": "2026-05-13T20:24:42.903Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.745
+    },
+    {
+      "at": "2026-05-13T20:24:43.092Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.71
+    },
+    {
+      "at": "2026-05-13T20:24:43.253Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:43.399Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:43.563Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:43.720Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:43.875Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.031Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.182Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.320Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.479Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.629Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.788Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-13T20:24:44.945Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    }
+  ],
+  "aggregate_scores": {
+    "topic_freshness": 0.9,
+    "narrative_continuity": 0.52,
+    "cta_fatigue": 0.76,
+    "audience_fatigue": 0.595,
+    "sequence_coherence": 0.578,
+    "expert_positioning_consistency": 0.675,
+    "format_variety": 0.75,
+    "campaign_memory_score": 0.571
+  }
+}

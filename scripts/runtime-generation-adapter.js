@@ -13,6 +13,8 @@ import { analyzeRuntimeQuality, stabilizePromptPackage } from "./runtime-quality
 import { normalizeExecutionMode } from "../runtime/execution/runtime-executor.js";
 import { runRuntimeExecutionSandbox } from "../runtime/execution/runtime-sandbox.js";
 import { runAuthorIdentityEngine } from "../runtime/identity/author-identity-engine.js";
+import { runCampaignMemoryEngine } from "../runtime/campaign-memory/campaign-memory-engine.js";
+import { runStrategicBrain } from "../runtime/strategy/strategic-brain.js";
 
 const ROOT = process.cwd();
 const DEFAULT_EXPERT_ID = "dinara";
@@ -27,6 +29,10 @@ const ADAPTER_CONSTRAINTS = {
   llm_execution_disabled: true,
   identity_engine_admin_only: true,
   identity_engine_local_only: true,
+  campaign_memory_admin_only: true,
+  campaign_memory_local_only: true,
+  strategic_brain_admin_only: true,
+  strategic_brain_local_only: true,
 };
 
 function normalizeGenerationIntent(intent = "educational_post") {
@@ -489,6 +495,38 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     persist: options.persistIdentity !== false,
     initializeStorage: options.initializeStorage !== false,
   });
+  const campaignMemory = await runCampaignMemoryEngine({
+    expertId,
+    root,
+    runtimeResult,
+    request,
+    persist: options.persistCampaignMemory !== false,
+    initializeStorage: options.initializeStorage !== false,
+  });
+  stabilizedPromptPackage.campaignMemory = {
+    adapter_signals: campaignMemory.adapter_signals,
+    campaign_scores: campaignMemory.campaign_scores,
+    campaign_state_summary: campaignMemory.campaign_state_summary,
+    local_only: true,
+    admin_only: true,
+  };
+  const strategicBrain = await runStrategicBrain({
+    expertId,
+    root,
+    runtimeResult,
+    request,
+    identityRuntime,
+    campaignMemory,
+    persist: options.persistStrategicBrain !== false,
+    initializeStorage: options.initializeStorage !== false,
+  });
+  stabilizedPromptPackage.strategicBrain = {
+    adapter_signals: strategicBrain.adapter_signals,
+    strategic_scores: strategicBrain.strategic_scores,
+    strategic_state_summary: strategicBrain.strategic_state_summary,
+    local_only: true,
+    admin_only: true,
+  };
 
   return {
     schema_version: ADAPTER_SCHEMA_VERSION,
@@ -503,6 +541,10 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       production_generation_replaced: false,
       identity_engine_admin_only: true,
       identity_engine_local_only: true,
+      campaign_memory_admin_only: true,
+      campaign_memory_local_only: true,
+      strategic_brain_admin_only: true,
+      strategic_brain_local_only: true,
     },
     expert_id: expertId,
     adapter_mode: "local_runtime_to_prompt_assembly",
@@ -514,6 +556,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       "scripts/expert-retrieval-intelligence.js",
       "scripts/expert-generation-sandbox.js",
       "runtime/identity/author-identity-engine.js",
+      "runtime/campaign-memory/campaign-memory-engine.js",
+      "runtime/strategy/strategic-brain.js",
     ],
     cognition_loading: {
       loaded_from_disk: cognition.loaded_from_disk,
@@ -556,6 +600,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     },
     integrated_validation: integratedValidation,
     identity_runtime: identityRuntime,
+    campaign_memory: campaignMemory,
+    strategic_brain: strategicBrain,
     final_generation_result: {
       publication_status: "not_published_local_simulation",
       telegram_runtime_mutation: false,
@@ -567,6 +613,10 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       auto_posting: false,
       identity_engine_admin_only: true,
       identity_engine_local_only: true,
+      campaign_memory_admin_only: true,
+      campaign_memory_local_only: true,
+      strategic_brain_admin_only: true,
+      strategic_brain_local_only: true,
       llmExecutionMode,
       assembledPrompt: stabilizedPromptPackage.assembledPrompt,
       messagePayload: stabilizedPromptPackage.messagePayload,
@@ -581,6 +631,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       warnings: [...new Set([
         ...integratedValidation.warnings,
         ...(identityRuntime.warnings || []),
+        ...(campaignMemory.warnings || []),
+        ...(strategicBrain.warnings || []),
         ...(executionSandbox.diagnostics?.warnings || []),
       ])],
     },

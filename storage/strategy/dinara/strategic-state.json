@@ -1,0 +1,1109 @@
+{
+  "schema_version": "2026-05-13.strategic_memory_state.v1",
+  "expert_id": "dinara",
+  "local_only": true,
+  "admin_only": true,
+  "production_activation_allowed": false,
+  "created_at": "2026-05-13T20:24:41.176Z",
+  "updated_at": "2026-05-13T20:24:44.948Z",
+  "run_count": 20,
+  "current_state": {
+    "authority_level": 0.88,
+    "trust_level": 0.714,
+    "emotional_warmth": 0.96,
+    "conversion_pressure": 0.365,
+    "audience_resistance": 0.362,
+    "audience_trust_fatigue": 0.567,
+    "narrative_loop_stage": "normalization",
+    "positioning_consistency": 0.705,
+    "perceived_expertise_level": 0.768,
+    "intimacy_pacing": 0.82,
+    "trust_retention_probability": 0.738
+  },
+  "history": [
+    {
+      "at": "2026-05-13T20:24:41.613Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "topic": "стыд и близость",
+      "strategic_brain_score": 0.829,
+      "trust_level": 0.426,
+      "authority_level": 0.459,
+      "conversion_pressure": 0.112,
+      "overselling_risk": 0.065,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "topic": "страх желания",
+      "strategic_brain_score": 0.84,
+      "trust_level": 0.492,
+      "authority_level": 0.498,
+      "conversion_pressure": 0.098,
+      "overselling_risk": 0.057,
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "topic": "почему тело закрывается",
+      "strategic_brain_score": 0.836,
+      "trust_level": 0.558,
+      "authority_level": 0.537,
+      "conversion_pressure": 0.191,
+      "overselling_risk": 0.111,
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "topic": "как говорить о сексе без давления",
+      "strategic_brain_score": 0.841,
+      "trust_level": 0.624,
+      "authority_level": 0.576,
+      "conversion_pressure": 0.159,
+      "overselling_risk": 0.092,
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "topic": "женское желание и усталость",
+      "strategic_brain_score": 0.828,
+      "trust_level": 0.67,
+      "authority_level": 0.615,
+      "conversion_pressure": 0.283,
+      "overselling_risk": 0.164,
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "topic": "границы в близости",
+      "strategic_brain_score": 0.82,
+      "trust_level": 0.716,
+      "authority_level": 0.654,
+      "conversion_pressure": 0.407,
+      "overselling_risk": 0.236,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "topic": "стыд после конфликта",
+      "strategic_brain_score": 0.828,
+      "trust_level": 0.762,
+      "authority_level": 0.693,
+      "conversion_pressure": 0.312,
+      "overselling_risk": 0.181,
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "topic": "почему пропадает желание",
+      "strategic_brain_score": 0.836,
+      "trust_level": 0.808,
+      "authority_level": 0.732,
+      "conversion_pressure": 0.242,
+      "overselling_risk": 0.14,
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "topic": "безопасность в разговоре с партнером",
+      "strategic_brain_score": 0.818,
+      "trust_level": 0.834,
+      "authority_level": 0.771,
+      "conversion_pressure": 0.346,
+      "overselling_risk": 0.201,
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "topic": "как возвращать контакт с телом",
+      "strategic_brain_score": 0.789,
+      "trust_level": 0.834,
+      "authority_level": 0.81,
+      "conversion_pressure": 0.32,
+      "overselling_risk": 0.186,
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "topic": "желание и тревога",
+      "strategic_brain_score": 0.77,
+      "trust_level": 0.834,
+      "authority_level": 0.849,
+      "conversion_pressure": 0.406,
+      "overselling_risk": 0.236,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "topic": "когда нужна консультация сексолога",
+      "strategic_brain_score": 0.748,
+      "trust_level": 0.834,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.751,
+      "overselling_risk": 0.436,
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "topic": "как не давить на себя в близости",
+      "strategic_brain_score": 0.746,
+      "trust_level": 0.834,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.511,
+      "overselling_risk": 0.296,
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "topic": "стыд и близость без давления",
+      "strategic_brain_score": 0.749,
+      "trust_level": 0.834,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.406,
+      "overselling_risk": 0.235,
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "topic": "интимность после паузы",
+      "strategic_brain_score": 0.738,
+      "trust_level": 0.834,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.511,
+      "overselling_risk": 0.296,
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "topic": "как просить о нежности",
+      "strategic_brain_score": 0.739,
+      "trust_level": 0.834,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.506,
+      "overselling_risk": 0.293,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "topic": "сексологическая консультация без стыда",
+      "strategic_brain_score": 0.703,
+      "trust_level": 0.804,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.803,
+      "overselling_risk": 0.466,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "topic": "отношения и телесная безопасность",
+      "strategic_brain_score": 0.701,
+      "trust_level": 0.774,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.638,
+      "overselling_risk": 0.37,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "topic": "как замечать свои границы",
+      "strategic_brain_score": 0.713,
+      "trust_level": 0.744,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.472,
+      "overselling_risk": 0.274,
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "topic": "мягкий путь к разговору о сексе",
+      "strategic_brain_score": 0.721,
+      "trust_level": 0.714,
+      "authority_level": 0.88,
+      "conversion_pressure": 0.365,
+      "overselling_risk": 0.212,
+      "strategic_next_move": "normalization_move"
+    }
+  ],
+  "trust_history": [
+    {
+      "at": "2026-05-13T20:24:41.613Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "trust_level": 0.426,
+      "trust_delta": 0.066,
+      "retention": 0.736
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "trust_level": 0.492,
+      "trust_delta": 0.066,
+      "retention": 0.758
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "trust_level": 0.558,
+      "trust_delta": 0.066,
+      "retention": 0.781
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "trust_level": 0.624,
+      "trust_delta": 0.066,
+      "retention": 0.803
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "trust_level": 0.67,
+      "trust_delta": 0.046,
+      "retention": 0.799
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "trust_level": 0.716,
+      "trust_delta": 0.046,
+      "retention": 0.815
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "trust_level": 0.762,
+      "trust_delta": 0.046,
+      "retention": 0.83
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "trust_level": 0.808,
+      "trust_delta": 0.046,
+      "retention": 0.846
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "trust_level": 0.834,
+      "trust_delta": 0.026,
+      "retention": 0.835
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "trust_level": 0.834,
+      "trust_delta": 0,
+      "retention": 0.809
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "trust_level": 0.804,
+      "trust_delta": -0.03,
+      "retention": 0.769
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "trust_level": 0.774,
+      "trust_delta": -0.03,
+      "retention": 0.759
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "trust_level": 0.744,
+      "trust_delta": -0.03,
+      "retention": 0.749
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "trust_level": 0.714,
+      "trust_delta": -0.03,
+      "retention": 0.738
+    }
+  ],
+  "authority_history": [
+    {
+      "at": "2026-05-13T20:24:41.614Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "authority_level": 0.459,
+      "authority_balance": 0.857,
+      "perceived_expertise_level": 0.47
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "authority_level": 0.498,
+      "authority_balance": 0.879,
+      "perceived_expertise_level": 0.497
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "authority_level": 0.537,
+      "authority_balance": 0.86,
+      "perceived_expertise_level": 0.523
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "authority_level": 0.576,
+      "authority_balance": 0.838,
+      "perceived_expertise_level": 0.55
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "authority_level": 0.615,
+      "authority_balance": 0.817,
+      "perceived_expertise_level": 0.581
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "authority_level": 0.654,
+      "authority_balance": 0.795,
+      "perceived_expertise_level": 0.613
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "authority_level": 0.693,
+      "authority_balance": 0.774,
+      "perceived_expertise_level": 0.635
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "authority_level": 0.732,
+      "authority_balance": 0.752,
+      "perceived_expertise_level": 0.666
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "authority_level": 0.771,
+      "authority_balance": 0.731,
+      "perceived_expertise_level": 0.695
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "authority_level": 0.81,
+      "authority_balance": 0.71,
+      "perceived_expertise_level": 0.721
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "authority_level": 0.849,
+      "authority_balance": 0.688,
+      "perceived_expertise_level": 0.746
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.77,
+      "perceived_expertise_level": 0.766
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.769
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.769
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.766
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.766
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.77,
+      "perceived_expertise_level": 0.767
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.773
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.769
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "authority_level": 0.88,
+      "authority_balance": 0.671,
+      "perceived_expertise_level": 0.768
+    }
+  ],
+  "emotional_funnel_history": [
+    {
+      "at": "2026-05-13T20:24:41.614Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "emotional_warmth": 0.615,
+      "intimacy_pacing": 0.395,
+      "funnel_stage": "safety_to_insight"
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "emotional_warmth": 0.65,
+      "intimacy_pacing": 0.43,
+      "funnel_stage": "safety_to_insight"
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "emotional_warmth": 0.685,
+      "intimacy_pacing": 0.465,
+      "funnel_stage": "safety_to_insight"
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "emotional_warmth": 0.72,
+      "intimacy_pacing": 0.5,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "emotional_warmth": 0.755,
+      "intimacy_pacing": 0.535,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "emotional_warmth": 0.79,
+      "intimacy_pacing": 0.57,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "emotional_warmth": 0.825,
+      "intimacy_pacing": 0.605,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "emotional_warmth": 0.86,
+      "intimacy_pacing": 0.64,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "emotional_warmth": 0.895,
+      "intimacy_pacing": 0.675,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "emotional_warmth": 0.915,
+      "intimacy_pacing": 0.71,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "emotional_warmth": 0.935,
+      "intimacy_pacing": 0.745,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "emotional_warmth": 0.955,
+      "intimacy_pacing": 0.78,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "emotional_warmth": 0.975,
+      "intimacy_pacing": 0.815,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "emotional_warmth": 0.995,
+      "intimacy_pacing": 0.85,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "emotional_warmth": 1,
+      "intimacy_pacing": 0.86,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "emotional_warmth": 1,
+      "intimacy_pacing": 0.86,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "emotional_warmth": 0.99,
+      "intimacy_pacing": 0.85,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "emotional_warmth": 0.98,
+      "intimacy_pacing": 0.84,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "emotional_warmth": 0.97,
+      "intimacy_pacing": 0.83,
+      "funnel_stage": "trust_to_action"
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "emotional_warmth": 0.96,
+      "intimacy_pacing": 0.82,
+      "funnel_stage": "trust_to_action"
+    }
+  ],
+  "conversion_pressure_history": [
+    {
+      "at": "2026-05-13T20:24:41.614Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "conversion_pressure": 0.112,
+      "overselling_risk": 0.065,
+      "next_opportunity": "no_conversion_trust_only"
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "conversion_pressure": 0.098,
+      "overselling_risk": 0.057,
+      "next_opportunity": "no_conversion_trust_only"
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "conversion_pressure": 0.191,
+      "overselling_risk": 0.111,
+      "next_opportunity": "value_based_reflection_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "conversion_pressure": 0.159,
+      "overselling_risk": 0.092,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "conversion_pressure": 0.283,
+      "overselling_risk": 0.164,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "conversion_pressure": 0.407,
+      "overselling_risk": 0.236,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "conversion_pressure": 0.312,
+      "overselling_risk": 0.181,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "conversion_pressure": 0.242,
+      "overselling_risk": 0.14,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "conversion_pressure": 0.346,
+      "overselling_risk": 0.201,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "conversion_pressure": 0.32,
+      "overselling_risk": 0.186,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "conversion_pressure": 0.406,
+      "overselling_risk": 0.236,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "conversion_pressure": 0.751,
+      "overselling_risk": 0.436,
+      "next_opportunity": "value_based_reflection_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "conversion_pressure": 0.511,
+      "overselling_risk": 0.296,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "conversion_pressure": 0.406,
+      "overselling_risk": 0.235,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "conversion_pressure": 0.511,
+      "overselling_risk": 0.296,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "conversion_pressure": 0.506,
+      "overselling_risk": 0.293,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "conversion_pressure": 0.803,
+      "overselling_risk": 0.466,
+      "next_opportunity": "value_based_reflection_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "conversion_pressure": 0.638,
+      "overselling_risk": 0.37,
+      "next_opportunity": "value_based_reflection_cta"
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "conversion_pressure": 0.472,
+      "overselling_risk": 0.274,
+      "next_opportunity": "soft_consultation_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "conversion_pressure": 0.365,
+      "overselling_risk": 0.212,
+      "next_opportunity": "soft_consultation_bridge"
+    }
+  ],
+  "positioning_history": [
+    {
+      "at": "2026-05-13T20:24:41.614Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.813,
+      "reinforcement": "add_grounded_expert_interpretation"
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.813,
+      "reinforcement": "add_grounded_expert_interpretation"
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.811,
+      "reinforcement": "add_grounded_expert_interpretation"
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.81,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.813,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.815,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.811,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.813,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.778,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.742,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.705,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.704,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.705,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.705,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.703,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.703,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.704,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.708,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.705,
+      "reinforcement": "maintain_warm_expert_positioning"
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.705,
+      "reinforcement": "maintain_warm_expert_positioning"
+    }
+  ],
+  "narrative_loop_history": [
+    {
+      "at": "2026-05-13T20:24:41.614Z",
+      "run_id": "runtime_2026-05-13T20-24-41-223Z",
+      "current": "recognition",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:41.862Z",
+      "run_id": "runtime_2026-05-13T20-24-41-652Z",
+      "current": "normalization",
+      "next": "expert_reframe",
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.106Z",
+      "run_id": "runtime_2026-05-13T20-24-41-879Z",
+      "current": "expert_reframe",
+      "next": "practical_anchor",
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.378Z",
+      "run_id": "runtime_2026-05-13T20-24-42-121Z",
+      "current": "practical_anchor",
+      "next": "soft_invitation",
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:42.554Z",
+      "run_id": "runtime_2026-05-13T20-24-42-392Z",
+      "current": "soft_invitation",
+      "next": "recognition",
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.718Z",
+      "run_id": "runtime_2026-05-13T20-24-42-569Z",
+      "current": "recognition",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:42.905Z",
+      "run_id": "runtime_2026-05-13T20-24-42-734Z",
+      "current": "normalization",
+      "next": "expert_reframe",
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.094Z",
+      "run_id": "runtime_2026-05-13T20-24-42-917Z",
+      "current": "expert_reframe",
+      "next": "practical_anchor",
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.255Z",
+      "run_id": "runtime_2026-05-13T20-24-43-107Z",
+      "current": "practical_anchor",
+      "next": "soft_invitation",
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:43.402Z",
+      "run_id": "runtime_2026-05-13T20-24-43-267Z",
+      "current": "soft_invitation",
+      "next": "recognition",
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.565Z",
+      "run_id": "runtime_2026-05-13T20-24-43-416Z",
+      "current": "recognition",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.723Z",
+      "run_id": "runtime_2026-05-13T20-24-43-579Z",
+      "current": "normalization",
+      "next": "expert_reframe",
+      "strategic_next_move": "expert_reframe_move"
+    },
+    {
+      "at": "2026-05-13T20:24:43.877Z",
+      "run_id": "runtime_2026-05-13T20-24-43-735Z",
+      "current": "expert_reframe",
+      "next": "practical_anchor",
+      "strategic_next_move": "practical_anchor_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.034Z",
+      "run_id": "runtime_2026-05-13T20-24-43-890Z",
+      "current": "practical_anchor",
+      "next": "soft_invitation",
+      "strategic_next_move": "soft_conversion_bridge"
+    },
+    {
+      "at": "2026-05-13T20:24:44.186Z",
+      "run_id": "runtime_2026-05-13T20-24-44-046Z",
+      "current": "soft_invitation",
+      "next": "recognition",
+      "strategic_next_move": "recognition_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.323Z",
+      "run_id": "runtime_2026-05-13T20-24-44-197Z",
+      "current": "recognition",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.481Z",
+      "run_id": "runtime_2026-05-13T20-24-44-341Z",
+      "current": "normalization",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.632Z",
+      "run_id": "runtime_2026-05-13T20-24-44-497Z",
+      "current": "normalization",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.790Z",
+      "run_id": "runtime_2026-05-13T20-24-44-644Z",
+      "current": "normalization",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    },
+    {
+      "at": "2026-05-13T20:24:44.948Z",
+      "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "current": "normalization",
+      "next": "normalization",
+      "strategic_next_move": "normalization_move"
+    }
+  ],
+  "aggregate_scores": {
+    "authority_balance": 0.671,
+    "trust_pacing": 0.696,
+    "emotional_pacing": 0.741,
+    "conversion_pressure": 0.365,
+    "overselling_risk": 0.212,
+    "intimacy_overload": 0.26,
+    "expert_positioning_consistency": 0.705,
+    "audience_warming_quality": 0.696,
+    "trust_retention_probability": 0.738,
+    "strategic_brain_score": 0.721
+  }
+}
