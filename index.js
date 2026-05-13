@@ -973,6 +973,7 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
   const jsonPath = join(dir, `${stem}.json`);
   const mdPath = join(dir, `${stem}.md`);
   const promptPackage = result.generation_pipeline?.prompt_package || {};
+  const identityRuntime = result.identity_runtime || {};
   const payload = {
     timestamp: new Date().toISOString(),
     chat_id: chatId,
@@ -987,6 +988,8 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
     quality_score: result.integrated_validation?.combined_quality_score,
     stabilization: result.integrated_validation?.stabilization,
     stabilization_improvement: result.integrated_validation?.stabilization_improvement,
+    identity_runtime: identityRuntime,
+    identity_preview_metrics: identityRuntime.preview_metrics,
     sandbox_execution_enabled: result.generation_pipeline?.sandbox_execution_enabled,
     content_execution_status: result.final_generation_result?.content_execution_status,
     output_validation: result.final_generation_result?.output_validation,
@@ -1013,6 +1016,13 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
     `Author voice confidence: ${payload.stabilization?.author_voice_confidence ?? "n/a"}`,
     `CTA pressure score: ${payload.stabilization?.cta_pressure_score ?? "n/a"}`,
     `Generic AI risk score: ${payload.stabilization?.generic_ai_risk_score ?? "n/a"}`,
+    `Identity confidence: ${payload.identity_preview_metrics?.identity_confidence ?? "n/a"}`,
+    `Persona drift level: ${payload.identity_preview_metrics?.persona_drift_level ?? "n/a"}`,
+    `Worldview stability: ${payload.identity_preview_metrics?.worldview_stability ?? "n/a"}`,
+    `Emotional continuity: ${payload.identity_preview_metrics?.emotional_continuity ?? "n/a"}`,
+    `Rhetorical continuity: ${payload.identity_preview_metrics?.rhetorical_continuity ?? "n/a"}`,
+    `Generic AI divergence: ${payload.identity_preview_metrics?.generic_ai_divergence ?? "n/a"}`,
+    `Narrative persistence: ${payload.identity_preview_metrics?.narrative_persistence ?? "n/a"}`,
     `Warnings: ${payload.warnings.length ? payload.warnings.join(", ") : "none"}`,
     "",
     "## Stabilization",
@@ -1021,6 +1031,11 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
       stabilization: payload.stabilization,
       improvement: payload.stabilization_improvement,
     }, null, 2),
+    "```",
+    "",
+    "## Identity Runtime",
+    "```json",
+    JSON.stringify(payload.identity_runtime, null, 2),
     "```",
     "",
     "## Runtime Decisions",
@@ -1063,6 +1078,8 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
   const contextSummary = result.generation_pipeline?.assembled_context_summary || {};
   const validation = result.integrated_validation || {};
   const stabilization = validation.stabilization || {};
+  const identityRuntime = result.identity_runtime || {};
+  const identityMetrics = identityRuntime.preview_metrics || {};
   const cognition = promptPackage.runtimeCognitionState || {};
   const promptPreview = promptPackage.assembledPrompt?.final_prompt || "";
   const configSummary = {
@@ -1096,6 +1113,14 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
     `CTA pressure: ${stabilization.cta_pressure_score ?? "n/a"}`,
     `Generic AI risk: ${stabilization.generic_ai_risk_score ?? "n/a"}`,
     `Continuity: ${stabilization.continuity_score ?? "n/a"}`,
+    `Identity confidence: ${identityMetrics.identity_confidence ?? "n/a"}`,
+    `Persona drift: ${identityMetrics.persona_drift_level ?? "n/a"}`,
+    `Worldview stability: ${identityMetrics.worldview_stability ?? "n/a"}`,
+    `Emotional continuity: ${identityMetrics.emotional_continuity ?? "n/a"}`,
+    `Rhetorical continuity: ${identityMetrics.rhetorical_continuity ?? "n/a"}`,
+    `Generic AI divergence: ${identityMetrics.generic_ai_divergence ?? "n/a"}`,
+    `Narrative persistence: ${identityMetrics.narrative_persistence ?? "n/a"}`,
+    `Identity memory persisted: ${identityRuntime.persona_memory_persisted_after_run === true}`,
     "",
     "Runtime decisions:",
     compactJson(result.runtime?.selected_generation_decisions, 700),
@@ -1119,6 +1144,20 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
     "",
     "Author voice:",
     compactJson(validation.author_voice_status, 700),
+    "",
+    "Identity runtime:",
+    compactJson({
+      identity_confidence: identityMetrics.identity_confidence,
+      persona_drift_level: identityMetrics.persona_drift_level,
+      worldview_stability: identityMetrics.worldview_stability,
+      emotional_continuity: identityMetrics.emotional_continuity,
+      rhetorical_continuity: identityMetrics.rhetorical_continuity,
+      generic_ai_divergence: identityMetrics.generic_ai_divergence,
+      narrative_persistence: identityMetrics.narrative_persistence,
+      memory_path: identityRuntime.persona_memory_path,
+      memory_run_count: identityRuntime.persona_memory_run_count,
+      warnings: identityRuntime.warnings,
+    }, 900),
     "",
     `Warnings: ${validation.warnings?.length ? validation.warnings.join(", ") : "none"}`,
     "",

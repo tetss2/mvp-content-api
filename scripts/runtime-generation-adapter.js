@@ -12,6 +12,7 @@ import { assembleFinalPrompt, createLocalRetrievalCandidates } from "./expert-ge
 import { analyzeRuntimeQuality, stabilizePromptPackage } from "./runtime-quality-analyzer.js";
 import { normalizeExecutionMode } from "../runtime/execution/runtime-executor.js";
 import { runRuntimeExecutionSandbox } from "../runtime/execution/runtime-sandbox.js";
+import { runAuthorIdentityEngine } from "../runtime/identity/author-identity-engine.js";
 
 const ROOT = process.cwd();
 const DEFAULT_EXPERT_ID = "dinara";
@@ -24,6 +25,8 @@ const ADAPTER_CONSTRAINTS = {
   telegram_handlers_modified: false,
   railway_or_env_modified: false,
   llm_execution_disabled: true,
+  identity_engine_admin_only: true,
+  identity_engine_local_only: true,
 };
 
 function normalizeGenerationIntent(intent = "educational_post") {
@@ -469,6 +472,23 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     provider: options.sandboxProvider || request.sandboxProvider,
     allowExternalApi: options.allowExternalApi === true,
   });
+  const identityRuntime = await runAuthorIdentityEngine({
+    expertId,
+    root,
+    runtimeResult: {
+      ...runtimeResult,
+      integrated_validation: integratedValidation,
+      generation_pipeline: {
+        runtime_quality_stabilization: stabilizedPromptPackage.runtimeQualityStabilization,
+      },
+    },
+    promptPackage: stabilizedPromptPackage,
+    finalGenerationResult: {
+      content: executionSandbox.sanitized_output,
+    },
+    persist: options.persistIdentity !== false,
+    initializeStorage: options.initializeStorage !== false,
+  });
 
   return {
     schema_version: ADAPTER_SCHEMA_VERSION,
@@ -481,6 +501,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       llm_execution_disabled: llmExecutionMode !== "sandbox_execution",
       admin_only_sandbox: llmExecutionMode === "sandbox_execution",
       production_generation_replaced: false,
+      identity_engine_admin_only: true,
+      identity_engine_local_only: true,
     },
     expert_id: expertId,
     adapter_mode: "local_runtime_to_prompt_assembly",
@@ -491,6 +513,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       "scripts/expert-generation-orchestration.js",
       "scripts/expert-retrieval-intelligence.js",
       "scripts/expert-generation-sandbox.js",
+      "runtime/identity/author-identity-engine.js",
     ],
     cognition_loading: {
       loaded_from_disk: cognition.loaded_from_disk,
@@ -532,6 +555,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       runtime_execution_sandbox: executionSandbox,
     },
     integrated_validation: integratedValidation,
+    identity_runtime: identityRuntime,
     final_generation_result: {
       publication_status: "not_published_local_simulation",
       telegram_runtime_mutation: false,
@@ -541,6 +565,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       ingest_or_promote: false,
       production_database_migration: false,
       auto_posting: false,
+      identity_engine_admin_only: true,
+      identity_engine_local_only: true,
       llmExecutionMode,
       assembledPrompt: stabilizedPromptPackage.assembledPrompt,
       messagePayload: stabilizedPromptPackage.messagePayload,
@@ -554,6 +580,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       quality_score: executionSandbox.quality?.runtime_quality_score || integratedValidation.combined_quality_score,
       warnings: [...new Set([
         ...integratedValidation.warnings,
+        ...(identityRuntime.warnings || []),
         ...(executionSandbox.diagnostics?.warnings || []),
       ])],
     },
