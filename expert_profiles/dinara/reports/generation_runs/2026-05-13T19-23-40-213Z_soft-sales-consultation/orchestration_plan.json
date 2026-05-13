@@ -1,0 +1,589 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "sales_post",
+  "generation_strategy": {
+    "goal": "Support ethical conversion by connecting a real pain point to an expert solution without aggressive pressure.",
+    "recommended_structure": [
+      "pain point",
+      "consequence",
+      "expert solution",
+      "trust proof",
+      "CTA"
+    ],
+    "voice_priorities": [
+      "trust",
+      "specificity",
+      "ethical persuasion"
+    ],
+    "context_usage_rules": [
+      "Prefer sales context when available, supported by educational or story context.",
+      "Use proof points only when the context actually supports them.",
+      "Avoid turning therapeutic material into manipulative scarcity or fear."
+    ],
+    "cta_strategy": "Direct or consultative CTA depending on constraints, with clear next step and no coercion.",
+    "forbidden_patterns": [
+      "aggressive pressure",
+      "scarcity without basis",
+      "shaming",
+      "guaranteed transformation",
+      "fabricated proof"
+    ],
+    "quality_checklist": [
+      "offer is specific",
+      "reader autonomy is preserved",
+      "benefit is concrete",
+      "trust proof is grounded",
+      "CTA is clear"
+    ]
+  },
+  "prompt_blueprint": {
+    "system_instruction": "You are preparing future Russian expert content for expert_id=dinara. Follow the generation plan exactly, but do not invent unsupported expert claims.",
+    "expert_voice_instruction": "Use the expert voice constraints: tone=expert_warm; priorities=trust, specificity, ethical persuasion. Preserve warmth, precision, and ethical boundaries.",
+    "generation_strategy_instruction": "Intent=sales_post. Goal: Support ethical conversion by connecting a real pain point to an expert solution without aggressive pressure.. Recommended structure: pain point -> consequence -> expert solution -> trust proof -> CTA. CTA strategy: Direct or consultative CTA depending on constraints, with clear next step and no coercion..",
+    "context_pack_instruction": "Use primary context ids: b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36, 4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa. Use supporting context ids: af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65, 60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc, f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1. Tone/style context ids: 4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa. Avoid suppressed context.",
+    "output_constraints_instruction": "Platform=instagram; length=medium; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.",
+    "safety_instruction": "Avoid: aggressive pressure, scarcity without basis, shaming, guaranteed transformation, fabricated proof. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.",
+    "final_user_request": "Мягкий продающий пост про консультацию и границы в близости"
+  },
+  "context_injection_plan": {
+    "primary_context": [
+      {
+        "id": "b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36",
+        "role": "primary",
+        "title": "Сексуальный интеллект.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved_high_confidence/Сексуальный интеллект.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "sales",
+        "confidence_level": "high",
+        "expert_signal_score": 0.96,
+        "retrieval_trace": {
+          "base_score": 0.7188,
+          "final_score": 2.4488,
+          "boosts": [
+            "approved_high_confidence:+1",
+            "confidence_high:+0.25",
+            "expert_signal_0.96:+0.23",
+            "sales_match:+0.25"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "sales",
+          "source_type": "approved_high_confidence",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "intent_content_match",
+          "generation_safe",
+          "source_diversity",
+          "content_kind_diversity"
+        ]
+      },
+      {
+        "id": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+        "role": "primary",
+        "title": "Мужская сексуальность.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "short_hook",
+        "confidence_level": "high",
+        "expert_signal_score": 0.96,
+        "retrieval_trace": {
+          "base_score": 0.7908,
+          "final_score": 2.3508,
+          "boosts": [
+            "approved_high_confidence:+1",
+            "confidence_high:+0.25",
+            "expert_signal_0.96:+0.23",
+            "short_hook_match:+0.08"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "short_hook",
+          "source_type": "approved_high_confidence",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "generation_safe",
+          "source_diversity",
+          "content_kind_diversity"
+        ]
+      }
+    ],
+    "supporting_context": [
+      {
+        "id": "af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65",
+        "role": "supporting",
+        "title": "Автостоп. Техника символдрамы.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved_high_confidence/Автостоп. Техника символдрамы.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "faq",
+        "confidence_level": "high",
+        "expert_signal_score": 0.96,
+        "retrieval_trace": {
+          "base_score": 0.8388,
+          "final_score": 2.3188,
+          "boosts": [
+            "approved_high_confidence:+1",
+            "confidence_high:+0.25",
+            "expert_signal_0.96:+0.23"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "faq",
+          "source_type": "approved_high_confidence",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "generation_safe",
+          "source_diversity",
+          "content_kind_diversity"
+        ]
+      },
+      {
+        "id": "60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc",
+        "role": "supporting",
+        "title": "Женская сексуальность.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved/Женская сексуальность.cleaned.txt",
+        "source_type": "approved_dataset",
+        "content_kind": "educational",
+        "confidence_level": "high",
+        "expert_signal_score": 0.86,
+        "retrieval_trace": {
+          "base_score": 0.8668,
+          "final_score": 2.1468,
+          "boosts": [
+            "approved_dataset:+0.85",
+            "confidence_high:+0.25",
+            "expert_signal_0.86:+0.18"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "educational",
+          "source_type": "approved_dataset",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "intent_content_match",
+          "generation_safe",
+          "source_diversity",
+          "content_kind_diversity"
+        ]
+      },
+      {
+        "id": "f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1",
+        "role": "supporting",
+        "title": "Стыд и секс.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved/Стыд и секс.cleaned.txt",
+        "source_type": "approved_dataset",
+        "content_kind": "faq",
+        "confidence_level": "high",
+        "expert_signal_score": 0.86,
+        "retrieval_trace": {
+          "base_score": 0.8428,
+          "final_score": 2.1228,
+          "boosts": [
+            "approved_dataset:+0.85",
+            "confidence_high:+0.25",
+            "expert_signal_0.86:+0.18"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "faq",
+          "source_type": "approved_dataset",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "generation_safe"
+        ]
+      }
+    ],
+    "tone_style_context": [
+      {
+        "id": "4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa",
+        "role": "tone_style",
+        "title": "Мужская сексуальность.cleaned.txt",
+        "source_path": "knowledge_intake/sexologist/approved_high_confidence/Мужская сексуальность.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "short_hook",
+        "confidence_level": "high",
+        "expert_signal_score": 0.96,
+        "retrieval_trace": {
+          "base_score": 0.7908,
+          "final_score": 2.3508,
+          "boosts": [
+            "approved_high_confidence:+1",
+            "confidence_high:+0.25",
+            "expert_signal_0.96:+0.23",
+            "short_hook_match:+0.08"
+          ],
+          "penalties": [],
+          "generation_safe": true,
+          "generation_intent": "sales_post",
+          "content_kind": "short_hook",
+          "source_type": "approved_high_confidence",
+          "confidence_level": "high"
+        },
+        "selected_because": [
+          "high_final_score",
+          "generation_safe",
+          "source_diversity",
+          "content_kind_diversity"
+        ]
+      }
+    ],
+    "background_context": [],
+    "suppressed_context": [
+      {
+        "id": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+        "title": "Введение в сексологию.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+        "title": "Женские сексуальные дисфункции .cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "faq",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+        "title": "Завис (през).cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "faq",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+        "title": "Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+        "title": "Нетипичный секс.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+        "title": "ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+        "title": "секс дисф. начало (през).cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "therapeutic_case",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+        "title": "Сексуальные дисгармонии.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+        "title": "Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "therapeutic_case",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+        "title": "Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "educational",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+        "title": "ЭГ в пт секс дисфункций.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "therapeutic_case",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+        "title": "Эмили Нагоски - Как хочет женщина.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "faq",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+        "title": "Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+        "source_type": "approved_high_confidence",
+        "content_kind": "storytelling",
+        "suppressed_because": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+        "title": "Секс. обслед. Ж (1).cleaned.txt",
+        "source_type": "questionnaire",
+        "content_kind": "questionnaire",
+        "suppressed_because": [
+          "questionnaire_context",
+          "low_final_score"
+        ]
+      },
+      {
+        "id": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+        "title": "«Когда мы не ладим» Упражнение .cleaned.txt",
+        "source_type": "questionnaire",
+        "content_kind": "storytelling",
+        "suppressed_because": [
+          "generation_unsafe",
+          "questionnaire_context",
+          "noisy_warnings",
+          "low_final_score"
+        ]
+      }
+    ],
+    "preferred_structure": [
+      "pain point",
+      "consequence",
+      "expert solution",
+      "trust proof",
+      "CTA"
+    ],
+    "max_quoted_content_chars_per_item": 280,
+    "max_total_quoted_content_chars": 900,
+    "injection_rules": [
+      "Use primary context for factual grounding and main expert position.",
+      "Use supporting context for nuance, objections, examples, or secondary angles.",
+      "Use tone/style context only to influence rhythm, warmth, and framing.",
+      "Do not copy long source fragments; quote only short fragments when attribution or wording matters.",
+      "Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.",
+      "Prefer synthesized output over paraphrase.",
+      "Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text."
+    ],
+    "safety_exclusions": [
+      {
+        "id": "fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae",
+        "title": "Введение в сексологию.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "379c1fd9e816efac16657e88f8ce549dac7e329ce2ca5c3d33644a0878f8e8df",
+        "title": "Женские сексуальные дисфункции .cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "931e27553d2f457a6718a04cf02d96b374230a469c8b958c1271bda1cde4970f",
+        "title": "Завис (през).cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145",
+        "title": "Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "594b2bbd31d88aa0a2cedb228f0bd4b6721afaf8cd5ed2d0c898f02c5066f86c",
+        "title": "Нетипичный секс.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "77d4467f3f304cab90ddee973eb93228fd0f571a6cb476eb861a8726d6e4c8af",
+        "title": "ПСР_психосексуальное_развитие_в_норме.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10",
+        "title": "секс дисф. начало (през).cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "2d4935f23aec8028e7552e77766179ab693072685f8c93ad89db4fe0e391e003",
+        "title": "Сексуальные дисгармонии.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "2010375b3815dc169c1c97082ca88ba49b7495fff5b02ef49157280eda43527d",
+        "title": "Стратегии_с_неврозами,_диссоциацией,_окр_и_тп.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "7024139b53e6a01426bea85506c75c1513351459bde57eb32168a1110ca1127f",
+        "title": "Супружеская_совместимость_и_проблемы_отношений_в_браке_.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "ab6559e9d7d6ae484087653e367bb723d6441d35418470105e3a9868ad092401",
+        "title": "ЭГ в пт секс дисфункций.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "670e04304717a2478151735a99e99c67c0bc62ec0f31e0a61fbdefd996f8788a",
+        "title": "Эмили Нагоски - Как хочет женщина.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "d1686d2591d26c40e2c0fecca8ef3e43ec426166c419e4a7af0907a85baea31b",
+        "title": "Taormino_T_Bibliya_Bdsm_Polnoe_Rukova6.cleaned.txt",
+        "reasons": [
+          "source_type_limit"
+        ]
+      },
+      {
+        "id": "a7c7b1a61f9ef5da29c614a509cb381b7a468366b28cb62b2451ad017fffbb96",
+        "title": "Секс. обслед. Ж (1).cleaned.txt",
+        "reasons": [
+          "questionnaire_context",
+          "low_final_score"
+        ]
+      },
+      {
+        "id": "8b3353ac9d78dd8cf570f6487022bd32b4dcbe48ba334c4045e6a04cf8a423a2",
+        "title": "«Когда мы не ладим» Упражнение .cleaned.txt",
+        "reasons": [
+          "generation_unsafe",
+          "questionnaire_context",
+          "noisy_warnings",
+          "low_final_score"
+        ]
+      }
+    ]
+  },
+  "output_policy": {
+    "platform": "instagram",
+    "length": "medium",
+    "format": "post",
+    "cta_style": "soft",
+    "tone": "expert_warm",
+    "language": "ru",
+    "final_text_generation": false,
+    "constraints_summary": {
+      "platform_rule": "Adapt future text to platform norms without changing source meaning.",
+      "length_rule": "Treat length as a planning constraint only; no final post is generated here.",
+      "format_rule": "Use the format to choose section intent and content density.",
+      "cta_rule": "Direct or consultative CTA depending on constraints, with clear next step and no coercion.",
+      "tone_rule": "Use expert_warm as a future voice constraint."
+    }
+  },
+  "orchestration_trace": [
+    {
+      "step": "intent_strategy_selected",
+      "at": "2026-05-13T19:23:40.212Z",
+      "generation_intent": "sales_post",
+      "fallback_used": false
+    },
+    {
+      "step": "context_pack_received",
+      "at": "2026-05-13T19:23:40.212Z",
+      "selected_count": 5,
+      "suppressed_count": 15,
+      "warnings": []
+    },
+    {
+      "step": "primary_context_selected",
+      "at": "2026-05-13T19:23:40.212Z",
+      "primary_count": 2,
+      "supporting_count": 3,
+      "tone_style_count": 1
+    },
+    {
+      "step": "safety_rules_applied",
+      "at": "2026-05-13T19:23:40.212Z",
+      "forbidden_patterns": [
+        "aggressive pressure",
+        "scarcity without basis",
+        "shaming",
+        "guaranteed transformation",
+        "fabricated proof"
+      ],
+      "excluded_context_count": 15,
+      "max_quoted_content_chars_per_item": 280
+    },
+    {
+      "step": "output_policy_applied",
+      "at": "2026-05-13T19:23:40.212Z",
+      "platform": "instagram",
+      "length": "medium",
+      "format": "post",
+      "cta_style": "soft",
+      "tone": "expert_warm"
+    },
+    {
+      "step": "prompt_blueprint_created",
+      "at": "2026-05-13T19:23:40.212Z",
+      "sections": [
+        "system_instruction",
+        "expert_voice_instruction",
+        "generation_strategy_instruction",
+        "context_pack_instruction",
+        "output_constraints_instruction",
+        "safety_instruction",
+        "final_user_request"
+      ]
+    }
+  ]
+}

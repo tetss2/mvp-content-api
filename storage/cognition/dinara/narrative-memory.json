@@ -1,7 +1,7 @@
 {
   "schema_version": "2026-05-13.persistent_cognition.v1",
   "expert_id": "dinara",
-  "day": 30,
+  "day": 35,
   "narrative_memory": {
     "arcs": [
       {
@@ -9,7 +9,7 @@
         "cluster": "attachment",
         "title": "attachment continuity arc",
         "startedDay": 1,
-        "lastUpdatedDay": 29,
+        "lastUpdatedDay": 32,
         "stage": "deepening",
         "contentDays": [
           1,
@@ -20,7 +20,11 @@
           19,
           21,
           22,
-          29
+          29,
+          31,
+          32,
+          31,
+          32
         ],
         "primaryTopics": [
           "relationship anxiety",
@@ -36,13 +40,19 @@
           "calm",
           "calm",
           "calm",
+          "calm",
+          "calm",
+          "calm",
+          "calm",
           "calm"
         ],
         "openThreads": [
           "thread_11_topic_1",
           "thread_19_topic_8",
           "thread_21_topic_1",
-          "thread_29_topic_8"
+          "thread_29_topic_8",
+          "thread_32_topic_2",
+          "thread_32_topic_2"
         ]
       },
       {
@@ -50,7 +60,7 @@
         "cluster": "sexuality",
         "title": "sexuality continuity arc",
         "startedDay": 3,
-        "lastUpdatedDay": 27,
+        "lastUpdatedDay": 34,
         "stage": "deepening",
         "contentDays": [
           3,
@@ -61,7 +71,11 @@
           17,
           23,
           25,
-          27
+          27,
+          33,
+          34,
+          33,
+          34
         ],
         "primaryTopics": [
           "female sexuality myths",
@@ -77,7 +91,11 @@
           "recognition",
           "calm",
           "calm",
-          "calm"
+          "calm",
+          "recognition",
+          "recognition",
+          "recognition",
+          "recognition"
         ],
         "openThreads": [
           "thread_3_topic_5",
@@ -91,12 +109,14 @@
         "cluster": "boundaries",
         "title": "boundaries continuity arc",
         "startedDay": 4,
-        "lastUpdatedDay": 24,
+        "lastUpdatedDay": 35,
         "stage": "building",
         "contentDays": [
           4,
           14,
-          24
+          24,
+          35,
+          35
         ],
         "primaryTopics": [
           "boundaries in intimacy"
@@ -104,6 +124,8 @@
         "emotionalPath": [
           "calm",
           "recognition",
+          "calm",
+          "calm",
           "calm"
         ],
         "openThreads": []
@@ -176,9 +198,24 @@
       }
     ],
     "recurringMotifs": {
-      "open_new_thread": 30
+      "open_new_thread": 40
     },
-    "unresolvedThreads": [],
+    "unresolvedThreads": [
+      {
+        "id": "thread_32_topic_2",
+        "day": 32,
+        "topic": "emotional dependency",
+        "question": "Continue the attachment arc with a grounded next step.",
+        "status": "unresolved"
+      },
+      {
+        "id": "thread_32_topic_2",
+        "day": 32,
+        "topic": "emotional dependency",
+        "question": "Continue the attachment arc with a grounded next step.",
+        "status": "unresolved"
+      }
+    ],
     "emotionalCallbacks": [
       {
         "day": 1,
@@ -359,6 +396,66 @@
         "topic": "soft communication",
         "emotion": "calm",
         "callbackAfterDays": 16
+      },
+      {
+        "day": 31,
+        "topic": "relationship anxiety",
+        "emotion": "calm",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 32,
+        "topic": "emotional dependency",
+        "emotion": "calm",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 33,
+        "topic": "female sexuality myths",
+        "emotion": "recognition",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 34,
+        "topic": "shame and desire",
+        "emotion": "recognition",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 35,
+        "topic": "boundaries in intimacy",
+        "emotion": "calm",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 31,
+        "topic": "relationship anxiety",
+        "emotion": "calm",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 32,
+        "topic": "emotional dependency",
+        "emotion": "calm",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 33,
+        "topic": "female sexuality myths",
+        "emotion": "recognition",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 34,
+        "topic": "shame and desire",
+        "emotion": "recognition",
+        "callbackAfterDays": 16
+      },
+      {
+        "day": 35,
+        "topic": "boundaries in intimacy",
+        "emotion": "calm",
+        "callbackAfterDays": 16
       }
     ],
     "authorityProgression": [
@@ -511,6 +608,56 @@
         "day": 30,
         "domain": "communication",
         "authorityScore": 0.52
+      },
+      {
+        "day": 31,
+        "domain": "attachment psychology",
+        "authorityScore": 0.532
+      },
+      {
+        "day": 32,
+        "domain": "dependency patterns",
+        "authorityScore": 0.544
+      },
+      {
+        "day": 33,
+        "domain": "sex education",
+        "authorityScore": 0.556
+      },
+      {
+        "day": 34,
+        "domain": "sexology",
+        "authorityScore": 0.568
+      },
+      {
+        "day": 35,
+        "domain": "communication",
+        "authorityScore": 0.58
+      },
+      {
+        "day": 31,
+        "domain": "attachment psychology",
+        "authorityScore": 0.592
+      },
+      {
+        "day": 32,
+        "domain": "dependency patterns",
+        "authorityScore": 0.604
+      },
+      {
+        "day": 33,
+        "domain": "sex education",
+        "authorityScore": 0.616
+      },
+      {
+        "day": 34,
+        "domain": "sexology",
+        "authorityScore": 0.628
+      },
+      {
+        "day": 35,
+        "domain": "communication",
+        "authorityScore": 0.64
       }
     ],
     "audienceJourneyContinuity": [
@@ -693,6 +840,66 @@
         "topic": "soft communication",
         "journeyState": "returning_reader",
         "continuityNote": "communication thread expanded through FAQ."
+      },
+      {
+        "day": 31,
+        "topic": "relationship anxiety",
+        "journeyState": "warming",
+        "continuityNote": "attachment thread expanded through educational_post."
+      },
+      {
+        "day": 32,
+        "topic": "emotional dependency",
+        "journeyState": "engaged",
+        "continuityNote": "attachment thread expanded through storytelling."
+      },
+      {
+        "day": 33,
+        "topic": "female sexuality myths",
+        "journeyState": "trusting",
+        "continuityNote": "sexuality thread expanded through longform_article."
+      },
+      {
+        "day": 34,
+        "topic": "shame and desire",
+        "journeyState": "trusting",
+        "continuityNote": "sexuality thread expanded through faq_answer."
+      },
+      {
+        "day": 35,
+        "topic": "boundaries in intimacy",
+        "journeyState": "considering_purchase",
+        "continuityNote": "boundaries thread expanded through sales_post."
+      },
+      {
+        "day": 31,
+        "topic": "relationship anxiety",
+        "journeyState": "warming",
+        "continuityNote": "attachment thread expanded through educational_post."
+      },
+      {
+        "day": 32,
+        "topic": "emotional dependency",
+        "journeyState": "engaged",
+        "continuityNote": "attachment thread expanded through storytelling."
+      },
+      {
+        "day": 33,
+        "topic": "female sexuality myths",
+        "journeyState": "trusting",
+        "continuityNote": "sexuality thread expanded through longform_article."
+      },
+      {
+        "day": 34,
+        "topic": "shame and desire",
+        "journeyState": "trusting",
+        "continuityNote": "sexuality thread expanded through faq_answer."
+      },
+      {
+        "day": 35,
+        "topic": "boundaries in intimacy",
+        "journeyState": "considering_purchase",
+        "continuityNote": "boundaries thread expanded through sales_post."
       }
     ]
   },
@@ -701,7 +908,13 @@
     "weakAudienceMemoryZones": [],
     "forgottenEducationalConcepts": [],
     "idealCallbackTiming": [],
-    "trustReinforcementOpportunities": []
+    "trustReinforcementOpportunities": [
+      {
+        "topic": "boundaries in intimacy",
+        "saturation": 0.65,
+        "recommendation": "Use adjacent callback instead of direct repetition."
+      }
+    ]
   },
-  "updated_at": "2026-05-13T19:14:17.471Z"
+  "updated_at": "2026-05-13T19:23:40.115Z"
 }

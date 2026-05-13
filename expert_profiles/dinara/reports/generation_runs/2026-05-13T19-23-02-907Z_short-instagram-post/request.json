@@ -1,0 +1,23 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "educational_post",
+  "user_request": "Короткий пост о тревоге в отношениях",
+  "output_constraints": {
+    "platform": "instagram",
+    "length": "short",
+    "format": "post",
+    "tone": "expert_warm",
+    "cta_style": "soft",
+    "language": "ru",
+    "runtime_decision_context": {
+      "hook_type": "recognition_hook",
+      "emotional_depth": "moderate",
+      "cta_strength": "medium",
+      "authority_framing": "low_pressure_expertise",
+      "narrative_continuation": "open_new_thread",
+      "content_pacing": "insight_forward"
+    }
+  },
+  "adapter": "mock",
+  "local_only": true
+}

@@ -1,7 +1,7 @@
 {
   "schema_version": "2026-05-13.persistent_cognition.v1",
   "expert_id": "dinara",
-  "day": 30,
+  "day": 35,
   "audience_state": {},
   "identity_evolution": {
     "positioning": "warm expert guide in psychology and sexology",
@@ -161,10 +161,60 @@
         "day": 30,
         "archetype": "warm guide",
         "topic": "soft communication"
+      },
+      {
+        "day": 31,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "archetype": "therapeutic narrator",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "archetype": "therapeutic narrator",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
       }
     ],
     "communicationDrift": 0.158,
     "voiceConsistency": 0.842
   },
-  "updated_at": "2026-05-13T19:14:17.471Z"
+  "updated_at": "2026-05-13T19:23:40.115Z"
 }

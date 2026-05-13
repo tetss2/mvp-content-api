@@ -1,0 +1,80 @@
+## SYSTEM PROMPT
+You are preparing future Russian expert content for expert_id=dinara. Follow the generation plan exactly, but do not invent unsupported expert claims.
+
+Use the expert voice constraints: tone=expert_warm; priorities=trust, specificity, ethical persuasion. Preserve warmth, precision, and ethical boundaries.
+
+Avoid: aggressive pressure, scarcity without basis, shaming, guaranteed transformation, fabricated proof. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+## FINAL USER PROMPT
+# Generation Task
+Мягкий продающий пост про консультацию и границы в близости
+
+# Strategy
+Intent=sales_post. Goal: Support ethical conversion by connecting a real pain point to an expert solution without aggressive pressure.. Recommended structure: pain point -> consequence -> expert solution -> trust proof -> CTA. CTA strategy: Direct or consultative CTA depending on constraints, with clear next step and no coercion..
+
+# Output Constraints
+Platform=instagram; length=medium; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.
+
+# Context Injection Rules
+- Use primary context for factual grounding and main expert position.
+- Use supporting context for nuance, objections, examples, or secondary angles.
+- Use tone/style context only to influence rhythm, warmth, and framing.
+- Do not copy long source fragments; quote only short fragments when attribution or wording matters.
+- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.
+- Prefer synthesized output over paraphrase.
+- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.
+
+# Curated Context
+### Primary context: Сексуальный интеллект.cleaned.txt
+- id: b2c77af9a67f69e76fb678cc9b2154a56c1cd0a4c7a35db5129901aad7032f36
+- source_type: approved_high_confidence
+- content_kind: sales
+- confidence: high
+
+Annotation Эта книга – не виагра в бумажном формате. Скорее операция на мозге, которая удалит из вашей жизни понятие сексуальной нормы. Миллионы женщин думают: если у мужчины не встает или он кончает слишком быстро, значит, я провалилась. И еще куча стереотипов, которые в итоге п
+
+### Primary context: Мужская сексуальность.cleaned.txt
+- id: 4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa
+- source_type: approved_high_confidence
+- content_kind: short_hook
+- confidence: high
+
+Мужская сексуальность Доктор медицинских наук, профессор В. А. Доморацкий Мужская сексуальность В нашей культуре широко распространено представление о том, что мужская половая идентичность неотделима от сексуальности, а сила мужчины — это прежде всего хорошая потенция. Подобная у
+
+### Supporting context: Автостоп. Техника символдрамы.cleaned.txt
+- id: af40b165e78c748cfa46574282b48fa2d63b676ba8c0dceb8fdcfa6ea8c5fa65
+- source_type: approved_high_confidence
+- content_kind: faq
+- confidence: high
+
+АВТОСТОП М.В. Маркова Из известных сегодня психотерапевтических методик и техник, использующих образы в лечебном процессе, метод символдрамы (известной как Кататимно-имагинативная психотерапия, Кататимное переживание образов (КПО) или метод «сновидений наяву») (Лёйнер Х., 1996; О
+
+### Supporting context: Женская сексуальность.cleaned.txt
+- id: 60643d12c0055da2dcc9df31d3e8b2b74403e3d6974de5354fdff0d9ea9b7adc
+- source_type: approved_dataset
+- content_kind: educational
+- confidence: high
+
+Женская сексуальность Доморацкий В. А. доктор медицинских наук, профессор Особенности женской сексуальности Женская сексуальность тесно связана с менструальным циклом. Сексуальная реактивность женщин различна на разных стадиях цикла. Так, наибольший интерес к эротическим фильмам 
+
+### Supporting context: Стыд и секс.cleaned.txt
+- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1
+- source_type: approved_dataset
+- content_kind: faq
+- confidence: high
+
+Стыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч
+
+### Tone/style context: Мужская сексуальность.cleaned.txt
+- id: 4eaf5ad5a3fb88b99fe8cfdedfe232ece43dd36e3da9736adaaf1d50004695aa
+- source_type: approved_high_confidence
+- content_kind: short_hook
+- confidence: high
+
+Мужская сексуальность Доктор медицинских наук, профессор В. А. Доморацкий Мужская сексуальность В нашей культуре широко распространено представление о том, что мужская половая иден
+
+# Safety
+Avoid: aggressive pressure, scarcity without basis, shaming, guaranteed transformation, fabricated proof. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.
+
+# Produce Final Draft
+Write the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids.

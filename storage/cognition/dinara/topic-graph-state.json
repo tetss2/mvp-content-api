@@ -1,7 +1,7 @@
 {
   "schema_version": "2026-05-13.persistent_cognition.v1",
   "expert_id": "dinara",
-  "day": 30,
+  "day": 35,
   "topic_graph": {
     "nodes": [
       {
@@ -25,11 +25,11 @@
         "conversionDrivingDomains": [
           "consultation readiness"
         ],
-        "occurrenceCount": 3,
-        "lastSeenDay": 21,
-        "saturation": 0.393,
-        "noveltyScore": 0.607,
-        "memoryStrength": 0.608
+        "occurrenceCount": 5,
+        "lastSeenDay": 31,
+        "saturation": 0.65,
+        "noveltyScore": 0.35,
+        "memoryStrength": 0.937
       },
       {
         "id": "topic_2",
@@ -52,11 +52,11 @@
         "conversionDrivingDomains": [
           "therapy motivation"
         ],
-        "occurrenceCount": 3,
-        "lastSeenDay": 22,
-        "saturation": 0.393,
-        "noveltyScore": 0.607,
-        "memoryStrength": 0.608
+        "occurrenceCount": 5,
+        "lastSeenDay": 32,
+        "saturation": 0.65,
+        "noveltyScore": 0.35,
+        "memoryStrength": 0.937
       },
       {
         "id": "topic_3",
@@ -79,11 +79,11 @@
         "conversionDrivingDomains": [
           "consultation readiness"
         ],
-        "occurrenceCount": 3,
-        "lastSeenDay": 24,
-        "saturation": 0.393,
-        "noveltyScore": 0.607,
-        "memoryStrength": 0.608
+        "occurrenceCount": 5,
+        "lastSeenDay": 35,
+        "saturation": 0.65,
+        "noveltyScore": 0.35,
+        "memoryStrength": 0.937
       },
       {
         "id": "topic_4",
@@ -106,11 +106,11 @@
         "conversionDrivingDomains": [
           "private consultation"
         ],
-        "occurrenceCount": 3,
-        "lastSeenDay": 25,
-        "saturation": 0.393,
-        "noveltyScore": 0.607,
-        "memoryStrength": 0.608
+        "occurrenceCount": 5,
+        "lastSeenDay": 34,
+        "saturation": 0.65,
+        "noveltyScore": 0.35,
+        "memoryStrength": 0.937
       },
       {
         "id": "topic_5",
@@ -133,11 +133,11 @@
         "conversionDrivingDomains": [
           "educational lead"
         ],
-        "occurrenceCount": 3,
-        "lastSeenDay": 23,
-        "saturation": 0.393,
-        "noveltyScore": 0.607,
-        "memoryStrength": 0.608
+        "occurrenceCount": 5,
+        "lastSeenDay": 33,
+        "saturation": 0.65,
+        "noveltyScore": 0.35,
+        "memoryStrength": 0.937
       },
       {
         "id": "topic_6",
@@ -412,11 +412,11 @@
   },
   "repetition_intelligence": {
     "conceptHistory": {
-      "relationship anxiety": 3,
-      "emotional dependency": 3,
-      "female sexuality myths": 3,
-      "boundaries in intimacy": 3,
-      "shame and desire": 3,
+      "relationship anxiety": 5,
+      "emotional dependency": 5,
+      "female sexuality myths": 5,
+      "boundaries in intimacy": 5,
+      "shame and desire": 5,
       "trust after conflict": 3,
       "body sensitivity": 3,
       "self-worth in relationships": 3,
@@ -424,20 +424,20 @@
       "soft communication": 3
     },
     "hookHistory": {
-      "recognition_hook": 5,
-      "therapeutic_hook": 25
+      "recognition_hook": 7,
+      "therapeutic_hook": 33
     },
     "framingHistory": {
-      "low_pressure_expertise": 30
+      "low_pressure_expertise": 40
     },
     "ctaStructureHistory": {
       "low_pressure_cta": 5,
-      "save_share_cta": 5,
-      "educational_cta": 3,
+      "save_share_cta": 7,
+      "educational_cta": 5,
       "soft_cta": 5,
-      "dm_cta": 5,
-      "emotional_cta": 3,
-      "trust_cta": 4
+      "dm_cta": 7,
+      "emotional_cta": 5,
+      "trust_cta": 6
     },
     "emotionalPacingHistory": [
       {
@@ -589,10 +589,60 @@
         "day": 30,
         "emotion": "calm",
         "intensity": 0.24
+      },
+      {
+        "day": 31,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 32,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 33,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 34,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 35,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 31,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 32,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 33,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 34,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 35,
+        "emotion": "calm",
+        "intensity": 0.24
       }
     ],
     "storytellingTemplateHistory": {
-      "open_new_thread": 30
+      "open_new_thread": 40
     },
     "warnings": [
       {
@@ -786,15 +836,149 @@
         "value": "therapeutic_hook",
         "score": 1,
         "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 31,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "recognition_hook",
+        "score": 0.75,
+        "message": "Hook frame \"recognition_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 32,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 33,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 34,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 35,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 31,
+        "type": "repeated_concept",
+        "severity": "medium",
+        "value": "relationship anxiety",
+        "score": 0.5,
+        "message": "Concept \"relationship anxiety\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 31,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "recognition_hook",
+        "score": 0.875,
+        "message": "Hook frame \"recognition_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 32,
+        "type": "repeated_concept",
+        "severity": "medium",
+        "value": "emotional dependency",
+        "score": 0.5,
+        "message": "Concept \"emotional dependency\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 32,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 33,
+        "type": "repeated_concept",
+        "severity": "medium",
+        "value": "female sexuality myths",
+        "score": 0.5,
+        "message": "Concept \"female sexuality myths\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 33,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 34,
+        "type": "repeated_concept",
+        "severity": "medium",
+        "value": "shame and desire",
+        "score": 0.5,
+        "message": "Concept \"shame and desire\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 34,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 35,
+        "type": "repeated_concept",
+        "severity": "medium",
+        "value": "boundaries in intimacy",
+        "score": 0.5,
+        "message": "Concept \"boundaries in intimacy\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 35,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 35,
+        "type": "repeated_cta_structure",
+        "severity": "high",
+        "value": "dm_cta",
+        "score": 0.7,
+        "message": "dm_cta is overrepresented; cool down conversion pressure."
       }
     ]
   },
   "recommendations": [
     {
       "type": "narrative_continuation",
-      "priority": "medium",
-      "target": "soft communication",
-      "recommendation": "Continue the communication arc from day 30 with a fresh emotional callback."
+      "priority": "high",
+      "target": "emotional dependency",
+      "recommendation": "Continue unresolved thread from day 32 with one concrete next-step post."
+    },
+    {
+      "type": "narrative_continuation",
+      "priority": "high",
+      "target": "emotional dependency",
+      "recommendation": "Continue unresolved thread from day 32 with one concrete next-step post."
     },
     {
       "type": "trust_pacing",
@@ -827,5 +1011,5 @@
       "recommendation": "Alternate client mirror stories with myth correction or body signal motifs."
     }
   ],
-  "updated_at": "2026-05-13T19:14:17.471Z"
+  "updated_at": "2026-05-13T19:23:40.115Z"
 }

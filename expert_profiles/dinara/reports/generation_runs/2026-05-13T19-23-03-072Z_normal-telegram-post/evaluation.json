@@ -1,0 +1,19 @@
+{
+  "style_match_score": 0.84,
+  "structure_quality_score": 0.8,
+  "educational_clarity_score": 0.69,
+  "emotional_warmth_score": 0.77,
+  "redundancy_score": 1,
+  "hallucination_risk": "low",
+  "cta_quality": "good",
+  "expert_tone_match_score": 0.74,
+  "context_utilization_quality_score": 0.65,
+  "overall_score": 0.78,
+  "warnings": [],
+  "metrics": {
+    "word_count": 112,
+    "repeated_line_ratio": 0,
+    "cta_present": true,
+    "forbidden_matches": []
+  }
+}

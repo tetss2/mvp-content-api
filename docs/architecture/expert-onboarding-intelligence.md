@@ -393,6 +393,127 @@ node scripts/simulate-unified-runtime.js
 
 The simulation is local only and confirms no deploy, no Telegram runtime mutation, no external API calls, no FAISS/index mutation, no ingest/promote, and no production publishing.
 
+## Unified Runtime -> Generation Pipeline Integration
+
+The unified runtime now connects to the existing local generation sandbox through an additive adapter:
+
+```text
+scripts/runtime-generation-adapter.js
+```
+
+The adapter does not replace production generation logic. It sits beside the live system and calls the existing local-only generation modules:
+
+- `scripts/unified-generation-runtime.js`
+- `scripts/expert-generation-sandbox.js`
+- `scripts/expert-context-assembly.js`
+- `scripts/expert-generation-orchestration.js`
+- `scripts/expert-retrieval-intelligence.js`
+- `scripts/expert-output-evaluation.js`
+- `scripts/adapters/mock-generation-adapter.js`
+
+The adapter always uses the mock generation adapter for this phase. It does not call OpenAI or any external provider.
+
+### Current Local-Only Adapter Architecture
+
+```text
+generation request
+  -> runtime-generation-adapter
+  -> load persistent cognition
+  -> run unified generation runtime
+  -> extract runtime decisions
+  -> map decisions into generation sandbox constraints
+  -> run local generation sandbox with mock adapter
+  -> evaluate generated mock output
+  -> merge runtime validation + generation evaluation
+  -> return structured local generation result
+```
+
+### Execution Flow
+
+1. The adapter accepts `expertId`, topic/request text, intent, platform, length, format, tone, audience state, CTA type, and optional campaign day.
+2. It loads local cognition state from `storage/cognition/<expert_id>/`.
+3. It runs the unified runtime to evaluate repetition, trust pacing, audience memory, author voice, AI suppression, and quality.
+4. It maps runtime decisions into generation sandbox `output_constraints`.
+5. It runs the existing generation sandbox with `adapter: "mock"`.
+6. It returns a structured result containing runtime state, generation decisions, assembled context summary, generated mock content structure, validation warnings, quality score, repetition risk, CTA/trust pacing, and author voice status.
+
+### State Loading Flow
+
+Persistent cognition remains the runtime source of state:
+
+```text
+storage/cognition/dinara/topic-graph-state.json
+storage/cognition/dinara/trust-memory.json
+storage/cognition/dinara/cta-history.json
+storage/cognition/dinara/audience-memory.json
+storage/cognition/dinara/narrative-memory.json
+storage/cognition/dinara/emotional-cycles.json
+storage/cognition/dinara/optimization-history.json
+```
+
+The generation sandbox still assembles its own local context from expert metadata sidecars and prepared local knowledge files. This is intentional for the integration phase: it proves compatibility without making runtime context authoritative for production.
+
+### Generation Decision Flow
+
+Runtime decisions are passed into sandbox constraints as local planning context:
+
+- `hook_type`
+- `emotional_depth`
+- `cta_strength`
+- `authority_framing`
+- `narrative_continuation`
+- `content_pacing`
+- normalized platform
+- normalized length
+- normalized format
+- tone and CTA style
+
+The existing sandbox then builds a generation plan, prompt assembly, mock output, evaluation, and local artifacts under expert report folders.
+
+### Validation Flow
+
+The integration result merges two validation layers:
+
+- Runtime validation: repetition risk, trust/CTA pacing, audience fatigue, emotional overload, author voice status, AI-generic warnings.
+- Generation sandbox evaluation: structure quality, clarity, warmth, hallucination risk, CTA quality, context utilization, output warnings.
+
+The adapter returns a combined quality score and combined warning list. Current expected local warnings include `author_voice_drift`, `mock_adapter_used`, `missing_cta`, and `reduce_cta_strength`.
+
+### Runtime Generation Simulation
+
+`scripts/simulate-runtime-generation-flow.js` runs five local requests for `dinara`:
+
+- short Instagram post
+- normal Telegram post
+- long article mode
+- direct FAQ answer
+- soft sales/consultation post
+
+Generated reports:
+
+```text
+reports/runtime-generation/runtime_generation_flow_report.md
+reports/runtime-generation/runtime_adapter_report.md
+reports/runtime-generation/runtime_generation_validation_report.md
+reports/runtime-generation/runtime_integration_risks_report.md
+```
+
+### Blocked From Production
+
+The adapter is intentionally blocked from production use until separate validation is complete:
+
+- No Telegram handler integration.
+- No Telegram polling/runtime mutation.
+- No production publishing.
+- No auto-posting.
+- No Railway deploy or environment changes.
+- No external API generation.
+- No FAISS/vector index mutation.
+- No ingest/promote.
+- No production database migration.
+
+Before Telegram runtime integration, the platform must validate exact Telegram payload shape, Markdown escaping, caption limits, runtime persistence failure behavior, real generated draft quality, duplicate-topic suppression, CTA escalation, and a human approval workflow.
+
 Current local flow:
 
 ```text

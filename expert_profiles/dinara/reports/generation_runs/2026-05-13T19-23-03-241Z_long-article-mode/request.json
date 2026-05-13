@@ -1,0 +1,23 @@
+{
+  "expert_id": "dinara",
+  "generation_intent": "educational_post",
+  "user_request": "Длинная статья о мифах женской сексуальности",
+  "output_constraints": {
+    "platform": "telegram",
+    "length": "long",
+    "format": "post",
+    "tone": "calm",
+    "cta_style": "soft",
+    "language": "ru",
+    "runtime_decision_context": {
+      "hook_type": "therapeutic_hook",
+      "emotional_depth": "deep",
+      "cta_strength": "medium",
+      "authority_framing": "low_pressure_expertise",
+      "narrative_continuation": "open_new_thread",
+      "content_pacing": "insight_forward"
+    }
+  },
+  "adapter": "mock",
+  "local_only": true
+}
