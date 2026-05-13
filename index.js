@@ -945,7 +945,7 @@ async function sendPublishMenu(chatId) {
 
 async function canUseRuntimePreview(userId) {
   if (Number(userId) === ADMIN_TG_ID) return true;
-  return canUseKnowledgeIntake(userId);
+  return false;
 }
 
 function truncatePreview(value, limit = 900) {
@@ -966,7 +966,7 @@ function runtimePreviewFileStem() {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
 
-async function storeRuntimePreviewRun({ chatId, topic, result }) {
+async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dry" }) {
   const dir = runtimePreviewReportDir();
   await fs.mkdir(dir, { recursive: true });
   const stem = `${runtimePreviewFileStem()}_runtime_preview`;
@@ -976,6 +976,7 @@ async function storeRuntimePreviewRun({ chatId, topic, result }) {
   const payload = {
     timestamp: new Date().toISOString(),
     chat_id: chatId,
+    preview_mode: previewMode,
     expert_id: result.expert_id,
     topic,
     llmExecutionMode: result.generation_pipeline?.llm_execution_mode,
@@ -986,6 +987,12 @@ async function storeRuntimePreviewRun({ chatId, topic, result }) {
     quality_score: result.integrated_validation?.combined_quality_score,
     stabilization: result.integrated_validation?.stabilization,
     stabilization_improvement: result.integrated_validation?.stabilization_improvement,
+    sandbox_execution_enabled: result.generation_pipeline?.sandbox_execution_enabled,
+    content_execution_status: result.final_generation_result?.content_execution_status,
+    output_validation: result.final_generation_result?.output_validation,
+    output_sanitization: result.final_generation_result?.output_sanitization,
+    runtime_execution_diagnostics: result.final_generation_result?.runtime_execution_diagnostics,
+    generated_text_preview: result.final_generation_result?.content?.slice(0, 2200) || "",
     warnings: result.integrated_validation?.warnings || [],
     prompt_preview: promptPackage.assembledPrompt?.final_prompt?.slice(0, 2200) || "",
     config_payload: promptPackage.configPayload,
@@ -997,7 +1004,10 @@ async function storeRuntimePreviewRun({ chatId, topic, result }) {
     `Generated: ${payload.timestamp}`,
     `Expert: ${payload.expert_id}`,
     `Topic: ${topic}`,
+    `Preview mode: ${payload.preview_mode}`,
     `LLM execution mode: ${payload.llmExecutionMode}`,
+    `Sandbox execution enabled: ${payload.sandbox_execution_enabled}`,
+    `Content execution status: ${payload.content_execution_status || "n/a"}`,
     `Quality score: ${payload.quality_score}`,
     `Stabilization score: ${payload.stabilization?.stabilization_score ?? "n/a"}`,
     `Author voice confidence: ${payload.stabilization?.author_voice_confidence ?? "n/a"}`,
@@ -1027,11 +1037,26 @@ async function storeRuntimePreviewRun({ chatId, topic, result }) {
     "```text",
     payload.prompt_preview,
     "```",
+    "",
+    "## Generated Text Preview",
+    "```text",
+    payload.generated_text_preview || "No generated text in dry-run mode.",
+    "```",
+    "",
+    "## Output Validation",
+    "```json",
+    JSON.stringify(payload.output_validation, null, 2),
+    "```",
+    "",
+    "## Output Sanitization",
+    "```json",
+    JSON.stringify(payload.output_sanitization, null, 2),
+    "```",
   ].join("\n"), "utf-8");
   return { jsonPath, mdPath };
 }
 
-function formatRuntimePreviewMessage(result, topic) {
+function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
   const runtimeState = result.runtime?.runtime_state || {};
   const promptPackage = result.generation_pipeline?.prompt_package || {};
   const promptStructure = result.generation_pipeline?.prompt_structure || {};
@@ -1051,13 +1076,18 @@ function formatRuntimePreviewMessage(result, topic) {
     external_api_calls_allowed: promptPackage.configPayload?.external_api_calls_allowed,
     telegram_delivery_allowed: promptPackage.configPayload?.telegram_delivery_allowed,
   };
+  const sandbox = result.generation_pipeline?.runtime_execution_sandbox || {};
+  const outputValidation = result.final_generation_result?.output_validation || {};
+  const generatedText = result.final_generation_result?.content || "";
 
   return [
-    "🧪 Runtime preview (admin-only, dry run)",
+    `🧪 Runtime preview (admin-only, ${previewMode === "sandbox" ? "sandbox execution" : "dry run"})`,
     "",
     `Expert: ${result.expert_id}`,
     `Topic: ${topic}`,
     `Mode: ${result.generation_pipeline?.llm_execution_mode}`,
+    `Sandbox executed: ${sandbox.execution?.executed === true}`,
+    `Content status: ${result.final_generation_result?.content_execution_status}`,
     `Context selected: ${contextSummary.selected_count || 0}`,
     `Quality: ${validation.combined_quality_score}`,
     `Stabilization: ${stabilization.stabilization_score ?? "n/a"}`,
@@ -1091,6 +1121,23 @@ function formatRuntimePreviewMessage(result, topic) {
     compactJson(validation.author_voice_status, 700),
     "",
     `Warnings: ${validation.warnings?.length ? validation.warnings.join(", ") : "none"}`,
+    "",
+    "Sandbox diagnostics:",
+    compactJson({
+      sandbox_execution_enabled: sandbox.sandbox_execution_enabled,
+      output_validation_enabled: sandbox.output_validation_enabled,
+      output_sanitization_enabled: sandbox.output_sanitization_enabled,
+      provider: sandbox.execution?.provider,
+      external_api_calls: sandbox.diagnostics?.external_api_calls,
+      validation_status: outputValidation.status,
+      sanitization_changed: result.final_generation_result?.output_sanitization?.changed,
+      validation_warnings: outputValidation.warnings,
+    }, 900),
+    generatedText ? [
+      "",
+      "Generated text preview:",
+      truncatePreview(generatedText, 1200),
+    ].join("\n") : "",
     "",
     "Config summary:",
     compactJson(configSummary, 750),
@@ -1454,24 +1501,34 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
   }
 
   const topic = (match?.[1] || "").trim();
-  if (!topic) {
+  const parts = topic.split(/\s+/).filter(Boolean);
+  const requestedMode = ["dry", "sandbox"].includes(parts[0]) ? parts.shift() : "dry";
+  const runtimeTopic = parts.join(" ").trim();
+  if (!runtimeTopic) {
     await bot.sendMessage(chatId, [
-      "🧪 Runtime preview работает только как dry run.",
+      "🧪 Runtime preview доступен в двух admin-only режимах.",
       "",
       "Использование:",
-      "/runtime_preview тема поста",
+      "/runtime_preview dry тема поста",
+      "/runtime_preview sandbox тема поста",
       "",
-      "LLM не вызывается, публикации нет, Telegram production flow не меняется.",
+      "Dry не генерирует текст. Sandbox выполняет локальную генерацию, валидирует и санитизирует результат.",
+      "Публикации нет, Telegram production flow не меняется.",
     ].join("\n"));
     return;
   }
 
-  const status = await bot.sendMessage(chatId, "🧪 Собираю runtime preview без LLM и без публикации...");
+  const status = await bot.sendMessage(
+    chatId,
+    requestedMode === "sandbox"
+      ? "🧪 Запускаю admin-only runtime sandbox без публикации..."
+      : "🧪 Собираю runtime preview без LLM и без публикации...",
+  );
   try {
     const result = await runRuntimeGenerationAdapter({
       expertId: "dinara",
-      topic,
-      userRequest: topic,
+      topic: runtimeTopic,
+      userRequest: runtimeTopic,
       intent: "educational_post",
       platform: "telegram_longread",
       length: "medium",
@@ -1479,18 +1536,20 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
       tone: "expert_warm",
       audienceState: "warming",
       ctaType: "low_pressure_cta",
+      llmExecutionMode: requestedMode === "sandbox" ? "sandbox_execution" : "dry_run_prompt_only",
     }, {
       persistRuntime: false,
       initializeStorage: false,
+      llmExecutionMode: requestedMode === "sandbox" ? "sandbox_execution" : "dry_run_prompt_only",
     });
 
-    const logPaths = await storeRuntimePreviewRun({ chatId, topic, result });
+    const logPaths = await storeRuntimePreviewRun({ chatId, topic: runtimeTopic, result, previewMode: requestedMode });
     await bot.editMessageText("✅ Runtime preview готов. Отправляю краткий отчёт...", {
       chat_id: chatId,
       message_id: status.message_id,
     }).catch(() => {});
     await sendLongPlainText(chatId, [
-      formatRuntimePreviewMessage(result, topic),
+      formatRuntimePreviewMessage(result, runtimeTopic, requestedMode),
       "",
       `Local log: ${logPaths.mdPath.replace(process.cwd(), "").replace(/^[\\/]/, "")}`,
     ].join("\n"));

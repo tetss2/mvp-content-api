@@ -10,6 +10,8 @@ import { createGenerationPlan } from "./expert-generation-orchestration.js";
 import { rerankRetrievalItems } from "./expert-retrieval-intelligence.js";
 import { assembleFinalPrompt, createLocalRetrievalCandidates } from "./expert-generation-sandbox.js";
 import { analyzeRuntimeQuality, stabilizePromptPackage } from "./runtime-quality-analyzer.js";
+import { normalizeExecutionMode } from "../runtime/execution/runtime-executor.js";
+import { runRuntimeExecutionSandbox } from "../runtime/execution/runtime-sandbox.js";
 
 const ROOT = process.cwd();
 const DEFAULT_EXPERT_ID = "dinara";
@@ -75,7 +77,7 @@ function normalizeTone(runtimeDecision = {}, requested = {}) {
   return "expert_warm";
 }
 
-function buildGenerationPackageRequest({ request, runtimeResult }) {
+function buildGenerationPackageRequest({ request, runtimeResult, llmExecutionMode = "dry_run_prompt_only" }) {
   const runtimeState = runtimeResult.runtime_state;
   const runtimeDecision = runtimeState.decision_engine;
   const generationIntent = normalizeGenerationIntent(runtimeState.generation_intent.intent);
@@ -108,7 +110,7 @@ function buildGenerationPackageRequest({ request, runtimeResult }) {
         content_pacing: runtimeDecision.content_pacing,
       },
     },
-    adapter: "dry_run_prompt_only",
+    adapter: llmExecutionMode,
     run_name: request.runName || `runtime-${generationIntent}-${length}`,
     max_context_items: request.maxContextItems || 6,
     max_total_chars: request.maxTotalChars || 12000,
@@ -155,10 +157,10 @@ function buildMessagePayload(promptAssembly) {
   ];
 }
 
-function buildConfigPayload({ generationPackageRequest, runtimeResult }) {
+function buildConfigPayload({ generationPackageRequest, runtimeResult, llmExecutionMode = "dry_run_prompt_only" }) {
   const lengthPolicy = contentLengthPolicy(generationPackageRequest.output_constraints.length);
   return {
-    llmExecutionMode: "dry_run_prompt_only",
+    llmExecutionMode,
     intended_provider: "openai-compatible-chat",
     intended_model: "gpt-4o-mini",
     temperature: runtimeResult.runtime_state.decision_engine.cta_strength === "strong" ? 0.55 : 0.65,
@@ -254,7 +256,7 @@ function buildPromptQuality({ promptAssembly, contextPack, runtimeResult }) {
   };
 }
 
-async function assembleRuntimePromptPackage({ root, expertId, generationPackageRequest, runtimeResult }) {
+async function assembleRuntimePromptPackage({ root, expertId, generationPackageRequest, runtimeResult, llmExecutionMode = "dry_run_prompt_only" }) {
   const retrieval = await createLocalRetrievalCandidates({
     root,
     expertId,
@@ -278,16 +280,18 @@ async function assembleRuntimePromptPackage({ root, expertId, generationPackageR
   });
   const promptAssembly = assembleFinalPrompt({ plan: orchestrationPlan, contextPack });
   const messagePayload = buildMessagePayload(promptAssembly);
-  const configPayload = buildConfigPayload({ generationPackageRequest, runtimeResult });
+  const configPayload = buildConfigPayload({ generationPackageRequest, runtimeResult, llmExecutionMode });
   const lengthPolicy = contentLengthPolicy(generationPackageRequest.output_constraints.length);
   const quality = buildPromptQuality({ promptAssembly, contextPack, runtimeResult });
 
   return {
-    llmExecutionMode: "dry_run_prompt_only",
+    llmExecutionMode,
     realLocalPromptAssemblyUsed: true,
     mockContentGenerationUsed: false,
-    generationExecutionSkipped: true,
-    skip_reason: "External LLM execution is disabled for local-only runtime integration.",
+    generationExecutionSkipped: llmExecutionMode !== "sandbox_execution",
+    skip_reason: llmExecutionMode === "sandbox_execution"
+      ? null
+      : "External LLM execution is disabled for local-only runtime integration.",
     expertId,
     generationRequest: generationPackageRequest,
     expertProfileSummary: summarizeExpertProfile(runtimeResult),
@@ -380,6 +384,9 @@ function buildIntegratedValidation({ runtimeResult, promptPackage }) {
 async function runRuntimeGenerationAdapter(request = {}, options = {}) {
   const root = options.root || ROOT;
   const expertId = request.expertId || request.expert_id || DEFAULT_EXPERT_ID;
+  const llmExecutionMode = normalizeExecutionMode(
+    options.llmExecutionMode || request.llmExecutionMode || request.llm_execution_mode || "dry_run_prompt_only",
+  );
   const cognition = await loadPersistentCognition(expertId, {
     root,
     initialize: options.initializeStorage !== false,
@@ -405,12 +412,13 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     contextLimit: request.contextLimit || 6,
   });
 
-  const generationPackageRequest = buildGenerationPackageRequest({ request, runtimeResult });
+  const generationPackageRequest = buildGenerationPackageRequest({ request, runtimeResult, llmExecutionMode });
   const promptPackage = await assembleRuntimePromptPackage({
     root,
     expertId,
     generationPackageRequest,
     runtimeResult,
+    llmExecutionMode,
   });
   const stabilization = stabilizePromptPackage(promptPackage);
   const stabilizedPromptPackage = {
@@ -433,10 +441,47 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
   stabilizedPromptPackage.qualityScore = stabilizedPromptPackage.validationResult.prompt_score;
 
   const integratedValidation = buildIntegratedValidation({ runtimeResult, promptPackage: stabilizedPromptPackage });
+  const baseRuntimeResult = {
+    runtime: {
+      run_id: runtimeResult.run_id,
+      runtime_state: runtimeResult.runtime_state,
+      selected_generation_decisions: runtimeResult.runtime_state.decision_engine,
+      orchestration_flow: runtimeResult.orchestration_flow,
+      context_summary: runtimeResult.context_pack?.context_summary,
+      production_pack: runtimeResult.production_pack,
+      validation: runtimeResult.validation,
+      quality_score: runtimeResult.quality_score,
+      trust_pacing: runtimeResult.trust_pacing,
+      author_voice_validation: runtimeResult.author_voice_validation,
+    },
+    generation_pipeline: {
+      assembled_context_summary: stabilizedPromptPackage.assembledContextSummary,
+      orchestration_plan: stabilizedPromptPackage.orchestrationPlan,
+      prompt_package: stabilizedPromptPackage,
+      validation: stabilizedPromptPackage.validationResult,
+    },
+    integrated_validation: integratedValidation,
+  };
+  const executionSandbox = await runRuntimeExecutionSandbox({
+    runtimeResult: baseRuntimeResult,
+    promptPackage: stabilizedPromptPackage,
+    mode: llmExecutionMode,
+    provider: options.sandboxProvider || request.sandboxProvider,
+    allowExternalApi: options.allowExternalApi === true,
+  });
+
   return {
     schema_version: ADAPTER_SCHEMA_VERSION,
     generated_at: new Date().toISOString(),
-    constraints: ADAPTER_CONSTRAINTS,
+    constraints: {
+      ...ADAPTER_CONSTRAINTS,
+      adapter_mode: llmExecutionMode === "sandbox_execution"
+        ? "admin_local_runtime_execution_sandbox"
+        : ADAPTER_CONSTRAINTS.adapter_mode,
+      llm_execution_disabled: llmExecutionMode !== "sandbox_execution",
+      admin_only_sandbox: llmExecutionMode === "sandbox_execution",
+      production_generation_replaced: false,
+    },
     expert_id: expertId,
     adapter_mode: "local_runtime_to_prompt_assembly",
     connected_files: [
@@ -470,7 +515,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       generation_package_request: generationPackageRequest,
       real_local_prompt_assembly_used: promptPackage.realLocalPromptAssemblyUsed,
       mock_content_generation_used: promptPackage.mockContentGenerationUsed,
-      llm_execution_mode: promptPackage.llmExecutionMode,
+      llm_execution_mode: llmExecutionMode,
+      sandbox_execution_enabled: executionSandbox.sandbox_execution_enabled,
       assembled_context_summary: stabilizedPromptPackage.assembledContextSummary,
       orchestration_plan: stabilizedPromptPackage.orchestrationPlan,
       prompt_package: stabilizedPromptPackage,
@@ -483,25 +529,33 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       },
       validation: stabilizedPromptPackage.validationResult,
       runtime_quality_stabilization: stabilizedPromptPackage.runtimeQualityStabilization,
+      runtime_execution_sandbox: executionSandbox,
     },
     integrated_validation: integratedValidation,
     final_generation_result: {
       publication_status: "not_published_local_simulation",
       telegram_runtime_mutation: false,
       production_generation_replaced: false,
-      external_api_calls: false,
+      external_api_calls: executionSandbox.diagnostics?.external_api_calls === true,
       faiss_or_index_mutation: false,
       ingest_or_promote: false,
       production_database_migration: false,
       auto_posting: false,
-      llmExecutionMode: stabilizedPromptPackage.llmExecutionMode,
+      llmExecutionMode,
       assembledPrompt: stabilizedPromptPackage.assembledPrompt,
       messagePayload: stabilizedPromptPackage.messagePayload,
       configPayload: stabilizedPromptPackage.configPayload,
-      content: null,
-      content_execution_status: "not_executed_prompt_only",
-      quality_score: integratedValidation.combined_quality_score,
-      warnings: integratedValidation.warnings,
+      content: executionSandbox.sanitized_output,
+      raw_content: executionSandbox.raw_output,
+      content_execution_status: executionSandbox.execution?.executed ? "executed_in_admin_local_sandbox" : "not_executed_prompt_only",
+      output_validation: executionSandbox.validation,
+      output_sanitization: executionSandbox.sanitization,
+      runtime_execution_diagnostics: executionSandbox.diagnostics,
+      quality_score: executionSandbox.quality?.runtime_quality_score || integratedValidation.combined_quality_score,
+      warnings: [...new Set([
+        ...integratedValidation.warnings,
+        ...(executionSandbox.diagnostics?.warnings || []),
+      ])],
     },
   };
 }
