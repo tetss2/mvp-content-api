@@ -1,6 +1,6 @@
 # Runtime Generation Flow Report
 
-Generated: 2026-05-13T19:29:36.670Z
+Generated: 2026-05-13T19:35:38.440Z
 
 Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
 
@@ -28,8 +28,8 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 ```json
 {
   "schema_version": "2026-05-13.unified_generation_runtime.v1",
-  "run_id": "runtime_2026-05-13T19-29-35-964Z",
-  "created_at": "2026-05-13T19:29:35.964Z",
+  "run_id": "runtime_2026-05-13T19-35-37-731Z",
+  "created_at": "2026-05-13T19:35:37.731Z",
   "constraints": {
     "local_only": true,
     "no_deploy": true,
@@ -105,12 +105,12 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
   },
   "trust_progression": {
     "trust_state": {
-      "authorityGrowth": 0.724,
-      "emotionalTrustGrowth": 0.73,
-      "educationalTrust": 0.528,
-      "vulnerabilityTrust": 0.376,
-      "consistencyTrust": 0.768,
-      "audienceFamiliarity": 0.711,
+      "authorityGrowth": 0.844,
+      "emotionalTrustGrowth": 0.87,
+      "educationalTrust": 0.608,
+      "vulnerabilityTrust": 0.436,
+      "consistencyTrust": 0.948,
+      "audienceFamiliarity": 0.871,
       "trustTrajectory": [
         {
           "day": 1,
@@ -340,6 +340,56 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
         {
           "day": 31,
           "score": 0.64,
+          "topic": "relationship anxiety"
+        },
+        {
+          "day": 32,
+          "score": 0.651,
+          "topic": "emotional dependency"
+        },
+        {
+          "day": 33,
+          "score": 0.664,
+          "topic": "female sexuality myths"
+        },
+        {
+          "day": 34,
+          "score": 0.678,
+          "topic": "shame and desire"
+        },
+        {
+          "day": 35,
+          "score": 0.689,
+          "topic": "boundaries in intimacy"
+        },
+        {
+          "day": 31,
+          "score": 0.701,
+          "topic": "relationship anxiety"
+        },
+        {
+          "day": 32,
+          "score": 0.713,
+          "topic": "emotional dependency"
+        },
+        {
+          "day": 33,
+          "score": 0.726,
+          "topic": "female sexuality myths"
+        },
+        {
+          "day": 34,
+          "score": 0.739,
+          "topic": "shame and desire"
+        },
+        {
+          "day": 35,
+          "score": 0.751,
+          "topic": "boundaries in intimacy"
+        },
+        {
+          "day": 31,
+          "score": 0.763,
           "topic": "relationship anxiety"
         }
       ],
@@ -572,6 +622,56 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
         {
           "day": 31,
           "score": 0.724,
+          "domain": "attachment psychology"
+        },
+        {
+          "day": 32,
+          "score": 0.736,
+          "domain": "dependency patterns"
+        },
+        {
+          "day": 33,
+          "score": 0.748,
+          "domain": "sex education"
+        },
+        {
+          "day": 34,
+          "score": 0.76,
+          "domain": "sexology"
+        },
+        {
+          "day": 35,
+          "score": 0.772,
+          "domain": "communication"
+        },
+        {
+          "day": 31,
+          "score": 0.784,
+          "domain": "attachment psychology"
+        },
+        {
+          "day": 32,
+          "score": 0.796,
+          "domain": "dependency patterns"
+        },
+        {
+          "day": 33,
+          "score": 0.808,
+          "domain": "sex education"
+        },
+        {
+          "day": 34,
+          "score": 0.82,
+          "domain": "sexology"
+        },
+        {
+          "day": 35,
+          "score": 0.832,
+          "domain": "communication"
+        },
+        {
+          "day": 31,
+          "score": 0.844,
           "domain": "attachment psychology"
         }
       ]

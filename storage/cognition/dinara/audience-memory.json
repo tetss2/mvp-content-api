@@ -261,10 +261,60 @@
         "day": 35,
         "archetype": "warm guide",
         "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "archetype": "therapeutic narrator",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "archetype": "warm guide",
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "archetype": "therapeutic narrator",
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "archetype": "warm guide",
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "archetype": "warm guide",
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "archetype": "warm guide",
+        "topic": "boundaries in intimacy"
       }
     ],
     "communicationDrift": 0.158,
     "voiceConsistency": 0.842
   },
-  "updated_at": "2026-05-13T19:29:36.570Z"
+  "updated_at": "2026-05-13T19:35:38.341Z"
 }

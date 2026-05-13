@@ -1,6 +1,6 @@
 # Runtime Prompt Assembly Report
 
-Generated: 2026-05-13T19:29:36.675Z
+Generated: 2026-05-13T19:35:38.445Z
 
 Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
 

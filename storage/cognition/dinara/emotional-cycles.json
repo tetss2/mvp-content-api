@@ -303,6 +303,66 @@
         "emotion": "calm",
         "intensity": 0.24,
         "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "emotion": "recognition",
+        "intensity": 0.52,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "emotion": "calm",
+        "intensity": 0.24,
+        "topic": "boundaries in intimacy"
       }
     ],
     "emotionalOverloadRisk": 0,
@@ -557,12 +617,62 @@
         "day": 35,
         "depth": 0.212,
         "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 31,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 32,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 33,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 34,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 35,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 31,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 32,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 33,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 34,
+        "depth": 0.366,
+        "note": "Depth kept in content-safe range."
+      },
+      {
+        "day": 35,
+        "depth": 0.212,
+        "note": "Depth kept in content-safe range."
       }
     ],
     "audienceEmotionalSaturation": {
-      "calm": 1.015,
-      "recognition": 0.93
+      "calm": 1.189,
+      "recognition": 1.178
     }
   },
-  "updated_at": "2026-05-13T19:29:36.570Z"
+  "updated_at": "2026-05-13T19:35:38.341Z"
 }
