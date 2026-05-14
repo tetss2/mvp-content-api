@@ -33,6 +33,7 @@ import {
   createUserScenario,
   ensureUserExpertFolders,
   generatePersonaDrafts,
+  getUserRoot,
   getOnboardingInventory,
   loadUserProfile,
   loadUserScenario,
@@ -106,6 +107,12 @@ function debugLog(...args) {
   if (DEBUG_LOGS) console.log(`[${RUNTIME_NAME}:debug]`, ...args);
 }
 
+async function ensureRuntimeDirectory(path, label = "directory") {
+  const created = await fs.mkdir(path, { recursive: true });
+  if (created) runtimeLog("directory initialized", { label, path });
+  return path;
+}
+
 function requireEnv(name) {
   if (!process.env[name]) throw new Error(`Missing required env var: ${name}`);
 }
@@ -138,12 +145,12 @@ function validateRuntimeEnv() {
 }
 
 validateRuntimeEnv();
-await fs.mkdir(RUNTIME_DATA_ROOT, { recursive: true });
+await ensureRuntimeDirectory(RUNTIME_DATA_ROOT, "runtime data root");
 await Promise.all([
-  fs.mkdir(join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry"), { recursive: true }),
-  fs.mkdir(join(RUNTIME_DATA_ROOT, "reports", "runtime-preview"), { recursive: true }),
-  fs.mkdir(join(RUNTIME_DATA_ROOT, "users"), { recursive: true }),
-  fs.mkdir(join(RUNTIME_DATA_ROOT, "feedback_reports"), { recursive: true }),
+  ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry"), "beta telemetry"),
+  ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "reports", "runtime-preview"), "runtime preview"),
+  ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "users"), "users root"),
+  ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "feedback_reports"), "feedback reports"),
 ]);
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: TELEGRAM_POLLING_ENABLED });
@@ -400,18 +407,29 @@ function normalizeExpertRuntime(runtime = {}) {
 }
 
 async function loadExpertRuntime(userId) {
-  await ensureUserExpertFolders(userId);
-  const path = join("users", String(userId), "profile", "runtime.json");
+  const root = getUserRoot(userId);
+  const path = join(root, "profile", "runtime.json");
+  await ensureRuntimeDirectory(dirname(path), "user runtime profile");
   try {
-    return normalizeExpertRuntime(JSON.parse(await fs.readFile(path, "utf-8")));
-  } catch {
-    return normalizeExpertRuntime();
+    const runtime = normalizeExpertRuntime(JSON.parse(await fs.readFile(path, "utf-8")));
+    runtimeLog("runtime restored", { userId: String(userId), path });
+    return runtime;
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      console.warn(`[${RUNTIME_NAME}] runtime restore failed, initializing fresh: ${error.message}`);
+    }
+    const runtime = normalizeExpertRuntime();
+    await fs.writeFile(path, JSON.stringify(runtime, null, 2), "utf-8");
+    runtimeLog("runtime file created", { userId: String(userId), path });
+    runtimeLog("runtime initialized fresh", { userId: String(userId), path });
+    return runtime;
   }
 }
 
 async function saveExpertRuntime(userId, runtime) {
-  await ensureUserExpertFolders(userId);
-  const path = join("users", String(userId), "profile", "runtime.json");
+  const root = getUserRoot(userId);
+  const path = join(root, "profile", "runtime.json");
+  await ensureRuntimeDirectory(dirname(path), "user runtime profile");
   await fs.writeFile(path, JSON.stringify(runtime, null, 2), "utf-8");
   return runtime;
 }
@@ -2020,7 +2038,7 @@ function buildMaterialQualityText(quality, category = "") {
 }
 
 async function readLatestMaterialQualities(userId, category) {
-  const dir = join("users", String(userId), category === "style" ? "style/pending" : "knowledge/pending");
+  const dir = join(getUserRoot(userId), category === "style" ? "style/pending" : "knowledge/pending");
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
   const qualities = [];
   for (const entry of entries.filter((item) => item.isFile() && item.name.endsWith(".json")).slice(-12)) {
@@ -2578,7 +2596,7 @@ async function sendExpertDashboard(chatId, userId = chatId) {
 
 async function readProfileDraft(userId, fileName, maxChars = 700) {
   try {
-    const text = await fs.readFile(join("users", String(userId), "profile", fileName), "utf-8");
+    const text = await fs.readFile(join(getUserRoot(userId), "profile", fileName), "utf-8");
     return text.replace(/\s+/g, " ").trim().slice(0, maxChars);
   } catch {
     return "";
@@ -2635,7 +2653,7 @@ function isAdminUser(userId) {
 }
 
 async function listUploadNames(userId, folder) {
-  const dir = join("users", String(userId), folder);
+  const dir = join(getUserRoot(userId), folder);
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
   return entries
     .filter((entry) => entry.isFile() && !entry.name.endsWith(".json"))
