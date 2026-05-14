@@ -88,6 +88,10 @@ const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
 const STARTUP_WARNINGS = [];
+const POLLING_LOCK_PATH = process.env.POLLING_LOCK_PATH || join(RUNTIME_DATA_ROOT, "telegram-polling.lock");
+const POLLING_LOCK_STALE_MS = Number(process.env.POLLING_LOCK_STALE_MS || 120000);
+const POLLING_RETRY_MS = Number(process.env.POLLING_RETRY_MS || 30000);
+const POLLING_MAX_RETRIES = Number(process.env.POLLING_MAX_RETRIES || 3);
 
 process.env.RUNTIME_DATA_ROOT = RUNTIME_DATA_ROOT;
 if (!process.env.USERS_ROOT) process.env.USERS_ROOT = join(RUNTIME_DATA_ROOT, "users");
@@ -111,6 +115,65 @@ async function ensureRuntimeDirectory(path, label = "directory") {
   const created = await fs.mkdir(path, { recursive: true });
   if (created) runtimeLog("directory initialized", { label, path });
   return path;
+}
+
+function isProcessRunning(pid) {
+  if (!pid || Number(pid) === process.pid) return false;
+  try {
+    process.kill(Number(pid), 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function readPollingLock() {
+  try {
+    const raw = await fs.readFile(POLLING_LOCK_PATH, "utf-8");
+    return JSON.parse(raw.replace(/^\uFEFF/, ""));
+  } catch {
+    return null;
+  }
+}
+
+async function acquirePollingLock() {
+  await ensureRuntimeDirectory(dirname(POLLING_LOCK_PATH), "polling lock directory");
+  const current = await readPollingLock();
+  if (current?.pid && isProcessRunning(current.pid)) {
+    runtimeLog("polling already active", { pid: current.pid, lockPath: POLLING_LOCK_PATH });
+    return false;
+  }
+  if (current?.acquiredAt && Date.now() - Date.parse(current.acquiredAt) < POLLING_LOCK_STALE_MS) {
+    runtimeLog("polling already active", { lockPath: POLLING_LOCK_PATH, acquiredAt: current.acquiredAt });
+    return false;
+  }
+  if (current) await fs.rm(POLLING_LOCK_PATH, { force: true });
+
+  const lock = {
+    pid: process.pid,
+    runtimeName: RUNTIME_NAME,
+    runtimeMode: RUNTIME_MODE,
+    acquiredAt: new Date().toISOString(),
+  };
+  try {
+    const handle = await fs.open(POLLING_LOCK_PATH, "wx");
+    await handle.writeFile(JSON.stringify(lock, null, 2), "utf-8");
+    await handle.close();
+    runtimeLog("polling instance acquired", { pid: process.pid, lockPath: POLLING_LOCK_PATH });
+    return true;
+  } catch (error) {
+    if (error?.code === "EEXIST") {
+      runtimeLog("polling already active", { lockPath: POLLING_LOCK_PATH });
+      return false;
+    }
+    throw error;
+  }
+}
+
+async function releasePollingLock() {
+  const current = await readPollingLock();
+  if (!current || Number(current.pid) !== process.pid) return;
+  await fs.rm(POLLING_LOCK_PATH, { force: true }).catch(() => {});
 }
 
 function requireEnv(name) {
@@ -153,15 +216,97 @@ await Promise.all([
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "feedback_reports"), "feedback reports"),
 ]);
 
-const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: TELEGRAM_POLLING_ENABLED });
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
+let pollingActive = false;
+let pollingConflictHandled = false;
+let pollingRetryCount = 0;
+let pollingRetryTimer = null;
+
 bot.on("polling_error", (error) => {
   const message = error?.response?.body?.description || error?.message || String(error);
   if (message.includes("409")) {
     console.error(`[${RUNTIME_NAME}] Telegram polling conflict: another poller is using this bot token. Stop the duplicate Railway/service instance.`);
+    if (!pollingConflictHandled) {
+      pollingConflictHandled = true;
+      bot.stopPolling()
+        .catch(() => {})
+        .finally(async () => {
+          pollingActive = false;
+          globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__ = false;
+          await releasePollingLock();
+          runtimeLog("polling disabled", { reason: "telegram_conflict_409" });
+          schedulePollingRetry("telegram_conflict_409");
+        });
+    }
     return;
   }
   console.error(`[${RUNTIME_NAME}] Telegram polling error:`, message);
 });
+
+async function initializeMainPolling() {
+  if (!TELEGRAM_POLLING_ENABLED || !MAIN_BOT_ENABLED) {
+    runtimeLog("polling disabled", {
+      requested: TELEGRAM_POLLING_ENABLED,
+      tokenPresent: Boolean(TELEGRAM_TOKEN),
+    });
+    return;
+  }
+  runtimeLog("polling enabled", { token: IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN" });
+  if (globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__) {
+    runtimeLog("polling already active", { scope: "process" });
+    return;
+  }
+  const acquired = await acquirePollingLock();
+  if (!acquired) {
+    runtimeLog("polling disabled", { reason: "lock_not_acquired" });
+    schedulePollingRetry("lock_not_acquired");
+    return;
+  }
+  globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__ = true;
+  try {
+    await bot.startPolling();
+    pollingActive = true;
+    pollingConflictHandled = false;
+    pollingRetryCount = 0;
+    runtimeLog("Polling initialized");
+    runtimeLog("Polling active", { pid: process.pid });
+  } catch (error) {
+    globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__ = false;
+    pollingActive = false;
+    await releasePollingLock();
+    if (String(error?.message || error).includes("409")) {
+      pollingConflictHandled = true;
+      runtimeLog("polling disabled", { reason: "telegram_conflict_409" });
+      schedulePollingRetry("telegram_conflict_409");
+      return;
+    }
+    throw error;
+  }
+}
+
+function schedulePollingRetry(reason) {
+  if (!TELEGRAM_POLLING_ENABLED || !MAIN_BOT_ENABLED || pollingRetryTimer) return;
+  if (pollingRetryCount >= POLLING_MAX_RETRIES) {
+    runtimeLog("polling disabled", { reason, retriesExhausted: true });
+    return;
+  }
+  pollingRetryCount += 1;
+  pollingRetryTimer = setTimeout(() => {
+    pollingRetryTimer = null;
+    initializeMainPolling().catch((error) => {
+      console.error(`[${RUNTIME_NAME}] polling retry failed:`, error?.message || error);
+    });
+  }, POLLING_RETRY_MS);
+  pollingRetryTimer.unref?.();
+}
+
+for (const signal of ["SIGINT", "SIGTERM"]) {
+  process.once(signal, async () => {
+    if (pollingActive) await bot.stopPolling().catch(() => {});
+    await releasePollingLock();
+    process.exit(0);
+  });
+}
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
@@ -5670,3 +5815,5 @@ process.on("uncaughtException", (err) => {
 process.on("unhandledRejection", (err) => {
   console.error(`[${RUNTIME_NAME}] Unhandled:`, err?.message || err);
 });
+
+await initializeMainPolling();

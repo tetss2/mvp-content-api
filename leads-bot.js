@@ -9,6 +9,9 @@ const LEADS_TOKEN = process.env.LEADS_BOT_TOKEN;
 const ADMIN_ID = 109664871; // Твой Telegram ID
 const MAIN_BOT_USERNAME = "mvpdi1_bot";
 const DB_PATH = join(__dirname, "demo-users.json");
+const RUNTIME_MODE = (process.env.RUNTIME_MODE || process.env.APP_ENV || process.env.NODE_ENV || "development").toLowerCase();
+const IS_BETA_RUNTIME = ["beta", "staging", "railway-beta"].includes(RUNTIME_MODE);
+const MAIN_TOKEN = process.env[IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN"];
 
 const LIMITS = {
   text: 30,
@@ -19,7 +22,7 @@ const LIMITS = {
 
 const SCOPES = ["Психолог", "Врач", "Инста-мама", "Другое"];
 
-const LEADS_BOT_ENABLED = process.env.START_LEADS_BOT === "true" && Boolean(LEADS_TOKEN);
+const LEADS_BOT_ENABLED = process.env.START_LEADS_BOT === "true" && Boolean(LEADS_TOKEN) && LEADS_TOKEN !== MAIN_TOKEN;
 const disabledLeadsBot = {
   onText() {},
   on() {},
@@ -34,6 +37,7 @@ const leadsState = new Map(); // chatId -> { step, name, city, scope, phone }
 console.log(LEADS_BOT_ENABLED ? "Leads bot started" : "Leads bot disabled", {
   requested: process.env.START_LEADS_BOT === "true",
   tokenPresent: Boolean(LEADS_TOKEN),
+  tokenOverlapsMain: Boolean(LEADS_TOKEN && MAIN_TOKEN && LEADS_TOKEN === MAIN_TOKEN),
   polling: LEADS_BOT_ENABLED && process.env.LEADS_TELEGRAM_POLLING !== "false",
 });
 
