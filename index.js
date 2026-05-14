@@ -296,6 +296,7 @@ const REGENERATION_VARIANTS = {
   softer: "Сделай вариант мягче и интимнее: больше эмоционального признания, меньше советов и категоричности.",
   practical: "Сделай вариант практичнее: оставь тепло, но добавь один ясный маленький шаг, без чек-листа.",
   voice: "Сделай вариант сильнее похожим на Динару: больше живой авторской интонации, меньше универсальных AI-формулировок.",
+  feedback: "Исправь текст по конкретному комментарию пользователя, сохрани тему, длину и формат Telegram-поста.",
 };
 
 // ─── СТИЛИ СЕКСОЛОГА ─────────────────────────────────────────────────────────
@@ -1491,9 +1492,11 @@ function feedbackKeyboard(answerId) {
   ];
 }
 
-function buildRegenerationInstruction(variant = "default") {
+function buildRegenerationInstruction(variant = "default", feedbackNote = "") {
   const instruction = REGENERATION_VARIANTS[variant] || "";
-  return instruction ? `\n\nВАРИАНТ ПЕРЕГЕНЕРАЦИИ:\n${instruction}` : "";
+  if (!instruction && !feedbackNote) return "";
+  const note = feedbackNote ? `\nКомментарий пользователя: "${feedbackNote}"` : "";
+  return `\n\nВАРИАНТ ПЕРЕГЕНЕРАЦИИ:\n${instruction}${note}`;
 }
 
 function humanizeGeneratedPostText(text) {
@@ -1521,7 +1524,7 @@ function humanizeGeneratedPostText(text) {
     .trim();
 }
 
-async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto", variant = "default") {
+async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto", variant = "default", feedbackNote = "") {
   let context = "";
   let retrievalMeta = null;
   const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
@@ -1589,7 +1592,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${buildRegenerationInstruction(variant)}` }
+      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${buildRegenerationInstruction(variant, feedbackNote)}` }
     ],
     temperature: 0.82,
     max_tokens: maxTokens,
@@ -1893,8 +1896,15 @@ bot.on("message", async (msg) => {
       await appendFeedbackItem(correction);
       s.awaitingFeedbackCorrection = false;
       s.pendingFeedbackCorrection = null;
+      s.pendingTopic = s.lastTopic || s.pendingTopic;
+      s.pendingGenerationNote = text;
       userState.set(chatId, s);
-      await bot.sendMessage(chatId, "✅ Спасибо, комментарий сохранён.");
+      await bot.sendMessage(chatId, "✅ Спасибо, комментарий сохранён.", {
+        reply_markup: { inline_keyboard: [[
+          { text: "🔁 Исправить по комментарию", callback_data: "regen:feedback" },
+          { text: "✏️ Редактировать вручную", callback_data: "txt_edit" },
+        ]]},
+      });
       return;
     }
 
@@ -2467,7 +2477,8 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}${styleLabel}]\nТема: "${topic}"...`
   );
 
-  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant);
+  const feedbackNote = variant === "feedback" ? state.pendingGenerationNote || "" : "";
+  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote);
   const fullAnswer = generation.text;
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
@@ -2489,6 +2500,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   s.awaitingVoiceRecord = false;
   s.pendingVoiceBuffer = null;
   s.suggestedTracks = null;
+  if (variant === "feedback") s.pendingGenerationNote = null;
   s.awaitingTextEdit = false;
   userState.set(chatId, s);
 
