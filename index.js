@@ -276,8 +276,13 @@ const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, пра
 const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
 — Главный критерий: текст должен звучать как живой пост Динары в Telegram, а не как универсальная AI-статья.
 — Начинай с конкретного внутреннего состояния, наблюдения из жизни или мягкого вопроса. Не начинай с общих фраз вроде "в современном мире", "важно понимать", "сегодня поговорим".
+— Первый абзац должен сразу создавать человеческое присутствие: эмоция, напряжение, узнаваемая бытовая ситуация или мягкое "а у вас так бывает?".
+— Выбирай один из живых входов: эмоциональный ("Иногда так устаёшь быть сильной..."), напряжённый ("Самое больное в отношениях часто не ссора..."), эмпатичный ("Если сейчас вы читаете это и сжимаетесь внутри..."), разговорный ("Знаете, я часто вижу одну вещь...").
+— Не открывай текст определением темы. Не объясняй читателю, почему тема актуальна. Сразу входи в переживание.
 — Двигайся так: чувство читателя → нормализация → психологический смысл → один маленький практический сдвиг → мягкое завершение.
 — Пиши короткими, разными по длине абзацами. Иногда одно предложение может быть отдельным абзацем.
+— Чередуй ритм: короткая фраза для паузы, затем более длинная мысль, затем снова короткое человеческое уточнение.
+— Оставляй место тишине. Не закрывай каждую мысль выводом.
 — Добавь одну живую авторскую интонацию: "я часто вижу", "мне хочется здесь замедлиться", "знаете, что здесь важно?", "иногда это не про слабость".
 — Не превращай пост в инструкцию, лекцию, чек-лист или продающий текст.
 — CTA только мягкий: вопрос к себе, приглашение заметить, бережное "можно начать с малого".
@@ -290,6 +295,60 @@ const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
 АНТИ-ПАТТЕРНЫ:
 Не используй: "важно понимать", "следует отметить", "таким образом", "в современном мире", "данная тема", "каждый из нас", "просто полюбите себя", "работайте над собой", "в заключение".
 Не делай много эмодзи, заголовки, нумерованные списки, академический тон, одинаковые абзацы.`;
+
+const DINARA_EXAMPLES_DIR = join(__dirname, "expert_profiles", "dinara", "examples");
+const DINARA_EXAMPLE_ROUTES = [
+  {
+    key: "relationships",
+    file: "relationships.md",
+    keywords: ["отнош", "партнер", "партнёр", "муж", "жена", "любов", "близост", "ссор", "конфликт", "ревност", "расстав"],
+  },
+  {
+    key: "sexuality",
+    file: "sexuality.md",
+    keywords: ["секс", "сексуаль", "либидо", "желан", "оргазм", "возбужд", "интим", "тело", "стыдно хотеть"],
+  },
+  {
+    key: "shame",
+    file: "shame.md",
+    keywords: ["стыд", "вина", "неловк", "позор", "осужд", "не такая", "не такой", "смущ"],
+  },
+  {
+    key: "anxiety",
+    file: "anxiety.md",
+    keywords: ["тревог", "страх", "паник", "беспокой", "контрол", "напряж", "выдох", "неизвест"],
+  },
+  {
+    key: "self-worth",
+    file: "self-worth.md",
+    keywords: ["самооцен", "ценност", "принят", "любить себя", "недостаточ", "обесцен", "сравнив", "уверен"],
+  },
+];
+
+function pickDinaraExampleRoute(topic = "") {
+  const normalizedTopic = String(topic || "").toLowerCase();
+  return DINARA_EXAMPLE_ROUTES.find((route) =>
+    route.keywords.some((keyword) => normalizedTopic.includes(keyword))
+  ) || DINARA_EXAMPLE_ROUTES[3];
+}
+
+async function buildDinaraFewShotPrompt(topic) {
+  const route = pickDinaraExampleRoute(topic);
+  try {
+    const content = await fs.readFile(join(DINARA_EXAMPLES_DIR, route.file), "utf-8");
+    const example = content.trim();
+    if (!example) return "";
+    return [
+      "ЖИВОЙ СТИЛЕВОЙ ПРИМЕР ДИНАРЫ:",
+      `Тематический маршрут: ${route.key}.`,
+      "Используй как интонационный ориентир: похожая живость, начало, паузы, эмоциональная честность. Не копируй формулировки дословно.",
+      example,
+    ].join("\n");
+  } catch (error) {
+    console.warn(`[dinara-examples] failed to load ${route.file}: ${error.message}`);
+    return "";
+  }
+}
 
 const REGENERATION_VARIANTS = {
   default: "",
@@ -1502,14 +1561,28 @@ function buildRegenerationInstruction(variant = "default", feedbackNote = "") {
 function humanizeGeneratedPostText(text) {
   let result = String(text || "").trim();
   const replacements = [
-    [/\bВажно понимать,?\s*/gi, ""],
-    [/\bСледует отметить,?\s*/gi, ""],
-    [/\bТаким образом,?\s*/gi, ""],
-    [/\bВ современном мире\s*/gi, ""],
-    [/\bДанная тема\b/gi, "Эта тема"],
-    [/\bДанная проблема\b/gi, "Эта сложность"],
-    [/\bВ заключение,?\s*/gi, ""],
-    [/\bКаждый из нас\b/gi, "Многие из нас"],
+    [/важно помнить,?\s*/giu, ""],
+    [/важно понимать,?\s*/giu, ""],
+    [/важно отметить,?\s*/giu, ""],
+    [/следует отметить,?\s*/giu, ""],
+    [/следует понимать,?\s*/giu, ""],
+    [/необходимо понимать,?\s*/giu, ""],
+    [/необходимо помнить,?\s*/giu, ""],
+    [/таким образом,?\s*/giu, ""],
+    [/подводя итог,?\s*/giu, ""],
+    [/в заключение,?\s*/giu, ""],
+    [/в современном мире\s*/giu, ""],
+    [/в наше время\s*/giu, ""],
+    [/данная тема/giu, "эта тема"],
+    [/данная проблема/giu, "эта сложность"],
+    [/данный вопрос/giu, "этот вопрос"],
+    [/каждый человек уникален\.?/giu, ""],
+    [/каждый из нас/giu, "многие из нас"],
+    [/в этой статье мы рассмотрим,?\s*/giu, ""],
+    [/сегодня мы поговорим о том,?\s*/giu, ""],
+    [/существует множество факторов,?\s*/giu, "часто здесь много слоёв, "],
+    [/это является важным аспектом/giu, "это правда может многое менять"],
+    [/нужно работать над собой/giu, "можно бережно смотреть на себя"],
   ];
 
   for (const [pattern, replacement] of replacements) {
@@ -1519,6 +1592,10 @@ function humanizeGeneratedPostText(text) {
   return result
     .replace(/^\s*\d+[\).]\s+/gm, "")
     .replace(/^\s*(#{1,6}\s*)/gm, "")
+    .replace(/^\s*[-•]\s+/gm, "")
+    .replace(/([.!?])\s+(А ещё важно[^.!?]*[.!?])/giu, "$1")
+    .replace(/\s+,/g, ",")
+    .replace(/(^|\n)([а-яё])/giu, (match, prefix, letter) => `${prefix}${letter.toUpperCase()}`)
     .replace(/\n{3,}/g, "\n\n")
     .replace(/[ \t]+\n/g, "\n")
     .trim();
@@ -1586,7 +1663,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     : { enabled: false, profileLoaded: false, content: "" };
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
-  const systemPrompt = [baseSystemPrompt, DINARA_REALISM_PROMPT, authorVoicePrompt].filter(Boolean).join("\n\n");
+  const fewShotPrompt = await buildDinaraFewShotPrompt(topic);
+  const systemPrompt = [baseSystemPrompt, DINARA_REALISM_PROMPT, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
