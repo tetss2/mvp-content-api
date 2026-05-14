@@ -976,6 +976,7 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
   const identityRuntime = result.identity_runtime || {};
   const campaignMemory = result.campaign_memory || {};
   const strategicBrain = result.strategic_brain || {};
+  const editorialDirector = result.editorial_director || {};
   const payload = {
     timestamp: new Date().toISOString(),
     chat_id: chatId,
@@ -996,6 +997,8 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
     campaign_memory_signals: campaignMemory.adapter_signals,
     strategic_brain: strategicBrain,
     strategic_brain_signals: strategicBrain.adapter_signals,
+    editorial_director: editorialDirector,
+    editorial_director_signals: editorialDirector.adapter_signals,
     sandbox_execution_enabled: result.generation_pipeline?.sandbox_execution_enabled,
     content_execution_status: result.final_generation_result?.content_execution_status,
     output_validation: result.final_generation_result?.output_validation,
@@ -1045,6 +1048,18 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
     `Overselling risk: ${payload.strategic_brain_signals?.overselling_risk ?? "n/a"}`,
     `Current narrative loop: ${payload.strategic_brain_signals?.current_narrative_loop ?? "n/a"}`,
     `Strategic next move: ${payload.strategic_brain_signals?.strategic_next_move ?? "n/a"}`,
+    `Editorial director score: ${payload.editorial_director_signals?.editorial_director_score ?? "n/a"}`,
+    `Audience temperature: ${payload.editorial_director_signals?.current_audience_temperature ?? "n/a"}`,
+    `Authority saturation: ${payload.editorial_director_signals?.authority_saturation ?? "n/a"}`,
+    `Emotional saturation: ${payload.editorial_director_signals?.emotional_saturation ?? "n/a"}`,
+    `Freshness score: ${payload.editorial_director_signals?.editorial_freshness ?? "n/a"}`,
+    `Narrative progression stage: ${payload.editorial_director?.storytelling?.narrative_progression_stage ?? "n/a"}`,
+    `Current content arc: ${payload.editorial_director?.storytelling?.current_content_arc ?? "n/a"}`,
+    `Recommended next format: ${payload.editorial_director_signals?.recommended_content_format ?? "n/a"}`,
+    `Recommended next narrative move: ${payload.editorial_director_signals?.recommended_next_narrative_move ?? "n/a"}`,
+    `Attention stability: ${payload.editorial_director?.attention_loop?.attention_loop_stability ?? "n/a"}`,
+    `Fatigue risk: ${payload.editorial_director_signals?.fatigue_risk ?? "n/a"}`,
+    `Storytelling continuity: ${payload.editorial_director?.storytelling?.storytelling_continuity ?? "n/a"}`,
     `Warnings: ${payload.warnings.length ? payload.warnings.join(", ") : "none"}`,
     "",
     "## Stabilization",
@@ -1068,6 +1083,11 @@ async function storeRuntimePreviewRun({ chatId, topic, result, previewMode = "dr
     "## Strategic Brain",
     "```json",
     JSON.stringify(payload.strategic_brain, null, 2),
+    "```",
+    "",
+    "## Editorial Director",
+    "```json",
+    JSON.stringify(payload.editorial_director, null, 2),
     "```",
     "",
     "## Runtime Decisions",
@@ -1116,6 +1136,8 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
   const campaignSignals = campaignMemory.adapter_signals || {};
   const strategicBrain = result.strategic_brain || {};
   const strategicSignals = strategicBrain.adapter_signals || {};
+  const editorialDirector = result.editorial_director || {};
+  const editorialSignals = editorialDirector.adapter_signals || {};
   const cognition = promptPackage.runtimeCognitionState || {};
   const promptPreview = promptPackage.assembledPrompt?.final_prompt || "";
   const configSummary = {
@@ -1174,6 +1196,18 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
     `Overselling risk: ${strategicSignals.overselling_risk ?? "n/a"}`,
     `Current narrative loop: ${strategicSignals.current_narrative_loop ?? "n/a"}`,
     `Strategic next move: ${strategicSignals.strategic_next_move ?? "n/a"}`,
+    `Editorial director score: ${editorialSignals.editorial_director_score ?? "n/a"}`,
+    `Audience temperature: ${editorialSignals.current_audience_temperature ?? "n/a"}`,
+    `Authority saturation: ${editorialSignals.authority_saturation ?? "n/a"}`,
+    `Emotional saturation: ${editorialSignals.emotional_saturation ?? "n/a"}`,
+    `Freshness score: ${editorialSignals.editorial_freshness ?? "n/a"}`,
+    `Narrative progression: ${editorialDirector.storytelling?.narrative_progression_stage ?? "n/a"}`,
+    `Current content arc: ${editorialDirector.storytelling?.current_content_arc ?? "n/a"}`,
+    `Recommended next format: ${editorialSignals.recommended_content_format ?? "n/a"}`,
+    `Recommended next narrative move: ${editorialSignals.recommended_next_narrative_move ?? "n/a"}`,
+    `Attention stability: ${editorialDirector.attention_loop?.attention_loop_stability ?? "n/a"}`,
+    `Fatigue risk: ${editorialSignals.fatigue_risk ?? "n/a"}`,
+    `Storytelling continuity: ${editorialDirector.storytelling?.storytelling_continuity ?? "n/a"}`,
     "",
     "Runtime decisions:",
     compactJson(result.runtime?.selected_generation_decisions, 700),
@@ -1247,6 +1281,30 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
       memory_run_count: strategicBrain.strategic_state_run_count,
       warnings: strategicBrain.warnings,
     }, 900),
+    "",
+    "Editorial director:",
+    compactJson({
+      editorial_state: editorialDirector.editorial_state_summary,
+      audience_temperature: editorialSignals.current_audience_temperature,
+      audience_temperature_score: editorialSignals.audience_temperature_score,
+      saturation_warning: editorialSignals.saturation_warning,
+      authority_saturation: editorialSignals.authority_saturation,
+      emotional_saturation: editorialSignals.emotional_saturation,
+      freshness_score: editorialSignals.editorial_freshness,
+      narrative_progression_stage: editorialDirector.storytelling?.narrative_progression_stage,
+      current_content_arc: editorialDirector.storytelling?.current_content_arc,
+      recommended_next_format: editorialSignals.recommended_content_format,
+      recommended_next_narrative_move: editorialSignals.recommended_next_narrative_move,
+      attention_stability: editorialDirector.attention_loop?.attention_loop_stability,
+      attention_loop_status: editorialSignals.attention_loop_status,
+      fatigue_risk: editorialSignals.fatigue_risk,
+      storytelling_continuity: editorialDirector.storytelling?.storytelling_continuity,
+      category_balance: editorialSignals.content_category_balancing_signals,
+      freshness_recommendations: editorialSignals.freshness_recommendations,
+      memory_path: editorialDirector.editorial_state_path,
+      memory_run_count: editorialDirector.editorial_state_run_count,
+      warnings: editorialDirector.warnings,
+    }, 1000),
     "",
     `Warnings: ${validation.warnings?.length ? validation.warnings.join(", ") : "none"}`,
     "",

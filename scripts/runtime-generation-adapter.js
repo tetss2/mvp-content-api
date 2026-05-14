@@ -15,6 +15,7 @@ import { runRuntimeExecutionSandbox } from "../runtime/execution/runtime-sandbox
 import { runAuthorIdentityEngine } from "../runtime/identity/author-identity-engine.js";
 import { runCampaignMemoryEngine } from "../runtime/campaign-memory/campaign-memory-engine.js";
 import { runStrategicBrain } from "../runtime/strategy/strategic-brain.js";
+import { runEditorialDirector } from "../runtime/editorial/editorial-director.js";
 
 const ROOT = process.cwd();
 const DEFAULT_EXPERT_ID = "dinara";
@@ -33,6 +34,8 @@ const ADAPTER_CONSTRAINTS = {
   campaign_memory_local_only: true,
   strategic_brain_admin_only: true,
   strategic_brain_local_only: true,
+  editorial_director_admin_only: true,
+  editorial_director_local_only: true,
 };
 
 function normalizeGenerationIntent(intent = "educational_post") {
@@ -527,6 +530,23 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     local_only: true,
     admin_only: true,
   };
+  const editorialDirector = await runEditorialDirector({
+    expertId,
+    root,
+    runtimeResult,
+    request,
+    campaignMemory,
+    strategicBrain,
+    persist: options.persistEditorialDirector !== false,
+    initializeStorage: options.initializeStorage !== false,
+  });
+  stabilizedPromptPackage.editorialDirector = {
+    adapter_signals: editorialDirector.adapter_signals,
+    editorial_scores: editorialDirector.editorial_scores,
+    editorial_state_summary: editorialDirector.editorial_state_summary,
+    local_only: true,
+    admin_only: true,
+  };
 
   return {
     schema_version: ADAPTER_SCHEMA_VERSION,
@@ -545,6 +565,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       campaign_memory_local_only: true,
       strategic_brain_admin_only: true,
       strategic_brain_local_only: true,
+      editorial_director_admin_only: true,
+      editorial_director_local_only: true,
     },
     expert_id: expertId,
     adapter_mode: "local_runtime_to_prompt_assembly",
@@ -558,6 +580,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       "runtime/identity/author-identity-engine.js",
       "runtime/campaign-memory/campaign-memory-engine.js",
       "runtime/strategy/strategic-brain.js",
+      "runtime/editorial/editorial-director.js",
     ],
     cognition_loading: {
       loaded_from_disk: cognition.loaded_from_disk,
@@ -602,6 +625,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
     identity_runtime: identityRuntime,
     campaign_memory: campaignMemory,
     strategic_brain: strategicBrain,
+    editorial_director: editorialDirector,
     final_generation_result: {
       publication_status: "not_published_local_simulation",
       telegram_runtime_mutation: false,
@@ -617,6 +641,8 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
       campaign_memory_local_only: true,
       strategic_brain_admin_only: true,
       strategic_brain_local_only: true,
+      editorial_director_admin_only: true,
+      editorial_director_local_only: true,
       llmExecutionMode,
       assembledPrompt: stabilizedPromptPackage.assembledPrompt,
       messagePayload: stabilizedPromptPackage.messagePayload,
@@ -633,6 +659,7 @@ async function runRuntimeGenerationAdapter(request = {}, options = {}) {
         ...(identityRuntime.warnings || []),
         ...(campaignMemory.warnings || []),
         ...(strategicBrain.warnings || []),
+        ...(editorialDirector.warnings || []),
         ...(executionSandbox.diagnostics?.warnings || []),
       ])],
     },
