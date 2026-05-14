@@ -1,7 +1,7 @@
 import http from "http";
 const startedAt = new Date().toISOString();
 const runtimeMode = (process.env.RUNTIME_MODE || process.env.APP_ENV || process.env.NODE_ENV || "development").toLowerCase();
-const betaMode = ["beta", "staging", "railway-beta"].includes(runtimeMode);
+const betaMode = ["beta", "demo", "staging", "railway-beta"].includes(runtimeMode);
 const mainTokenName = betaMode ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN";
 const mainToken = process.env[mainTokenName];
 const leadsToken = process.env.LEADS_BOT_TOKEN;
@@ -10,6 +10,13 @@ const leadsBotRequested = process.env.START_LEADS_BOT === "true";
 const leadsBotTokenPresent = Boolean(leadsToken);
 const leadsBotTokenOverlapsMain = Boolean(mainToken && leadsToken && mainToken === leadsToken);
 const leadsBotEnabled = leadsBotRequested && leadsBotTokenPresent && !leadsBotTokenOverlapsMain;
+
+function tokenFingerprint(value) {
+  if (value === undefined || value === null || value === "") return value;
+  const text = String(value);
+  if (text.length <= 10) return "[set]";
+  return `${text.slice(0, 6)}...${text.slice(-4)}`;
+}
 
 console.log("[startup] Runtime:", {
   runtimeMode,
@@ -20,13 +27,21 @@ console.log("[startup] Main bot:", {
   polling: process.env.TELEGRAM_POLLING !== "false",
   tokenName: mainTokenName,
   tokenPresent: Boolean(process.env[mainTokenName]),
+  tokenFingerprint: tokenFingerprint(mainToken),
   telegramTokenPresent: Boolean(process.env.TELEGRAM_TOKEN),
+  telegramTokenFingerprint: tokenFingerprint(process.env.TELEGRAM_TOKEN),
   telegramBetaTokenPresent: Boolean(process.env.TELEGRAM_BETA_TOKEN),
+  telegramBetaTokenFingerprint: tokenFingerprint(process.env.TELEGRAM_BETA_TOKEN),
+  telegramBotTokenPresent: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+  telegramBotTokenFingerprint: tokenFingerprint(process.env.TELEGRAM_BOT_TOKEN),
+  botTokenPresent: Boolean(process.env.BOT_TOKEN),
+  botTokenFingerprint: tokenFingerprint(process.env.BOT_TOKEN),
 });
 console.log("[startup] Leads bot:", {
   enabled: leadsBotEnabled,
   requested: leadsBotRequested,
   tokenPresent: leadsBotTokenPresent,
+  tokenFingerprint: tokenFingerprint(leadsToken),
   disabledReason: leadsBotEnabled
     ? null
     : (leadsBotTokenOverlapsMain

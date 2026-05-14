@@ -10,7 +10,7 @@ const ADMIN_ID = 109664871; // Твой Telegram ID
 const MAIN_BOT_USERNAME = "mvpdi1_bot";
 const DB_PATH = join(__dirname, "demo-users.json");
 const RUNTIME_MODE = (process.env.RUNTIME_MODE || process.env.APP_ENV || process.env.NODE_ENV || "development").toLowerCase();
-const IS_BETA_RUNTIME = ["beta", "staging", "railway-beta"].includes(RUNTIME_MODE);
+const IS_BETA_RUNTIME = ["beta", "demo", "staging", "railway-beta"].includes(RUNTIME_MODE);
 const MAIN_TOKEN = process.env[IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN"];
 
 const LIMITS = {

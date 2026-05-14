@@ -59,12 +59,13 @@ const require = createRequire(import.meta.url);
 
 const NODE_ENV = process.env.NODE_ENV || "development";
 const RUNTIME_MODE = (process.env.RUNTIME_MODE || process.env.APP_ENV || (NODE_ENV === "production" ? "production" : "development")).toLowerCase();
-const IS_BETA_RUNTIME = ["beta", "staging", "railway-beta"].includes(RUNTIME_MODE);
+const IS_BETA_RUNTIME = ["beta", "demo", "staging", "railway-beta"].includes(RUNTIME_MODE);
 const RUNTIME_NAME = process.env.RUNTIME_NAME || (IS_BETA_RUNTIME ? "mvp-content-api-beta" : "mvp-content-api");
 const RUNTIME_DATA_ROOT = process.env.RUNTIME_DATA_ROOT || (IS_BETA_RUNTIME ? join(__dirname, "runtime-data", "beta") : __dirname);
-const TELEGRAM_TOKEN = IS_BETA_RUNTIME
-  ? process.env.TELEGRAM_BETA_TOKEN
-  : (process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BETA_TOKEN);
+const TELEGRAM_TOKEN_SOURCE = IS_BETA_RUNTIME
+  ? "TELEGRAM_BETA_TOKEN"
+  : (process.env.TELEGRAM_TOKEN ? "TELEGRAM_TOKEN" : (process.env.TELEGRAM_BETA_TOKEN ? "TELEGRAM_BETA_TOKEN" : null));
+const TELEGRAM_TOKEN = TELEGRAM_TOKEN_SOURCE ? process.env[TELEGRAM_TOKEN_SOURCE] : null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
 const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
@@ -99,8 +100,33 @@ if (!process.env.USERS_ROOT) process.env.USERS_ROOT = join(RUNTIME_DATA_ROOT, "u
 function safeLogValue(value) {
   if (value === undefined || value === null || value === "") return value;
   const text = String(value);
-  if (text.length <= 8) return "[set]";
-  return `${text.slice(0, 4)}...${text.slice(-4)}`;
+  if (text.length <= 10) return "[set]";
+  return `${text.slice(0, 6)}...${text.slice(-4)}`;
+}
+
+function tokenPresenceReport() {
+  return {
+    TELEGRAM_BETA_TOKEN: {
+      present: Boolean(process.env.TELEGRAM_BETA_TOKEN),
+      fingerprint: safeLogValue(process.env.TELEGRAM_BETA_TOKEN),
+    },
+    TELEGRAM_BOT_TOKEN: {
+      present: Boolean(process.env.TELEGRAM_BOT_TOKEN),
+      fingerprint: safeLogValue(process.env.TELEGRAM_BOT_TOKEN),
+    },
+    TELEGRAM_TOKEN: {
+      present: Boolean(process.env.TELEGRAM_TOKEN),
+      fingerprint: safeLogValue(process.env.TELEGRAM_TOKEN),
+    },
+    BOT_TOKEN: {
+      present: Boolean(process.env.BOT_TOKEN),
+      fingerprint: safeLogValue(process.env.BOT_TOKEN),
+    },
+    LEADS_BOT_TOKEN: {
+      present: Boolean(process.env.LEADS_BOT_TOKEN),
+      fingerprint: safeLogValue(process.env.LEADS_BOT_TOKEN),
+    },
+  };
 }
 
 function runtimeLog(...args) {
@@ -251,7 +277,7 @@ async function initializeMainPolling() {
     });
     return;
   }
-  runtimeLog("polling enabled", { token: IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN" });
+  runtimeLog("polling enabled", { token: TELEGRAM_TOKEN_SOURCE, tokenFingerprint: safeLogValue(TELEGRAM_TOKEN) });
   if (globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__) {
     runtimeLog("polling already active", { scope: "process" });
     return;
@@ -323,7 +349,9 @@ runtimeLog(`Bot started`, {
   usersRoot: process.env.USERS_ROOT,
   telegramTokenPresent: Boolean(process.env.TELEGRAM_TOKEN),
   telegramBetaTokenPresent: Boolean(process.env.TELEGRAM_BETA_TOKEN),
-  selectedTelegramToken: IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN",
+  selectedTelegramToken: TELEGRAM_TOKEN_SOURCE,
+  selectedTelegramTokenFingerprint: safeLogValue(TELEGRAM_TOKEN),
+  tokenEnv: tokenPresenceReport(),
 });
 runtimeLog("Feature readiness:", {
   supabase: Boolean(supabase),
