@@ -99,6 +99,7 @@ const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || 
 const ENTITLEMENTS_PATH = process.env.ENTITLEMENTS_PATH || join(RUNTIME_DATA_ROOT, "entitlements.json");
 const PAYMENT_EVENTS_PATH = process.env.PAYMENT_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "payment_events.jsonl");
 const EXPERTS_RUNTIME_PATH = process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json");
+const MEDIA_PROFILES_RUNTIME_PATH = process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json");
 
 const PAID_BETA_PLANS = {
   demo: {
@@ -256,6 +257,15 @@ const DEFAULT_RUNTIME_EXPERT = Object.freeze({
   status: "active",
 });
 
+const DEFAULT_MEDIA_PROFILE = Object.freeze({
+  expertId: "dinara",
+  voiceProfileId: null,
+  imageAvatarProfileId: null,
+  videoAvatarProfileId: null,
+  status: "draft",
+  updatedAt: "2026-05-15T00:00:00.000Z",
+});
+
 function normalizeRuntimeExpert(expert = {}) {
   return {
     expertId: String(expert.expertId || DEFAULT_RUNTIME_EXPERT.expertId),
@@ -274,9 +284,32 @@ function normalizeExpertRegistry(raw) {
   return [normalizeRuntimeExpert()];
 }
 
+function normalizeMediaProfile(profile = {}) {
+  return {
+    expertId: String(profile.expertId || DEFAULT_MEDIA_PROFILE.expertId),
+    voiceProfileId: profile.voiceProfileId || null,
+    imageAvatarProfileId: profile.imageAvatarProfileId || null,
+    videoAvatarProfileId: profile.videoAvatarProfileId || null,
+    status: profile.status || DEFAULT_MEDIA_PROFILE.status,
+    updatedAt: profile.updatedAt || DEFAULT_MEDIA_PROFILE.updatedAt,
+  };
+}
+
+function normalizeMediaProfileRegistry(raw) {
+  if (Array.isArray(raw)) return raw.map(normalizeMediaProfile);
+  if (Array.isArray(raw?.profiles)) return raw.profiles.map(normalizeMediaProfile);
+  if (raw && typeof raw === "object" && raw.expertId) return [normalizeMediaProfile(raw)];
+  return [normalizeMediaProfile()];
+}
+
 async function loadExpertRegistry() {
   const raw = await readJsonFileSafe(EXPERTS_RUNTIME_PATH, null);
   return normalizeExpertRegistry(raw);
+}
+
+async function loadMediaProfileRegistry() {
+  const raw = await readJsonFileSafe(MEDIA_PROFILES_RUNTIME_PATH, null);
+  return normalizeMediaProfileRegistry(raw);
 }
 
 async function ensureExpertRegistry() {
@@ -294,6 +327,15 @@ async function ensureExpertRegistry() {
     defaultExpertId: activeExperts[0]?.expertId || experts[0]?.expertId || DEFAULT_RUNTIME_EXPERT.expertId,
   });
   return experts;
+}
+
+function getDefaultMediaProfile() {
+  return normalizeMediaProfile();
+}
+
+async function getMediaProfileForExpert(expertId) {
+  const profiles = await loadMediaProfileRegistry();
+  return profiles.find((profile) => profile.expertId === expertId) || getDefaultMediaProfile();
 }
 
 async function getExpertById(expertId) {
