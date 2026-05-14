@@ -5,53 +5,66 @@
   "admin_only": true,
   "production_activation_allowed": false,
   "created_at": "2026-05-13T20:08:13.293Z",
-  "updated_at": "2026-05-13T20:08:43.742Z",
-  "run_count": 4,
+  "updated_at": "2026-05-14T15:05:40.511Z",
+  "run_count": 9,
   "aggregate_identity": {
-    "identity_confidence": 0.732,
-    "author_similarity": 0.748,
-    "rhetorical_similarity": 0.713,
-    "emotional_similarity": 0.73,
-    "continuity_similarity": 0.802,
-    "worldview_similarity": 0.737,
-    "generic_ai_divergence": 0.694,
-    "narrative_persistence": 0.802
+    "identity_confidence": 0.769,
+    "author_similarity": 0.774,
+    "rhetorical_similarity": 0.761,
+    "emotional_similarity": 0.761,
+    "continuity_similarity": 0.871,
+    "worldview_similarity": 0.819,
+    "generic_ai_divergence": 0.773,
+    "narrative_persistence": 0.871
   },
   "tendencies": {
     "emotional_tone": {
-      "shame_work": 4,
-      "intimacy": 4
+      "shame_work": 9,
+      "intimacy": 7,
+      "recognition": 1,
+      "softness": 1,
+      "safety": 1
     },
     "phrase_rhythm": {
-      "medium_explanatory_cadence": 4,
-      "emotional_short_opener": 4
+      "medium_explanatory_cadence": 7,
+      "emotional_short_opener": 9,
+      "short_reflective_sentences": 2
     },
     "rhetorical_patterns": {
-      "reader_mirror": 2,
-      "narrative_open_new_thread": 2,
-      "expert_meaning": 2
+      "reader_mirror": 3,
+      "narrative_open_new_thread": 7,
+      "expert_meaning": 7,
+      "question_hook": 2
     },
-    "cta_behavior": {},
+    "cta_behavior": {
+      "consultation_soft": 1
+    },
     "pacing": {
-      "uneven": 4
+      "uneven": 9
     },
     "worldview_anchors": {
-      "body_as_signal": 4,
-      "professional_boundary": 4
+      "body_as_signal": 9,
+      "professional_boundary": 9,
+      "relational_depth": 3,
+      "psyche_context_first": 3,
+      "non_pathologizing": 1
     },
     "semantic_structures": {
-      "hook:recognition_hook": 4,
-      "narrative:open_new_thread": 4,
-      "authority:low_pressure_expertise": 4,
-      "rhetoric:reader_mirror": 2,
-      "rhetoric:narrative_open_new_thread": 2,
-      "rhetoric:expert_meaning": 2
+      "hook:recognition_hook": 5,
+      "narrative:open_new_thread": 9,
+      "authority:low_pressure_expertise": 9,
+      "rhetoric:reader_mirror": 3,
+      "rhetoric:narrative_open_new_thread": 7,
+      "rhetoric:expert_meaning": 7,
+      "hook:therapeutic_hook": 4,
+      "rhetoric:question_hook": 2
     },
     "narrative_markers": {
-      "open_new_thread": 4,
-      "insight_forward": 4,
-      "medium_explanatory_cadence": 4,
-      "emotional_short_opener": 4
+      "open_new_thread": 9,
+      "insight_forward": 9,
+      "medium_explanatory_cadence": 7,
+      "emotional_short_opener": 9,
+      "short_reflective_sentences": 2
     }
   },
   "continuity_memory": {
@@ -62,11 +75,20 @@
       "source",
       "high",
       "confidence",
-      "стыд и близость без давления"
+      "стыд и близость без давления",
+      "relationship anxiety",
+      "emotional dependency",
+      "female sexuality myths",
+      "shame and desire",
+      "boundaries in intimacy",
+      "сексуальность"
     ],
     "recent_emotional_arcs": [
       "shame_work",
-      "intimacy"
+      "intimacy",
+      "recognition",
+      "softness",
+      "safety"
     ],
     "repeated_semantic_structures": [
       "hook:recognition_hook",
@@ -74,18 +96,22 @@
       "authority:low_pressure_expertise",
       "rhetoric:reader_mirror",
       "rhetoric:narrative_open_new_thread",
-      "rhetoric:expert_meaning"
+      "rhetoric:expert_meaning",
+      "hook:therapeutic_hook",
+      "rhetoric:question_hook"
     ],
     "repetitive_narrative_habits": [
       "reader_mirror",
       "narrative_open_new_thread",
-      "expert_meaning"
+      "expert_meaning",
+      "question_hook"
     ],
     "continuity_anchors": [
       "open_new_thread",
       "insight_forward",
       "medium_explanatory_cadence",
-      "emotional_short_opener"
+      "emotional_short_opener",
+      "short_reflective_sentences"
     ]
   },
   "history": [
@@ -128,6 +154,56 @@
       "generic_ai_divergence": 0.86,
       "worldview_similarity": 0.743,
       "rhetorical_similarity": 0.815
+    },
+    {
+      "at": "2026-05-14T15:05:39.871Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "topic": "relationship anxiety",
+      "identity_confidence": 0.78,
+      "persona_drift_level": "low",
+      "generic_ai_divergence": 0.86,
+      "worldview_similarity": 0.79,
+      "rhetorical_similarity": 0.815
+    },
+    {
+      "at": "2026-05-14T15:05:40.052Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "topic": "emotional dependency",
+      "identity_confidence": 0.739,
+      "persona_drift_level": "low",
+      "generic_ai_divergence": 0.72,
+      "worldview_similarity": 0.79,
+      "rhetorical_similarity": 0.79
+    },
+    {
+      "at": "2026-05-14T15:05:40.203Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "topic": "female sexuality myths",
+      "identity_confidence": 0.737,
+      "persona_drift_level": "low",
+      "generic_ai_divergence": 0.86,
+      "worldview_similarity": 0.743,
+      "rhetorical_similarity": 0.74
+    },
+    {
+      "at": "2026-05-14T15:05:40.352Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "topic": "shame and desire",
+      "identity_confidence": 0.8,
+      "persona_drift_level": "low",
+      "generic_ai_divergence": 0.86,
+      "worldview_similarity": 0.913,
+      "rhetorical_similarity": 0.815
+    },
+    {
+      "at": "2026-05-14T15:05:40.511Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "topic": "boundaries in intimacy",
+      "identity_confidence": 0.797,
+      "persona_drift_level": "low",
+      "generic_ai_divergence": 0.72,
+      "worldview_similarity": 0.867,
+      "rhetorical_similarity": 0.74
     }
   ]
 }

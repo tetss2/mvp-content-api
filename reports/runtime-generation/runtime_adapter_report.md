@@ -1,8 +1,8 @@
 # Runtime Adapter Report
 
-Generated: 2026-05-13T19:35:38.442Z
+Generated: 2026-05-14T15:05:40.523Z
 
-Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
+Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`, `identity_engine_admin_only`, `identity_engine_local_only`, `campaign_memory_admin_only`, `campaign_memory_local_only`, `strategic_brain_admin_only`, `strategic_brain_local_only`, `editorial_director_admin_only`, `editorial_director_local_only`.
 
 ## Connected Files
 
@@ -12,6 +12,10 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 - `scripts/expert-generation-orchestration.js`
 - `scripts/expert-retrieval-intelligence.js`
 - `scripts/expert-generation-sandbox.js`
+- `runtime/identity/author-identity-engine.js`
+- `runtime/campaign-memory/campaign-memory-engine.js`
+- `runtime/strategy/strategic-brain.js`
+- `runtime/editorial/editorial-director.js`
 
 ## What Is Real
 

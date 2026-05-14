@@ -5,8 +5,8 @@
   "admin_only": true,
   "production_activation_allowed": false,
   "created_at": "2026-05-13T20:24:41.166Z",
-  "updated_at": "2026-05-13T20:24:44.945Z",
-  "run_count": 20,
+  "updated_at": "2026-05-14T15:05:40.514Z",
+  "run_count": 25,
   "topic_history": [
     {
       "at": "2026-05-13T20:24:41.592Z",
@@ -165,6 +165,46 @@
       "run_id": "runtime_2026-05-13T20-24-44-801Z",
       "topic": "мягкий путь к разговору о сексе",
       "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-14T15:05:39.881Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "topic": "relationship anxiety",
+      "intent": "educational_post",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "topic": "emotional dependency",
+      "intent": "storytelling",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "topic": "female sexuality myths",
+      "intent": "longform_article",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "topic": "shame and desire",
+      "intent": "faq_answer",
+      "freshness": 0.9,
+      "repetition_risk": 0
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "topic": "boundaries in intimacy",
+      "intent": "sales_post",
       "freshness": 0.9,
       "repetition_risk": 0
     }
@@ -329,6 +369,46 @@
       "cta_strength": "medium",
       "intensity": 1,
       "fatigue_score": 0.76
+    },
+    {
+      "at": "2026-05-14T15:05:39.882Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "cta_type": "save_share_cta",
+      "cta_strength": "medium",
+      "intensity": 1,
+      "fatigue_score": 0.648
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "cta_type": "emotional_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.648
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "cta_type": "educational_cta",
+      "cta_strength": "medium",
+      "intensity": 2,
+      "fatigue_score": 0.656
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "cta_type": "trust_cta",
+      "cta_strength": "medium",
+      "intensity": 3,
+      "fatigue_score": 0.648
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "cta_type": "dm_cta",
+      "cta_strength": "medium",
+      "intensity": 4,
+      "fatigue_score": 0.736
     }
   ],
   "narrative_arcs": [
@@ -487,6 +567,46 @@
     {
       "at": "2026-05-13T20:24:44.945Z",
       "run_id": "runtime_2026-05-13T20-24-44-801Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-14T15:05:39.882Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "arc": "open_new_thread",
+      "hook_type": "recognition_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "develop_thread_with_reframe"
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "arc": "open_new_thread",
+      "hook_type": "therapeutic_hook",
+      "pacing": "insight_forward",
+      "suggested_next_move": "change_hook_frame"
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
       "arc": "open_new_thread",
       "hook_type": "therapeutic_hook",
       "pacing": "insight_forward",
@@ -693,6 +813,56 @@
       "platform": "instagram_post",
       "format": "post",
       "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-14T15:05:39.882Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "sequence_index": 21,
+      "topic": "relationship anxiety",
+      "intent": "educational_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "soft_reflection_without_direct_cta"
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "sequence_index": 22,
+      "topic": "emotional dependency",
+      "intent": "storytelling",
+      "platform": "telegram_longread",
+      "format": "post",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "sequence_index": 23,
+      "topic": "female sexuality myths",
+      "intent": "longform_article",
+      "platform": "telegram_longread",
+      "format": "article",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "sequence_index": 24,
+      "topic": "shame and desire",
+      "intent": "faq_answer",
+      "platform": "instagram_post",
+      "format": "answer",
+      "suggested_next_move": "light_educational_reset"
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "sequence_index": 25,
+      "topic": "boundaries in intimacy",
+      "intent": "sales_post",
+      "platform": "instagram_post",
+      "format": "post",
+      "suggested_next_move": "light_educational_reset"
     }
   ],
   "audience_fatigue_signals": [
@@ -835,13 +1005,49 @@
       "emotional_depth": "deep",
       "fatigue_score": 0.595,
       "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-14T15:05:39.882Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.455,
+      "fatigue_risk": "medium"
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.545,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.73,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "emotional_depth": "deep",
+      "fatigue_score": 0.775,
+      "fatigue_risk": "high"
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "emotional_depth": "moderate",
+      "fatigue_score": 0.68,
+      "fatigue_risk": "high"
     }
   ],
   "format_distribution": {
-    "post": 14,
+    "post": 17,
     "carousel_script": 3,
-    "answer": 2,
-    "reel_script": 1
+    "answer": 3,
+    "reel_script": 1,
+    "article": 1
   },
   "expert_positioning_history": [
     {
@@ -963,16 +1169,46 @@
       "run_id": "runtime_2026-05-13T20-24-44-801Z",
       "positioning": "low_pressure_expertise",
       "consistency": 0.675
+    },
+    {
+      "at": "2026-05-14T15:05:39.882Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-14T15:05:40.055Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-14T15:05:40.206Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-14T15:05:40.355Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
+    },
+    {
+      "at": "2026-05-14T15:05:40.514Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "positioning": "low_pressure_expertise",
+      "consistency": 0.675
     }
   ],
   "aggregate_scores": {
     "topic_freshness": 0.9,
-    "narrative_continuity": 0.52,
-    "cta_fatigue": 0.76,
-    "audience_fatigue": 0.595,
-    "sequence_coherence": 0.578,
+    "narrative_continuity": 0.525,
+    "cta_fatigue": 0.736,
+    "audience_fatigue": 0.68,
+    "sequence_coherence": 0.574,
     "expert_positioning_consistency": 0.675,
-    "format_variety": 0.75,
-    "campaign_memory_score": 0.571
+    "format_variety": 0.77,
+    "campaign_memory_score": 0.564
   }
 }

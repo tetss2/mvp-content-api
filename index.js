@@ -80,6 +80,9 @@ const ADMIN_TG_ID = 109664871;
 const IS_PRODUCTION = NODE_ENV === "production";
 const DEBUG_LOGS = process.env.DEBUG_LOGS === "true" || (!IS_PRODUCTION && process.env.DEBUG_LOGS !== "false");
 const TELEGRAM_POLLING_ENABLED = process.env.TELEGRAM_POLLING !== "false";
+const MAIN_BOT_ENABLED = TELEGRAM_POLLING_ENABLED && Boolean(TELEGRAM_TOKEN);
+const LEADS_BOT_REQUESTED = process.env.START_LEADS_BOT === "true";
+const LEADS_BOT_ENABLED = LEADS_BOT_REQUESTED && Boolean(LEADS_BOT_TOKEN);
 const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
@@ -144,6 +147,14 @@ await Promise.all([
 ]);
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: TELEGRAM_POLLING_ENABLED });
+bot.on("polling_error", (error) => {
+  const message = error?.response?.body?.description || error?.message || String(error);
+  if (message.includes("409")) {
+    console.error(`[${RUNTIME_NAME}] Telegram polling conflict: another poller is using this bot token. Stop the duplicate Railway/service instance.`);
+    return;
+  }
+  console.error(`[${RUNTIME_NAME}] Telegram polling error:`, message);
+});
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
@@ -154,14 +165,19 @@ const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
 runtimeLog(`Bot started`, {
   nodeEnv: NODE_ENV,
   runtimeMode: RUNTIME_MODE,
+  mainBotEnabled: MAIN_BOT_ENABLED,
   polling: TELEGRAM_POLLING_ENABLED,
   dataRoot: RUNTIME_DATA_ROOT,
   usersRoot: process.env.USERS_ROOT,
-  telegramToken: safeLogValue(TELEGRAM_TOKEN),
+  telegramTokenPresent: Boolean(process.env.TELEGRAM_TOKEN),
+  telegramBetaTokenPresent: Boolean(process.env.TELEGRAM_BETA_TOKEN),
+  selectedTelegramToken: IS_BETA_RUNTIME ? "TELEGRAM_BETA_TOKEN" : "TELEGRAM_TOKEN",
 });
 runtimeLog("Feature readiness:", {
   supabase: Boolean(supabase),
-  leadsBot: Boolean(LEADS_BOT_TOKEN),
+  leadsBotEnabled: LEADS_BOT_ENABLED,
+  leadsBotRequested: LEADS_BOT_REQUESTED,
+  leadsBotTokenPresent: Boolean(LEADS_BOT_TOKEN),
   publishChannel: Boolean(TG_CHANNEL),
   fishAudio: Boolean(FISH_AUDIO_API_KEY && FISH_AUDIO_VOICE_ID),
   fal: Boolean(FAL_KEY),

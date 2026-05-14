@@ -1,8 +1,8 @@
 # Runtime Prompt Assembly Report
 
-Generated: 2026-05-13T19:35:38.445Z
+Generated: 2026-05-14T15:05:40.527Z
 
-Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
+Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`, `identity_engine_admin_only`, `identity_engine_local_only`, `campaign_memory_admin_only`, `campaign_memory_local_only`, `strategic_brain_admin_only`, `strategic_brain_local_only`, `editorial_director_admin_only`, `editorial_director_local_only`.
 
 ## Prompt Assembly Status
 
@@ -12,11 +12,11 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 
 ## Per-Run Prompt Metrics
 
-- short-instagram-post: 4164 chars, 2 messages, prompt score 0.855, context 4.
-- normal-telegram-post: 4979 chars, 2 messages, prompt score 0.855, context 5.
-- long-article-mode: 4163 chars, 2 messages, prompt score 0.855, context 4.
-- direct-faq-answer: 4165 chars, 2 messages, prompt score 0.855, context 4.
-- soft-sales-consultation: 5008 chars, 2 messages, prompt score 0.83, context 5.
+- short-instagram-post: 6145 chars, 2 messages, prompt score 0.855, context 4.
+- normal-telegram-post: 6960 chars, 2 messages, prompt score 0.855, context 5.
+- long-article-mode: 6144 chars, 2 messages, prompt score 0.855, context 4.
+- direct-faq-answer: 6146 chars, 2 messages, prompt score 0.855, context 4.
+- soft-sales-consultation: 6989 chars, 2 messages, prompt score 0.83, context 5.
 
 ## Example Config Payload
 

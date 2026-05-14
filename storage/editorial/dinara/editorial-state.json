@@ -5,8 +5,8 @@
   "admin_only": true,
   "production_activation_allowed": false,
   "created_at": "2026-05-13T20:38:05.549Z",
-  "updated_at": "2026-05-13T20:38:10.103Z",
-  "run_count": 30,
+  "updated_at": "2026-05-14T15:05:40.519Z",
+  "run_count": 35,
   "timeline": [
     {
       "at": "2026-05-13T20:38:05.755Z",
@@ -397,24 +397,89 @@
       "attention_decay": 0.555,
       "freshness": 0.682,
       "narrative_stage": "renewal"
+    },
+    {
+      "at": "2026-05-14T15:05:39.904Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "topic": "relationship anxiety",
+      "topic_cluster": "anxiety",
+      "category": "educational",
+      "format": "post",
+      "audience_temperature": 0.681,
+      "audience_saturation": 0.869,
+      "attention_decay": 0.567,
+      "freshness": 0.693,
+      "narrative_stage": "renewal"
+    },
+    {
+      "at": "2026-05-14T15:05:40.061Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "topic": "emotional dependency",
+      "topic_cluster": "emotional_dependency",
+      "category": "educational",
+      "format": "post",
+      "audience_temperature": 0.659,
+      "audience_saturation": 0.885,
+      "attention_decay": 0.576,
+      "freshness": 0.691,
+      "narrative_stage": "renewal"
+    },
+    {
+      "at": "2026-05-14T15:05:40.211Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "topic": "female sexuality myths",
+      "topic_cluster": "female_sexuality",
+      "category": "educational",
+      "format": "long_form_post",
+      "audience_temperature": 0.64,
+      "audience_saturation": 0.895,
+      "attention_decay": 0.582,
+      "freshness": 0.69,
+      "narrative_stage": "renewal"
+    },
+    {
+      "at": "2026-05-14T15:05:40.360Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "topic": "shame and desire",
+      "topic_cluster": "shame",
+      "category": "educational",
+      "format": "story",
+      "audience_temperature": 0.622,
+      "audience_saturation": 0.901,
+      "attention_decay": 0.549,
+      "freshness": 0.694,
+      "narrative_stage": "renewal"
+    },
+    {
+      "at": "2026-05-14T15:05:40.519Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "topic": "boundaries in intimacy",
+      "topic_cluster": "boundaries",
+      "category": "soft_selling",
+      "format": "post",
+      "audience_temperature": 0.603,
+      "audience_saturation": 0.91,
+      "attention_decay": 0.569,
+      "freshness": 0.685,
+      "narrative_stage": "renewal"
     }
   ],
   "content_category_distribution": {
     "storytelling": 6,
-    "educational": 12,
+    "educational": 16,
     "attention": 5,
-    "soft_selling": 7
+    "soft_selling": 8
   },
   "format_distribution": {
-    "post": 10,
-    "story": 10,
+    "post": 13,
+    "story": 11,
     "reel_script": 5,
-    "long_form_post": 5
+    "long_form_post": 6
   },
   "repetition_clusters": {
-    "shame": 3,
-    "anxiety": 1,
-    "boundaries": 1,
+    "shame": 4,
+    "anxiety": 2,
+    "boundaries": 2,
     "как_говорить": 1,
     "усталость_и": 1,
     "безопасность_рядом": 1,
@@ -437,7 +502,9 @@
     "право_на": 1,
     "как_не": 1,
     "практика_телесного": 1,
-    "новый_взгляд": 1
+    "новый_взгляд": 1,
+    "emotional_dependency": 1,
+    "female_sexuality": 1
   },
   "episodic_storylines": [
     {
@@ -709,37 +776,82 @@
       "arc": "trust_warming_arc",
       "stage": "renewal",
       "next_move": "reset_with_new_reader_problem"
+    },
+    {
+      "at": "2026-05-14T15:05:39.904Z",
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "topic": "relationship anxiety",
+      "topic_cluster": "anxiety",
+      "arc": "trust_warming_arc",
+      "stage": "renewal",
+      "next_move": "reset_with_new_reader_problem"
+    },
+    {
+      "at": "2026-05-14T15:05:40.061Z",
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "topic": "emotional dependency",
+      "topic_cluster": "emotional_dependency",
+      "arc": "trust_warming_arc",
+      "stage": "renewal",
+      "next_move": "reset_with_new_reader_problem"
+    },
+    {
+      "at": "2026-05-14T15:05:40.211Z",
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "topic": "female sexuality myths",
+      "topic_cluster": "female_sexuality",
+      "arc": "trust_warming_arc",
+      "stage": "renewal",
+      "next_move": "reset_with_new_reader_problem"
+    },
+    {
+      "at": "2026-05-14T15:05:40.360Z",
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "topic": "shame and desire",
+      "topic_cluster": "shame",
+      "arc": "trust_warming_arc",
+      "stage": "renewal",
+      "next_move": "reset_with_new_reader_problem"
+    },
+    {
+      "at": "2026-05-14T15:05:40.519Z",
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "topic": "boundaries in intimacy",
+      "topic_cluster": "boundaries",
+      "arc": "trust_warming_arc",
+      "stage": "renewal",
+      "next_move": "reset_with_new_reader_problem"
     }
   ],
   "current_arc": {
     "name": "trust_warming_arc",
     "stage": "renewal",
-    "progression": 0.58
+    "progression": 0.98
   },
   "current_state": {
-    "audience_temperature": 0.632,
-    "audience_saturation": 0.928,
-    "attention_decay": 0.555,
-    "emotional_carryover": 0.951,
-    "trust_carryover": 0.685,
+    "audience_temperature": 0.603,
+    "audience_saturation": 0.91,
+    "attention_decay": 0.569,
+    "emotional_carryover": 0.933,
+    "trust_carryover": 0.644,
     "authority_carryover": 0.879,
-    "editorial_freshness": 0.682,
+    "editorial_freshness": 0.685,
     "narrative_progression_stage": "renewal",
     "attention_loop_status": "stable"
   },
   "aggregate_scores": {
-    "editorial_diversity": 0.79,
-    "emotional_pacing_quality": 0.373,
-    "storytelling_continuity": 0.84,
-    "content_freshness": 0.682,
+    "editorial_diversity": 0.795,
+    "emotional_pacing_quality": 0.401,
+    "storytelling_continuity": 0.89,
+    "content_freshness": 0.685,
     "audience_retention_probability": 0.629,
-    "attention_loop_stability": 0.808,
-    "saturation_risk": 0.928,
-    "educational_balance": 0.823,
+    "attention_loop_stability": 0.813,
+    "saturation_risk": 0.91,
+    "educational_balance": 0.855,
     "authority_balance": 0.645,
-    "content_fatigue_risk": 0.681,
+    "content_fatigue_risk": 0.672,
     "format_distribution_quality": 1,
-    "series_continuity_quality": 0.81,
-    "editorial_director_score": 0.716
+    "series_continuity_quality": 0.86,
+    "editorial_director_score": 0.734
   }
 }

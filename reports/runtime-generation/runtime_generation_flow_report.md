@@ -1,13 +1,13 @@
 # Runtime Generation Flow Report
 
-Generated: 2026-05-13T19:35:38.440Z
+Generated: 2026-05-14T15:05:40.521Z
 
-Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`.
+Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation`, `no_auto_posting`, `no_railway_deploy`, `no_external_apis`, `no_faiss_or_index_mutation`, `no_ingest_or_promote`, `no_production_database_migration`, `no_production_publishing`, `adapter_mode=local_prompt_assembly_dry_run`, `llm_execution_disabled`, `identity_engine_admin_only`, `identity_engine_local_only`, `campaign_memory_admin_only`, `campaign_memory_local_only`, `strategic_brain_admin_only`, `strategic_brain_local_only`, `editorial_director_admin_only`, `editorial_director_local_only`.
 
 ## Summary
 
 - Requests simulated: 5
-- Average combined quality: 0.753
+- Average combined quality: 0.766
 - Average prompt assembly score: 0.85
 - Adapter mode: `local_runtime_to_prompt_assembly`
 - LLM execution mode: `dry_run_prompt_only`
@@ -17,19 +17,19 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 
 | Run | Request | Length | Tone | Assembly | Mock Content | Context | Prompt Chars | Score | Warnings |
 | --- | --- | --- | --- | --- | --- | ---: | ---: | ---: | --- |
-| short-instagram-post | relationship anxiety | short | expert_warm | real local | no | 4 | 4164 | 0.764 | author_voice_drift |
-| normal-telegram-post | emotional dependency | medium | empathetic | real local | no | 5 | 4979 | 0.765 | author_voice_drift |
-| long-article-mode | female sexuality myths | long | calm | real local | no | 4 | 4163 | 0.757 | author_voice_drift |
-| direct-faq-answer | shame and desire | medium | direct | real local | no | 4 | 4165 | 0.754 | author_voice_drift |
-| soft-sales-consultation | boundaries in intimacy | medium | expert_warm | real local | no | 5 | 5008 | 0.726 | reduce_cta_strength, author_voice_drift |
+| short-instagram-post | relationship anxiety | short | expert_warm | real local | no | 4 | 6145 | 0.778 | author_voice_drift |
+| normal-telegram-post | emotional dependency | medium | empathetic | real local | no | 5 | 6960 | 0.773 | author_voice_drift, repeated_paragraph_openings |
+| long-article-mode | female sexuality myths | long | calm | real local | no | 4 | 6144 | 0.773 | author_voice_drift |
+| direct-faq-answer | shame and desire | medium | direct | real local | no | 4 | 6146 | 0.768 | author_voice_drift |
+| soft-sales-consultation | boundaries in intimacy | medium | expert_warm | real local | no | 5 | 6989 | 0.738 | reduce_cta_strength, author_voice_drift, repeated_paragraph_openings |
 
 ## Example Runtime State
 
 ```json
 {
   "schema_version": "2026-05-13.unified_generation_runtime.v1",
-  "run_id": "runtime_2026-05-13T19-35-37-731Z",
-  "created_at": "2026-05-13T19:35:37.731Z",
+  "run_id": "runtime_2026-05-14T15-05-39-491Z",
+  "created_at": "2026-05-14T15:05:39.491Z",
   "constraints": {
     "local_only": true,
     "no_deploy": true,
@@ -105,12 +105,12 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
   },
   "trust_progression": {
     "trust_state": {
-      "authorityGrowth": 0.844,
-      "emotionalTrustGrowth": 0.87,
-      "educationalTrust": 0.608,
-      "vulnerabilityTrust": 0.436,
-      "consistencyTrust": 0.948,
-      "audienceFamiliarity": 0.871,
+      "authorityGrowth": 0.904,
+      "emotionalTrustGrowth": 0.94,
+      "educationalTrust": 0.648,
+      "vulnerabilityTrust": 0.466,
+      "consistencyTrust": 1,
+      "audienceFamiliarity": 0.951,
       "trustTrajectory": [
         {
           "day": 1,
@@ -390,6 +390,31 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
         {
           "day": 31,
           "score": 0.763,
+          "topic": "relationship anxiety"
+        },
+        {
+          "day": 32,
+          "score": 0.775,
+          "topic": "emotional dependency"
+        },
+        {
+          "day": 33,
+          "score": 0.788,
+          "topic": "female sexuality myths"
+        },
+        {
+          "day": 34,
+          "score": 0.801,
+          "topic": "shame and desire"
+        },
+        {
+          "day": 35,
+          "score": 0.809,
+          "topic": "boundaries in intimacy"
+        },
+        {
+          "day": 31,
+          "score": 0.818,
           "topic": "relationship anxiety"
         }
       ],
@@ -673,6 +698,31 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
           "day": 31,
           "score": 0.844,
           "domain": "attachment psychology"
+        },
+        {
+          "day": 32,
+          "score": 0.856,
+          "domain": "dependency patterns"
+        },
+        {
+          "day": 33,
+          "score": 0.868,
+          "domain": "sex education"
+        },
+        {
+          "day": 34,
+          "score": 0.88,
+          "domain": "sexology"
+        },
+        {
+          "day": 35,
+          "score": 0.892,
+          "domain": "communication"
+        },
+        {
+          "day": 31,
+          "score": 0.904,
+          "domain": "attachment psychology"
         }
       ]
     },
@@ -718,8 +768,8 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
 ```json
 {
   "system_prompt_chars": 531,
-  "user_prompt_chars": 3633,
-  "total_prompt_chars": 4164,
+  "user_prompt_chars": 5614,
+  "total_prompt_chars": 6145,
   "message_count": 2,
   "config_payload": {
     "llmExecutionMode": "dry_run_prompt_only",
@@ -757,7 +807,5 @@ Local-only constraints: `local_only`, `no_deploy`, `no_telegram_runtime_mutation
   },
   {
     "role": "user",
-    "content": "# Generation Task\nКороткий пост о тревоге в отношениях\n\n# Strategy\nIntent=educational_post. Goal: Create a useful expert explanation that helps the reader understand a psychological or sexological topic without overclaiming.. Recommended structure: hook -> problem framing -> expert explanation -> example -> soft CTA. CTA strategy: Soft invitation to reflect, save, comment, or book a consultation when appropriate..\n\n# Output Constraints\nPlatform=instagram; length=short; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.\n\n# Context Injection Rules\n- Use primary context for factual grounding and main expert position.\n- Use supporting context for nuance, objections, examples, or secondary angles.\n- Use tone/style context only to influence rhythm, warmth, and framing.\n- Do not copy long source fragments; quote only short fragments when attribution or wording matters.\n- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.\n- Prefer synthesized output over paraphrase.\n- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.\n\n# Curated Context\n### Primary context: Введение в сексологию.cleaned.txt\n- id: fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nВведение в сексологию Доктор мед. наук, профессор В. А. Доморацкий Секс и сексуальность В повседневной жизни слово «секс» в последнее время часто используют для обозначения полового акта («заниматься сексом»). Но сексуальность — больше, чем просто секс и способность человека к эр\n\n### Primary context: Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt\n- id: f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nНарушения оргазма у женщин и их коррекция Доктор медицинских наук, профессор В. А. Доморацкий Оргазм Физиологически оргазм представляет собой избавление от нарастающих в процессе сексуального возбуждения мышечного напряжения и переполнения кровью гениталий (миотонии и вазокогнест\n\n### Supporting context: секс дисф. начало (през).cleaned.txt\n- id: 31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10\n- source_type: approved_high_confidence\n- content_kind: therapeutic_case\n- confidence: high\n\nМужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотер\n\n### Supporting context: Стыд и секс.cleaned.txt\n- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1\n- source_type: approved_dataset\n- content_kind: faq\n- confidence: high\n\nСтыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч\n\nNo tone/style context selected.\n\n# Safety\nAvoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.\n\n# Produce Final Draft\nWrite the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids."
-  }
-]
+    "content": "# Generation Task\nКороткий пост о тревоге в отношениях\n\n# Strategy\nIntent=educational_post. Goal: Create a useful expert explanation that helps the reader understand a psychological or sexological topic without overclaiming.. Recommended structure: hook -> problem framing -> expert explanation -> example -> soft CTA. CTA strategy: Soft invitation to reflect, save, comment, or book a consultation when appropriate..\n\n# Output Constraints\nPlatform=instagram; length=short; format=post; CTA=soft; language=ru. This is a planning blueprint, not final generated text.\n\n# Context Injection Rules\n- Use primary context for factual grounding and main expert position.\n- Use supporting context for nuance, objections, examples, or secondary angles.\n- Use tone/style context only to influence rhythm, warmth, and framing.\n- Do not copy long source fragments; quote only short fragments when attribution or wording matters.\n- Do not use unsafe, suppressed, questionnaire, noisy, or low-score items as generation grounding.\n- Prefer synthesized output over paraphrase.\n- Keep retrieval_trace and assembly_trace available for debugging, not for reader-facing text.\n\n# Curated Context\n### Primary context: Введение в сексологию.cleaned.txt\n- id: fb5785f1c1a1b181176c33dd84d1c8301852c61a59755966f137d4eef00e02ae\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nВведение в сексологию Доктор мед. наук, профессор В. А. Доморацкий Секс и сексуальность В повседневной жизни слово «секс» в последнее время часто используют для обозначения полового акта («заниматься сексом»). Но сексуальность — больше, чем просто секс и способность человека к эр\n\n### Primary context: Нарушение_оргазма_у_женщин_и_их_коррекция_.cleaned.txt\n- id: f6c5f124626e1532e64f2bed0be500b4a2c19d6e001436393f51f4d99dd49145\n- source_type: approved_high_confidence\n- content_kind: educational\n- confidence: high\n\nНарушения оргазма у женщин и их коррекция Доктор медицинских наук, профессор В. А. Доморацкий Оргазм Физиологически оргазм представляет собой избавление от нарастающих в процессе сексуального возбуждения мышечного напряжения и переполнения кровью гениталий (миотонии и вазокогнест\n\n### Supporting context: секс дисф. начало (през).cleaned.txt\n- id: 31919f7d420f72e2ee1fa71f37c2b7169dd35c384e8b78eed1f6169064edcf10\n- source_type: approved_high_confidence\n- content_kind: therapeutic_case\n- confidence: high\n\nМужские сексуальные дисфункции и их психотерапия Доктор медицинских наук, профессор В. А. Доморацкий Авторская модель интегративной психотерапии сексуальных дисфункций наиболее полно была представлена нами в докторской диссертации (2004) и книге «Медицинская сексология и психотер\n\n### Supporting context: Стыд и секс.cleaned.txt\n- id: f52a96dcc3478cf45881dfdc96ad62249b1c89adeff9d3ea82e76d33a0eb13a1\n- source_type: approved_dataset\n- content_kind: faq\n- confidence: high\n\nСтыд, вина и сексДоктор медицинских наук, профессор В. А. Доморацкий Вина реальная и невротическая Вина - это чувство, которое испытывает человек, думая о чем-то, что он совершил или чего не совершал, как о проступке, достойном порицания: Женщина чувствует себя виноватой за то, ч\n\nNo tone/style context selected.\n\n# Safety\nAvoid: excessive jargon, diagnosis, fearmongering, guaranteed outcomes, copying long source fragments. Do not diagnose, shame, fearmonger, copy long fragments, or use unsafe/suppressed material. Refer to a specialist when appropriate.\n\n# Produce Final Draft\nWrite the requested expert content in Russian. Use the curated context as grounding, synthesize rather than copying, and do not mention internal traces or source ids.\n\n## Runtime Quality Stabilization Layer\nApply these soft constraints before drafting. They are local admin-preview guidance, not production execution.\n- Keep Dinara's voice warm, specific, and gently expert rather than motivational.\n- Use psychologically nuanced Russian phrasing with lived inner states, not abstract advice.\n- Prefer soft authority: explain what may be happening inside the psyche before suggesting action.\n- Avoid formulaic transitions such as 'таким образом', 'в заключение', and 'следует отметить'.\n- Integrate CTA as one gentle continuation, not as pressure.\n- Prefer save/return/observe wording unless trust pacing allows a consultation CTA.\n- If a consultation is mentioned, frame it as support for a long-painful topic, not urgency.\n- Avoid repeated CTA wording across the same prompt.\n- Move emotionally from recognition to explanation to one grounded next step.\n- Name inner states before advice, so the text feels human and progressive.\n- Balance emotionally charged language with calming, body-aware or relational grounding.\n- Avoid a flat explanatory tone for intimate or psychologically sensitive topics.\n- Replace generic educational scaffolding with concrete inner-life observations.\n- Use fewer headers, numbered lists, and bolded formula blocks unless the format requires them.\n- Vary paragraph rhythm: short human observations can sit beside fuller expert explanation.\n- Avoid motivational slogans and universal advice that could fit any expert.\n- Change the opening angle when a topic or hook appeared recently.\n- Do not repeat the same expert frame across adjacent paragraphs.\n- Use one clear thread and one reframe instead
 ```

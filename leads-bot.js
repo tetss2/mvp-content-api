@@ -19,14 +19,23 @@ const LIMITS = {
 
 const SCOPES = ["Психолог", "Врач", "Инста-мама", "Другое"];
 
-if (!LEADS_TOKEN) {
-  throw new Error("Missing required env var: LEADS_BOT_TOKEN");
-}
-
-const leadsBot = new TelegramBot(LEADS_TOKEN, { polling: process.env.LEADS_TELEGRAM_POLLING !== "false" });
+const LEADS_BOT_ENABLED = process.env.START_LEADS_BOT === "true" && Boolean(LEADS_TOKEN);
+const disabledLeadsBot = {
+  onText() {},
+  on() {},
+  sendMessage: async () => {},
+  answerCallbackQuery: async () => {},
+};
+const leadsBot = LEADS_BOT_ENABLED
+  ? new TelegramBot(LEADS_TOKEN, { polling: process.env.LEADS_TELEGRAM_POLLING !== "false" })
+  : disabledLeadsBot;
 const leadsState = new Map(); // chatId -> { step, name, city, scope, phone }
 
-console.log("Leads bot started");
+console.log(LEADS_BOT_ENABLED ? "Leads bot started" : "Leads bot disabled", {
+  requested: process.env.START_LEADS_BOT === "true",
+  tokenPresent: Boolean(LEADS_TOKEN),
+  polling: LEADS_BOT_ENABLED && process.env.LEADS_TELEGRAM_POLLING !== "false",
+});
 
 // ─── БАЗА ДАННЫХ ──────────────────────────────────────────────────────────────
 
@@ -578,7 +587,9 @@ async function checkDeadlinesAndDigest() {
 }
 
 // Проверка каждые 30 минут
-setInterval(checkDeadlinesAndDigest, 30 * 60 * 1000);
+if (LEADS_BOT_ENABLED) {
+  setInterval(checkDeadlinesAndDigest, 30 * 60 * 1000);
+}
 
 // ─── ЭКСПОРТ ФУНКЦИЙ ДЛЯ ОСНОВНОГО БОТА ─────────────────────────────────────
 // (используется из index.js для уведомлений о лимитах)

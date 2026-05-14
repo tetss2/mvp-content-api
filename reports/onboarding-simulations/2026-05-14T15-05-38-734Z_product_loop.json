@@ -1,0 +1,113 @@
+{
+  "generated_at": "2026-05-14T15:05:38.736Z",
+  "results": [
+    {
+      "role": "psychologist",
+      "label": "Psychologist",
+      "topic": "why I understand everything but still feel anxious",
+      "upload_quality": "good",
+      "extraction_readiness": "medium",
+      "generation_readiness": "good",
+      "onboarding_ux": "good",
+      "wow_quality": "medium",
+      "total": 11,
+      "risks": [
+        "worldview may remain generic"
+      ]
+    },
+    {
+      "role": "coach",
+      "label": "Coach",
+      "topic": "why I plan a lot and still do not start",
+      "upload_quality": "good",
+      "extraction_readiness": "medium",
+      "generation_readiness": "good",
+      "onboarding_ux": "good",
+      "wow_quality": "medium",
+      "total": 11,
+      "risks": [
+        "worldview may remain generic"
+      ]
+    },
+    {
+      "role": "blogger",
+      "label": "Blogger",
+      "topic": "how to stop sounding like everyone else",
+      "upload_quality": "medium",
+      "extraction_readiness": "medium",
+      "generation_readiness": "good",
+      "onboarding_ux": "good",
+      "wow_quality": "medium",
+      "total": 10,
+      "risks": [
+        "worldview may remain generic"
+      ]
+    },
+    {
+      "role": "fitness",
+      "label": "Fitness expert",
+      "topic": "why I start training and quit after a week",
+      "upload_quality": "good",
+      "extraction_readiness": "medium",
+      "generation_readiness": "good",
+      "onboarding_ux": "good",
+      "wow_quality": "medium",
+      "total": 11,
+      "risks": [
+        "worldview may remain generic",
+        "needs careful non-medical guidance copy in real prompts"
+      ]
+    },
+    {
+      "role": "marketing",
+      "label": "Marketing expert",
+      "topic": "why content does not bring clients",
+      "upload_quality": "good",
+      "extraction_readiness": "medium",
+      "generation_readiness": "good",
+      "onboarding_ux": "good",
+      "wow_quality": "medium",
+      "total": 11,
+      "risks": [
+        "worldview may remain generic",
+        "needs concrete offer/audience examples to avoid generic strategy posts"
+      ]
+    }
+  ],
+  "failures": [
+    {
+      "case": "empty_upload",
+      "material_score": "weak",
+      "expected_recovery": [
+        "show empty upload guidance and ask for text/file/link again",
+        "request 3-5 real posts for style rhythm",
+        "request one expert note with beliefs, audience, boundaries, and examples"
+      ]
+    },
+    {
+      "case": "broken_link_only",
+      "material_score": "weak",
+      "expected_recovery": [
+        "ask user to paste page/post text next to the link",
+        "request 3-5 real posts for style rhythm",
+        "request one expert note with beliefs, audience, boundaries, and examples"
+      ]
+    },
+    {
+      "case": "thin_style",
+      "material_score": "weak",
+      "expected_recovery": [
+        "request 3-5 real posts for style rhythm",
+        "request one expert note with beliefs, audience, boundaries, and examples"
+      ]
+    },
+    {
+      "case": "low_quality_input",
+      "material_score": "weak",
+      "expected_recovery": [
+        "request 3-5 real posts for style rhythm",
+        "request one expert note with beliefs, audience, boundaries, and examples"
+      ]
+    }
+  ]
+}

@@ -542,7 +542,52 @@
       "selected_hook_type": "therapeutic_hook",
       "selected_cta_type": "dm_cta",
       "platform": "instagram_post"
+    },
+    {
+      "day": 31,
+      "run_id": "runtime_2026-05-14T15-05-39-491Z",
+      "quality_score": 0.689,
+      "validation_status": "pass_with_warnings",
+      "selected_hook_type": "recognition_hook",
+      "selected_cta_type": "save_share_cta",
+      "platform": "instagram_post"
+    },
+    {
+      "day": 32,
+      "run_id": "runtime_2026-05-14T15-05-39-918Z",
+      "quality_score": 0.692,
+      "validation_status": "pass_with_warnings",
+      "selected_hook_type": "therapeutic_hook",
+      "selected_cta_type": "emotional_cta",
+      "platform": "telegram_longread"
+    },
+    {
+      "day": 33,
+      "run_id": "runtime_2026-05-14T15-05-40-074Z",
+      "quality_score": 0.677,
+      "validation_status": "pass_with_warnings",
+      "selected_hook_type": "therapeutic_hook",
+      "selected_cta_type": "educational_cta",
+      "platform": "telegram_longread"
+    },
+    {
+      "day": 34,
+      "run_id": "runtime_2026-05-14T15-05-40-223Z",
+      "quality_score": 0.671,
+      "validation_status": "pass_with_warnings",
+      "selected_hook_type": "therapeutic_hook",
+      "selected_cta_type": "trust_cta",
+      "platform": "instagram_post"
+    },
+    {
+      "day": 35,
+      "run_id": "runtime_2026-05-14T15-05-40-373Z",
+      "quality_score": 0.64,
+      "validation_status": "pass_with_warnings",
+      "selected_hook_type": "therapeutic_hook",
+      "selected_cta_type": "dm_cta",
+      "platform": "instagram_post"
     }
   ],
-  "updated_at": "2026-05-13T19:35:38.341Z"
+  "updated_at": "2026-05-14T15:05:40.392Z"
 }

@@ -3,12 +3,12 @@
   "expert_id": "dinara",
   "day": 35,
   "trust_state": {
-    "authorityGrowth": 0.892,
-    "emotionalTrustGrowth": 0.93,
-    "educationalTrust": 0.64,
-    "vulnerabilityTrust": 0.46,
+    "authorityGrowth": 0.952,
+    "emotionalTrustGrowth": 1,
+    "educationalTrust": 0.68,
+    "vulnerabilityTrust": 0.49,
     "consistencyTrust": 1,
-    "audienceFamiliarity": 0.935,
+    "audienceFamiliarity": 1,
     "trustTrajectory": [
       {
         "day": 1,
@@ -308,6 +308,31 @@
       {
         "day": 35,
         "score": 0.809,
+        "topic": "boundaries in intimacy"
+      },
+      {
+        "day": 31,
+        "score": 0.818,
+        "topic": "relationship anxiety"
+      },
+      {
+        "day": 32,
+        "score": 0.827,
+        "topic": "emotional dependency"
+      },
+      {
+        "day": 33,
+        "score": 0.837,
+        "topic": "female sexuality myths"
+      },
+      {
+        "day": 34,
+        "score": 0.848,
+        "topic": "shame and desire"
+      },
+      {
+        "day": 35,
+        "score": 0.854,
         "topic": "boundaries in intimacy"
       }
     ],
@@ -611,8 +636,33 @@
         "day": 35,
         "score": 0.892,
         "domain": "communication"
+      },
+      {
+        "day": 31,
+        "score": 0.904,
+        "domain": "attachment psychology"
+      },
+      {
+        "day": 32,
+        "score": 0.916,
+        "domain": "dependency patterns"
+      },
+      {
+        "day": 33,
+        "score": 0.928,
+        "domain": "sex education"
+      },
+      {
+        "day": 34,
+        "score": 0.94,
+        "domain": "sexology"
+      },
+      {
+        "day": 35,
+        "score": 0.952,
+        "domain": "communication"
       }
     ]
   },
-  "updated_at": "2026-05-13T19:35:38.341Z"
+  "updated_at": "2026-05-14T15:05:40.392Z"
 }

@@ -25,7 +25,7 @@
         "conversionDrivingDomains": [
           "consultation readiness"
         ],
-        "occurrenceCount": 9,
+        "occurrenceCount": 10,
         "lastSeenDay": 31,
         "saturation": 1,
         "noveltyScore": 0,
@@ -52,7 +52,7 @@
         "conversionDrivingDomains": [
           "therapy motivation"
         ],
-        "occurrenceCount": 9,
+        "occurrenceCount": 10,
         "lastSeenDay": 32,
         "saturation": 1,
         "noveltyScore": 0,
@@ -79,7 +79,7 @@
         "conversionDrivingDomains": [
           "consultation readiness"
         ],
-        "occurrenceCount": 9,
+        "occurrenceCount": 10,
         "lastSeenDay": 35,
         "saturation": 1,
         "noveltyScore": 0,
@@ -106,7 +106,7 @@
         "conversionDrivingDomains": [
           "private consultation"
         ],
-        "occurrenceCount": 9,
+        "occurrenceCount": 10,
         "lastSeenDay": 34,
         "saturation": 1,
         "noveltyScore": 0,
@@ -133,7 +133,7 @@
         "conversionDrivingDomains": [
           "educational lead"
         ],
-        "occurrenceCount": 9,
+        "occurrenceCount": 10,
         "lastSeenDay": 33,
         "saturation": 1,
         "noveltyScore": 0,
@@ -412,11 +412,11 @@
   },
   "repetition_intelligence": {
     "conceptHistory": {
-      "relationship anxiety": 9,
-      "emotional dependency": 9,
-      "female sexuality myths": 9,
-      "boundaries in intimacy": 9,
-      "shame and desire": 9,
+      "relationship anxiety": 10,
+      "emotional dependency": 10,
+      "female sexuality myths": 10,
+      "boundaries in intimacy": 10,
+      "shame and desire": 10,
       "trust after conflict": 3,
       "body sensitivity": 3,
       "self-worth in relationships": 3,
@@ -424,20 +424,20 @@
       "soft communication": 3
     },
     "hookHistory": {
-      "recognition_hook": 11,
-      "therapeutic_hook": 49
+      "recognition_hook": 12,
+      "therapeutic_hook": 53
     },
     "framingHistory": {
-      "low_pressure_expertise": 60
+      "low_pressure_expertise": 65
     },
     "ctaStructureHistory": {
       "low_pressure_cta": 5,
-      "save_share_cta": 11,
-      "educational_cta": 9,
+      "save_share_cta": 12,
+      "educational_cta": 10,
       "soft_cta": 5,
-      "dm_cta": 11,
-      "emotional_cta": 9,
-      "trust_cta": 10
+      "dm_cta": 12,
+      "emotional_cta": 10,
+      "trust_cta": 11
     },
     "emotionalPacingHistory": [
       {
@@ -739,10 +739,35 @@
         "day": 35,
         "emotion": "calm",
         "intensity": 0.24
+      },
+      {
+        "day": 31,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 32,
+        "emotion": "calm",
+        "intensity": 0.24
+      },
+      {
+        "day": 33,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 34,
+        "emotion": "recognition",
+        "intensity": 0.52
+      },
+      {
+        "day": 35,
+        "emotion": "calm",
+        "intensity": 0.24
       }
     ],
     "storytellingTemplateHistory": {
-      "open_new_thread": 60
+      "open_new_thread": 65
     },
     "warnings": [
       {
@@ -1416,6 +1441,94 @@
         "value": "dm_cta",
         "score": 1,
         "message": "dm_cta is overrepresented; cool down conversion pressure."
+      },
+      {
+        "day": 31,
+        "type": "repeated_concept",
+        "severity": "high",
+        "value": "relationship anxiety",
+        "score": 1,
+        "message": "Concept \"relationship anxiety\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 31,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "recognition_hook",
+        "score": 1,
+        "message": "Hook frame \"recognition_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 32,
+        "type": "repeated_concept",
+        "severity": "high",
+        "value": "emotional dependency",
+        "score": 1,
+        "message": "Concept \"emotional dependency\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 32,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 33,
+        "type": "repeated_concept",
+        "severity": "high",
+        "value": "female sexuality myths",
+        "score": 1,
+        "message": "Concept \"female sexuality myths\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 33,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 34,
+        "type": "repeated_concept",
+        "severity": "high",
+        "value": "shame and desire",
+        "score": 1,
+        "message": "Concept \"shame and desire\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 34,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 35,
+        "type": "repeated_concept",
+        "severity": "high",
+        "value": "boundaries in intimacy",
+        "score": 1,
+        "message": "Concept \"boundaries in intimacy\" is becoming semantically familiar; revisit through a new adjacent topic."
+      },
+      {
+        "day": 35,
+        "type": "repeated_hook",
+        "severity": "medium",
+        "value": "therapeutic_hook",
+        "score": 1,
+        "message": "Hook frame \"therapeutic_hook\" is recurring often enough to create pattern recognition."
+      },
+      {
+        "day": 35,
+        "type": "repeated_cta_structure",
+        "severity": "high",
+        "value": "dm_cta",
+        "score": 1,
+        "message": "dm_cta is overrepresented; cool down conversion pressure."
       }
     ]
   },
@@ -1463,5 +1576,5 @@
       "recommendation": "Alternate client mirror stories with myth correction or body signal motifs."
     }
   ],
-  "updated_at": "2026-05-13T19:35:38.341Z"
+  "updated_at": "2026-05-14T15:05:40.392Z"
 }

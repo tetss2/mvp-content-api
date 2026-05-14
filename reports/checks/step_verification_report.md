@@ -1,5 +1,5 @@
-STATUS: PASS
-SAFE_TO_COMMIT: YES
+STATUS: FAIL
+SAFE_TO_COMMIT: NO
 SAFE_TO_DEPLOY: NO
 PRODUCTION_TOUCHED: NO
 TELEGRAM_TOUCHED: NO
@@ -8,7 +8,7 @@ EXTERNAL_API_USED: NO
 
 ## Summary
 
-Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
+Runtime safety gate completed at 2026-05-14T15:05:40.561Z.
 
 - Required runtime files: PASS
 - Required report directories: PASS
@@ -33,7 +33,7 @@ Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
 - `node --check scripts/runtime-generation-adapter.js`: PASS
 - `node --check scripts/simulate-runtime-generation-flow.js`: PASS
 - `node scripts/simulate-runtime-generation-flow.js`: PASS
-  - stdout: `{ "simulated_requests": 5, "average_combined_quality": 0.753, "generated_reports": [ "reports/runtime-generation/runtime_generation_flow_report.md", "reports/runtime-generation/runtime_adapter_report.md", `
+  - stdout: `{ "simulated_requests": 5, "average_combined_quality": 0.766, "generated_reports": [ "reports/runtime-generation/runtime_generation_flow_report.md", "reports/runtime-generation/runtime_adapter_report.md", `
 
 ## Simulation Signals
 
@@ -53,7 +53,7 @@ Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
     5
   ],
   "selected_context_count_exists": true,
-  "average_combined_quality": 0.753,
+  "average_combined_quality": 0.766,
   "average_combined_quality_exists": true,
   "warnings_listed": true
 }
@@ -66,7 +66,7 @@ Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
 
 ## Unexpected Warnings
 
-- none
+- `repeated_paragraph_openings`
 
 ## Safety Findings
 
@@ -74,9 +74,9 @@ Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
 - INFO auto_posting: Auto-posting or publishing command at `scripts/unified-generation-runtime.js:30` -> `no_production_publishing: true,`
 - INFO auto_posting: Auto-posting or publishing command at `scripts/unified-generation-runtime.js:711` -> `publication_status: "not_published_local_simulation",`
 - INFO auto_posting: Auto-posting or publishing command at `scripts/simulate-unified-runtime.js:367` -> `no_auto_posting: true,`
-- INFO external_api: External API call primitive at `scripts/runtime-generation-adapter.js:161` -> `intended_provider: "openai-compatible-chat",`
-- INFO auto_posting: Auto-posting or publishing command at `scripts/runtime-generation-adapter.js:462` -> `publication_status: "not_published_local_simulation",`
-- INFO auto_posting: Auto-posting or publishing command at `scripts/runtime-generation-adapter.js:469` -> `auto_posting: false,`
+- INFO external_api: External API call primitive at `scripts/runtime-generation-adapter.js:176` -> `intended_provider: "openai-compatible-chat",`
+- INFO auto_posting: Auto-posting or publishing command at `scripts/runtime-generation-adapter.js:630` -> `publication_status: "not_published_local_simulation",`
+- INFO auto_posting: Auto-posting or publishing command at `scripts/runtime-generation-adapter.js:637` -> `auto_posting: false,`
 - INFO auto_posting: Auto-posting or publishing command at `scripts/simulate-runtime-generation-flow.js:184` -> `- Production publishing is not connected.`
 - INFO external_api: External API call primitive at `scripts/simulate-runtime-generation-flow.js:233` -> `- Cloudinary/FAL/Fish Audio/OpenAI live generation paths.`
 - INFO auto_posting: Auto-posting or publishing command at `scripts/simulate-runtime-generation-flow.js:237` -> `- Auto-posting or publishing.`
@@ -98,11 +98,11 @@ Runtime safety gate completed at 2026-05-13T19:35:38.472Z.
 
 ## Risks
 
-- No blocking runtime safety risks detected.
+- Unexpected warning: repeated_paragraph_openings
 
 ## Next Step
 
-Safe to commit the local runtime safety gate and continue toward an admin-only dry-run preview design. Deployment remains explicitly blocked.
+Resolve the failed checks above, rerun `node scripts/verify-runtime-safety-gate.js`, and keep deployment blocked.
 
 <!-- command_summaries
 [
@@ -138,7 +138,7 @@ Safe to commit the local runtime safety gate and continue toward an admin-only d
     "command": "node scripts/simulate-runtime-generation-flow.js",
     "status": "PASS",
     "exitCode": 0,
-    "stdoutSummary": "{\n  \"simulated_requests\": 5,\n  \"average_combined_quality\": 0.753,\n  \"generated_reports\": [\n    \"reports/runtime-generation/runtime_generation_flow_report.md\",\n    \"reports/runtime-generation/runtime_adapter_report.md\",\n    \"reports/runtime-generation/runtime_generation_validation_report.md\",\n    \"reports/runtime-generation/runtime_integration_risks_report.md\",\n    \"reports/runtime-generation/runtime_prompt_assembly_report.md\"\n  ],\n  \"real_local_prompt_assembly_used\": true,\n  \"mock_content_generation_used\": false,\n  \"llmExecutionMode\": \"dry_run_prompt_only\",\n  \"simulation_output_summary\": [\n   ",
+    "stdoutSummary": "{\n  \"simulated_requests\": 5,\n  \"average_combined_quality\": 0.766,\n  \"generated_reports\": [\n    \"reports/runtime-generation/runtime_generation_flow_report.md\",\n    \"reports/runtime-generation/runtime_adapter_report.md\",\n    \"reports/runtime-generation/runtime_generation_validation_report.md\",\n    \"reports/runtime-generation/runtime_integration_risks_report.md\",\n    \"reports/runtime-generation/runtime_prompt_assembly_report.md\"\n  ],\n  \"real_local_prompt_assembly_used\": true,\n  \"mock_content_generation_used\": false,\n  \"llmExecutionMode\": \"dry_run_prompt_only\",\n  \"simulation_output_summary\": [\n   ",
     "stderrSummary": ""
   }
 ]
