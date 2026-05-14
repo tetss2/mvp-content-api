@@ -405,7 +405,9 @@ async function generatePersonaDraftsLegacy(openai, userId) {
     snippets.join("\n\n") || "Пользователь пока загрузил мало текстовых материалов. Сделай осторожный черновик по имени и роли.",
   ].join("\n\n");
 
-  const completion = await openai.chat.completions.create({
+  let completion = null;
+  try {
+    completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.45,
     max_tokens: 1200,
@@ -419,9 +421,29 @@ async function generatePersonaDraftsLegacy(openai, userId) {
         content: `На основе данных создай 3 блока в Markdown с заголовками строго: PERSONA, WORLDVIEW, STYLE_EXAMPLES.\n\n${base}`,
       },
     ],
-  });
+    });
+  } catch (error) {
+    console.warn(`[expert-onboarding] persona draft fallback used: ${error.message}`);
+  }
 
-  const raw = completion.choices[0].message.content.trim();
+  const raw = completion?.choices?.[0]?.message?.content?.trim() || [
+    "PERSONA",
+    `${profile?.expert_name || "Expert"} is an AI expert draft. Use a cautious, specific, non-generic voice. Do not invent biography, credentials, client stories, or guarantees.`,
+    "",
+    "WORLDVIEW",
+    "The worldview is provisional because source extraction or AI analysis did not complete. Keep claims modest, practical, and grounded in the uploaded fragments that are available.",
+    "",
+    "STYLE_GUIDANCE",
+    "Use clear Russian social-media prose, short paragraphs, concrete observations, and soft endings. Avoid hype, empty motivation, fake certainty, and unsupported facts.",
+    "",
+    "STYLE_EXAMPLES",
+    "No stable examples extracted yet. Ask the user to add 3-5 real posts for stronger voice matching.",
+    "",
+    "MATERIAL_QUALITY",
+    "overall: weak",
+    "style_learning: weak",
+    "expert_learning: weak",
+  ].join("\n");
   const sections = {
     persona: raw.match(/PERSONA([\s\S]*?)(WORLDVIEW|$)/i)?.[1]?.trim() || raw,
     worldview: raw.match(/WORLDVIEW([\s\S]*?)(STYLE_EXAMPLES|$)/i)?.[1]?.trim() || "",
@@ -455,7 +477,9 @@ export async function generatePersonaDrafts(openai, userId) {
     snippets.join("\n\n") || "The user has uploaded very little text. Make a cautious draft from name and role only; mark material quality as weak.",
   ].join("\n\n");
 
-  const completion = await openai.chat.completions.create({
+  let completion = null;
+  try {
+    completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.35,
     max_tokens: 1700,
@@ -463,9 +487,29 @@ export async function generatePersonaDrafts(openai, userId) {
       { role: "system", content: buildStyleExtractionPrompt() },
       { role: "user", content: `Создай прикладные черновики на русском для генерации контента.\n\n${base}` },
     ],
-  });
+    });
+  } catch (error) {
+    console.warn(`[expert-onboarding] persona draft fallback used: ${error.message}`);
+  }
 
-  const raw = completion.choices[0].message.content.trim();
+  const raw = completion?.choices?.[0]?.message?.content?.trim() || [
+    "PERSONA",
+    `${profile?.expert_name || "Expert"} is an AI expert draft. Use a cautious, specific, non-generic voice. Do not invent biography, credentials, client stories, or guarantees.`,
+    "",
+    "WORLDVIEW",
+    "The worldview is provisional because source extraction or AI analysis did not complete. Keep claims modest, practical, and grounded in the uploaded fragments that are available.",
+    "",
+    "STYLE_GUIDANCE",
+    "Use clear Russian social-media prose, short paragraphs, concrete observations, and soft endings. Avoid hype, empty motivation, fake certainty, and unsupported facts.",
+    "",
+    "STYLE_EXAMPLES",
+    "No stable examples extracted yet. Ask the user to add 3-5 real posts for stronger voice matching.",
+    "",
+    "MATERIAL_QUALITY",
+    "overall: weak",
+    "style_learning: weak",
+    "expert_learning: weak",
+  ].join("\n");
   const sections = {
     persona: extractSection(raw, "PERSONA", ["WORLDVIEW", "STYLE_GUIDANCE", "STYLE_EXAMPLES", "MATERIAL_QUALITY"]) || raw,
     worldview: extractSection(raw, "WORLDVIEW", ["STYLE_GUIDANCE", "STYLE_EXAMPLES", "MATERIAL_QUALITY"]),

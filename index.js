@@ -249,7 +249,10 @@ function buildRuntimeCounterText(runtime) {
     `Видео: ${runtime.counters?.video || 0}/${runtime.limits?.video ?? "∞"}`,
   ];
   if (demoLeft !== null) bits.push(`Демо: ${runtime.counters?.demo || 0}/${runtime.limits?.demo ?? "∞"}`);
-  if (textLeft !== null && textLeft <= 3) bits.push("Premium-ready: лимиты скоро можно будет расширить без пересборки бота");
+  if (textLeft !== null) {
+    bits.push(`Осталось бесплатных текстов: ${textLeft}`);
+    if (textLeft <= 3) bits.push("Следующий шаг: усилить эксперта материалами или запросить расширение лимита");
+  }
   return bits.join("\n");
 }
 
@@ -833,32 +836,38 @@ async function rewriteGenericPostOnce({ text, topic, context, lengthInstruction,
   const quality = genericQualitySignals(text);
   if (!quality.tooGeneric) return { text, quality, rewritten: false };
 
-  const rewrite = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: [systemPrompt, styleLockPrompt].filter(Boolean).join("\n\n") },
-      {
-        role: "user",
-        content: [
-          `Тема: "${topic}"`,
-          "",
-          `Контекст:\n${context}`,
-          "",
-          `${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}`,
-          "",
-          "ANTI-GENERIC REWRITE PASS:",
-          `Текущий текст слишком общий. Сигналы: ${quality.reasons.join("; ") || "generic drift"}.`,
-          "Перепиши один раз целиком: больше авторского присутствия, конкретного переживания, неровного живого ритма и мягкого финала.",
-          "Не добавляй списки, заголовки, канцелярит, мотивационные лозунги и универсальные выводы.",
-          "",
-          "Текст для переписывания:",
-          text,
-        ].join("\n"),
-      },
-    ],
-    temperature: 0.74,
-    max_tokens: maxTokens,
-  });
+  let rewrite = null;
+  try {
+    rewrite = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: [systemPrompt, styleLockPrompt].filter(Boolean).join("\n\n") },
+        {
+          role: "user",
+          content: [
+            `Тема: "${topic}"`,
+            "",
+            `Контекст:\n${context}`,
+            "",
+            `${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}`,
+            "",
+            "ANTI-GENERIC REWRITE PASS:",
+            `Текущий текст слишком общий. Сигналы: ${quality.reasons.join("; ") || "generic drift"}.`,
+            "Перепиши один раз целиком: больше авторского присутствия, конкретного переживания, неровного живого ритма и мягкого финала.",
+            "Не добавляй списки, заголовки, канцелярит, мотивационные лозунги и универсальные выводы.",
+            "",
+            "Текст для переписывания:",
+            text,
+          ].join("\n"),
+        },
+      ],
+      temperature: 0.74,
+      max_tokens: maxTokens,
+    });
+  } catch (error) {
+    console.warn("Anti-generic rewrite failed:", error.message);
+    return { text, quality, rewritten: false, rewrite_failed: true };
+  }
 
   const rewrittenText = humanizeGeneratedPostText(rewrite.choices[0].message.content);
   return {
@@ -920,6 +929,123 @@ function shuffleArray(arr) {
 }
 
 const userState = new Map();
+
+const ABUSE_LIMITS = {
+  generationCooldownMs: 45_000,
+  mediaCooldownMs: 20_000,
+  uploadCooldownMs: 4_000,
+  maxUploadBytes: 12 * 1024 * 1024,
+  maxTextUploadChars: 16_000,
+  maxTopicChars: 500,
+  maxUploadsPerHour: 20,
+};
+
+const ALLOWED_ONBOARDING_EXTENSIONS = {
+  knowledge: [".txt", ".md", ".pdf", ".docx"],
+  style: [".txt", ".md", ".pdf", ".docx"],
+  avatar: [".jpg", ".jpeg", ".png", ".webp"],
+  voice: [".ogg", ".oga", ".mp3", ".m4a", ".wav"],
+};
+
+function nowMs() {
+  return Date.now();
+}
+
+function rememberStateEvent(state, key, ts = nowMs(), windowMs = 60 * 60 * 1000) {
+  const values = Array.isArray(state[key]) ? state[key] : [];
+  values.push(ts);
+  state[key] = values.filter((value) => ts - value < windowMs).slice(-100);
+  return state[key];
+}
+
+function checkCooldown(state, key, cooldownMs) {
+  const last = Number(state[key] || 0);
+  const remainingMs = cooldownMs - (nowMs() - last);
+  if (remainingMs <= 0) return { ok: true, remainingSec: 0 };
+  return { ok: false, remainingSec: Math.ceil(remainingMs / 1000) };
+}
+
+function canAcceptUploadEvent(state) {
+  const events = rememberStateEvent(state, "uploadEvents");
+  if (events.length > ABUSE_LIMITS.maxUploadsPerHour) {
+    return { ok: false, reason: "hour_limit" };
+  }
+  const cooldown = checkCooldown(state, "lastUploadAt", ABUSE_LIMITS.uploadCooldownMs);
+  if (!cooldown.ok) return { ok: false, reason: "cooldown", remainingSec: cooldown.remainingSec };
+  state.lastUploadAt = nowMs();
+  return { ok: true };
+}
+
+function validateOnboardingUpload(step, msg) {
+  if (msg.text && ["knowledge", "style"].includes(step)) {
+    const text = msg.text.trim();
+    if (!text) return { ok: false, reason: "empty_text" };
+    if (text.length > ABUSE_LIMITS.maxTextUploadChars) {
+      return { ok: false, reason: "text_too_large", limit: ABUSE_LIMITS.maxTextUploadChars };
+    }
+    if (/^https?:\/\/\S+$/i.test(text) && text.length > 1800) {
+      return { ok: false, reason: "broken_link" };
+    }
+    return { ok: true };
+  }
+
+  const file = msg.document || msg.audio || msg.voice || null;
+  if (file) {
+    const size = Number(file.file_size || 0);
+    if (size > ABUSE_LIMITS.maxUploadBytes) {
+      return { ok: false, reason: "file_too_large", size };
+    }
+    const name = msg.document?.file_name || msg.audio?.file_name || "";
+    const ext = name.includes(".") ? name.slice(name.lastIndexOf(".")).toLowerCase() : "";
+    if (msg.document && ALLOWED_ONBOARDING_EXTENSIONS[step] && !ALLOWED_ONBOARDING_EXTENSIONS[step].includes(ext)) {
+      return { ok: false, reason: "bad_extension", ext };
+    }
+  }
+  return { ok: true };
+}
+
+async function guardMediaAction(chatId, label = "медиа") {
+  const state = userState.get(chatId) || {};
+  const cooldown = checkCooldown(state, "lastMediaActionAt", ABUSE_LIMITS.mediaCooldownMs);
+  if (!cooldown.ok) {
+    await bot.sendMessage(chatId, `Подождите ${cooldown.remainingSec} сек. перед следующей ${label}-операцией.`);
+    return false;
+  }
+  state.lastMediaActionAt = nowMs();
+  userState.set(chatId, state);
+  return true;
+}
+
+function uploadRejectionText(reason, details = {}) {
+  if (reason === "hour_limit") return "Слишком много загрузок за короткое время. Давайте продолжим чуть позже, чтобы материалы не потерялись.";
+  if (reason === "cooldown") return `Файл вижу. Подождите ${details.remainingSec || 3} сек. и отправьте ещё раз.`;
+  if (reason === "file_too_large") return "Файл слишком большой для быстрого онбординга. Лучше отправьте TXT/DOCX/PDF до 12 МБ или вставьте главный фрагмент текстом.";
+  if (reason === "text_too_large") return "Текст слишком длинный для одного сообщения. Разбейте его на 2-3 части или загрузите TXT/DOCX.";
+  if (reason === "bad_extension") return "Этот формат сейчас не обрабатываю в онбординге. Подойдут TXT, DOCX, PDF, фото для аватара или аудио для голоса.";
+  if (reason === "broken_link") return "Ссылка выглядит некорректно или слишком длинно. Пришлите обычную ссылку и, если можно, вставьте текст поста рядом.";
+  return "Материал не получилось принять. Попробуйте отправить текстом, TXT, DOCX или PDF.";
+}
+
+function friendlyErrorMessage(error, area = "generation") {
+  const raw = String(error?.message || error || "").toLowerCase();
+  if (raw.includes("rate") || raw.includes("429")) {
+    return "Сервис генерации сейчас просит паузу. Подождите минуту и попробуйте снова.";
+  }
+  if (raw.includes("timeout") || raw.includes("network") || raw.includes("fetch")) {
+    return "Похоже, внешний сервис временно не ответил. Ваши материалы и тема сохранены, можно повторить запрос.";
+  }
+  if (raw.includes("api key") || raw.includes("401") || raw.includes("403")) {
+    return "Не удалось обратиться к AI-сервису из-за настройки доступа. Я сохранил состояние, администратор сможет проверить ключи.";
+  }
+  if (area === "extraction") {
+    return "Материал сохранён, но текст из него извлечь не удалось. Лучше отправьте тот же материал текстом или в DOCX/TXT.";
+  }
+  return "Генерация не дошла до конца. Тема сохранена, можно повторить или выбрать другой формат.";
+}
+
+function scoreToPoints(score) {
+  return score === "good" ? 25 : score === "medium" ? 16 : score === "weak" ? 7 : 10;
+}
 
 function scoreArticle(article, query) {
   const text = (article.title + " " + article.content).toLowerCase();
@@ -1309,6 +1435,81 @@ function buildMaterialQualityText(quality, category = "") {
   return lines.join("\n");
 }
 
+async function readLatestMaterialQualities(userId, category) {
+  const dir = join("users", String(userId), category === "style" ? "style/pending" : "knowledge/pending");
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  const qualities = [];
+  for (const entry of entries.filter((item) => item.isFile() && item.name.endsWith(".json")).slice(-12)) {
+    try {
+      const meta = JSON.parse(await fs.readFile(join(dir, entry.name), "utf-8"));
+      if (meta?.quality) qualities.push(meta.quality);
+    } catch {}
+  }
+  return qualities;
+}
+
+function bestQualityScore(qualities, field) {
+  if (!qualities.length) return "unknown";
+  const rank = { good: 3, medium: 2, weak: 1, unknown: 0 };
+  return qualities
+    .map((quality) => quality?.[field] || quality?.score || "unknown")
+    .sort((a, b) => (rank[b] || 0) - (rank[a] || 0))[0] || "unknown";
+}
+
+async function buildReadinessScore(userId) {
+  const inventory = await getOnboardingInventory(userId);
+  const [knowledgeQualities, styleQualities, persona, worldview, styleGuidance] = await Promise.all([
+    readLatestMaterialQualities(userId, "knowledge"),
+    readLatestMaterialQualities(userId, "style"),
+    readProfileDraft(userId, "persona.md", 2000),
+    readProfileDraft(userId, "worldview.md", 2000),
+    readProfileDraft(userId, "style_guidance.md", 2000),
+  ]);
+  const styleQuality = inventory.counts.style > 0 ? bestQualityScore(styleQualities, "style_learning") : (styleGuidance ? "medium" : "weak");
+  const expertQuality = inventory.counts.knowledge > 0 ? bestQualityScore(knowledgeQualities, "expert_learning") : (worldview ? "medium" : "weak");
+  const personalizationQuality = persona && (styleGuidance || inventory.counts.style > 0)
+    ? (styleQuality === "good" ? "good" : "medium")
+    : "weak";
+  const onboardingCompleteness = inventory.profile?.status === "completed" && inventory.scenarios.length > 0
+    ? (inventory.counts.knowledge + inventory.counts.style + inventory.counts.avatar + inventory.counts.voice >= 3 ? "good" : "medium")
+    : "weak";
+  const total = Math.min(100,
+    scoreToPoints(styleQuality) +
+    scoreToPoints(personalizationQuality) +
+    scoreToPoints(expertQuality) +
+    scoreToPoints(onboardingCompleteness)
+  );
+  const label = total >= 78 ? "уверенно готов" : total >= 55 ? "готов к тестам" : "нужны ещё материалы";
+  const nextStep = total >= 78
+    ? "Можно генерировать и собирать обратную связь."
+    : inventory.counts.style === 0
+      ? "Добавьте 3-5 реальных постов, чтобы голос стал заметно ближе."
+      : inventory.counts.knowledge === 0
+        ? "Добавьте экспертную заметку или разбор подхода, чтобы worldview стал точнее."
+        : "Сделайте тестовый пост и отметьте, что звучит не как вы.";
+  return {
+    total,
+    label,
+    styleQuality,
+    personalizationQuality,
+    expertQuality,
+    onboardingCompleteness,
+    nextStep,
+    inventory,
+  };
+}
+
+function buildReadinessSummaryText(readiness) {
+  return [
+    `Готовность AI-эксперта: ${readiness.total}/100 — ${readiness.label}`,
+    `Стиль: ${qualityLabel(readiness.styleQuality)}`,
+    `Персонализация: ${qualityLabel(readiness.personalizationQuality)}`,
+    `Экспертная база: ${qualityLabel(readiness.expertQuality)}`,
+    `Онбординг: ${qualityLabel(readiness.onboardingCompleteness)}`,
+    `Следующий шаг: ${readiness.nextStep}`,
+  ].join("\n");
+}
+
 async function sendUploadRecoveryGuide(chatId, category) {
   const title = category === "style" ? "Как усилить стиль" : "Как усилить материалы";
   const lines = [
@@ -1327,16 +1528,35 @@ async function sendUploadRecoveryGuide(chatId, category) {
 
 async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю persona, worldview и examples из материалов...") {
   const status = await bot.sendMessage(chatId, intro);
+  const setProgress = async (text) => {
+    await bot.editMessageText(text, { chat_id: chatId, message_id: status.message_id }).catch(() => {});
+  };
   try {
+    await setProgress("✅ Материалы получены\n⏳ Анализирую стиль...");
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await setProgress("✅ Материалы получены\n✅ Анализирую стиль\n⏳ Собираю persona...");
     await generatePersonaDrafts(openai, userId);
+    await setProgress("✅ Материалы получены\n✅ Стиль проанализирован\n✅ Persona собрана\n⏳ Формирую worldview...");
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    await setProgress("✅ Материалы получены\n✅ Стиль проанализирован\n✅ Persona собрана\n✅ Worldview сформирован\n⏳ Обновляю AI-эксперта...");
+    const readiness = await buildReadinessScore(userId);
     await bot.editMessageText(
-      "✅ Persona updated\n✅ Worldview updated\n✅ Style guidance extracted\n✅ Examples updated\n✅ Material quality scored",
+      [
+        "✅ AI-эксперт обновлён",
+        "",
+        buildReadinessSummaryText(readiness),
+      ].join("\n"),
       { chat_id: chatId, message_id: status.message_id }
     ).catch(() => {});
     return true;
   } catch (error) {
     console.error("Persona draft error:", error.message);
-    await bot.editMessageText(`Persona не обновилась: ${error.message.slice(0, 160)}`, {
+    await bot.editMessageText([
+      "Материалы сохранены, но обновление AI-эксперта не завершилось.",
+      friendlyErrorMessage(error, "extraction"),
+      "",
+      "Можно продолжить с текущей версией или нажать «Regenerate persona» позже.",
+    ].join("\n"), {
       chat_id: chatId,
       message_id: status.message_id,
     }).catch(() => {});
@@ -1574,29 +1794,52 @@ async function handleExpertOnboardingMessage(msg, state) {
   }
 
   if (["knowledge", "style", "avatar", "voice"].includes(step)) {
+    const uploadGate = canAcceptUploadEvent(state);
+    userState.set(chatId, state);
+    if (!uploadGate.ok) {
+      await bot.sendMessage(chatId, uploadRejectionText(uploadGate.reason, uploadGate), onboardingControls(step));
+      return true;
+    }
+
+    const validation = validateOnboardingUpload(step, msg);
+    if (!validation.ok) {
+      await bot.sendMessage(chatId, uploadRejectionText(validation.reason, validation), onboardingControls(step));
+      return true;
+    }
+
     const before = await getOnboardingInventory(userId);
     let stored = null;
-    if (msg.document) {
-      const buffer = await downloadTelegramDocument(msg.document.file_id);
-      stored = await storeOnboardingFile(userId, step, msg.document.file_name || "telegram_document", buffer, {
-        telegram_file_id: msg.document.file_id,
-        mime_type: msg.document.mime_type,
-      });
-    } else if (msg.photo && step === "avatar") {
-      const photo = msg.photo[msg.photo.length - 1];
-      const buffer = await downloadTelegramDocument(photo.file_id);
-      stored = await storeOnboardingFile(userId, "avatar", `${photo.file_unique_id || photo.file_id}.jpg`, buffer, {
-        telegram_file_id: photo.file_id,
-      });
-    } else if ((msg.voice || msg.audio) && step === "voice") {
-      const media = msg.voice || msg.audio;
-      const buffer = await downloadTelegramDocument(media.file_id);
-      stored = await storeOnboardingFile(userId, "voice", `${media.file_unique_id || media.file_id}.ogg`, buffer, {
-        telegram_file_id: media.file_id,
-        duration: media.duration,
-      });
-    } else if (msg.text && ["knowledge", "style"].includes(step)) {
-      stored = await storeOnboardingText(userId, step, msg.text.trim(), { source: "telegram_text_or_link" });
+    try {
+      if (msg.document) {
+        const buffer = await downloadTelegramDocument(msg.document.file_id);
+        stored = await storeOnboardingFile(userId, step, msg.document.file_name || "telegram_document", buffer, {
+          telegram_file_id: msg.document.file_id,
+          mime_type: msg.document.mime_type,
+        });
+      } else if (msg.photo && step === "avatar") {
+        const photo = msg.photo[msg.photo.length - 1];
+        const buffer = await downloadTelegramDocument(photo.file_id);
+        stored = await storeOnboardingFile(userId, "avatar", `${photo.file_unique_id || photo.file_id}.jpg`, buffer, {
+          telegram_file_id: photo.file_id,
+        });
+      } else if ((msg.voice || msg.audio) && step === "voice") {
+        const media = msg.voice || msg.audio;
+        const buffer = await downloadTelegramDocument(media.file_id);
+        stored = await storeOnboardingFile(userId, "voice", `${media.file_unique_id || media.file_id}.ogg`, buffer, {
+          telegram_file_id: media.file_id,
+          duration: media.duration,
+        });
+      } else if (msg.text && ["knowledge", "style"].includes(step)) {
+        stored = await storeOnboardingText(userId, step, msg.text.trim(), { source: "telegram_text_or_link" });
+      }
+    } catch (error) {
+      console.warn("Onboarding upload failed:", error.message);
+      await bot.sendMessage(chatId, [
+        "Материал не удалось скачать из Telegram.",
+        friendlyErrorMessage(error, "extraction"),
+        "Попробуйте отправить файл ещё раз или вставьте текст сообщением.",
+      ].join("\n"), onboardingControls(step));
+      return true;
     }
 
     if (!stored) {
@@ -1608,10 +1851,12 @@ async function handleExpertOnboardingMessage(msg, state) {
     const count = after.counts[step] ?? before.counts[step] ?? 0;
     let quality = null;
     if (["knowledge", "style"].includes(step)) {
+      const progress = await bot.sendMessage(chatId, "✅ Материалы получены\n⏳ Анализирую качество и полезные сигналы...");
       quality = await analyzeOnboardingMaterial(openai, userId, stored, step).catch((error) => {
         console.warn("Material quality analysis failed:", error.message);
         return null;
       });
+      await bot.deleteMessage(chatId, progress.message_id).catch(() => {});
     }
     await bot.sendMessage(chatId, `${buildUploadVisibilityText(step, stored, count)}${buildMaterialQualityText(quality, step)}`, onboardingControls(step));
     return true;
@@ -1658,10 +1903,12 @@ async function sendExpertDashboard(chatId, userId = chatId) {
   const statusLabel = inventory.profile?.status === "completed" ? "готов к генерации" : "онбординг не завершён";
   const runtime = await loadExpertRuntime(userId);
   const runtimeText = buildRuntimeCounterText(runtime);
+  const readiness = await buildReadinessScore(userId);
   await bot.sendMessage(chatId,
     `AI-эксперт: ${name}\n` +
     `Статус: ${statusLabel}\n` +
     `Активный сценарий: ${activeScenario?.label || "не выбран"}\n\n` +
+    `${buildReadinessSummaryText(readiness)}\n\n` +
     `Сценарии: ${inventory.scenarios.length}\n` +
     `Материалы: ${inventory.counts.knowledge}\n` +
     `Примеры стиля: ${inventory.counts.style}\n` +
@@ -2034,6 +2281,10 @@ async function handleKnowledgeIntakeMessage(msg) {
   }
 
   if (msg.document) {
+    if (Number(msg.document.file_size || 0) > ABUSE_LIMITS.maxUploadBytes) {
+      await bot.sendMessage(chatId, uploadRejectionText("file_too_large"), KNOWLEDGE_INTAKE_ACTIONS);
+      return true;
+    }
     const buffer = await downloadTelegramDocument(msg.document.file_id);
     const updated = await addFileItem(session, msg.document.file_name || "telegram_document", buffer);
     await bot.sendMessage(
@@ -2046,6 +2297,10 @@ async function handleKnowledgeIntakeMessage(msg) {
 
   if (msg.text) {
     const text = msg.text.trim();
+    if (text.length > ABUSE_LIMITS.maxTextUploadChars) {
+      await bot.sendMessage(chatId, uploadRejectionText("text_too_large"), KNOWLEDGE_INTAKE_ACTIONS);
+      return true;
+    }
     const updated = isUrlText(text)
       ? await addUrlItem(session, text)
       : await addTextItem(session, text);
@@ -2957,7 +3212,10 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       productionVersion: null,
     };
   } else if (scenario === "sexologist") {
-    const retrieval = await retrieveGroundingContext(topic, "sexologist");
+    const retrieval = await retrieveGroundingContext(topic, "sexologist").catch((error) => {
+      console.warn("Production retrieval failed:", error.message);
+      return null;
+    });
     if (retrieval?.context) {
       context = retrieval.context;
       retrievalMeta = {
@@ -3142,6 +3400,11 @@ async function sendGeneratedText(chatId, text, scenario) {
   const scenarioLabel = state.demoMode && state.demoTemplateKey
     ? `⚡ Demo: ${STARTER_EXPERT_TEMPLATES[state.demoTemplateKey]?.label || "AI-эксперт"}`
     : await getScenarioLabel(chatId, scenario);
+  const runtime = await loadExpertRuntime(chatId).catch(() => normalizeExpertRuntime());
+  const remaining = runtimeRemaining(runtime, "text");
+  const progressLine = remaining !== null
+    ? `\n\nОсталось бесплатных генераций: ${remaining}/${runtime.limits?.text ?? "∞"}`
+    : "";
   const answerId = state.lastAnswerId || createAnswerId();
   state.lastAnswerId = answerId;
   userState.set(chatId, state);
@@ -3156,7 +3419,7 @@ async function sendGeneratedText(chatId, text, scenario) {
     ? [[{ text: "⚡ Создать такого эксперта себе", callback_data: `ob_template:${state.demoTemplateKey || "psychologist"}` }]]
     : [];
 
-  await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
+  await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*${progressLine}\n\nЧто дальше?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
       ...demoRows,
@@ -3165,6 +3428,7 @@ async function sendGeneratedText(chatId, text, scenario) {
       ...shareExpertKeyboard(),
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
+      [{ text: "👤 Улучшить AI-эксперта", callback_data: "ob_dashboard" }],
       [{ text: "✅ Текст готов", callback_data: "txt_ready" }],
     ]},
   });
@@ -3456,6 +3720,10 @@ bot.on("message", async (msg) => {
     }
 
     if (state.usingPreset) {
+      if (text.length > ABUSE_LIMITS.maxTopicChars) {
+        await bot.sendMessage(chatId, "Тема слишком длинная для генерации. Сформулируйте её в 1-3 предложениях.");
+        return;
+      }
       const s = userState.get(chatId) || {};
       s.pendingTopic = text;
       s.usingPreset = false;
@@ -3465,6 +3733,10 @@ bot.on("message", async (msg) => {
     }
 
     if (state.pendingScenario && !state.pendingTopic) {
+      if (text.length > ABUSE_LIMITS.maxTopicChars) {
+        await bot.sendMessage(chatId, "Тема слишком длинная. Напишите короткий запрос, а детали можно добавить через правку после первого варианта.");
+        return;
+      }
       const s = userState.get(chatId) || {};
       s.pendingTopic = text;
       s.pendingContentPreset = null;
@@ -3474,6 +3746,10 @@ bot.on("message", async (msg) => {
     }
 
     console.log("New topic:", text);
+    if (text.length > ABUSE_LIMITS.maxTopicChars) {
+      await bot.sendMessage(chatId, "Тема слишком длинная для первого шага. Напишите коротко: о чём пост и для кого.");
+      return;
+    }
     await sendScenarioChoice(chatId, text);
 
   } catch (error) {
@@ -4132,6 +4408,18 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "retry_generation") {
+      const s = userState.get(chatId) || {};
+      if (!s.pendingTopic && !s.lastTopic) {
+        await bot.sendMessage(chatId, "Тема не найдена. Напишите тему заново.");
+        return;
+      }
+      s.lastGenerationAt = 0;
+      userState.set(chatId, s);
+      await runGeneration(chatId, s.pendingScenario || s.lastScenario || "psychologist", s.pendingLengthMode || s.lastLengthMode || "normal", s.lastStyleKey || "auto");
+      return;
+    }
+
     if (data === "regen_txt") {
       if (!state.lastTopic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
       const s = userState.get(chatId) || {};
@@ -4155,6 +4443,7 @@ bot.on("callback_query", async (query) => {
     if (data.startsWith("pub:")) { await showFinalPost(chatId, data.replace("pub:", "")); return; }
 
     if (data.startsWith("rp:")) {
+      if (!(await guardMediaAction(chatId, "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4191,6 +4480,7 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data === "vid_again") {
+      if (!(await guardMediaAction(chatId, "видео"))) return;
       if (!state.lastImageUrl || !state.lastAudioUrl) { await bot.sendMessage(chatId, "Нет фото или аудио."); return; }
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, state.lastImageUrl, state.lastAudioUrl);
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
@@ -4200,6 +4490,7 @@ bot.on("callback_query", async (query) => {
     if (data === "audio_gen") { await sendAudioLengthChoice(chatId); return; }
 
     if (data === "audlen_short" || data === "audlen_long") {
+      if (!(await guardMediaAction(chatId, "аудио"))) return;
       const audioLength = data === "audlen_long" ? "long" : "short";
       const fullAnswer = state.lastFullAnswer;
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
@@ -4287,6 +4578,7 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("mv:")) {
+      if (!(await guardMediaAction(chatId, "видео"))) return;
       const videoCheck = await checkLimit(chatId, "video");
       if (!videoCheck.ok) {
         if (videoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4308,6 +4600,7 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data === "photo_topic") {
+      if (!(await guardMediaAction(chatId, "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4323,6 +4616,7 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, s);
       await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
     } else if (data === "photo_office") {
+      if (!(await guardMediaAction(chatId, "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4352,6 +4646,14 @@ bot.on("callback_query", async (query) => {
 
 async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "default") {
   const state = userState.get(chatId) || {};
+  const cooldown = checkCooldown(state, "lastGenerationAt", ABUSE_LIMITS.generationCooldownMs);
+  if (!cooldown.ok) {
+    await bot.sendMessage(chatId, `Генерация уже запущена недавно. Подождите ${cooldown.remainingSec} сек., чтобы не потерять результат.`);
+    return;
+  }
+  state.lastGenerationAt = nowMs();
+  userState.set(chatId, state);
+
   if (!state.demoMode) {
     const textCheck = await checkLimit(chatId, "text");
     if (!textCheck.ok) {
@@ -4381,56 +4683,93 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}${styleLabel}]\nТема: "${topic}"...`
   );
 
-  const feedbackNote = variant === "feedback" ? state.pendingGenerationNote || "" : "";
-  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote, chatId);
-  const fullAnswer = generation.text;
-  await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
+  try {
+    const feedbackNote = variant === "feedback" ? state.pendingGenerationNote || "" : "";
+    const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote, chatId);
+    const fullAnswer = generation.text;
+    await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
-  await incrementLimit(chatId, "text", scenario, lengthMode);
-  const runtimeAfterGeneration = await incrementExpertRuntime(chatId, "generate_text", {
-    counter: "text",
-    scenario,
-    lengthMode,
-    demoMode: state.demoMode || variant === "demo",
-  });
+    await incrementLimit(chatId, "text", scenario, lengthMode);
+    const runtimeAfterGeneration = await incrementExpertRuntime(chatId, "generate_text", {
+      counter: "text",
+      scenario,
+      lengthMode,
+      demoMode: state.demoMode || variant === "demo",
+    });
 
-  const s = userState.get(chatId) || {};
-  s.lastFullAnswer = fullAnswer;
-  s.lastTopic = topic;
-  s.lastScenario = scenario;
-  s.lastLengthMode = lengthMode;
-  s.lastStyleKey = generation.styleKey || styleKey;
-  s.lastContentPreset = s.pendingContentPreset || null;
-  s.lastAnswerId = createAnswerId();
-  s.lastRetrievalMeta = generation.retrieval;
-  s.lastAuthorVoiceMeta = generation.authorVoice;
-  s.lastQualityPass = generation.qualityPass;
-  s.lastGenerationVariant = generation.variant || variant;
-  s.firstGenerationBoostApplied = Boolean(generation.firstGenerationBoost);
-  s.firstGenerationBoost = false;
-  s.lastAudioUrl = null;
-  s.lastVideoUrl = null;
-  s.pendingVoices = [];
-  s.awaitingVoiceRecord = false;
-  s.pendingVoiceBuffer = null;
-  s.suggestedTracks = null;
-  if (variant === "feedback") s.pendingGenerationNote = null;
-  s.awaitingTextEdit = false;
-  userState.set(chatId, s);
+    const s = userState.get(chatId) || {};
+    s.lastFullAnswer = fullAnswer;
+    s.lastTopic = topic;
+    s.lastScenario = scenario;
+    s.lastLengthMode = lengthMode;
+    s.lastStyleKey = generation.styleKey || styleKey;
+    s.lastContentPreset = s.pendingContentPreset || null;
+    s.lastAnswerId = createAnswerId();
+    s.lastRetrievalMeta = generation.retrieval;
+    s.lastAuthorVoiceMeta = generation.authorVoice;
+    s.lastQualityPass = generation.qualityPass;
+    s.lastGenerationVariant = generation.variant || variant;
+    s.firstGenerationBoostApplied = Boolean(generation.firstGenerationBoost);
+    s.firstGenerationBoost = false;
+    s.lastAudioUrl = null;
+    s.lastVideoUrl = null;
+    s.pendingVoices = [];
+    s.awaitingVoiceRecord = false;
+    s.pendingVoiceBuffer = null;
+    s.suggestedTracks = null;
+    if (variant === "feedback") s.pendingGenerationNote = null;
+    s.awaitingTextEdit = false;
+    userState.set(chatId, s);
 
-  selectMusicTracks(fullAnswer).then(tracks => {
-    const cur = userState.get(chatId) || {};
-    cur.suggestedTracks = tracks;
-    userState.set(chatId, cur);
-  }).catch(() => {});
+    selectMusicTracks(fullAnswer).then(tracks => {
+      const cur = userState.get(chatId) || {};
+      cur.suggestedTracks = tracks;
+      userState.set(chatId, cur);
+    }).catch(() => {});
 
-  await sendGeneratedText(chatId, fullAnswer, scenario);
-  const remaining = runtimeRemaining(runtimeAfterGeneration, "text");
-  if (remaining !== null && (remaining <= 3 || state.demoMode || variant === "demo")) {
-    await bot.sendMessage(
-      chatId,
-      `Осталось бесплатных текстовых генераций: ${remaining}/${runtimeAfterGeneration.limits.text}.\nПремиум-доступ скоро появится, а пока можно продолжать тестировать AI-эксперта в этом лимите.`
-    );
+    await sendGeneratedText(chatId, fullAnswer, scenario);
+    const remaining = runtimeRemaining(runtimeAfterGeneration, "text");
+    if (remaining !== null && (remaining <= 3 || state.demoMode || variant === "demo")) {
+      await bot.sendMessage(
+        chatId,
+        [
+          `Осталось бесплатных текстовых генераций: ${remaining}/${runtimeAfterGeneration.limits.text}.`,
+          remaining <= 0
+            ? "Лимит закончился. Можно запросить расширение, а пока улучшить AI-эксперта материалами."
+            : "Чтобы следующий текст был сильнее, можно продолжить онбординг: добавить стиль, материалы или собрать своего AI-эксперта.",
+        ].join("\n"),
+        {
+          reply_markup: { inline_keyboard: [
+            [{ text: "👤 Продолжить онбординг", callback_data: "ob_dashboard" }],
+            [{ text: "📩 Запросить расширение", callback_data: "req_limit_text" }],
+          ]},
+        }
+      );
+    }
+  } catch (error) {
+    console.error("Generation failed:", error.message);
+    const s = userState.get(chatId) || {};
+    s.pendingTopic = topic;
+    s.pendingScenario = scenario;
+    s.pendingLengthMode = lengthMode;
+    s.lastGenerationFailedAt = new Date().toISOString();
+    s.firstGenerationBoost = false;
+    userState.set(chatId, s);
+    await bot.editMessageText([
+      "Генерация не завершилась.",
+      friendlyErrorMessage(error, "generation"),
+      "",
+      "Тема сохранена. Можно повторить или перейти в dashboard и усилить эксперта.",
+    ].join("\n"), {
+      chat_id: chatId,
+      message_id: genMsg.message_id,
+      reply_markup: { inline_keyboard: [
+        [{ text: "🔁 Повторить", callback_data: "retry_generation" }],
+        [{ text: "👤 Dashboard", callback_data: "ob_dashboard" }],
+      ]},
+    }).catch(async () => {
+      await bot.sendMessage(chatId, friendlyErrorMessage(error, "generation"));
+    });
   }
 }
 
