@@ -376,6 +376,125 @@ const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
 Не используй финалы: "поделитесь в комментариях", "сохраняйте пост", "помните, что вы достойны", "сделайте первый шаг к себе", "выберите себя", "начните путь к гармонии".
 Не делай много эмодзи, заголовки, нумерованные списки, академический тон, одинаковые абзацы.`;
 
+const STARTER_EXPERT_TEMPLATES = {
+  psychologist: {
+    label: "Психолог",
+    expertName: "Психолог",
+    roleKey: "psychologist",
+    worldview: [
+      "Человек не ломается просто так: симптомы часто защищают его от боли, стыда или перегруза.",
+      "Важнее не быстро починить себя, а сначала понять, что внутри пытается быть услышанным.",
+      "Терапевтичность звучит через бережную точность: не давить, не спасать, не обещать чудо.",
+    ],
+    openings: [
+      "Иногда человек приходит не за советом. А за тем, чтобы рядом наконец не спорили с его болью.",
+      "Есть состояния, в которых не хочется сильных слов. Хочется, чтобы кто-то сказал: с вами не что-то не так.",
+      "Знаете, что часто прячется за усталостью?",
+    ],
+    cadence: "Короткие абзацы по 1-3 предложения. Ритм: узнаваемое чувство -> пауза -> психологический смысл -> маленький бережный шаг. Можно оставлять одну короткую фразу отдельной строкой.",
+    emotionalStyle: "Тепло, интимно, наблюдательно. Меньше учительства, больше ощущения, что автора правда интересует внутренний мир читателя.",
+    ctaPatterns: [
+      "Можно сегодня просто заметить, где вы перестали быть на своей стороне.",
+      "Попробуйте спросить себя не 'что со мной не так?', а 'что сейчас во мне просит бережности?'.",
+      "Если откликнулось, сохраните это как маленькое разрешение не торопить себя.",
+    ],
+  },
+  sexologist: {
+    label: "Сексолог",
+    expertName: "Сексолог",
+    roleKey: "sexologist",
+    worldview: [
+      "Сексуальность не существует отдельно от тела, стыда, безопасности, отношений и права хотеть по-своему.",
+      "Норма шире, чем кажется, но любые рекомендации должны оставаться этичными, взрослыми и без давления.",
+      "Тема секса звучит сильнее, когда в ней есть спокойствие, ясность и уважение к границам.",
+    ],
+    openings: [
+      "Иногда разговор о сексе начинается не с желания. А с напряжения: 'со мной вообще нормально?'.",
+      "Есть вопросы, которые люди годами стесняются произнести вслух.",
+      "Давайте без стыда: желание не обязано быть одинаковым всегда.",
+    ],
+    cadence: "Спокойные абзацы, без пошлости и кликбейта. Ритм: снятие стыда -> нормализация -> профессиональное объяснение -> один безопасный ориентир.",
+    emotionalStyle: "Уверенно, деликатно, телесно, взрослым языком. Не сюсюкать, не шокировать, не превращать тему в медицинскую лекцию.",
+    ctaPatterns: [
+      "Можно начать с честного вопроса к себе: мне сейчас правда хочется или я пытаюсь соответствовать?",
+      "Если эта тема про вас, не торопитесь обвинять тело. Сначала посмотрите, где ему небезопасно.",
+      "Сохраните как напоминание: сексуальность не любит стыд и спешку.",
+    ],
+  },
+  coach: {
+    label: "Коуч",
+    expertName: "Коуч",
+    roleKey: "coach",
+    worldview: [
+      "Ясность появляется не от давления, а от честного выбора следующего маленького действия.",
+      "Ответственность не должна звучать как самонаказание. Она может быть спокойной опорой.",
+      "Рост держится на фокусе, энергии и уважении к реальному темпу человека.",
+    ],
+    openings: [
+      "Иногда человек застревает не потому, что ленится. А потому что цель давно перестала быть его.",
+      "Самый честный вопрос в развитии часто неприятный: а я правда этого хочу?",
+      "Есть решения, которые не требуют больше мотивации. Им нужна ясность.",
+    ],
+    cadence: "Четко и энергично: короткий хук -> разворот мысли -> 1 практический фокус -> спокойный вызов. Абзацы компактные, без длинных лекций.",
+    emotionalStyle: "Поддерживающе, собранно, без инфобизнес-нажима. Чувствуется взрослый партнер рядом, а не мотиватор со сцены.",
+    ctaPatterns: [
+      "Выберите один шаг, который можно сделать за 15 минут, и проверьте реальность, а не фантазию.",
+      "Сегодня не обещайте себе новую жизнь. Просто верните себе один управляемый выбор.",
+      "Запишите честно: что я делаю из желания, а что из страха отстать?",
+    ],
+  },
+  blogger: {
+    label: "Блогер",
+    expertName: "Блогер",
+    roleKey: "blogger",
+    worldview: [
+      "Личный бренд держится не на идеальности, а на узнаваемом взгляде и честной интонации.",
+      "Люди возвращаются к автору, когда чувствуют характер, позицию и живое наблюдение.",
+      "Контент должен звучать как человек, у которого есть вкус, опыт и своя оптика.",
+    ],
+    openings: [
+      "Есть мысль, которую я долго не могла нормально сформулировать.",
+      "Наблюдаю одну вещь, и она слишком часто повторяется, чтобы делать вид, что это случайность.",
+      "Иногда самый сильный контент начинается не с пользы, а с честного 'я тоже так делала'.",
+    ],
+    cadence: "Живой блоговый ритм: цепкий первый абзац -> личное наблюдение -> конкретная деталь -> вывод с характером. Можно использовать разговорные повороты.",
+    emotionalStyle: "Лично, современно, чуть смело, но без искусственной дерзости. Больше авторского взгляда, меньше универсальных советов.",
+    ctaPatterns: [
+      "Напишите себе одну фразу, которую вы обычно сглаживаете, и попробуйте сказать ее честнее.",
+      "Если узнали себя, это хороший момент пересобрать не контент, а позицию.",
+      "Сохраните как напоминание: узнаваемость начинается там, где вы перестаете звучать как все.",
+    ],
+  },
+};
+
+const STYLE_LOCK_FORBIDDEN_PATTERNS = [
+  "в современном мире",
+  "важно понимать",
+  "следует отметить",
+  "таким образом",
+  "данная тема",
+  "каждый из нас",
+  "не бойтесь",
+  "просто полюбите себя",
+  "работайте над собой",
+  "сделайте первый шаг",
+  "путь к гармонии",
+  "лучшая версия себя",
+];
+
+const GENERIC_QUALITY_PATTERNS = [
+  ...STYLE_LOCK_FORBIDDEN_PATTERNS,
+  "в заключение",
+  "подводя итог",
+  "помните, что",
+  "это нормально",
+  "вы достойны",
+  "гармоничные отношения",
+  "позитивное мышление",
+  "саморазвитие",
+  "раскрыть потенциал",
+];
+
 const DINARA_EXAMPLES_DIR = join(__dirname, "expert_profiles", "dinara", "examples");
 const DINARA_WORLDVIEW_DIR = join(__dirname, "expert_profiles", "dinara", "worldview");
 const DINARA_WORLDVIEW_FILES = [
@@ -527,6 +646,126 @@ function getContentPreset(id) {
 function buildContentPresetInstruction(presetId) {
   const preset = getContentPreset(presetId);
   return preset ? `\n\nCONTENT PRESET:\n${preset.instruction}` : "";
+}
+
+function compactList(items = [], fallback = "") {
+  const list = Array.isArray(items) ? items.filter(Boolean) : [];
+  return list.length ? list.map((item) => `- ${item}`).join("\n") : fallback;
+}
+
+function buildTemplateStyleLock(template) {
+  if (!template) return "";
+  return [
+    "STARTER TEMPLATE STYLE LOCK:",
+    `Role: ${template.label}`,
+    "",
+    "Worldview:",
+    compactList(template.worldview),
+    "",
+    "Openings to imitate structurally, not copy:",
+    compactList(template.openings),
+    "",
+    `Cadence: ${template.cadence}`,
+    `Emotional style: ${template.emotionalStyle}`,
+    "",
+    "CTA patterns:",
+    compactList(template.ctaPatterns),
+  ].join("\n");
+}
+
+function buildStyleLockPrompt({ userScenarioContext, scenario, template }) {
+  const scenarioLabel = template?.label || userScenarioContext?.scenario?.label || getBuiltInScenarioLabel(scenario);
+  return [
+    "STYLE LOCK — ОБЯЗАТЕЛЬНО ПЕРЕД ГЕНЕРАЦИЕЙ:",
+    `Пиши не как универсальный ассистент, а как конкретный эксперт: ${scenarioLabel}.`,
+    "",
+    "Зафиксируй 6 якорей голоса:",
+    "1. Tone: один узнаваемый эмоциональный тон на весь текст; не смешивай лекцию, мотивацию и продающий стиль.",
+    "2. Cadence: абзацы разной длины, живые паузы, 1-2 короткие строки отдельно; не делай ровную AI-структуру.",
+    "3. Paragraph rhythm: сначала чувство/наблюдение, затем смысл, затем мягкий практический сдвиг. Не начинай с определения темы.",
+    "4. Emotional framing: читатель должен почувствовать «меня поняли» до того, как получит совет.",
+    "5. Openings: начинай с конкретного переживания, вопроса или наблюдения, а не с объяснения актуальности.",
+    "6. CTA style: финал тихий, человеческий, без давления; вопрос к себе или маленькое разрешение лучше прямого призыва.",
+    "",
+    "Forbidden patterns:",
+    compactList(STYLE_LOCK_FORBIDDEN_PATTERNS),
+    "",
+    "Если style guidance или template дают конкретные openings/cadence/CTA, они важнее общего блогового стиля.",
+    buildTemplateStyleLock(template),
+  ].filter(Boolean).join("\n");
+}
+
+function genericQualitySignals(text = "") {
+  const normalized = String(text || "").toLowerCase();
+  const paragraphs = String(text || "").split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const firstParagraph = paragraphs[0] || "";
+  const foundPatterns = GENERIC_QUALITY_PATTERNS.filter((pattern) => normalized.includes(pattern));
+  const avgParagraphLength = paragraphs.length
+    ? paragraphs.reduce((sum, p) => sum + p.length, 0) / paragraphs.length
+    : 0;
+  const longEvenParagraphs = paragraphs.length >= 3 && paragraphs.filter((p) => p.length > 260).length >= Math.ceil(paragraphs.length * 0.7);
+  const listLike = /^(\d+\.|[-•])\s/m.test(text);
+  const genericOpening = /^(сегодня|в этом посте|важно|многие люди|каждый из нас|тема|давайте поговорим)/i.test(firstParagraph);
+  const noPersonalPresence = !/(иногда|знаете|мне хочется|я часто вижу|внутри|тело|стыд|страх|устал|больно|можно|попробуйте)/i.test(text);
+  const score =
+    foundPatterns.length * 2 +
+    (genericOpening ? 3 : 0) +
+    (listLike ? 2 : 0) +
+    (longEvenParagraphs ? 2 : 0) +
+    (avgParagraphLength > 360 ? 1 : 0) +
+    (noPersonalPresence ? 2 : 0);
+  return {
+    tooGeneric: score >= 4,
+    score,
+    foundPatterns,
+    reasons: [
+      ...(genericOpening ? ["generic opening"] : []),
+      ...(listLike ? ["list-like structure"] : []),
+      ...(longEvenParagraphs ? ["even long paragraphs"] : []),
+      ...(noPersonalPresence ? ["weak emotional presence"] : []),
+      ...foundPatterns.map((pattern) => `generic phrase: ${pattern}`),
+    ].slice(0, 8),
+  };
+}
+
+async function rewriteGenericPostOnce({ text, topic, context, lengthInstruction, systemPrompt, contentPresetInstruction, styleLockPrompt, maxTokens }) {
+  const quality = genericQualitySignals(text);
+  if (!quality.tooGeneric) return { text, quality, rewritten: false };
+
+  const rewrite = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: [systemPrompt, styleLockPrompt].filter(Boolean).join("\n\n") },
+      {
+        role: "user",
+        content: [
+          `Тема: "${topic}"`,
+          "",
+          `Контекст:\n${context}`,
+          "",
+          `${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}`,
+          "",
+          "ANTI-GENERIC REWRITE PASS:",
+          `Текущий текст слишком общий. Сигналы: ${quality.reasons.join("; ") || "generic drift"}.`,
+          "Перепиши один раз целиком: больше авторского присутствия, конкретного переживания, неровного живого ритма и мягкого финала.",
+          "Не добавляй списки, заголовки, канцелярит, мотивационные лозунги и универсальные выводы.",
+          "",
+          "Текст для переписывания:",
+          text,
+        ].join("\n"),
+      },
+    ],
+    temperature: 0.74,
+    max_tokens: maxTokens,
+  });
+
+  const rewrittenText = humanizeGeneratedPostText(rewrite.choices[0].message.content);
+  return {
+    text: rewrittenText,
+    quality: genericQualitySignals(rewrittenText),
+    rewritten: true,
+    firstPassQuality: quality,
+  };
 }
 
 function getPresets(chatId) {
@@ -966,7 +1205,138 @@ async function startExpertOnboarding(chatId, fromUserId) {
     data: {},
   };
   userState.set(chatId, s);
-  await bot.sendMessage(chatId, "Создадим AI-эксперта. Напишите имя эксперта или бренда:");
+  await bot.sendMessage(chatId,
+    "Создадим AI-эксперта.\n\nСамый быстрый путь: выбрать готовый шаблон и сразу получить первый пост. Если хотите собрать с нуля — напишите имя эксперта или бренда.",
+    { reply_markup: { inline_keyboard: [
+      [{ text: "⚡ Start with template expert", callback_data: "ob_template_menu" }],
+      [{ text: "📝 Собрать с нуля", callback_data: "ob_custom_name" }],
+    ]}}
+  );
+}
+
+function starterTemplateRows(prefix = "ob_template") {
+  return [
+    [
+      { text: "🧠 Психолог", callback_data: `${prefix}:psychologist` },
+      { text: "💜 Сексолог", callback_data: `${prefix}:sexologist` },
+    ],
+    [
+      { text: "🎯 Коуч", callback_data: `${prefix}:coach` },
+      { text: "✨ Блогер", callback_data: `${prefix}:blogger` },
+    ],
+  ];
+}
+
+async function sendStarterTemplateMenu(chatId, mode = "onboarding") {
+  const prefix = mode === "demo" ? "demo_template" : "ob_template";
+  const text = mode === "demo"
+    ? "Выберите готового AI-эксперта и сразу сгенерируем демо-пост:"
+    : "Выберите стартовый шаблон. Я создам AI-эксперта без загрузок, а материалы можно будет добавить позже:";
+  await bot.sendMessage(chatId, text, {
+    reply_markup: { inline_keyboard: [
+      ...starterTemplateRows(prefix),
+      ...(mode === "onboarding" ? [[{ text: "← Назад", callback_data: "ob_start" }]] : []),
+    ]},
+  });
+}
+
+function buildStarterProfileMarkdown(templateKey, template) {
+  return {
+    persona: [
+      `${template.label} с узнаваемым голосом для Telegram/Instagram.`,
+      "",
+      "Главное ощущение в тексте: читатель быстро думает «это про меня» и чувствует не generic advice, а живого эксперта рядом.",
+      "Не придумывать биографию, дипломы, личные кейсы и факты. Держаться роли, темы и выбранной интонации.",
+    ].join("\n"),
+    worldview: [
+      `Starter template: ${templateKey}`,
+      "",
+      ...template.worldview.map((item) => `- ${item}`),
+    ].join("\n"),
+    style_guidance: [
+      "STYLE LOCK",
+      "",
+      `Tone: ${template.emotionalStyle}`,
+      `Cadence: ${template.cadence}`,
+      "",
+      "Openings:",
+      ...template.openings.map((item) => `- ${item}`),
+      "",
+      "CTA style:",
+      ...template.ctaPatterns.map((item) => `- ${item}`),
+      "",
+      "Forbidden:",
+      ...STYLE_LOCK_FORBIDDEN_PATTERNS.map((item) => `- ${item}`),
+    ].join("\n"),
+    style_examples: [
+      "Use these as structural examples, not phrases to copy:",
+      "",
+      ...template.openings.map((opening, index) => `${index + 1}. ${opening}\n\n${template.worldview[index % template.worldview.length]}\n\n${template.ctaPatterns[index % template.ctaPatterns.length]}`),
+    ].join("\n\n"),
+    material_quality: [
+      "Starter template expert.",
+      "Knowledge uploads: weak yet.",
+      "Style learning: template-based.",
+      "Recommendation: add 3-5 real posts later to make the voice more personal.",
+    ].join("\n"),
+  };
+}
+
+async function createStarterExpertFromTemplate(userId, templateKey, expertName = null) {
+  const template = STARTER_EXPERT_TEMPLATES[templateKey] || STARTER_EXPERT_TEMPLATES.blogger;
+  const root = await ensureUserExpertFolders(userId);
+  const name = expertName || template.expertName;
+  const scenario = await createUserScenario(userId, template.roleKey, {
+    expertName: name,
+    title: template.label,
+    scenarioId: templateKey,
+    systemPrompt: [
+      `Ты — ${name}, AI-эксперт в роли "${template.label}".`,
+      "Пиши посты на русском для Telegram/Instagram.",
+      "Главный критерий: текст должен звучать как конкретный живой эксперт, а не как универсальный GPT-пост.",
+      "Не выдумывай биографию, дипломы, клиентов и личные факты.",
+      "Опирайся на starter worldview, openings, cadence, emotional style и CTA patterns из profile drafts.",
+    ].join("\n"),
+  });
+  const profile = {
+    user_id: String(userId),
+    expert_name: name,
+    status: "completed",
+    starter_template: templateKey,
+    active_scenario_id: scenario.id,
+    updated_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+  };
+  await saveUserProfile(userId, profile);
+  const drafts = buildStarterProfileMarkdown(templateKey, template);
+  await fs.writeFile(join(root, "profile", "persona.md"), drafts.persona, "utf-8");
+  await fs.writeFile(join(root, "profile", "worldview.md"), drafts.worldview, "utf-8");
+  await fs.writeFile(join(root, "profile", "style_guidance.md"), drafts.style_guidance, "utf-8");
+  await fs.writeFile(join(root, "profile", "style_examples.md"), drafts.style_examples, "utf-8");
+  await fs.writeFile(join(root, "profile", "material_quality.md"), drafts.material_quality, "utf-8");
+  return { profile, scenario, template };
+}
+
+async function startDemoMode(chatId, templateKey = "psychologist") {
+  const template = STARTER_EXPERT_TEMPLATES[templateKey] || STARTER_EXPERT_TEMPLATES.psychologist;
+  const s = userState.get(chatId) || {};
+  s.demoMode = true;
+  s.demoTemplateKey = templateKey;
+  s.pendingScenario = templateKey === "sexologist" ? "sexologist" : "psychologist";
+  s.pendingTopic = templateKey === "sexologist"
+    ? "как перестать стыдиться своего желания"
+    : templateKey === "coach"
+      ? "почему я много планирую и не начинаю"
+      : templateKey === "blogger"
+        ? "как перестать звучать как все"
+        : "почему я всё понимаю, но не могу перестать тревожиться";
+  s.pendingLengthMode = "normal";
+  s.pendingContentPreset = "emotional";
+  userState.set(chatId, s);
+  await bot.sendMessage(chatId,
+    `⚡ Demo mode: ${template.label}\n\nСейчас сгенерирую готовый пост без онбординга. После этого можно будет создать такого же эксперта под себя.`
+  );
+  await runGeneration(chatId, s.pendingScenario, "normal", "auto", "demo");
 }
 
 async function startAddScenario(chatId, fromUserId) {
@@ -1201,6 +1571,7 @@ async function sendTopicMenu(chatId) {
   state.userScenarioMenu = userScenarios.map((scenario) => scenario.id);
   userState.set(chatId, state);
   const keyboard = [
+    [{ text: "⚡ Демо за 1 минуту", callback_data: "demo_start" }],
     [
       { text: "🧠 Психолог Динара", callback_data: "sc_psych" },
       { text: "💜 Сексолог Динара", callback_data: "sc_sex" },
@@ -1223,7 +1594,8 @@ async function sendTopicMenu(chatId) {
     }
     keyboard.push([{ text: "👤 Expert dashboard", callback_data: "ob_dashboard" }]);
   }
-  keyboard.push([{ text: "➕ Создать AI-эксперта", callback_data: "ob_start" }]);
+  keyboard.push([{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }]);
+  keyboard.push([{ text: "➕ Создать AI-эксперта с нуля", callback_data: "ob_start" }]);
   await bot.sendMessage(chatId, `🌟 *С чего начнём?*\n\nВыберите сценарий:`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: keyboard },
@@ -2168,6 +2540,9 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   let retrievalMeta = null;
   const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
   const userScenarioContext = chatId ? await buildUserScenarioContext(chatId, scenario, topic) : null;
+  const runtimeState = chatId ? (userState.get(chatId) || {}) : {};
+  const starterTemplateKey = userScenarioContext?.profile?.starter_template || runtimeState.demoTemplateKey || null;
+  const starterTemplate = starterTemplateKey ? STARTER_EXPERT_TEMPLATES[starterTemplateKey] : null;
 
   if (userScenarioContext?.scenario) {
     context = userScenarioContext.context;
@@ -2247,8 +2622,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const fewShotPrompt = userScenarioContext?.scenario ? "" : await buildDinaraFewShotPrompt(topic);
   const worldviewPrompt = userScenarioContext?.scenario ? "" : await buildDinaraWorldviewPrompt();
   const realismPrompt = userScenarioContext?.scenario ? "" : DINARA_REALISM_PROMPT;
-  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
-  const runtimeState = chatId ? (userState.get(chatId) || {}) : {};
+  const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate });
+  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt].filter(Boolean).join("\n\n");
   const contentPresetInstruction = buildContentPresetInstruction(runtimeState.pendingContentPreset || runtimeState.lastContentPreset);
 
   const completion = await openai.chat.completions.create({
@@ -2261,8 +2636,20 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     max_tokens: maxTokens,
   });
 
+  const firstPassText = humanizeGeneratedPostText(completion.choices[0].message.content);
+  const qualityPass = await rewriteGenericPostOnce({
+    text: firstPassText,
+    topic,
+    context,
+    lengthInstruction,
+    systemPrompt,
+    contentPresetInstruction,
+    styleLockPrompt,
+    maxTokens,
+  });
+
   return {
-    text: humanizeGeneratedPostText(completion.choices[0].message.content),
+    text: qualityPass.text,
     retrieval: retrievalMeta,
     authorVoice: {
       enabled: authorVoice.enabled,
@@ -2273,6 +2660,12 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     styleKey: normalizedStyleKey,
     lengthMode,
     variant,
+    qualityPass: {
+      rewritten: qualityPass.rewritten,
+      score: qualityPass.quality?.score,
+      reasons: qualityPass.quality?.reasons || [],
+      firstPassScore: qualityPass.firstPassQuality?.score,
+    },
   };
 }
 
@@ -2326,8 +2719,10 @@ async function generateAudioText(fullAnswer, audioLength = "short") {
 }
 
 async function sendGeneratedText(chatId, text, scenario) {
-  const scenarioLabel = await getScenarioLabel(chatId, scenario);
   const state = userState.get(chatId) || {};
+  const scenarioLabel = state.demoMode && state.demoTemplateKey
+    ? `⚡ Demo: ${STARTER_EXPERT_TEMPLATES[state.demoTemplateKey]?.label || "AI-эксперт"}`
+    : await getScenarioLabel(chatId, scenario);
   const answerId = state.lastAnswerId || createAnswerId();
   state.lastAnswerId = answerId;
   userState.set(chatId, state);
@@ -2336,9 +2731,14 @@ async function sendGeneratedText(chatId, text, scenario) {
     await bot.sendMessage(chatId, text);
   });
 
+  const demoRows = state.demoMode
+    ? [[{ text: "⚡ Создать такого эксперта себе", callback_data: `ob_template:${state.demoTemplateKey || "psychologist"}` }]]
+    : [];
+
   await bot.sendMessage(chatId, `Сгенерировано: *${scenarioLabel}*\n\nЧто дальше?`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
+      ...demoRows,
       ...feedbackKeyboard(answerId),
       [
         { text: "🌿 Мягче", callback_data: "regen:softer" },
@@ -2410,8 +2810,10 @@ bot.onText(/\/start/, async (msg) => {
     );
   } else {
     await bot.sendMessage(chatId,
-      "Добро пожаловать. Можно создать своего AI-эксперта прямо здесь: загрузить материалы, стиль, фото и голос.",
+      "Добро пожаловать. Можно сначала попробовать готового AI-эксперта за минуту, а потом собрать своего под ваш голос.",
       { reply_markup: { inline_keyboard: [
+        [{ text: "⚡ Попробовать демо сейчас", callback_data: "demo_start" }],
+        [{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }],
         [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
         [{ text: "У меня уже есть доступ", callback_data: "show_help" }],
       ]}}
@@ -2423,6 +2825,10 @@ bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
 
 bot.onText(/\/onboard/, async (msg) => {
   await startExpertOnboarding(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/demo/, async (msg) => {
+  await sendStarterTemplateMenu(msg.chat.id, "demo");
 });
 
 bot.onText(/\/my_expert/, async (msg) => {
@@ -2763,6 +3169,60 @@ bot.on("callback_query", async (query) => {
 
     if (data === "ob_start") {
       await startExpertOnboarding(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data === "ob_custom_name") {
+      const s = userState.get(chatId) || {};
+      s.expertOnboarding = {
+        userId: query.from?.id || chatId,
+        mode: "create_expert",
+        step: "name",
+        data: {},
+      };
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId, "Напишите имя эксперта или бренда:");
+      return;
+    }
+
+    if (data === "ob_template_menu") {
+      await sendStarterTemplateMenu(chatId, "onboarding");
+      return;
+    }
+
+    if (data === "demo_start") {
+      await sendStarterTemplateMenu(chatId, "demo");
+      return;
+    }
+
+    if (data.startsWith("demo_template:")) {
+      await startDemoMode(chatId, data.replace("demo_template:", ""));
+      return;
+    }
+
+    if (data.startsWith("ob_template:")) {
+      const templateKey = data.replace("ob_template:", "");
+      const s = userState.get(chatId) || {};
+      const userId = query.from?.id || chatId;
+      const { scenario, template } = await createStarterExpertFromTemplate(userId, templateKey);
+      s.expertOnboarding = null;
+      s.demoMode = false;
+      s.demoTemplateKey = null;
+      s.pendingScenario = scenario.id;
+      s.pendingTopic = templateKey === "sexologist"
+        ? "как перестать стыдиться своего желания"
+        : templateKey === "coach"
+          ? "почему я много планирую и не начинаю"
+          : templateKey === "blogger"
+            ? "как перестать звучать как все"
+            : "почему я всё понимаю, но не могу перестать тревожиться";
+      s.pendingLengthMode = "normal";
+      s.pendingContentPreset = "emotional";
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId,
+        `✅ Шаблон "${template.label}" создан.\n\nСейчас покажу первый пост сразу, а стиль и материалы можно усилить позже.`
+      );
+      await runGeneration(chatId, scenario.id, "normal", "auto");
       return;
     }
 
@@ -3354,19 +3814,23 @@ bot.on("callback_query", async (query) => {
 // ─── ГЕНЕРАЦИЯ ────────────────────────────────────────────────────────────────
 
 async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "default") {
-  const textCheck = await checkLimit(chatId, "text");
-  if (!textCheck.ok) {
-    if (textCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
-    if (textCheck.reason === "expired") { await handleExpired(chatId, textCheck.user); return; }
-    await handleLimitExhausted(chatId, "text", textCheck.user); return;
+  const state = userState.get(chatId) || {};
+  if (!state.demoMode) {
+    const textCheck = await checkLimit(chatId, "text");
+    if (!textCheck.ok) {
+      if (textCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
+      if (textCheck.reason === "expired") { await handleExpired(chatId, textCheck.user); return; }
+      await handleLimitExhausted(chatId, "text", textCheck.user); return;
+    }
   }
 
-  const state = userState.get(chatId) || {};
   const topic = state.pendingTopic || state.lastTopic;
   if (!topic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
 
   const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
-  const scenarioLabel = await getScenarioLabel(chatId, scenario);
+  const scenarioLabel = state.demoMode && state.demoTemplateKey
+    ? `⚡ Demo: ${STARTER_EXPERT_TEMPLATES[state.demoTemplateKey]?.label || "AI-эксперт"}`
+    : await getScenarioLabel(chatId, scenario);
   const styleLabel = scenario === "sexologist" && styleKey !== "auto"
     ? ` · ${SEXOLOGIST_STYLE_META[styleKey]?.label || ""}` : "";
   const genMsg = await bot.sendMessage(chatId,
@@ -3391,6 +3855,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   s.lastAnswerId = createAnswerId();
   s.lastRetrievalMeta = generation.retrieval;
   s.lastAuthorVoiceMeta = generation.authorVoice;
+  s.lastQualityPass = generation.qualityPass;
   s.lastGenerationVariant = generation.variant || variant;
   s.lastAudioUrl = null;
   s.lastVideoUrl = null;
