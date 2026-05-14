@@ -2,7 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 
 const ROOT = process.cwd();
-const TELEMETRY_DIR = path.join(ROOT, "reports", "beta-telemetry");
+const RUNTIME_DATA_ROOT = process.env.RUNTIME_DATA_ROOT || ROOT;
+const TELEMETRY_DIR = process.env.BETA_TELEMETRY_DIR || path.join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry");
 
 function parseArgs(argv) {
   const args = { days: 7 };

@@ -4,6 +4,10 @@ import path from "path";
 const CAMPAIGN_STATE_SCHEMA_VERSION = "2026-05-13.campaign_memory_state.v1";
 const DEFAULT_HISTORY_LIMIT = 60;
 
+function runtimeRoot() {
+  return process.env.RUNTIME_DATA_ROOT || process.cwd();
+}
+
 function campaignMemoryDir(root, expertId) {
   return path.join(root, "storage", "campaign-memory", expertId);
 }
@@ -56,7 +60,7 @@ function createDefaultCampaignState(expertId = "dinara") {
   };
 }
 
-async function loadCampaignState(expertId = "dinara", { root = process.cwd(), initialize = true } = {}) {
+async function loadCampaignState(expertId = "dinara", { root = runtimeRoot(), initialize = true } = {}) {
   const target = campaignStatePath(root, expertId);
   const stored = await readJson(target, null);
   if (stored) {
@@ -76,7 +80,7 @@ async function loadCampaignState(expertId = "dinara", { root = process.cwd(), in
   };
 }
 
-async function saveCampaignState(expertId, state, { root = process.cwd() } = {}) {
+async function saveCampaignState(expertId, state, { root = runtimeRoot() } = {}) {
   const target = campaignStatePath(root, expertId);
   const next = {
     ...state,
@@ -92,7 +96,7 @@ async function saveCampaignState(expertId, state, { root = process.cwd() } = {})
   return target;
 }
 
-async function resetCampaignState(expertId = "dinara", { root = process.cwd() } = {}) {
+async function resetCampaignState(expertId = "dinara", { root = runtimeRoot() } = {}) {
   const state = createDefaultCampaignState(expertId);
   await saveCampaignState(expertId, state, { root });
   return state;

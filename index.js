@@ -8,6 +8,7 @@ import { tmpdir } from "os";
 import { basename, join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
+import { randomUUID } from "crypto";
 import {
   addFileItem,
   addTextItem,
@@ -43,7 +44,7 @@ import {
 } from "./expert-onboarding.js";
 let ffmpegPath = "ffmpeg";
 try {
-  ffmpegPath = execSync(process.platform === "win32" ? "where ffmpeg" : "which ffmpeg").toString().split(/\r?\n/)[0].trim();
+  ffmpegPath = execSync(process.platform === "win32" ? "where ffmpeg" : "which ffmpeg", { stdio: ["ignore", "pipe", "ignore"] }).toString().split(/\r?\n/)[0].trim();
   console.log("ffmpeg available");
 } catch(e) {
   console.warn("ffmpeg not found; audio mixing will fall back to voice-only:", e.message);
@@ -55,7 +56,14 @@ ffmpeg.setFfmpegPath(ffmpegPath);
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 
-const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
+const NODE_ENV = process.env.NODE_ENV || "development";
+const RUNTIME_MODE = (process.env.RUNTIME_MODE || process.env.APP_ENV || (NODE_ENV === "production" ? "production" : "development")).toLowerCase();
+const IS_BETA_RUNTIME = ["beta", "staging", "railway-beta"].includes(RUNTIME_MODE);
+const RUNTIME_NAME = process.env.RUNTIME_NAME || (IS_BETA_RUNTIME ? "mvp-content-api-beta" : "mvp-content-api");
+const RUNTIME_DATA_ROOT = process.env.RUNTIME_DATA_ROOT || (IS_BETA_RUNTIME ? join(__dirname, "runtime-data", "beta") : __dirname);
+const TELEGRAM_TOKEN = IS_BETA_RUNTIME
+  ? process.env.TELEGRAM_BETA_TOKEN
+  : (process.env.TELEGRAM_TOKEN || process.env.TELEGRAM_BETA_TOKEN);
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const FISH_AUDIO_API_KEY = process.env.FISH_AUDIO_API_KEY;
 const FISH_AUDIO_VOICE_ID = process.env.FISH_AUDIO_VOICE_ID;
@@ -69,12 +77,31 @@ const LEADS_BOT_TOKEN = process.env.LEADS_BOT_TOKEN;
 const TG_CHANNEL = process.env.TG_CHANNEL; // chat_id канала, напр. -1001234567890
 const FREESOUND_API_KEY = process.env.FREESOUND_API_KEY;
 const ADMIN_TG_ID = 109664871;
-const NODE_ENV = process.env.NODE_ENV || "development";
 const IS_PRODUCTION = NODE_ENV === "production";
+const DEBUG_LOGS = process.env.DEBUG_LOGS === "true" || (!IS_PRODUCTION && process.env.DEBUG_LOGS !== "false");
+const TELEGRAM_POLLING_ENABLED = process.env.TELEGRAM_POLLING !== "false";
 const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
 const STARTUP_WARNINGS = [];
+
+process.env.RUNTIME_DATA_ROOT = RUNTIME_DATA_ROOT;
+if (!process.env.USERS_ROOT) process.env.USERS_ROOT = join(RUNTIME_DATA_ROOT, "users");
+
+function safeLogValue(value) {
+  if (value === undefined || value === null || value === "") return value;
+  const text = String(value);
+  if (text.length <= 8) return "[set]";
+  return `${text.slice(0, 4)}...${text.slice(-4)}`;
+}
+
+function runtimeLog(...args) {
+  console.log(`[${RUNTIME_NAME}]`, ...args);
+}
+
+function debugLog(...args) {
+  if (DEBUG_LOGS) console.log(`[${RUNTIME_NAME}:debug]`, ...args);
+}
 
 function requireEnv(name) {
   if (!process.env[name]) throw new Error(`Missing required env var: ${name}`);
@@ -85,7 +112,14 @@ function warnOptionalEnv(name, feature) {
 }
 
 function validateRuntimeEnv() {
-  requireEnv("TELEGRAM_TOKEN");
+  if (IS_BETA_RUNTIME) {
+    requireEnv("TELEGRAM_BETA_TOKEN");
+    if (process.env.TELEGRAM_TOKEN && process.env.TELEGRAM_TOKEN === process.env.TELEGRAM_BETA_TOKEN) {
+      STARTUP_WARNINGS.push("TELEGRAM_TOKEN and TELEGRAM_BETA_TOKEN are identical; beta should use a separate Telegram bot token.");
+    }
+  } else {
+    requireEnv("TELEGRAM_TOKEN");
+  }
   requireEnv("OPENAI_API_KEY");
   warnOptionalEnv("SUPABASE_URL", "vector retrieval");
   warnOptionalEnv("SUPABASE_ANON_KEY", "vector retrieval");
@@ -101,8 +135,15 @@ function validateRuntimeEnv() {
 }
 
 validateRuntimeEnv();
+await fs.mkdir(RUNTIME_DATA_ROOT, { recursive: true });
+await Promise.all([
+  fs.mkdir(join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry"), { recursive: true }),
+  fs.mkdir(join(RUNTIME_DATA_ROOT, "reports", "runtime-preview"), { recursive: true }),
+  fs.mkdir(join(RUNTIME_DATA_ROOT, "users"), { recursive: true }),
+  fs.mkdir(join(RUNTIME_DATA_ROOT, "feedback_reports"), { recursive: true }),
+]);
 
-const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: TELEGRAM_POLLING_ENABLED });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 const articles = require("./articles.production.json");
 
@@ -110,8 +151,15 @@ const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-console.log(`Bot started (${NODE_ENV})`);
-console.log("Feature readiness:", {
+runtimeLog(`Bot started`, {
+  nodeEnv: NODE_ENV,
+  runtimeMode: RUNTIME_MODE,
+  polling: TELEGRAM_POLLING_ENABLED,
+  dataRoot: RUNTIME_DATA_ROOT,
+  usersRoot: process.env.USERS_ROOT,
+  telegramToken: safeLogValue(TELEGRAM_TOKEN),
+});
+runtimeLog("Feature readiness:", {
   supabase: Boolean(supabase),
   leadsBot: Boolean(LEADS_BOT_TOKEN),
   publishChannel: Boolean(TG_CHANNEL),
@@ -124,8 +172,8 @@ for (const warning of STARTUP_WARNINGS) console.warn(`[startup] ${warning}`);
 
 // ─── ДЕМО-ДОСТУП ─────────────────────────────────────────────────────────────
 
-const DEMO_DB_PATH = join(__dirname, "demo-users.json");
-const BETA_TELEMETRY_DIR = join(__dirname, "reports", "beta-telemetry");
+const DEMO_DB_PATH = process.env.DEMO_DB_PATH || join(RUNTIME_DATA_ROOT, "demo-users.json");
+const BETA_TELEMETRY_DIR = process.env.BETA_TELEMETRY_DIR || join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry");
 
 const BETA_EVENT_NAMES = {
   ONBOARDING_STARTED: "onboarding_started",
@@ -164,6 +212,7 @@ async function loadDemoDB() {
 }
 
 async function saveDemoDB(db) {
+  await fs.mkdir(dirname(DEMO_DB_PATH), { recursive: true });
   await fs.writeFile(DEMO_DB_PATH, JSON.stringify(db, null, 2), "utf-8");
 }
 
@@ -1436,7 +1485,7 @@ const ABUSE_LIMITS = {
   generationCooldownMs: 45_000,
   mediaCooldownMs: 20_000,
   uploadCooldownMs: 4_000,
-  maxUploadBytes: 12 * 1024 * 1024,
+  maxUploadBytes: Math.max(1, Number(process.env.MAX_UPLOAD_MB || 12)) * 1024 * 1024,
   maxTextUploadChars: 16_000,
   maxTopicChars: 500,
   maxUploadsPerHour: 20,
@@ -1537,7 +1586,7 @@ async function guardRuntimeQuotaForAction(chatId, limitType, label = "опера
 function uploadRejectionText(reason, details = {}) {
   if (reason === "hour_limit") return "Слишком много загрузок за короткое время. Давайте продолжим чуть позже, чтобы материалы не потерялись.";
   if (reason === "cooldown") return `Файл вижу. Подождите ${details.remainingSec || 3} сек. и отправьте ещё раз.`;
-  if (reason === "file_too_large") return "Файл слишком большой для быстрого онбординга. Лучше отправьте TXT/DOCX/PDF до 12 МБ или вставьте главный фрагмент текстом.";
+  if (reason === "file_too_large") return `Файл слишком большой для быстрого онбординга. Лучше отправьте TXT/DOCX/PDF до ${Math.round(ABUSE_LIMITS.maxUploadBytes / 1024 / 1024)} МБ или вставьте главный фрагмент текстом.`;
   if (reason === "text_too_large") return "Текст слишком длинный для одного сообщения. Разбейте его на 2-3 части или загрузите TXT/DOCX.";
   if (reason === "bad_extension") return "Этот формат сейчас не обрабатываю в онбординге. Подойдут TXT, DOCX, PDF, фото для аватара или аудио для голоса.";
   if (reason === "broken_link") return "Ссылка выглядит некорректно или слишком длинно. Пришлите обычную ссылку и, если можно, вставьте текст поста рядом.";
@@ -1587,7 +1636,7 @@ async function vectorSearch(query, scenario, limit = 5) {
       match_count: limit,
     });
     if (error) { console.error("Vector search error:", error.message); return null; }
-    if (!IS_PRODUCTION) console.log(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
+    debugLog(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
     return data;
   } catch (err) {
     console.error("Vector search failed:", err.message);
@@ -1676,10 +1725,10 @@ async function downloadTrack(url) {
 }
 
 async function mixAudioWithMusic(voiceBuffer, musicUrl) {
-  const tmp = tmpdir();
+  const tmp = await fs.mkdtemp(join(tmpdir(), "mvp-content-api-"));
   const voicePath = join(tmp, `voice_${Date.now()}.mp3`);
   const musicPath = join(tmp, `music_${Date.now()}.mp3`);
-  const outputPath = join(tmp, `mixed_${Date.now()}.mp3`);
+  const outputPath = join(tmp, `mixed_${Date.now()}_${randomUUID()}.mp3`);
   try {
     await fs.writeFile(voicePath, voiceBuffer);
     const musicBuffer = await downloadTrack(musicUrl).catch(e => { throw new Error(`Загрузка трека: ${e.message}`); });
@@ -1702,6 +1751,7 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
     await fs.unlink(voicePath).catch(() => {});
     await fs.unlink(musicPath).catch(() => {});
     await fs.unlink(outputPath).catch(() => {});
+    await fs.rm(tmp, { recursive: true, force: true }).catch(() => {});
   }
 }
 
@@ -3129,7 +3179,7 @@ function compactJson(value, limit = 900) {
 }
 
 function runtimePreviewReportDir() {
-  return join(process.cwd(), "reports", "runtime-preview");
+  return join(RUNTIME_DATA_ROOT, "reports", "runtime-preview");
 }
 
 function runtimePreviewFileStem() {
@@ -3598,7 +3648,7 @@ function createAnswerId() {
 
 function feedbackLogPath(authorId = process.env.AUTHOR_PROFILE_ID || "dinara") {
   const day = new Date().toISOString().slice(0, 10);
-  return join(process.cwd(), "feedback_reports", `${authorId}_feedback_${day}.jsonl`);
+  return join(RUNTIME_DATA_ROOT, "feedback_reports", `${authorId}_feedback_${day}.jsonl`);
 }
 
 async function appendFeedbackItem(item) {
@@ -4271,7 +4321,7 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
     await sendLongPlainText(chatId, [
       formatRuntimePreviewMessage(result, runtimeTopic, requestedMode),
       "",
-      `Local log: ${logPaths.mdPath.replace(process.cwd(), "").replace(/^[\\/]/, "")}`,
+      `Local log: ${logPaths.mdPath.replace(RUNTIME_DATA_ROOT, "").replace(/^[\\/]/, "")}`,
     ].join("\n"));
   } catch (err) {
     console.error("Runtime preview error:", err);
@@ -4448,7 +4498,7 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    if (!IS_PRODUCTION) console.log("New topic received", { chatId, length: text.length });
+    debugLog("New topic received", { chatId, length: text.length });
     if (text.length > ABUSE_LIMITS.maxTopicChars) {
       await bot.sendMessage(chatId, "Тема слишком длинная для первого шага. Напишите коротко: о чём пост и для кого.");
       return;
@@ -5258,7 +5308,7 @@ bot.on("callback_query", async (query) => {
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
       const genMsg = await bot.sendMessage(chatId, "⏳ Генерирую голос...");
       const audioText = await generateAudioText(fullAnswer, audioLength);
-      if (!IS_PRODUCTION) console.log(`Audio text prepared (${audioLength}): ${audioText.length} chars`);
+      debugLog(`Audio text prepared (${audioLength}): ${audioText.length} chars`);
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText);
       await incrementExpertRuntime(chatId, "generate_audio", { counter: "audio", scenario: state.lastScenario });
       await recordRuntimeCost(chatId, "audio", "fish_audio_tts", audioCost, { scenario: state.lastScenario, chars: audioText.length }).catch(() => {});
@@ -5580,5 +5630,9 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   }
 }
 
-process.on('uncaughtException', err => console.error('Uncaught:', err.message));
-process.on('unhandledRejection', err => console.error('Unhandled:', err));
+process.on("uncaughtException", (err) => {
+  console.error(`[${RUNTIME_NAME}] Uncaught:`, err?.message || err);
+});
+process.on("unhandledRejection", (err) => {
+  console.error(`[${RUNTIME_NAME}] Unhandled:`, err?.message || err);
+});

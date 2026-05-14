@@ -9,3 +9,5 @@ sources/sexologist/*.docx
 kb/sexologist/test-ingestion/*.jsonl
 kb/sexologist/test-ingestion/*.manifest.json
 users/
+runtime-data/
+feedback_reports/

@@ -4,7 +4,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "node start.js",
+    "start:bot": "node index.js",
     "index": "node scripts/indexer.js",
     "kb:ingest": "node knowledge_ingest.js",
     "kb:promote:dry": "node knowledge_promote.js --dry-run",
@@ -34,7 +35,8 @@
     "kb:test:ingest:dry": "node scripts/safe-cleaned-kb-ingest-test.js --dry-run",
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js",
     "verify:runtime-safety": "node scripts/verify-runtime-safety-gate.js",
-    "beta:telemetry": "node scripts/beta-telemetry-summary.js"
+    "beta:telemetry": "node scripts/beta-telemetry-summary.js",
+    "railway:check": "node scripts/verify-railway-runtime.js"
   },
   "engines": {
     "node": ">=18"

@@ -4,6 +4,10 @@ import path from "path";
 const STRATEGIC_MEMORY_SCHEMA_VERSION = "2026-05-13.strategic_memory_state.v1";
 const DEFAULT_HISTORY_LIMIT = 80;
 
+function runtimeRoot() {
+  return process.env.RUNTIME_DATA_ROOT || process.cwd();
+}
+
 function strategicMemoryDir(root, expertId) {
   return path.join(root, "storage", "strategy", expertId);
 }
@@ -71,7 +75,7 @@ function createDefaultStrategicState(expertId = "dinara") {
   };
 }
 
-async function loadStrategicState(expertId = "dinara", { root = process.cwd(), initialize = true } = {}) {
+async function loadStrategicState(expertId = "dinara", { root = runtimeRoot(), initialize = true } = {}) {
   const target = strategicStatePath(root, expertId);
   const stored = await readJson(target, null);
   if (stored) {
@@ -90,7 +94,7 @@ async function loadStrategicState(expertId = "dinara", { root = process.cwd(), i
   };
 }
 
-async function saveStrategicState(expertId, state, { root = process.cwd() } = {}) {
+async function saveStrategicState(expertId, state, { root = runtimeRoot() } = {}) {
   const target = strategicStatePath(root, expertId);
   const next = {
     ...state,
@@ -106,7 +110,7 @@ async function saveStrategicState(expertId, state, { root = process.cwd() } = {}
   return target;
 }
 
-async function resetStrategicState(expertId = "dinara", { root = process.cwd() } = {}) {
+async function resetStrategicState(expertId = "dinara", { root = runtimeRoot() } = {}) {
   const state = createDefaultStrategicState(expertId);
   await saveStrategicState(expertId, state, { root });
   return state;

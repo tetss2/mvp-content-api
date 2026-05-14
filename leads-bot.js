@@ -19,7 +19,11 @@ const LIMITS = {
 
 const SCOPES = ["Психолог", "Врач", "Инста-мама", "Другое"];
 
-const leadsBot = new TelegramBot(LEADS_TOKEN, { polling: true });
+if (!LEADS_TOKEN) {
+  throw new Error("Missing required env var: LEADS_BOT_TOKEN");
+}
+
+const leadsBot = new TelegramBot(LEADS_TOKEN, { polling: process.env.LEADS_TELEGRAM_POLLING !== "false" });
 const leadsState = new Map(); // chatId -> { step, name, city, scope, phone }
 
 console.log("Leads bot started");

@@ -4,9 +4,22 @@ import { fileURLToPath } from "url";
 import crypto from "crypto";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const USERS_PATH = join(__dirname, "data", "users.json");
-const INTAKE_ROOT = join(__dirname, "knowledge_intake");
-const SESSIONS_DIR = join(INTAKE_ROOT, "sessions");
+
+function runtimeRoot() {
+  return process.env.RUNTIME_DATA_ROOT || __dirname;
+}
+
+function usersPath() {
+  return process.env.USERS_DB_PATH || join(runtimeRoot(), "data", "users.json");
+}
+
+function intakeRoot() {
+  return process.env.KNOWLEDGE_INTAKE_ROOT || join(runtimeRoot(), "knowledge_intake");
+}
+
+function sessionsDir() {
+  return join(intakeRoot(), "sessions");
+}
 
 const TARGET_LABELS = {
   psychologist: "Психолог Динара",
@@ -30,14 +43,14 @@ function sanitizeName(name = "file") {
 }
 
 function localPathForManifest(path) {
-  return relative(__dirname, path).replace(/\\/g, "/");
+  return relative(runtimeRoot(), path).replace(/\\/g, "/");
 }
 
 async function ensureBaseDirs() {
-  await fs.mkdir(join(__dirname, "data"), { recursive: true });
-  await fs.mkdir(SESSIONS_DIR, { recursive: true });
+  await fs.mkdir(dirname(usersPath()), { recursive: true });
+  await fs.mkdir(sessionsDir(), { recursive: true });
   for (const target of Object.keys(TARGET_LABELS)) {
-    await fs.mkdir(join(INTAKE_ROOT, target, "incoming"), { recursive: true });
+    await fs.mkdir(join(intakeRoot(), target, "incoming"), { recursive: true });
   }
 }
 
@@ -48,10 +61,10 @@ export function getTargetLabel(targetKb) {
 export async function loadUsers() {
   await ensureBaseDirs();
   try {
-    return JSON.parse(await fs.readFile(USERS_PATH, "utf-8"));
+    return JSON.parse(await fs.readFile(usersPath(), "utf-8"));
   } catch {
     const initial = { admins: [], users: {} };
-    await fs.writeFile(USERS_PATH, JSON.stringify(initial, null, 2), "utf-8");
+    await fs.writeFile(usersPath(), JSON.stringify(initial, null, 2), "utf-8");
     return initial;
   }
 }
@@ -69,7 +82,7 @@ export async function canUseKnowledgeIntake(userId) {
 }
 
 function sessionPath(sessionId) {
-  return join(SESSIONS_DIR, `${sessionId}.json`);
+  return join(sessionsDir(), `${sessionId}.json`);
 }
 
 async function readSession(sessionId) {
@@ -97,16 +110,16 @@ export async function createIntakeSession(userId, targetKb) {
 }
 
 export function getIncomingDir(session) {
-  return join(INTAKE_ROOT, session.target_kb, "incoming", session.session_id);
+  return join(intakeRoot(), session.target_kb, "incoming", session.session_id);
 }
 
 export async function getActiveIntakeSession(userId) {
   await ensureBaseDirs();
-  const files = await fs.readdir(SESSIONS_DIR).catch(() => []);
+  const files = await fs.readdir(sessionsDir()).catch(() => []);
   const sessions = [];
   for (const file of files.filter((name) => name.endsWith(".json"))) {
     try {
-      const session = JSON.parse(await fs.readFile(join(SESSIONS_DIR, file), "utf-8"));
+      const session = JSON.parse(await fs.readFile(join(sessionsDir(), file), "utf-8"));
       if (
         String(session.user_id) === String(userId) &&
         ["collecting", "awaiting_confirmation"].includes(session.status)

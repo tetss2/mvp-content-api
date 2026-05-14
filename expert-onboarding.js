@@ -3,7 +3,11 @@ import { basename, extname, join } from "path";
 import pdfParse from "pdf-parse";
 import mammoth from "mammoth";
 
-const USERS_ROOT = join(process.cwd(), "users");
+function usersRoot() {
+  if (process.env.USERS_ROOT) return process.env.USERS_ROOT;
+  if (process.env.RUNTIME_DATA_ROOT) return join(process.env.RUNTIME_DATA_ROOT, "users");
+  return join(process.cwd(), "users");
+}
 
 export const ONBOARDING_ROLES = {
   psychologist: {
@@ -41,7 +45,7 @@ export function getUserId(rawUserId) {
 }
 
 export function getUserRoot(userId) {
-  return join(USERS_ROOT, getUserId(userId));
+  return join(usersRoot(), getUserId(userId));
 }
 
 export function slugifyScenario(value) {

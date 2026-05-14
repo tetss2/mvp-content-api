@@ -4,6 +4,10 @@ import path from "path";
 const PERSONA_MEMORY_SCHEMA_VERSION = "2026-05-13.persona_identity_memory.v1";
 const DEFAULT_HISTORY_LIMIT = 24;
 
+function runtimeRoot() {
+  return process.env.RUNTIME_DATA_ROOT || process.cwd();
+}
+
 function clamp(value, min = 0, max = 1) {
   const number = Number(value);
   if (!Number.isFinite(number)) return min;
@@ -81,7 +85,7 @@ function createDefaultPersonaMemory(expertId = "dinara") {
   };
 }
 
-async function loadPersonaMemory(expertId = "dinara", { root = process.cwd(), initialize = true } = {}) {
+async function loadPersonaMemory(expertId = "dinara", { root = runtimeRoot(), initialize = true } = {}) {
   const target = identityMemoryPath(root, expertId);
   const stored = await readJson(target, null);
   if (stored) {
@@ -103,7 +107,7 @@ async function loadPersonaMemory(expertId = "dinara", { root = process.cwd(), in
   };
 }
 
-async function savePersonaMemory(expertId, state, { root = process.cwd() } = {}) {
+async function savePersonaMemory(expertId, state, { root = runtimeRoot() } = {}) {
   const target = identityMemoryPath(root, expertId);
   const next = {
     ...state,

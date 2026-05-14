@@ -4,6 +4,10 @@ import path from "path";
 const EDITORIAL_MEMORY_SCHEMA_VERSION = "2026-05-13.editorial_memory.v1";
 const DEFAULT_HISTORY_LIMIT = 90;
 
+function runtimeRoot() {
+  return process.env.RUNTIME_DATA_ROOT || process.cwd();
+}
+
 function editorialMemoryDir(root, expertId) {
   return path.join(root, "storage", "editorial", expertId);
 }
@@ -75,7 +79,7 @@ function createDefaultEditorialState(expertId = "dinara") {
   };
 }
 
-async function loadEditorialState(expertId = "dinara", { root = process.cwd(), initialize = true } = {}) {
+async function loadEditorialState(expertId = "dinara", { root = runtimeRoot(), initialize = true } = {}) {
   const target = editorialStatePath(root, expertId);
   const stored = await readJson(target, null);
   if (stored) {
@@ -95,7 +99,7 @@ async function loadEditorialState(expertId = "dinara", { root = process.cwd(), i
   };
 }
 
-async function saveEditorialState(expertId, state, { root = process.cwd() } = {}) {
+async function saveEditorialState(expertId, state, { root = runtimeRoot() } = {}) {
   const target = editorialStatePath(root, expertId);
   const next = {
     ...state,
@@ -111,7 +115,7 @@ async function saveEditorialState(expertId, state, { root = process.cwd() } = {}
   return target;
 }
 
-async function resetEditorialState(expertId = "dinara", { root = process.cwd() } = {}) {
+async function resetEditorialState(expertId = "dinara", { root = runtimeRoot() } = {}) {
   const state = createDefaultEditorialState(expertId);
   await saveEditorialState(expertId, state, { root });
   return state;
