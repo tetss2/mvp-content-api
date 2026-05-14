@@ -1,33 +1,22 @@
 # Voice Generation Beta Readiness
 
-Minimal readiness layer for returning existing Fish Audio voice generation to the beta MVP.
+Minimal readiness layer for enabling existing Fish Audio voice generation for Dinara in the beta MVP.
 
-## Required ENV
+## Required ENV For Voice
 
-Voice generation needs:
+`/test_voice` and the existing AI audio flow require:
 
 ```env
 FISH_AUDIO_API_KEY=...
+```
+
+And one voice id source:
+
+```env
 FISH_AUDIO_VOICE_ID=...
 ```
 
-`FISH_AUDIO_VOICE_ID` is a fallback. If the active expert has `voiceProfileId` in `runtime_data/media_profiles.json`, that value is used instead.
-
-Cloudinary is optional for sending the generated voice back to Telegram, but needed when the existing audio-to-video path needs a hosted audio URL:
-
-```env
-CLOUDINARY_CLOUD=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-```
-
-`ffmpeg` should be installed on the runtime if audio + music mixing is used. If it is missing, the existing flow falls back to voice-only delivery.
-
-## Enable Voice For Dinara
-
-For Dinara, set one of these:
-
-1. Add a Fish Audio voice profile to `runtime_data/media_profiles.json`:
+`FISH_AUDIO_VOICE_ID` is only a fallback. The preferred beta route is to set Dinara's Fish Audio voice id in `runtime_data/media_profiles.json`:
 
 ```json
 {
@@ -40,13 +29,25 @@ For Dinara, set one of these:
 }
 ```
 
-2. Or set `FISH_AUDIO_VOICE_ID` in ENV.
-
-The runtime resolves voice in this order:
+Voice id resolution order:
 
 ```text
 media profile voiceProfileId -> FISH_AUDIO_VOICE_ID
 ```
+
+## Optional ENV
+
+Cloudinary is not required for `/test_voice` or for sending a generated mp3 back to Telegram.
+
+Cloudinary is required when the video pipeline needs a hosted audio URL:
+
+```env
+CLOUDINARY_CLOUD=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+```
+
+`ffmpeg` is not required for `/test_voice`. It is required only for voice + background music mixing. If `ffmpeg` is missing, the existing audio flow can still fall back to voice-only delivery.
 
 ## Check Status
 
@@ -61,37 +62,66 @@ The command reports:
 - voice enabled/disabled
 - Fish Audio key present yes/no
 - voiceProfileId present yes/no
+- voiceProfileId source: media profile, ENV, or missing
 - Cloudinary present yes/no
-- ffmpeg required/present yes/no
+- ffmpeg present yes/no
 - active expertId
 
-If Fish Audio configuration is missing, AI voice generation does not crash the bot. It responds:
+For `/test_voice`, only Fish Audio key plus voiceProfileId must be ready.
+
+## Test Dinara Voice
+
+Admin/full-access users can run:
 
 ```text
-Voice generation is not configured yet.
+/test_voice Привет, это тест голоса Динары
 ```
 
-## Current Scope
+The command:
 
-Implemented in this beta pass:
+- resolves the active `expertId`
+- loads the expert media profile
+- uses `mediaProfile.voiceProfileId` or falls back to `FISH_AUDIO_VOICE_ID`
+- calls the existing Fish Audio TTS function
+- sends an mp3 back to Telegram
+- does not spend generation limits
+- does not update the main text generation flow
 
-- reuse existing Fish Audio TTS function
-- reuse existing short audio text generation
-- reuse existing Cloudinary upload helper
-- reuse existing ffmpeg music mixing helper
-- resolve expert-specific `voiceProfileId` through `getMediaProfileForExpert(expertId)`
-- add safe readiness checks before AI voice generation
-- add `/voice_status`
+If ENV is missing, the bot explains which value is missing. If Fish Audio fails, the bot returns the provider error in a shortened admin-readable form.
 
-Not implemented in this pass:
+## If There Is No Voice ID
 
-- new Telegram UX buttons
-- payment flow
-- database migrations
+Add Dinara's Fish Audio voice id to `runtime_data/media_profiles.json` as `voiceProfileId`, or set `FISH_AUDIO_VOICE_ID` in ENV.
+
+Then run:
+
+```text
+/voice_status
+/test_voice Привет, это тест голоса Динары
+```
+
+## If Cloudinary Is Missing
+
+Voice mp3 testing still works.
+
+The current limitation is video/audio hosting: talking-head video generation needs a hosted audio URL, so configure Cloudinary before testing video paths. Do not treat missing Cloudinary as a blocker for beta voice mp3 validation.
+
+## Not Implemented Yet
+
+- voice profile creation from uploaded samples
+- automated Fish Audio voice cloning flow
+- persistent audio job queue or retry manager
+- payment integration
+- new Telegram UX for voice testing
 - image/video changes
-- voice cloning or profile creation from uploaded samples
-- persistent queueing or retry management for audio jobs
+- production/main deployment changes
 
-## Next Step
+## Beta Validation
 
-For real beta audio generation, configure `FISH_AUDIO_API_KEY` and either Dinara's `voiceProfileId` in `runtime_data/media_profiles.json` or `FISH_AUDIO_VOICE_ID` in ENV. Then run `/voice_status`, generate a text post, choose AI audio, and verify the bot returns an MP3 voice message.
+Run syntax checks before shipping:
+
+```bash
+node --check index.js
+node --check start.js
+node --check leads-bot.js
+```

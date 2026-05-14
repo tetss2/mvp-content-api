@@ -373,6 +373,28 @@ async function guardConfiguredVoiceGeneration(chatId) {
   return null;
 }
 
+function buildVoiceReadinessMissingText(readiness) {
+  const missing = [];
+  if (!readiness.fishAudioKeyPresent) missing.push("FISH_AUDIO_API_KEY");
+  if (!readiness.voiceProfileIdPresent) missing.push("voiceProfileId в runtime_data/media_profiles.json или FISH_AUDIO_VOICE_ID");
+  if (!missing.length) return null;
+  return [
+    "Голос Динары пока не настроен.",
+    "",
+    `Не хватает: ${missing.join(", ")}.`,
+    "",
+    "Cloudinary и ffmpeg для /test_voice не обязательны: они нужны для видео-аудио URL и микса с музыкой.",
+  ].join("\n");
+}
+
+function formatVoiceGenerationError(error) {
+  const raw = String(error?.message || error || "unknown error").trim();
+  if (!raw) return "Неизвестная ошибка Fish Audio.";
+  if (raw.includes("Voice generation is not configured")) return raw;
+  if (raw.includes("Fish Audio error:")) return raw.slice(0, 900);
+  return `Fish Audio не смог сгенерировать голос: ${raw.slice(0, 900)}`;
+}
+
 async function getExpertById(expertId) {
   const experts = await loadExpertRegistry();
   return experts.find((expert) => expert.expertId === expertId) || null;
@@ -5073,10 +5095,99 @@ bot.onText(/\/voice_status/, async (msg) => {
     `voiceProfileId present: ${yesNo(readiness.voiceProfileIdPresent)}`,
     `voiceProfileId source: ${readiness.voiceProfileSource}`,
     `Cloudinary present: ${yesNo(readiness.cloudinaryPresent)}`,
-    `ffmpeg required: ${yesNo(readiness.ffmpegRequired)}`,
+    `ffmpeg required for mixing: ${yesNo(readiness.ffmpegRequired)}`,
     `ffmpeg present: ${yesNo(readiness.ffmpegPresent)}`,
     `active expertId: ${readiness.expertId}`,
+    "",
+    "For /test_voice required: Fish Audio key + voiceProfileId.",
+    "Cloudinary is only needed for video audio hosting; ffmpeg is only needed for music mixing.",
   ].join("\n"));
+});
+
+bot.onText(/\/test_voice(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  let status = null;
+  console.log("[/test_voice] command received", { chatId, userId: msg.from?.id || chatId });
+  try {
+    status = await bot.sendMessage(chatId, "Генерирую тестовый голос...");
+
+    const userId = msg.from?.id || chatId;
+    if (!(await canManagePaidBeta(userId))) {
+      await bot.sendMessage(chatId, "🔒 Test voice доступен только admin/full_access.");
+      return;
+    }
+
+    const text = (match?.[1] || "").trim();
+    if (!text) {
+      await bot.sendMessage(chatId, [
+        "Usage:",
+        "/test_voice Привет, это тест голоса Динары",
+      ].join("\n"));
+      return;
+    }
+
+    const voiceText = text.length > 600 ? text.slice(0, 600).trim() : text;
+    const readiness = await getVoiceReadiness(chatId);
+    console.log("[/test_voice] expertId", readiness.expertId);
+    console.log("[/test_voice] voiceProfileId source", readiness.voiceProfileSource);
+
+    const missingText = buildVoiceReadinessMissingText(readiness);
+    if (missingText) {
+      await bot.sendMessage(chatId, missingText);
+      return;
+    }
+
+    let buffer;
+    try {
+      console.log("[/test_voice] Fish request start");
+      ({ buffer } = await generateVoice(voiceText, readiness.voiceProfileId));
+      console.log("[/test_voice] Fish request success", { bytes: buffer.length });
+    } catch (error) {
+      console.log("[/test_voice] Fish request fail", error);
+      await bot.sendMessage(chatId, formatVoiceGenerationError(error));
+      return;
+    }
+
+    try {
+      console.log("[/test_voice] Telegram sendAudio start");
+      await bot.sendAudio(chatId, buffer, {
+        caption: [
+          "Тест голоса готов.",
+          `expertId: ${readiness.expertId}`,
+          `voiceProfileId source: ${readiness.voiceProfileSource}`,
+        ].join("\n"),
+      }, { filename: `${readiness.expertId || "expert"}-test-voice.mp3`, contentType: "audio/mpeg" });
+      console.log("[/test_voice] Telegram sendAudio success");
+    } catch (error) {
+      console.log("[/test_voice] Telegram sendAudio fail", error);
+      await bot.sendMessage(chatId, [
+        "Голос сгенерирован, но Telegram не смог отправить аудио.",
+        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+      ].join("\n"));
+      return;
+    }
+
+    await bot.editMessageText("Готово: тестовый mp3 отправлен.", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+  } catch (error) {
+    console.log("[/test_voice] handler fail", error);
+    const message = [
+      "Не удалось выполнить /test_voice.",
+      `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+    ].join("\n");
+    if (status?.message_id) {
+      await bot.editMessageText(message, {
+        chat_id: chatId,
+        message_id: status.message_id,
+      }).catch(async () => {
+        await bot.sendMessage(chatId, message).catch(() => {});
+      });
+    } else {
+      await bot.sendMessage(chatId, message).catch(() => {});
+    }
+  }
 });
 
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
