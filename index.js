@@ -366,6 +366,25 @@ async function getVoiceReadiness(chatId) {
   };
 }
 
+async function getImageReadiness(chatId) {
+  const expertId = getActiveExpertIdForChat(chatId);
+  const mediaProfile = await getMediaProfileForExpert(expertId);
+  const imageAvatarProfileId = mediaProfile.imageAvatarProfileId || null;
+  const loraUrl = imageAvatarProfileId || LORA_URL;
+  return {
+    enabled: Boolean(FAL_KEY && loraUrl),
+    expertId,
+    falKeyPresent: Boolean(FAL_KEY),
+    mediaProfileStatus: mediaProfile.status || "unknown",
+    imageAvatarProfileIdPresent: Boolean(imageAvatarProfileId),
+    imageAvatarProfileSource: imageAvatarProfileId ? "media_profile" : "built_in_dinara_lora",
+    loraUrlPresent: Boolean(loraUrl),
+    loraUrl,
+    modelEndpoint: "fal-ai/flux-lora",
+    imageSize: "square_hd",
+  };
+}
+
 async function guardConfiguredVoiceGeneration(chatId) {
   const readiness = await getVoiceReadiness(chatId);
   if (readiness.enabled) return readiness;
@@ -393,6 +412,27 @@ function formatVoiceGenerationError(error) {
   if (raw.includes("Voice generation is not configured")) return raw;
   if (raw.includes("Fish Audio error:")) return raw.slice(0, 900);
   return `Fish Audio не смог сгенерировать голос: ${raw.slice(0, 900)}`;
+}
+
+function buildImageReadinessMissingText(readiness) {
+  const missing = [];
+  if (!readiness.falKeyPresent) missing.push("FALAI_KEY");
+  if (!readiness.loraUrlPresent) missing.push("Dinara LoRA URL или imageAvatarProfileId в runtime_data/media_profiles.json");
+  if (!missing.length) return null;
+  return [
+    "Генерация изображения Динары пока не настроена.",
+    "",
+    `Не хватает: ${missing.join(", ")}.`,
+    "",
+    "Для /test_image нужен только FALAI_KEY и существующий Dinara LoRA/profile.",
+  ].join("\n");
+}
+
+function formatImageGenerationError(error) {
+  const raw = String(error?.message || error || "unknown error").trim();
+  if (!raw) return "Неизвестная ошибка FAL.ai.";
+  if (raw.includes("fal photo error")) return raw.slice(0, 900);
+  return `FAL.ai не смог сгенерировать изображение: ${raw.slice(0, 900)}`;
 }
 
 async function getExpertById(expertId) {
@@ -2499,13 +2539,14 @@ async function translateScene(text) {
   return completion.choices[0].message.content.trim();
 }
 
-async function generateImage(chatId, scenePrompt) {
+async function generateImage(chatId, scenePrompt, imageProfile = {}) {
   await bot.sendMessage(chatId, "\u23F3 Генерирую фото ~60 сек...");
   const fullPrompt = `${BASE_PROMPT}, ${scenePrompt}`;
+  const loraUrl = imageProfile.loraUrl || LORA_URL;
   const res = await fetch("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt: fullPrompt, loras: [{ path: LORA_URL, scale: 0.85 }], num_inference_steps: 28, image_size: "square_hd" }),
+    body: JSON.stringify({ prompt: fullPrompt, loras: [{ path: loraUrl, scale: 0.85 }], num_inference_steps: 28, image_size: "square_hd" }),
   });
   const rawText = await res.text();
   if (!res.ok) throw new Error(`fal photo error ${res.status}: ${rawText}`);
@@ -5175,6 +5216,126 @@ bot.onText(/\/test_voice(?:\s+([\s\S]+))?/, async (msg, match) => {
     console.log("[/test_voice] handler fail", error);
     const message = [
       "Не удалось выполнить /test_voice.",
+      `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+    ].join("\n");
+    if (status?.message_id) {
+      await bot.editMessageText(message, {
+        chat_id: chatId,
+        message_id: status.message_id,
+      }).catch(async () => {
+        await bot.sendMessage(chatId, message).catch(() => {});
+      });
+    } else {
+      await bot.sendMessage(chatId, message).catch(() => {});
+    }
+  }
+});
+
+bot.onText(/\/image_status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 Image status доступен только admin/full_access.");
+    return;
+  }
+  const readiness = await getImageReadiness(chatId);
+  const yesNo = (value) => value ? "yes" : "no";
+  await bot.sendMessage(chatId, [
+    "Image/avatar generation beta readiness",
+    "",
+    `image enabled: ${yesNo(readiness.enabled)}`,
+    `FALAI_KEY present: ${yesNo(readiness.falKeyPresent)}`,
+    `active expertId: ${readiness.expertId}`,
+    `media profile status: ${readiness.mediaProfileStatus}`,
+    `imageAvatarProfileId present: ${yesNo(readiness.imageAvatarProfileIdPresent)}`,
+    `image avatar source: ${readiness.imageAvatarProfileSource}`,
+    `Dinara LoRA URL present: ${yesNo(readiness.loraUrlPresent)}`,
+    `model endpoint: ${readiness.modelEndpoint}`,
+    `image size: ${readiness.imageSize}`,
+    "",
+    "For /test_image required: FALAI_KEY + existing Dinara LoRA/profile.",
+    "This diagnostic command does not spend generation limits.",
+  ].join("\n"));
+});
+
+bot.onText(/\/test_image(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  let status = null;
+  console.log("[/test_image] command received", { chatId, userId: msg.from?.id || chatId });
+  try {
+    status = await bot.sendMessage(chatId, "Генерирую тестовое изображение...");
+
+    const userId = msg.from?.id || chatId;
+    if (!(await canManagePaidBeta(userId))) {
+      await bot.sendMessage(chatId, "🔒 Test image доступен только admin/full_access.");
+      return;
+    }
+
+    const prompt = (match?.[1] || "").trim();
+    if (!prompt) {
+      await bot.sendMessage(chatId, [
+        "Usage:",
+        "/test_image sitting in cozy therapist office, warm soft light, bookshelf background",
+      ].join("\n"));
+      return;
+    }
+
+    const scenePrompt = prompt.length > 700 ? prompt.slice(0, 700).trim() : prompt;
+    const readiness = await getImageReadiness(chatId);
+    console.log("[/test_image] expertId", readiness.expertId);
+    console.log("[/test_image] image source", readiness.imageAvatarProfileSource);
+    console.log("[/test_image] model endpoint", readiness.modelEndpoint);
+
+    const missingText = buildImageReadinessMissingText(readiness);
+    if (missingText) {
+      await bot.sendMessage(chatId, missingText);
+      return;
+    }
+
+    let imageResult;
+    try {
+      console.log("[/test_image] FAL image request start", { endpoint: readiness.modelEndpoint });
+      imageResult = await generateImage(chatId, scenePrompt, { loraUrl: readiness.loraUrl });
+      console.log("[/test_image] FAL image request success", {
+        imageUrlPresent: Boolean(imageResult?.imageUrl),
+        cost: imageResult?.cost,
+      });
+    } catch (error) {
+      console.log("[/test_image] FAL image request fail", error);
+      await bot.sendMessage(chatId, formatImageGenerationError(error));
+      return;
+    }
+
+    try {
+      console.log("[/test_image] Telegram sendPhoto start");
+      await bot.sendPhoto(chatId, imageResult.imageUrl, {
+        caption: [
+          "Тестовое изображение готово.",
+          `expertId: ${readiness.expertId}`,
+          `image source: ${readiness.imageAvatarProfileSource}`,
+          `cost reported by FAL: $${Number(imageResult.cost || 0).toFixed(3)}`,
+          "Generation limits were not incremented.",
+        ].join("\n"),
+      });
+      console.log("[/test_image] Telegram sendPhoto success");
+    } catch (error) {
+      console.log("[/test_image] Telegram sendPhoto fail", error);
+      await bot.sendMessage(chatId, [
+        "Изображение сгенерировано, но Telegram не смог отправить фото.",
+        `URL: ${imageResult.imageUrl}`,
+        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+      ].join("\n"));
+      return;
+    }
+
+    await bot.editMessageText("Готово: тестовое изображение отправлено.", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+  } catch (error) {
+    console.log("[/test_image] handler fail", error);
+    const message = [
+      "Не удалось выполнить /test_image.",
       `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
     ].join("\n");
     if (status?.message_id) {
