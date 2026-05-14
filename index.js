@@ -282,10 +282,17 @@ const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
 — Двигайся так: чувство читателя → нормализация → психологический смысл → один маленький практический сдвиг → мягкое завершение.
 — Пиши короткими, разными по длине абзацами. Иногда одно предложение может быть отдельным абзацем.
 — Чередуй ритм: короткая фраза для паузы, затем более длинная мысль, затем снова короткое человеческое уточнение.
+— Делай ритм немного неровным: допускай короткие фразы без полного объяснения, разговорные вставки, мягкие самоисправления.
+— Иногда ставь одну эмоциональную строку отдельно: "И это больно.", "Вот здесь хочется выдохнуть.", "Не сразу. Но честнее."
+— Используй фрагменты естественно: "Не потому что слабость.", "Не про каприз.", "Про очень усталую часть внутри."
+— Один раз можно прервать себя разговорным поворотом: "хотя нет, точнее...", "и вот здесь важно не ускоряться", "знаете, я бы тут не спешила".
 — Оставляй место тишине. Не закрывай каждую мысль выводом.
 — Добавь одну живую авторскую интонацию: "я часто вижу", "мне хочется здесь замедлиться", "знаете, что здесь важно?", "иногда это не про слабость".
 — Не превращай пост в инструкцию, лекцию, чек-лист или продающий текст.
 — CTA только мягкий: вопрос к себе, приглашение заметить, бережное "можно начать с малого".
+— Финал не должен звучать как вывод ассистента. Завершай эмоциональным послевкусием, тихим вопросом, маленьким разрешением или приглашением заметить одну вещь.
+— Хороший финал Динары: не "сделайте шаг к лучшей версии себя", а "можно сегодня хотя бы не ругать себя за то, что внутри пока не получается иначе".
+— CTA не обязателен в каждом тексте как отдельный призыв. Иногда достаточно вопроса, который остается внутри читателя.
 
 МИНИ-ПРИМЕРЫ ИНТОНАЦИИ:
 1) "Иногда тревога приходит не потому, что с вами что-то не так. А потому что внутри слишком долго не было места, где можно выдохнуть."
@@ -294,9 +301,18 @@ const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
 
 АНТИ-ПАТТЕРНЫ:
 Не используй: "важно понимать", "следует отметить", "таким образом", "в современном мире", "данная тема", "каждый из нас", "просто полюбите себя", "работайте над собой", "в заключение".
+Не используй финалы: "поделитесь в комментариях", "сохраняйте пост", "помните, что вы достойны", "сделайте первый шаг к себе", "выберите себя", "начните путь к гармонии".
 Не делай много эмодзи, заголовки, нумерованные списки, академический тон, одинаковые абзацы.`;
 
 const DINARA_EXAMPLES_DIR = join(__dirname, "expert_profiles", "dinara", "examples");
+const DINARA_WORLDVIEW_DIR = join(__dirname, "expert_profiles", "dinara", "worldview");
+const DINARA_WORLDVIEW_FILES = [
+  "beliefs.md",
+  "recurring_ideas.md",
+  "core_emotions.md",
+  "relationship_philosophy.md",
+  "sexuality_philosophy.md",
+];
 const DINARA_EXAMPLE_ROUTES = [
   {
     key: "relationships",
@@ -348,6 +364,25 @@ async function buildDinaraFewShotPrompt(topic) {
     console.warn(`[dinara-examples] failed to load ${route.file}: ${error.message}`);
     return "";
   }
+}
+
+async function buildDinaraWorldviewPrompt() {
+  const sections = [];
+  for (const file of DINARA_WORLDVIEW_FILES) {
+    try {
+      const content = (await fs.readFile(join(DINARA_WORLDVIEW_DIR, file), "utf-8")).trim();
+      if (content) sections.push(`Файл ${file}:\n${content}`);
+    } catch (error) {
+      console.warn(`[dinara-worldview] failed to load ${file}: ${error.message}`);
+    }
+  }
+  if (!sections.length) return "";
+
+  return [
+    "МИРОВОЗЗРЕНИЕ ДИНАРЫ:",
+    "Держи эти идеи как устойчивую внутреннюю опору автора. Не пересказывай их списком и не цитируй механически. Пусть они проявляются в выборе угла, эмоции, метафоры и финального вопроса.",
+    sections.join("\n\n"),
+  ].join("\n");
 }
 
 const REGENERATION_VARIANTS = {
@@ -1664,7 +1699,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
   const fewShotPrompt = await buildDinaraFewShotPrompt(topic);
-  const systemPrompt = [baseSystemPrompt, DINARA_REALISM_PROMPT, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
+  const worldviewPrompt = await buildDinaraWorldviewPrompt();
+  const systemPrompt = [baseSystemPrompt, worldviewPrompt, DINARA_REALISM_PROMPT, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
