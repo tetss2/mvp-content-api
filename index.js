@@ -92,7 +92,10 @@ const STARTUP_WARNINGS = [];
 const POLLING_LOCK_PATH = process.env.POLLING_LOCK_PATH || join(RUNTIME_DATA_ROOT, "telegram-polling.lock");
 const POLLING_LOCK_STALE_MS = Number(process.env.POLLING_LOCK_STALE_MS || 120000);
 const POLLING_RETRY_MS = Number(process.env.POLLING_RETRY_MS || 30000);
+const POLLING_CONFLICT_RETRY_MS = Number(process.env.POLLING_CONFLICT_RETRY_MS || 8000);
 const POLLING_MAX_RETRIES = Number(process.env.POLLING_MAX_RETRIES || 3);
+const IS_CLOUD_RUNTIME = IS_BETA_RUNTIME || IS_PRODUCTION || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID);
+const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || (IS_CLOUD_RUNTIME ? 4000 : 0));
 
 process.env.RUNTIME_DATA_ROOT = RUNTIME_DATA_ROOT;
 if (!process.env.USERS_ROOT) process.env.USERS_ROOT = join(RUNTIME_DATA_ROOT, "users");
@@ -135,6 +138,10 @@ function runtimeLog(...args) {
 
 function debugLog(...args) {
   if (DEBUG_LOGS) console.log(`[${RUNTIME_NAME}:debug]`, ...args);
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function ensureRuntimeDirectory(path, label = "directory") {
@@ -251,7 +258,7 @@ let pollingRetryTimer = null;
 bot.on("polling_error", (error) => {
   const message = error?.response?.body?.description || error?.message || String(error);
   if (message.includes("409")) {
-    console.error(`[${RUNTIME_NAME}] Telegram polling conflict: another poller is using this bot token. Stop the duplicate Railway/service instance.`);
+    runtimeLog("polling conflict detected", { reason: "telegram_conflict_409" });
     if (!pollingConflictHandled) {
       pollingConflictHandled = true;
       bot.stopPolling()
@@ -290,6 +297,7 @@ async function initializeMainPolling() {
   }
   globalThis.__MVP_CONTENT_API_POLLING_ACTIVE__ = true;
   try {
+    await prepareTelegramPollingStartup();
     await bot.startPolling();
     pollingActive = true;
     pollingConflictHandled = false;
@@ -302,11 +310,25 @@ async function initializeMainPolling() {
     await releasePollingLock();
     if (String(error?.message || error).includes("409")) {
       pollingConflictHandled = true;
+      runtimeLog("polling conflict detected", { reason: "telegram_conflict_409" });
       runtimeLog("polling disabled", { reason: "telegram_conflict_409" });
       schedulePollingRetry("telegram_conflict_409");
       return;
     }
     throw error;
+  }
+}
+
+async function prepareTelegramPollingStartup() {
+  try {
+    await bot.deleteWebHook({ drop_pending_updates: true });
+    runtimeLog("telegram webhook cleanup complete", { dropPendingUpdates: true });
+  } catch (error) {
+    console.warn(`[${RUNTIME_NAME}] telegram webhook cleanup failed; continuing with polling startup: ${error?.message || error}`);
+  }
+  if (POLLING_STARTUP_DELAY_MS > 0) {
+    runtimeLog("waiting before polling startup", { delayMs: POLLING_STARTUP_DELAY_MS });
+    await sleep(POLLING_STARTUP_DELAY_MS);
   }
 }
 
@@ -317,12 +339,15 @@ function schedulePollingRetry(reason) {
     return;
   }
   pollingRetryCount += 1;
+  const delayMs = reason === "telegram_conflict_409" ? POLLING_CONFLICT_RETRY_MS : POLLING_RETRY_MS;
+  runtimeLog("waiting before retry", { reason, delayMs, attempt: pollingRetryCount });
   pollingRetryTimer = setTimeout(() => {
     pollingRetryTimer = null;
+    runtimeLog("retry attempt", { reason, attempt: pollingRetryCount });
     initializeMainPolling().catch((error) => {
       console.error(`[${RUNTIME_NAME}] polling retry failed:`, error?.message || error);
     });
-  }, POLLING_RETRY_MS);
+  }, delayMs);
   pollingRetryTimer.unref?.();
 }
 
