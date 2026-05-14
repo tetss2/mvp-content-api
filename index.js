@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createRequire } from "module";
 import { promises as fs } from "fs";
 import { tmpdir } from "os";
-import { join, dirname } from "path";
+import { basename, join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execSync } from "child_process";
 import {
@@ -161,33 +161,49 @@ async function incrementLimit(chatId, limitType, scenario, lengthMode) {
   await saveDemoDB(db);
 }
 
+const SOFT_FREE_LIMITS = {
+  text: 10,
+  photo: 3,
+  video: 1,
+  audio: 3,
+  demo: 3,
+};
+
+function normalizeExpertRuntime(runtime = {}) {
+  return {
+    mode: runtime.mode || "free_demo",
+    counters: {
+      text: runtime.counters?.text || 0,
+      photo: runtime.counters?.photo || 0,
+      video: runtime.counters?.video || 0,
+      audio: runtime.counters?.audio || 0,
+      demo: runtime.counters?.demo || 0,
+      ...(runtime.counters || {}),
+    },
+    limits: {
+      ...SOFT_FREE_LIMITS,
+      ...(runtime.limits || {}),
+    },
+    monetization: {
+      premium_ready: true,
+      payments_enabled: false,
+      telegram_stars_ready: false,
+      paid_plan: null,
+      upgrade_trigger_seen: false,
+      ...(runtime.monetization || {}),
+    },
+    events: Array.isArray(runtime.events) ? runtime.events : [],
+    updated_at: runtime.updated_at || new Date().toISOString(),
+  };
+}
+
 async function loadExpertRuntime(userId) {
   await ensureUserExpertFolders(userId);
   const path = join("users", String(userId), "profile", "runtime.json");
   try {
-    return JSON.parse(await fs.readFile(path, "utf-8"));
+    return normalizeExpertRuntime(JSON.parse(await fs.readFile(path, "utf-8")));
   } catch {
-    return {
-      mode: "free_demo",
-      counters: {
-        text: 0,
-        photo: 0,
-        video: 0,
-        audio: 0,
-      },
-      limits: {
-        text: null,
-        photo: null,
-        video: null,
-        audio: null,
-      },
-      monetization: {
-        telegram_stars_ready: false,
-        paid_plan: null,
-      },
-      events: [],
-      updated_at: new Date().toISOString(),
-    };
+    return normalizeExpertRuntime();
   }
 }
 
@@ -202,6 +218,7 @@ async function incrementExpertRuntime(chatId, action, meta = {}) {
   const runtime = await loadExpertRuntime(chatId);
   const counterKey = meta.counter || action;
   runtime.counters[counterKey] = (runtime.counters[counterKey] || 0) + 1;
+  if (meta.demoMode) runtime.counters.demo = (runtime.counters.demo || 0) + 1;
   runtime.events = runtime.events || [];
   runtime.events.push({
     ts: new Date().toISOString(),
@@ -214,6 +231,26 @@ async function incrementExpertRuntime(chatId, action, meta = {}) {
   runtime.updated_at = new Date().toISOString();
   await saveExpertRuntime(chatId, runtime);
   return runtime;
+}
+
+function runtimeRemaining(runtime, key = "text") {
+  const limit = runtime.limits?.[key];
+  if (limit === null || limit === undefined) return null;
+  return Math.max(0, Number(limit) - Number(runtime.counters?.[key] || 0));
+}
+
+function buildRuntimeCounterText(runtime) {
+  const textLeft = runtimeRemaining(runtime, "text");
+  const demoLeft = runtimeRemaining(runtime, "demo");
+  const bits = [
+    `Режим: ${runtime.mode || "free_demo"}`,
+    `Тексты: ${runtime.counters?.text || 0}/${runtime.limits?.text ?? "∞"}`,
+    `Фото: ${runtime.counters?.photo || 0}/${runtime.limits?.photo ?? "∞"}`,
+    `Видео: ${runtime.counters?.video || 0}/${runtime.limits?.video ?? "∞"}`,
+  ];
+  if (demoLeft !== null) bits.push(`Демо: ${runtime.counters?.demo || 0}/${runtime.limits?.demo ?? "∞"}`);
+  if (textLeft !== null && textLeft <= 3) bits.push("Premium-ready: лимиты скоро можно будет расширить без пересборки бота");
+  return bits.join("\n");
 }
 
 async function notifyLeadsBot(text, keyboard = null) {
@@ -463,6 +500,50 @@ const STARTER_EXPERT_TEMPLATES = {
       "Напишите себе одну фразу, которую вы обычно сглаживаете, и попробуйте сказать ее честнее.",
       "Если узнали себя, это хороший момент пересобрать не контент, а позицию.",
       "Сохраните как напоминание: узнаваемость начинается там, где вы перестаете звучать как все.",
+    ],
+  },
+  fitness: {
+    label: "Фитнес-эксперт",
+    expertName: "Фитнес-эксперт",
+    roleKey: "fitness",
+    worldview: [
+      "Тело меняется устойчиво не от наказания, а от понятной системы, восстановления и уважения к реальному уровню человека.",
+      "Фитнес должен помогать человеку жить энергичнее, а не превращать каждый день в экзамен на силу воли.",
+      "Хороший эксперт объясняет просто: что делать, зачем это работает и как не сорваться через неделю.",
+    ],
+    openings: [
+      "Иногда человек бросает тренировки не потому, что слабый. А потому что план с самого начала был не для его жизни.",
+      "Самая частая ошибка в фитнесе звучит почти красиво: начать идеально.",
+      "Тело редко сопротивляется движению. Чаще оно сопротивляется перегрузу и стыду.",
+    ],
+    cadence: "Практично и спокойно: узнаваемая проблема -> объяснение без стыда -> один реалистичный шаг -> поддерживающий вывод. Без агрессивной мотивации.",
+    emotionalStyle: "Уверенно, дружелюбно, телесно и конкретно. Автор звучит как тренер, который умеет адаптировать нагрузку, а не давить.",
+    ctaPatterns: [
+      "Выберите сегодня не идеальную тренировку, а минимальный шаг, который реально повторить завтра.",
+      "Проверьте план простым вопросом: я смогу жить так месяц, не ненавидя процесс?",
+      "Сохраните как напоминание: устойчивость важнее героизма.",
+    ],
+  },
+  marketing: {
+    label: "Маркетинг-эксперт",
+    expertName: "Маркетинг-эксперт",
+    roleKey: "marketing",
+    worldview: [
+      "Маркетинг начинается не с красивой упаковки, а с ясного понимания клиента, боли и причины поверить.",
+      "Сильная коммуникация не кричит громче всех. Она точнее попадает в момент выбора.",
+      "Продажи растут, когда эксперт перестает говорить обо всем и формулирует один понятный следующий шаг.",
+    ],
+    openings: [
+      "Иногда контент не продает не потому, что он плохой. А потому что в нем не видно, зачем человеку действовать сейчас.",
+      "Самая дорогая ошибка в маркетинге часто выглядит безобидно: говорить слишком общо.",
+      "Клиент редко покупает 'экспертность'. Он покупает ясность: мне здесь помогут именно с моей задачей.",
+    ],
+    cadence: "Деловой, плотный ритм: точное наблюдение -> причина -> пример/контраст -> практический следующий шаг. Без инфобизнес-крика.",
+    emotionalStyle: "Спокойная стратегическая уверенность. Меньше хайпа, больше ясности, конкретики и уважения к бизнес-контексту.",
+    ctaPatterns: [
+      "Проверьте последний пост: после него человеку понятно, что сделать дальше?",
+      "Сформулируйте один оффер так, чтобы клиент узнал свою ситуацию в первой строке.",
+      "Сохраните как быстрый чек: конкретика продает лучше, чем громкие обещания.",
     ],
   },
 };
@@ -1123,11 +1204,14 @@ async function getScenarioLabel(chatId, scenario) {
 }
 
 function onboardingControls(category) {
+  const rows = [];
+  if (["knowledge", "style"].includes(category)) {
+    rows.push([{ text: "💡 Что лучше загрузить?", callback_data: `ob_help_upload:${category}` }]);
+  }
+  rows.push([{ text: "✅ Готово, дальше", callback_data: `ob_done:${category}` }]);
+  rows.push([{ text: "❌ Отменить", callback_data: "ob_cancel" }]);
   return {
-    reply_markup: { inline_keyboard: [
-      [{ text: "✅ Готово, дальше", callback_data: `ob_done:${category}` }],
-      [{ text: "❌ Отменить", callback_data: "ob_cancel" }],
-    ]},
+    reply_markup: { inline_keyboard: rows },
   };
 }
 
@@ -1174,7 +1258,33 @@ function qualityLabel(score) {
   }[score] || "unknown";
 }
 
-function buildMaterialQualityText(quality) {
+function buildUploadRecoverySuggestions(category, quality = null) {
+  const weakStyle = quality?.style_learning === "weak";
+  const weakExpert = quality?.expert_learning === "weak";
+  if (category === "knowledge") {
+    const suggestions = [
+      "Recovery suggestions:",
+      "• Add 1-3 longer texts where you explain your approach, beliefs, cases, objections, or client situations.",
+      "• If you pasted a link, also paste the article/post text. Telegram often cannot read the page content from a bare URL.",
+      "• Add a short note: who your audience is, what you believe, what you never promise, and what topics you avoid.",
+    ];
+    if (weakExpert) suggestions.push("• Current material is thin for worldview. A 10-15 sentence expert note will help more than another short link.");
+    return suggestions;
+  }
+  if (category === "style") {
+    const suggestions = [
+      "Recovery suggestions:",
+      "• Add 3-5 real posts written by you. Best format: full text, not screenshots and not links only.",
+      "• Include posts with different moods: expert, personal, selling softly, reflective, practical.",
+      "• Add one post you especially like and one you do not want the AI to imitate.",
+    ];
+    if (weakStyle) suggestions.push("• Current sample is weak for rhythm. Longer paragraphs with your openings and endings will improve the first WOW-post.");
+    return suggestions;
+  }
+  return [];
+}
+
+function buildMaterialQualityText(quality, category = "") {
   if (!quality) return "";
   const warnings = Array.isArray(quality.warnings) ? quality.warnings.filter(Boolean).slice(0, 3) : [];
   const useful = Array.isArray(quality.useful_signals) ? quality.useful_signals.filter(Boolean).slice(0, 2) : [];
@@ -1193,7 +1303,26 @@ function buildMaterialQualityText(quality) {
     lines.push("Useful signals:");
     for (const signal of useful) lines.push(`• ${signal}`);
   }
+  if (quality.score === "weak" || quality.style_learning === "weak" || quality.expert_learning === "weak") {
+    lines.push(...buildUploadRecoverySuggestions(category || quality.category || "", quality));
+  }
   return lines.join("\n");
+}
+
+async function sendUploadRecoveryGuide(chatId, category) {
+  const title = category === "style" ? "Как усилить стиль" : "Как усилить материалы";
+  const lines = [
+    `${title}:`,
+    "",
+    ...buildUploadRecoverySuggestions(category),
+    "",
+    category === "style"
+      ? "Минимум для хорошего старта: 3 полноценных поста по 800-1500 знаков."
+      : "Минимум для хорошего старта: 1 экспертная заметка на 15-25 предложений или 2-3 длинных поста.",
+    "",
+    "Можно продолжить прямо здесь: отправьте текст, TXT/DOCX/PDF или ссылку плюс скопированный текст."
+  ];
+  await bot.sendMessage(chatId, lines.join("\n"), onboardingControls(category));
 }
 
 async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю persona, worldview и examples из материалов...") {
@@ -1243,6 +1372,10 @@ function starterTemplateRows(prefix = "ob_template") {
     [
       { text: "🎯 Коуч", callback_data: `${prefix}:coach` },
       { text: "✨ Блогер", callback_data: `${prefix}:blogger` },
+    ],
+    [
+      { text: "💪 Фитнес", callback_data: `${prefix}:fitness` },
+      { text: "📈 Маркетинг", callback_data: `${prefix}:marketing` },
     ],
   ];
 }
@@ -1342,13 +1475,17 @@ async function startDemoMode(chatId, templateKey = "psychologist") {
   const s = userState.get(chatId) || {};
   s.demoMode = true;
   s.demoTemplateKey = templateKey;
-  s.pendingScenario = templateKey === "sexologist" ? "sexologist" : "psychologist";
+  s.pendingScenario = ["sexologist", "psychologist"].includes(templateKey) ? templateKey : "psychologist";
   s.pendingTopic = templateKey === "sexologist"
     ? "как перестать стыдиться своего желания"
     : templateKey === "coach"
       ? "почему я много планирую и не начинаю"
       : templateKey === "blogger"
         ? "как перестать звучать как все"
+        : templateKey === "fitness"
+          ? "почему я начинаю тренироваться и бросаю через неделю"
+          : templateKey === "marketing"
+            ? "почему контент не приводит клиентов"
         : "почему я всё понимаю, но не могу перестать тревожиться";
   s.pendingLengthMode = "normal";
   s.pendingContentPreset = "emotional";
@@ -1394,7 +1531,11 @@ async function sendOnboardingRoleChoice(chatId, title = "Выберите рол
         { text: "Гештальт", callback_data: "ob_role:gestalt_therapist" },
         { text: "Коуч", callback_data: "ob_role:coach" },
       ],
-      [{ text: "Блогер", callback_data: "ob_role:blogger" }],
+      [
+        { text: "Блогер", callback_data: "ob_role:blogger" },
+        { text: "Фитнес", callback_data: "ob_role:fitness" },
+      ],
+      [{ text: "Маркетинг", callback_data: "ob_role:marketing" }],
     ]},
   });
 }
@@ -1472,7 +1613,7 @@ async function handleExpertOnboardingMessage(msg, state) {
         return null;
       });
     }
-    await bot.sendMessage(chatId, `${buildUploadVisibilityText(step, stored, count)}${buildMaterialQualityText(quality)}`, onboardingControls(step));
+    await bot.sendMessage(chatId, `${buildUploadVisibilityText(step, stored, count)}${buildMaterialQualityText(quality, step)}`, onboardingControls(step));
     return true;
   }
 
@@ -1516,7 +1657,7 @@ async function sendExpertDashboard(chatId, userId = chatId) {
   const activeScenario = inventory.scenarios.find((s) => s.id === activeScenarioId);
   const statusLabel = inventory.profile?.status === "completed" ? "готов к генерации" : "онбординг не завершён";
   const runtime = await loadExpertRuntime(userId);
-  const runtimeText = `Режим: ${runtime.mode || "free_demo"}\nГенерации: ${runtime.counters?.text || 0} текст / ${runtime.counters?.photo || 0} фото / ${runtime.counters?.video || 0} видео`;
+  const runtimeText = buildRuntimeCounterText(runtime);
   await bot.sendMessage(chatId,
     `AI-эксперт: ${name}\n` +
     `Статус: ${statusLabel}\n` +
@@ -1534,7 +1675,10 @@ async function sendExpertDashboard(chatId, userId = chatId) {
           { text: "🧩 List scenarios", callback_data: "ob_list_scenarios" },
           { text: "🔄 Switch scenario", callback_data: "ob_select_scenario" },
         ],
-        [{ text: "🧠 Regenerate persona", callback_data: "ob_regen_persona" }],
+        [
+          { text: "🧠 Regenerate persona", callback_data: "ob_regen_persona" },
+          { text: "📣 My AI expert", callback_data: "ob_share_identity" },
+        ],
         [{ text: "➕ Add scenario", callback_data: "ob_add_scenario" }],
         [
           { text: "📚 Add materials", callback_data: "ob_upload_more:knowledge" },
@@ -1548,6 +1692,153 @@ async function sendExpertDashboard(chatId, userId = chatId) {
       ]},
     }
   );
+}
+
+async function readProfileDraft(userId, fileName, maxChars = 700) {
+  try {
+    const text = await fs.readFile(join("users", String(userId), "profile", fileName), "utf-8");
+    return text.replace(/\s+/g, " ").trim().slice(0, maxChars);
+  } catch {
+    return "";
+  }
+}
+
+async function buildShareableExpertIdentity(userId) {
+  const inventory = await getOnboardingInventory(userId);
+  const runtime = await loadExpertRuntime(userId);
+  const profile = inventory.profile || {};
+  const activeScenarioId = profile.active_scenario_id || inventory.scenarios[0]?.id;
+  const activeScenario = inventory.scenarios.find((scenario) => scenario.id === activeScenarioId);
+  const persona = await readProfileDraft(userId, "persona.md", 420);
+  const worldview = await readProfileDraft(userId, "worldview.md", 420);
+  const style = await readProfileDraft(userId, "style_guidance.md", 420);
+  const materialsReady = [
+    inventory.counts.knowledge > 0 ? `${inventory.counts.knowledge} материалов` : "материалы можно усилить",
+    inventory.counts.style > 0 ? `${inventory.counts.style} примеров стиля` : "стиль пока template-based",
+  ].join(" · ");
+  return [
+    "Мой AI-эксперт",
+    "",
+    `Имя: ${profile.expert_name || "эксперт"}`,
+    `Роль: ${activeScenario?.label || "не выбрана"}`,
+    `Статус: ${profile.status === "completed" ? "готов к генерации" : "собирается"}`,
+    `Основа: ${materialsReady}`,
+    `Генерации: ${runtime.counters?.text || 0}/${runtime.limits?.text ?? "∞"} текстов`,
+    "",
+    "Persona:",
+    persona || "Будет точнее после загрузки материалов.",
+    "",
+    "Worldview:",
+    worldview || "Будет точнее после загрузки экспертных заметок.",
+    "",
+    "Style lock:",
+    style || "Будет точнее после загрузки 3-5 реальных постов.",
+    "",
+    "Можно показать этот блок как краткую карточку эксперта: кто он, на чём обучен и почему звучит узнаваемо.",
+  ].join("\n");
+}
+
+async function sendShareableExpertIdentity(chatId, userId = chatId) {
+  const text = await buildShareableExpertIdentity(userId);
+  await sendLongPlainText(chatId, text, {
+    inline_keyboard: [
+      [{ text: "📣 Текст для пересылки", callback_data: "share_friend" }],
+      [{ text: "← Dashboard", callback_data: "ob_dashboard" }],
+    ],
+  });
+}
+
+function isAdminUser(userId) {
+  return Number(userId) === ADMIN_TG_ID;
+}
+
+async function listUploadNames(userId, folder) {
+  const dir = join("users", String(userId), folder);
+  const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
+  return entries
+    .filter((entry) => entry.isFile() && !entry.name.endsWith(".json"))
+    .map((entry) => entry.name)
+    .slice(0, 12);
+}
+
+async function inspectUploadsText(userId) {
+  const [inventory, knowledge, style, avatar, voice] = await Promise.all([
+    getOnboardingInventory(userId),
+    listUploadNames(userId, "knowledge/pending"),
+    listUploadNames(userId, "style/pending"),
+    listUploadNames(userId, "avatar"),
+    listUploadNames(userId, "voice"),
+  ]);
+  const line = (label, count, items) => [
+    `${label}: ${count}`,
+    ...(items.length ? items.map((item) => `• ${basename(item)}`) : ["• empty"]),
+  ].join("\n");
+  return [
+    `Admin upload inspect: ${userId}`,
+    "",
+    `Expert: ${inventory.profile?.expert_name || "none"}`,
+    `Status: ${inventory.profile?.status || "none"}`,
+    "",
+    line("Knowledge", inventory.counts.knowledge, knowledge),
+    "",
+    line("Style", inventory.counts.style, style),
+    "",
+    line("Avatar", inventory.counts.avatar, avatar),
+    "",
+    line("Voice", inventory.counts.voice, voice),
+  ].join("\n");
+}
+
+async function resetOnboardingState(userId) {
+  const profile = await loadUserProfile(userId);
+  if (!profile) return null;
+  const updated = {
+    ...profile,
+    status: "onboarding_reset",
+    updated_at: new Date().toISOString(),
+  };
+  await saveUserProfile(userId, updated);
+  return updated;
+}
+
+async function sendAdminTools(chatId, adminUserId, targetUserId = adminUserId) {
+  if (!isAdminUser(adminUserId)) {
+    await bot.sendMessage(chatId, "🔒 Admin shortcuts доступны только администратору.");
+    return;
+  }
+  const s = userState.get(chatId) || {};
+  s.adminTargetUserId = String(targetUserId || adminUserId);
+  userState.set(chatId, s);
+  const inventory = await getOnboardingInventory(s.adminTargetUserId);
+  await bot.sendMessage(chatId,
+    `Admin tools\n\nTarget user: ${s.adminTargetUserId}\nExpert: ${inventory.profile?.expert_name || "none"}\nScenarios: ${inventory.scenarios.length}\nMaterials: ${inventory.counts.knowledge}, style: ${inventory.counts.style}`,
+    {
+      reply_markup: { inline_keyboard: [
+        [
+          { text: "Rebuild persona", callback_data: "admin_rebuild:persona" },
+          { text: "Rebuild worldview", callback_data: "admin_rebuild:worldview" },
+        ],
+        [
+          { text: "Rebuild examples", callback_data: "admin_rebuild:examples" },
+          { text: "Inspect uploads", callback_data: "admin_inspect_uploads" },
+        ],
+        [
+          { text: "Reset onboarding", callback_data: "admin_reset_onboarding" },
+          { text: "Clone template", callback_data: "admin_clone_template_menu" },
+        ],
+        [{ text: "Dashboard as target", callback_data: "admin_target_dashboard" }],
+      ]},
+    }
+  );
+}
+
+async function sendAdminCloneTemplateMenu(chatId) {
+  await bot.sendMessage(chatId, "Clone template expert to admin target:", {
+    reply_markup: { inline_keyboard: [
+      ...starterTemplateRows("admin_clone_template"),
+      [{ text: "← Admin tools", callback_data: "admin_tools" }],
+    ]},
+  });
 }
 
 async function sendScenarioList(chatId, userId = chatId, mode = "list") {
@@ -2373,15 +2664,16 @@ function formatRuntimePreviewMessage(result, topic, previewMode = "dry") {
   ].join("\n");
 }
 
-async function sendLongPlainText(chatId, text) {
+async function sendLongPlainText(chatId, text, replyMarkup = null) {
   const chunks = [];
   let rest = text;
   while (rest.length > 0) {
     chunks.push(rest.slice(0, 3900));
     rest = rest.slice(3900);
   }
-  for (const chunk of chunks) {
-    await bot.sendMessage(chatId, chunk);
+  for (let i = 0; i < chunks.length; i++) {
+    const options = replyMarkup && i === chunks.length - 1 ? { reply_markup: replyMarkup } : undefined;
+    await bot.sendMessage(chatId, chunks[i], options);
   }
 }
 
@@ -2644,6 +2936,26 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       estimatedTokens: Math.ceil(context.length / 3.5),
       productionVersion: null,
     };
+  } else if (starterTemplate && runtimeState.demoMode) {
+    context = [
+      `Demo starter template: ${starterTemplate.label}`,
+      `Topic: ${topic}`,
+      "Worldview:",
+      ...starterTemplate.worldview.map((item) => `- ${item}`),
+      "",
+      `Cadence: ${starterTemplate.cadence}`,
+      `Emotional style: ${starterTemplate.emotionalStyle}`,
+      "Openings:",
+      ...starterTemplate.openings.map((item) => `- ${item}`),
+      "CTA patterns:",
+      ...starterTemplate.ctaPatterns.map((item) => `- ${item}`),
+    ].join("\n");
+    retrievalMeta = {
+      sources: [`starter-template:${starterTemplateKey}`],
+      chunksCount: 0,
+      estimatedTokens: Math.ceil(context.length / 3.5),
+      productionVersion: null,
+    };
   } else if (scenario === "sexologist") {
     const retrieval = await retrieveGroundingContext(topic, "sexologist");
     if (retrieval?.context) {
@@ -2704,6 +3016,14 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
         "Для нового эксперта особенно важно звучать узнаваемо: повторяй его ритм абзацев, типичные открытия, CTA и эмоциональную температуру из style guidance.",
         "Если материалов мало или они слабые, не становись универсальным блогером: честно держись роли, темы и тех немногих речевых сигналов, которые есть.",
       ].filter(Boolean).join("\n")
+    : starterTemplate && runtimeState.demoMode
+    ? [
+        `Ты — ${starterTemplate.expertName}, AI-эксперт в роли "${starterTemplate.label}".`,
+        "Пишешь живой русский пост для Telegram/Instagram.",
+        "Не выдумывай биографию, дипломы, клиентов, медицинские результаты или бизнес-гарантии.",
+        "Главный критерий: текст должен звучать как конкретный эксперт из выбранного starter template, а не как универсальный психологический пост.",
+        "Держи worldview, cadence, emotional style, openings и CTA patterns из контекста сильнее, чем встроенные сценарии Динары.",
+      ].join("\n")
     : scenario === "sexologist"
     ? buildSexologistPrompt(normalizedStyleKey)
     : PSYCHOLOGIST_SYSTEM_PROMPT;
@@ -2712,9 +3032,10 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     : { enabled: false, profileLoaded: false, content: "" };
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
-  const fewShotPrompt = userScenarioContext?.scenario ? "" : await buildDinaraFewShotPrompt(topic);
-  const worldviewPrompt = userScenarioContext?.scenario ? "" : await buildDinaraWorldviewPrompt();
-  const realismPrompt = userScenarioContext?.scenario ? "" : DINARA_REALISM_PROMPT;
+  const useDinaraFallbackPrompts = !userScenarioContext?.scenario && !(starterTemplate && runtimeState.demoMode);
+  const fewShotPrompt = useDinaraFallbackPrompts ? await buildDinaraFewShotPrompt(topic) : "";
+  const worldviewPrompt = useDinaraFallbackPrompts ? await buildDinaraWorldviewPrompt() : "";
+  const realismPrompt = useDinaraFallbackPrompts ? DINARA_REALISM_PROMPT : "";
   const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate });
   const firstGenerationWowPrompt = buildFirstGenerationWowInstruction(runtimeState.firstGenerationBoost);
   const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt].filter(Boolean).join("\n\n");
@@ -2934,6 +3255,12 @@ bot.onText(/\/my_expert/, async (msg) => {
 
 bot.onText(/\/add_scenario/, async (msg) => {
   await startAddScenario(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/admin_expert(?:\s+(\S+))?/, async (msg, match) => {
+  const adminUserId = msg.from?.id || msg.chat.id;
+  const targetUserId = match?.[1] || adminUserId;
+  await sendAdminTools(msg.chat.id, adminUserId, targetUserId);
 });
 
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
@@ -3165,6 +3492,78 @@ bot.on("callback_query", async (query) => {
   try {
     const state = userState.get(chatId) || {};
 
+    if (data === "admin_tools") {
+      await sendAdminTools(chatId, query.from?.id || chatId, state.adminTargetUserId || query.from?.id || chatId);
+      return;
+    }
+
+    if (data.startsWith("admin_rebuild:")) {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      const scope = data.replace("admin_rebuild:", "");
+      await rebuildPersonaAndNotify(chatId, targetUserId, `Admin rebuild ${scope}: пересобираю persona/worldview/examples...`);
+      await sendAdminTools(chatId, query.from?.id || chatId, targetUserId);
+      return;
+    }
+
+    if (data === "admin_inspect_uploads") {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      await sendLongPlainText(chatId, await inspectUploadsText(targetUserId), {
+        inline_keyboard: [[{ text: "← Admin tools", callback_data: "admin_tools" }]],
+      });
+      return;
+    }
+
+    if (data === "admin_reset_onboarding") {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      await resetOnboardingState(targetUserId);
+      await bot.sendMessage(chatId, `Onboarding reset for ${targetUserId}. Materials are preserved.`);
+      await sendAdminTools(chatId, query.from?.id || chatId, targetUserId);
+      return;
+    }
+
+    if (data === "admin_clone_template_menu") {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      await sendAdminCloneTemplateMenu(chatId);
+      return;
+    }
+
+    if (data.startsWith("admin_clone_template:")) {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      const templateKey = data.replace("admin_clone_template:", "");
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      const { template, scenario } = await createStarterExpertFromTemplate(targetUserId, templateKey);
+      await bot.sendMessage(chatId, `Cloned template "${template.label}" to ${targetUserId}. Active scenario: ${scenario.id}`);
+      await sendAdminTools(chatId, query.from?.id || chatId, targetUserId);
+      return;
+    }
+
+    if (data === "admin_target_dashboard") {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      await sendExpertDashboard(chatId, state.adminTargetUserId || query.from?.id || chatId);
+      return;
+    }
+
     if (data.startsWith("ki_kb:")) {
       const userId = query.from?.id || chatId;
       if (!(await canUseKnowledgeIntake(userId))) {
@@ -3312,6 +3711,10 @@ bot.on("callback_query", async (query) => {
           ? "почему я много планирую и не начинаю"
           : templateKey === "blogger"
             ? "как перестать звучать как все"
+            : templateKey === "fitness"
+              ? "почему я начинаю тренироваться и бросаю через неделю"
+              : templateKey === "marketing"
+                ? "почему контент не приводит клиентов"
             : "почему я всё понимаю, но не могу перестать тревожиться";
       s.pendingLengthMode = "normal";
       s.pendingContentPreset = "emotional";
@@ -3367,6 +3770,11 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "ob_share_identity") {
+      await sendShareableExpertIdentity(chatId, query.from?.id || chatId);
+      return;
+    }
+
     if (data === "ob_test_generation") {
       const inventory = await getOnboardingInventory(query.from?.id || chatId);
       const scenarioId = inventory.profile?.active_scenario_id || inventory.scenarios[0]?.id;
@@ -3396,6 +3804,12 @@ bot.on("callback_query", async (query) => {
       };
       userState.set(chatId, s);
       await sendOnboardingUploadStep(chatId, category);
+      return;
+    }
+
+    if (data.startsWith("ob_help_upload:")) {
+      const category = data.replace("ob_help_upload:", "");
+      await sendUploadRecoveryGuide(chatId, category);
       return;
     }
 
@@ -3443,6 +3857,18 @@ bot.on("callback_query", async (query) => {
         }
         await sendExpertDashboard(chatId, userId);
         return;
+      }
+      if (["knowledge", "style"].includes(category)) {
+        const inventory = await getOnboardingInventory(query.from?.id || chatId);
+        if ((inventory.counts?.[category] || 0) === 0) {
+          await bot.sendMessage(
+            chatId,
+            category === "knowledge"
+              ? "Можно продолжить без материалов, но первый пост будет шаблонным. Чтобы получить сильный WOW-эффект, позже добавьте хотя бы одну экспертную заметку или несколько постов."
+              : "Можно продолжить без примеров стиля, но голос будет менее похож на автора. Позже добавьте 3-5 реальных постов, и я пересоберу persona.",
+            onboardingControls(category)
+          );
+        }
       }
       if (category === "knowledge") { await sendOnboardingUploadStep(chatId, "style"); return; }
       if (category === "style") { await sendOnboardingUploadStep(chatId, "avatar"); return; }
@@ -3961,7 +4387,12 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
   await incrementLimit(chatId, "text", scenario, lengthMode);
-  await incrementExpertRuntime(chatId, "generate_text", { counter: "text", scenario, lengthMode });
+  const runtimeAfterGeneration = await incrementExpertRuntime(chatId, "generate_text", {
+    counter: "text",
+    scenario,
+    lengthMode,
+    demoMode: state.demoMode || variant === "demo",
+  });
 
   const s = userState.get(chatId) || {};
   s.lastFullAnswer = fullAnswer;
@@ -3994,6 +4425,13 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   }).catch(() => {});
 
   await sendGeneratedText(chatId, fullAnswer, scenario);
+  const remaining = runtimeRemaining(runtimeAfterGeneration, "text");
+  if (remaining !== null && (remaining <= 3 || state.demoMode || variant === "demo")) {
+    await bot.sendMessage(
+      chatId,
+      `Осталось бесплатных текстовых генераций: ${remaining}/${runtimeAfterGeneration.limits.text}.\nПремиум-доступ скоро появится, а пока можно продолжать тестировать AI-эксперта в этом лимите.`
+    );
+  }
 }
 
 process.on('uncaughtException', err => console.error('Uncaught:', err.message));

@@ -29,6 +29,7 @@
     "expert:dinara:prepare-sources": "node scripts/expert-knowledge-source-prepare.js --expert dinara",
     "expert:dinara:voice": "node scripts/expert-author-voice-intake.js --expert dinara",
     "expert:dinara:onboard": "npm run expert:dinara:inventory && npm run expert:dinara:prepare-sources && npm run expert:dinara:voice && npm run kb:report:dinara:sexologist",
+    "onboarding:simulate": "node scripts/simulate-onboarding-product-loop.js",
     "kb:test:ingest": "node scripts/safe-cleaned-kb-ingest-test.js",
     "kb:test:ingest:dry": "node scripts/safe-cleaned-kb-ingest-test.js --dry-run",
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js",

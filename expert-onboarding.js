@@ -26,6 +26,14 @@ export const ONBOARDING_ROLES = {
     label: "Блогер",
     prompt: "Ты эксперт-блогер. Пиши живо, лично, наблюдательно, с сильным крючком и понятной мыслью для соцсетей.",
   },
+  fitness: {
+    label: "Fitness expert",
+    prompt: "You are a fitness expert. Write practical Russian social posts with clear, safe, non-shaming guidance about training, recovery, consistency, and realistic progress. Do not promise medical outcomes.",
+  },
+  marketing: {
+    label: "Marketing expert",
+    prompt: "You are a marketing expert. Write clear Russian social posts about positioning, offers, content, client psychology, and conversion. Be specific, strategic, and avoid hype or fake guarantees.",
+  },
 };
 
 export function getUserId(rawUserId) {
