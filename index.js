@@ -83,6 +83,20 @@ console.log(" TG_CHANNEL:", TG_CHANNEL || "NOT SET");
 // ─── ДЕМО-ДОСТУП ─────────────────────────────────────────────────────────────
 
 const DEMO_DB_PATH = join(__dirname, "demo-users.json");
+const BETA_TELEMETRY_DIR = join(__dirname, "reports", "beta-telemetry");
+
+const BETA_EVENT_NAMES = {
+  ONBOARDING_STARTED: "onboarding_started",
+  ONBOARDING_COMPLETED: "onboarding_completed",
+  FIRST_GENERATION: "first_generation",
+  REGENERATION_USED: "regeneration_used",
+  UPLOAD_RECEIVED: "upload_received",
+  DEMO_STARTED: "demo_started",
+  DEMO_CONVERTED: "demo_conversion",
+  SCENARIO_CREATED: "scenario_creation",
+  GENERATION_EXHAUSTED: "generation_exhausted",
+  UPGRADE_PROMPT_SHOWN: "upgrade_prompt_shown",
+};
 
 async function loadDemoDB() {
   try {
@@ -162,11 +176,21 @@ async function incrementLimit(chatId, limitType, scenario, lengthMode) {
 }
 
 const SOFT_FREE_LIMITS = {
-  text: 10,
+  text: 12,
   photo: 3,
   video: 1,
   audio: 3,
-  demo: 3,
+  demo: 2,
+};
+
+const DEFAULT_RUNTIME_TUNING = {
+  prompt_patch: "",
+  style_lock_strength: "strong",
+  worldview_injection: "normal",
+  regeneration_strength: "normal",
+  temperature: null,
+  quality_rewrite_enabled: true,
+  updated_at: null,
 };
 
 function normalizeExpertRuntime(runtime = {}) {
@@ -188,9 +212,35 @@ function normalizeExpertRuntime(runtime = {}) {
       premium_ready: true,
       payments_enabled: false,
       telegram_stars_ready: false,
+      premium_generation_enabled: false,
+      premium_generations: 0,
+      upgrade_prompt_count: runtime.monetization?.upgrade_prompt_count || 0,
+      last_upgrade_prompt_at: runtime.monetization?.last_upgrade_prompt_at || null,
       paid_plan: null,
       upgrade_trigger_seen: false,
       ...(runtime.monetization || {}),
+    },
+    telemetry: {
+      ...(runtime.telemetry || {}),
+      first_generation_at: runtime.telemetry?.first_generation_at || null,
+      onboarding_started_at: runtime.telemetry?.onboarding_started_at || null,
+      onboarding_completed_at: runtime.telemetry?.onboarding_completed_at || null,
+      uploads_total: runtime.telemetry?.uploads_total || 0,
+      upload_counts: {
+        knowledge: runtime.telemetry?.upload_counts?.knowledge || 0,
+        style: runtime.telemetry?.upload_counts?.style || 0,
+        avatar: runtime.telemetry?.upload_counts?.avatar || 0,
+        voice: runtime.telemetry?.upload_counts?.voice || 0,
+        ...(runtime.telemetry?.upload_counts || {}),
+      },
+      demo_started_at: runtime.telemetry?.demo_started_at || null,
+      demo_converted_at: runtime.telemetry?.demo_converted_at || null,
+      scenario_creations: runtime.telemetry?.scenario_creations || 0,
+      regeneration_uses: runtime.telemetry?.regeneration_uses || 0,
+    },
+    tuning: {
+      ...DEFAULT_RUNTIME_TUNING,
+      ...(runtime.tuning || {}),
     },
     events: Array.isArray(runtime.events) ? runtime.events : [],
     updated_at: runtime.updated_at || new Date().toISOString(),
@@ -214,11 +264,76 @@ async function saveExpertRuntime(userId, runtime) {
   return runtime;
 }
 
+function betaTelemetryPath() {
+  const day = new Date().toISOString().slice(0, 10);
+  return join(BETA_TELEMETRY_DIR, `${day}.jsonl`);
+}
+
+function betaEventPatch(eventName, meta = {}) {
+  const now = new Date().toISOString();
+  if (eventName === BETA_EVENT_NAMES.ONBOARDING_STARTED) return { onboarding_started_at: now };
+  if (eventName === BETA_EVENT_NAMES.ONBOARDING_COMPLETED) return { onboarding_completed_at: now };
+  if (eventName === BETA_EVENT_NAMES.FIRST_GENERATION) return { first_generation_at: now };
+  if (eventName === BETA_EVENT_NAMES.DEMO_STARTED) return { demo_started_at: now };
+  if (eventName === BETA_EVENT_NAMES.DEMO_CONVERTED) return { demo_converted_at: now };
+  if (eventName === BETA_EVENT_NAMES.SCENARIO_CREATED) return { scenario_creations_delta: 1 };
+  if (eventName === BETA_EVENT_NAMES.REGENERATION_USED) return { regeneration_uses_delta: 1 };
+  if (eventName === BETA_EVENT_NAMES.UPLOAD_RECEIVED) return { upload_category: meta.category || "unknown" };
+  return {};
+}
+
+async function trackBetaEvent(userId, eventName, meta = {}) {
+  const item = {
+    ts: new Date().toISOString(),
+    user_id: String(userId),
+    event: eventName,
+    ...meta,
+  };
+  try {
+    await fs.mkdir(BETA_TELEMETRY_DIR, { recursive: true });
+    await fs.appendFile(betaTelemetryPath(), `${JSON.stringify(item)}\n`, "utf-8");
+  } catch (error) {
+    console.warn(`[beta-telemetry] append failed: ${error.message}`);
+  }
+
+  try {
+    const runtime = await loadExpertRuntime(userId);
+    const patch = betaEventPatch(eventName, meta);
+    runtime.telemetry = runtime.telemetry || {};
+    if (patch.onboarding_started_at && !runtime.telemetry.onboarding_started_at) runtime.telemetry.onboarding_started_at = patch.onboarding_started_at;
+    if (patch.onboarding_completed_at) runtime.telemetry.onboarding_completed_at = patch.onboarding_completed_at;
+    if (patch.first_generation_at && !runtime.telemetry.first_generation_at) runtime.telemetry.first_generation_at = patch.first_generation_at;
+    if (patch.demo_started_at && !runtime.telemetry.demo_started_at) runtime.telemetry.demo_started_at = patch.demo_started_at;
+    if (patch.demo_converted_at) runtime.telemetry.demo_converted_at = patch.demo_converted_at;
+    if (patch.scenario_creations_delta) runtime.telemetry.scenario_creations = (runtime.telemetry.scenario_creations || 0) + 1;
+    if (patch.regeneration_uses_delta) runtime.telemetry.regeneration_uses = (runtime.telemetry.regeneration_uses || 0) + 1;
+    if (patch.upload_category) {
+      runtime.telemetry.uploads_total = (runtime.telemetry.uploads_total || 0) + 1;
+      runtime.telemetry.upload_counts = runtime.telemetry.upload_counts || {};
+      runtime.telemetry.upload_counts[patch.upload_category] = (runtime.telemetry.upload_counts[patch.upload_category] || 0) + 1;
+    }
+    runtime.events = runtime.events || [];
+    runtime.events.push({
+      ts: item.ts,
+      action: eventName,
+      scenario: meta.scenario || null,
+      category: meta.category || null,
+      mode: meta.mode || runtime.mode || "free_demo",
+    });
+    runtime.events = runtime.events.slice(-150);
+    runtime.updated_at = item.ts;
+    await saveExpertRuntime(userId, runtime);
+  } catch (error) {
+    console.warn(`[beta-telemetry] runtime update failed: ${error.message}`);
+  }
+}
+
 async function incrementExpertRuntime(chatId, action, meta = {}) {
   const runtime = await loadExpertRuntime(chatId);
   const counterKey = meta.counter || action;
   runtime.counters[counterKey] = (runtime.counters[counterKey] || 0) + 1;
   if (meta.demoMode) runtime.counters.demo = (runtime.counters.demo || 0) + 1;
+  if (meta.premium) runtime.monetization.premium_generations = (runtime.monetization.premium_generations || 0) + 1;
   runtime.events = runtime.events || [];
   runtime.events.push({
     ts: new Date().toISOString(),
@@ -234,6 +349,7 @@ async function incrementExpertRuntime(chatId, action, meta = {}) {
 }
 
 function runtimeRemaining(runtime, key = "text") {
+  if (runtime?.monetization?.premium_generation_enabled || runtime?.monetization?.paid_plan) return null;
   const limit = runtime.limits?.[key];
   if (limit === null || limit === undefined) return null;
   return Math.max(0, Number(limit) - Number(runtime.counters?.[key] || 0));
@@ -242,18 +358,146 @@ function runtimeRemaining(runtime, key = "text") {
 function buildRuntimeCounterText(runtime) {
   const textLeft = runtimeRemaining(runtime, "text");
   const demoLeft = runtimeRemaining(runtime, "demo");
+  const premiumOn = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan;
   const bits = [
-    `Режим: ${runtime.mode || "free_demo"}`,
-    `Тексты: ${runtime.counters?.text || 0}/${runtime.limits?.text ?? "∞"}`,
+    `Режим: ${premiumOn ? "premium-ready" : (runtime.mode || "free_demo")}`,
+    `Тексты: ${runtime.counters?.text || 0}/${premiumOn ? "∞" : (runtime.limits?.text ?? "∞")}`,
     `Фото: ${runtime.counters?.photo || 0}/${runtime.limits?.photo ?? "∞"}`,
     `Видео: ${runtime.counters?.video || 0}/${runtime.limits?.video ?? "∞"}`,
   ];
   if (demoLeft !== null) bits.push(`Демо: ${runtime.counters?.demo || 0}/${runtime.limits?.demo ?? "∞"}`);
   if (textLeft !== null) {
     bits.push(`Осталось бесплатных текстов: ${textLeft}`);
-    if (textLeft <= 3) bits.push("Следующий шаг: усилить эксперта материалами или запросить расширение лимита");
+    if (textLeft <= 3) bits.push("Монетизация: готов Stars-upgrade hook, можно тестировать оплату/расширение вручную");
   }
   return bits.join("\n");
+}
+
+function buildRuntimeTuningText(runtime) {
+  const tuning = runtime.tuning || DEFAULT_RUNTIME_TUNING;
+  return [
+    "Tuning hooks:",
+    `Prompt patch: ${tuning.prompt_patch ? "on" : "off"}`,
+    `Style lock: ${tuning.style_lock_strength || "strong"}`,
+    `Worldview: ${tuning.worldview_injection || "normal"}`,
+    `Regeneration: ${tuning.regeneration_strength || "normal"}`,
+    `Temperature: ${tuning.temperature ?? "default"}`,
+    `Quality rewrite: ${tuning.quality_rewrite_enabled === false ? "off" : "on"}`,
+  ].join("\n");
+}
+
+function buildTuningPrompt(runtime) {
+  const tuning = runtime?.tuning || DEFAULT_RUNTIME_TUNING;
+  const parts = [];
+  const styleStrength = tuning.style_lock_strength || "strong";
+  if (styleStrength === "light") {
+    parts.push("RUNTIME TUNING: style lock light. Сохраняй узнаваемость, но не жертвуй ясностью темы.");
+  } else if (styleStrength === "strict") {
+    parts.push("RUNTIME TUNING: style lock strict. При конфликте между общей полезностью и голосом автора выбирай голос, cadence, openings и CTA из persona/style guidance.");
+  } else if (styleStrength === "strong") {
+    parts.push("RUNTIME TUNING: style lock strong. Усиливай авторский ритм, конкретность и эмоциональное узнавание.");
+  }
+
+  const worldviewStrength = tuning.worldview_injection || "normal";
+  if (worldviewStrength === "light") {
+    parts.push("RUNTIME TUNING: worldview light. Используй worldview только как фон, без явного пересказа.");
+  } else if (worldviewStrength === "strong") {
+    parts.push("RUNTIME TUNING: worldview strong. Угол, финальный вывод и эмоциональная логика должны явно вытекать из worldview/persona.");
+  }
+
+  if (tuning.prompt_patch) {
+    parts.push(`RUNTIME ADMIN PROMPT PATCH:\n${String(tuning.prompt_patch).slice(0, 1200)}`);
+  }
+  return parts.join("\n\n");
+}
+
+function normalizeTuningValue(key, value) {
+  const raw = String(value || "").trim();
+  if (key === "style_lock_strength") {
+    return ["light", "normal", "strong", "strict"].includes(raw) ? raw : null;
+  }
+  if (key === "worldview_injection") {
+    return ["off", "light", "normal", "strong"].includes(raw) ? raw : null;
+  }
+  if (key === "regeneration_strength") {
+    return ["light", "normal", "high"].includes(raw) ? raw : null;
+  }
+  if (key === "temperature") {
+    if (["default", "null", "off"].includes(raw)) return null;
+    const number = Number(raw);
+    return Number.isFinite(number) && number >= 0.1 && number <= 1.2 ? number : undefined;
+  }
+  if (key === "quality_rewrite_enabled") {
+    return ["true", "on", "yes", "1"].includes(raw.toLowerCase());
+  }
+  if (key === "prompt_patch") {
+    return raw.slice(0, 1200);
+  }
+  return undefined;
+}
+
+async function updateRuntimeSetting(userId, key, value) {
+  const runtime = await loadExpertRuntime(userId);
+  const now = new Date().toISOString();
+  if (["text", "photo", "video", "audio", "demo"].includes(key)) {
+    const number = Number(value);
+    if (!Number.isFinite(number) || number < 0) return { ok: false, error: "limit must be a positive number" };
+    runtime.limits[key] = number;
+  } else if (key === "premium") {
+    runtime.monetization.premium_generation_enabled = ["true", "on", "yes", "1"].includes(String(value).toLowerCase());
+  } else {
+    const normalized = normalizeTuningValue(key, value);
+    if (normalized === undefined || normalized === null) return { ok: false, error: `unsupported value for ${key}` };
+    runtime.tuning = runtime.tuning || { ...DEFAULT_RUNTIME_TUNING };
+    runtime.tuning[key] = normalized;
+    runtime.tuning.updated_at = now;
+  }
+  runtime.updated_at = now;
+  await saveExpertRuntime(userId, runtime);
+  return { ok: true, runtime };
+}
+
+async function sendAdminTuningPanel(chatId, adminUserId, targetUserId = adminUserId) {
+  if (!isAdminUser(adminUserId)) {
+    await bot.sendMessage(chatId, "🔒 Admin tuning доступен только администратору.");
+    return;
+  }
+  const runtime = await loadExpertRuntime(targetUserId);
+  await bot.sendMessage(chatId, [
+    `Admin tuning: ${targetUserId}`,
+    "",
+    buildRuntimeCounterText(runtime),
+    "",
+    buildRuntimeTuningText(runtime),
+    "",
+    "Команды:",
+    "/tune <user_id> style_lock_strength strict",
+    "/tune <user_id> worldview_injection strong",
+    "/tune <user_id> regeneration_strength high",
+    "/tune <user_id> prompt_patch ваш текст",
+    "/tune <user_id> text 20",
+    "/tune <user_id> premium on",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [
+        { text: "Style strong", callback_data: "admin_tune:style_lock_strength:strong" },
+        { text: "Style strict", callback_data: "admin_tune:style_lock_strength:strict" },
+      ],
+      [
+        { text: "Worldview light", callback_data: "admin_tune:worldview_injection:light" },
+        { text: "Worldview strong", callback_data: "admin_tune:worldview_injection:strong" },
+      ],
+      [
+        { text: "Regen normal", callback_data: "admin_tune:regeneration_strength:normal" },
+        { text: "Regen high", callback_data: "admin_tune:regeneration_strength:high" },
+      ],
+      [
+        { text: "Premium on", callback_data: "admin_tune:premium:on" },
+        { text: "Premium off", callback_data: "admin_tune:premium:off" },
+      ],
+      [{ text: "← Admin tools", callback_data: "admin_tools" }],
+    ]},
+  });
 }
 
 async function notifyLeadsBot(text, keyboard = null) {
@@ -291,10 +535,77 @@ async function handleLimitExhausted(chatId, limitType, user) {
   );
 }
 
+async function checkRuntimeGenerationQuota(chatId, state, limitType = "text") {
+  if (chatId === ADMIN_TG_ID) {
+    return { ok: true, runtime: await loadExpertRuntime(chatId), premium: true };
+  }
+
+  const runtime = await loadExpertRuntime(chatId);
+  const premium = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan;
+  if (premium) return { ok: true, runtime, premium: true };
+
+  const key = state?.demoMode ? "demo" : limitType;
+  const remaining = runtimeRemaining(runtime, key);
+  if (remaining !== null && remaining <= 0) {
+    return {
+      ok: false,
+      reason: state?.demoMode ? "runtime_demo_exhausted" : "runtime_limit_exhausted",
+      limitType: key,
+      runtime,
+      remaining,
+    };
+  }
+  return { ok: true, runtime, remaining };
+}
+
+async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options = {}) {
+  const isDemo = options.demoMode || limitType === "demo";
+  runtime.monetization = runtime.monetization || {};
+  runtime.monetization.upgrade_trigger_seen = true;
+  runtime.monetization.upgrade_prompt_count = (runtime.monetization.upgrade_prompt_count || 0) + 1;
+  runtime.monetization.last_upgrade_prompt_at = new Date().toISOString();
+  runtime.updated_at = runtime.monetization.last_upgrade_prompt_at;
+  await saveExpertRuntime(chatId, runtime);
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.GENERATION_EXHAUSTED, { limit_type: limitType, demo_mode: isDemo });
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.UPGRADE_PROMPT_SHOWN, { limit_type: limitType, demo_mode: isDemo });
+
+  const quotaText = isDemo
+    ? `Демо-лимит закончился: ${runtime.counters?.demo || 0}/${runtime.limits?.demo ?? "∞"}.`
+    : `Бесплатные генерации закончились: ${runtime.counters?.text || 0}/${runtime.limits?.text ?? "∞"}.`;
+
+  await bot.sendMessage(chatId, [
+    "Лимит на этом этапе закончился.",
+    "",
+    quotaText,
+    "",
+    "Можно создать своего AI-эксперта, усилить его материалами и запросить premium-доступ. Оплата Telegram Stars пока не включена, но hook уже готов для быстрого теста.",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Создать своего AI-эксперта", callback_data: "ob_template_menu" }],
+      [{ text: "Запросить premium-доступ", callback_data: `req_limit_${isDemo ? "demo" : "text"}` }],
+      [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+    ]},
+  });
+}
+
 async function handleNotRegistered(chatId) {
   await bot.sendMessage(chatId,
-    `🔐 *Доступ закрыт*\n\nДля использования бота необходимо получить демо-доступ.\n\nОбратитесь к администратору: @tetss2`,
-    { parse_mode: "Markdown" }
+    [
+      "Можно зайти двумя путями:",
+      "",
+      "1. Быстрое демо: готовый AI-эксперт покажет первый пост за минуту.",
+      "2. Свой AI-эксперт: выбираете роль, загружаете материалы и получаете голос ближе к себе.",
+      "",
+      "Для закрытого beta-доступа напишите @tetss2.",
+    ].join("\n"),
+    {
+      parse_mode: "Markdown",
+      reply_markup: { inline_keyboard: [
+        [{ text: "Попробовать демо", callback_data: "demo_start" }],
+        [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
+        [{ text: "Написать @tetss2", url: "https://t.me/tetss2" }],
+      ]},
+    }
   );
 }
 
@@ -777,11 +1088,19 @@ function buildTemplateStyleLock(template) {
   ].join("\n");
 }
 
-function buildStyleLockPrompt({ userScenarioContext, scenario, template }) {
+function buildStyleLockPrompt({ userScenarioContext, scenario, template, tuning = DEFAULT_RUNTIME_TUNING }) {
   const scenarioLabel = template?.label || userScenarioContext?.scenario?.label || getBuiltInScenarioLabel(scenario);
+  const styleStrength = tuning.style_lock_strength || "strong";
+  const styleStrengthLine = {
+    light: "Runtime strength: light — держи стиль, но допускай больше ясности и простоты.",
+    normal: "Runtime strength: normal — баланс узнаваемого голоса и понятной экспертности.",
+    strong: "Runtime strength: strong — голос, cadence и openings важнее универсальной блоговой структуры.",
+    strict: "Runtime strength: strict — если текст звучит generic, перепиши угол, первый экран и финал до узнаваемости.",
+  }[styleStrength] || "Runtime strength: strong.";
   return [
     "STYLE LOCK — ОБЯЗАТЕЛЬНО ПЕРЕД ГЕНЕРАЦИЕЙ:",
     `Пиши не как универсальный ассистент, а как конкретный эксперт: ${scenarioLabel}.`,
+    styleStrengthLine,
     "",
     "Зафиксируй 6 якорей голоса:",
     "1. Tone: один узнаваемый эмоциональный тон на весь текст; не смешивай лекцию, мотивацию и продающий стиль.",
@@ -1013,6 +1332,15 @@ async function guardMediaAction(chatId, label = "медиа") {
   }
   state.lastMediaActionAt = nowMs();
   userState.set(chatId, state);
+  return true;
+}
+
+async function guardRuntimeQuotaForAction(chatId, limitType, label = "операция") {
+  const quota = await checkRuntimeGenerationQuota(chatId, {}, limitType);
+  if (!quota.ok) {
+    await handleRuntimeLimitExhausted(chatId, limitType, quota.runtime, { demoMode: false });
+    return false;
+  }
   return true;
 }
 
@@ -1566,6 +1894,7 @@ async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю
 
 async function startExpertOnboarding(chatId, fromUserId) {
   await ensureUserExpertFolders(fromUserId || chatId);
+  await trackBetaEvent(fromUserId || chatId, BETA_EVENT_NAMES.ONBOARDING_STARTED, { entry: "manual_or_cta" });
   const s = userState.get(chatId) || {};
   s.expertOnboarding = {
     userId: fromUserId || chatId,
@@ -1575,7 +1904,7 @@ async function startExpertOnboarding(chatId, fromUserId) {
   };
   userState.set(chatId, s);
   await bot.sendMessage(chatId,
-    "Создадим AI-эксперта.\n\nСамый быстрый путь: выбрать готовый шаблон и сразу получить первый пост. Если хотите собрать с нуля — напишите имя эксперта или бренда.",
+    "Создадим AI-эксперта, который пишет не как пустой ассистент, а как конкретный автор.\n\nБыстрый путь: выберите шаблон и сразу получите первый пост. Точный путь: соберите с нуля и добавьте материалы, стиль, фото или голос.",
     { reply_markup: { inline_keyboard: [
       [{ text: "⚡ Start with template expert", callback_data: "ob_template_menu" }],
       [{ text: "📝 Собрать с нуля", callback_data: "ob_custom_name" }],
@@ -1603,8 +1932,8 @@ function starterTemplateRows(prefix = "ob_template") {
 async function sendStarterTemplateMenu(chatId, mode = "onboarding") {
   const prefix = mode === "demo" ? "demo_template" : "ob_template";
   const text = mode === "demo"
-    ? "Выберите готового AI-эксперта и сразу сгенерируем демо-пост:"
-    : "Выберите стартовый шаблон. Я создам AI-эксперта без загрузок, а материалы можно будет добавить позже:";
+    ? "Выберите готового AI-эксперта. Я сразу покажу первый пост, чтобы вы почувствовали качество без настройки:"
+    : "Выберите стартовый шаблон. Он уже даст первый рабочий пост, а настоящие материалы можно добавить после:";
   await bot.sendMessage(chatId, text, {
     reply_markup: { inline_keyboard: [
       ...starterTemplateRows(prefix),
@@ -1687,6 +2016,8 @@ async function createStarterExpertFromTemplate(userId, templateKey, expertName =
   await fs.writeFile(join(root, "profile", "style_guidance.md"), drafts.style_guidance, "utf-8");
   await fs.writeFile(join(root, "profile", "style_examples.md"), drafts.style_examples, "utf-8");
   await fs.writeFile(join(root, "profile", "material_quality.md"), drafts.material_quality, "utf-8");
+  await trackBetaEvent(userId, BETA_EVENT_NAMES.SCENARIO_CREATED, { scenario: scenario.id, source: "starter_template", template: templateKey });
+  await trackBetaEvent(userId, BETA_EVENT_NAMES.ONBOARDING_COMPLETED, { scenario: scenario.id, source: "starter_template", template: templateKey });
   return { profile, scenario, template };
 }
 
@@ -1710,8 +2041,9 @@ async function startDemoMode(chatId, templateKey = "psychologist") {
   s.pendingLengthMode = "normal";
   s.pendingContentPreset = "emotional";
   userState.set(chatId, s);
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.DEMO_STARTED, { template: templateKey, mode: "demo" });
   await bot.sendMessage(chatId,
-    `⚡ Demo mode: ${template.label}\n\nСейчас сгенерирую готовый пост без онбординга. После этого можно будет создать такого же эксперта под себя.`
+    `Demo: ${template.label}\n\nСейчас будет готовый пост без онбординга. Если попадёт в ощущение, следующим шагом можно создать такого же эксперта под ваш голос.`
   );
   await runGeneration(chatId, s.pendingScenario, "normal", "auto", "demo");
 }
@@ -1725,7 +2057,7 @@ async function startAddScenario(chatId, fromUserId) {
     data: {},
   };
   userState.set(chatId, s);
-  await sendOnboardingRoleChoice(chatId, "Выберите новый сценарий для этого эксперта:");
+  await sendOnboardingRoleChoice(chatId, "Выберите новый сценарий. Это отдельный режим голоса и задач для того же AI-эксперта:");
 }
 
 async function setActiveUserScenario(userId, scenarioId) {
@@ -1762,10 +2094,10 @@ async function sendOnboardingRoleChoice(chatId, title = "Выберите рол
 
 async function sendOnboardingUploadStep(chatId, category) {
   const copy = {
-    knowledge: "Загрузите материалы знаний: PDF, DOCX, TXT, ссылки или Telegram-ссылки. Когда хватит, нажмите «Готово, дальше».",
-    style: "Теперь загрузите источники стиля автора: посты, тексты, ссылки, заметки. Это нужно для голоса эксперта.",
-    avatar: "Загрузите фото аватара эксперта. Можно отправить несколько фото.",
-    voice: "Загрузите голосовые samples: voice message, audio или файлы. Это только intake, генерация голоса позже.",
+    knowledge: "Материалы знаний: статьи, заметки, методички, разборы, PDF/DOCX/TXT или просто текст сообщением. Даже 1 хорошая заметка лучше десяти случайных ссылок.",
+    style: "Источники стиля: 3-5 реальных постов, фрагменты рассылок, тексты от лица автора. По ним я ловлю ритм, открытия, паузы и финалы.",
+    avatar: "Фото аватара: портрет или рабочее фото эксперта. Можно пропустить и добавить позже.",
+    voice: "Голосовые samples: voice message/audio. Сейчас я их сохраняю для beta-профиля, генерацию голоса можно подключать позже.",
   };
   const s = userState.get(chatId) || {};
   if (s.expertOnboarding) s.expertOnboarding.step = category;
@@ -1859,6 +2191,12 @@ async function handleExpertOnboardingMessage(msg, state) {
       await bot.deleteMessage(chatId, progress.message_id).catch(() => {});
     }
     await bot.sendMessage(chatId, `${buildUploadVisibilityText(step, stored, count)}${buildMaterialQualityText(quality, step)}`, onboardingControls(step));
+    await trackBetaEvent(userId, BETA_EVENT_NAMES.UPLOAD_RECEIVED, {
+      category: step,
+      count,
+      source: msg.document ? "document" : msg.photo ? "photo" : (msg.voice || msg.audio) ? "voice_or_audio" : "text",
+      quality_score: quality?.score || null,
+    });
     return true;
   }
 
@@ -1887,11 +2225,18 @@ async function finishExpertOnboarding(chatId, fromUserId) {
     created_at: existingProfile?.created_at || new Date().toISOString(),
   };
   await saveUserProfile(userId, profile);
+  await trackBetaEvent(userId, BETA_EVENT_NAMES.SCENARIO_CREATED, { scenario: scenario.id, source: "custom_onboarding" });
 
   await rebuildPersonaAndNotify(chatId, userId, "Собираю persona draft, worldview и style examples из загруженных материалов...");
 
   state.expertOnboarding = null;
   userState.set(chatId, state);
+  await trackBetaEvent(userId, BETA_EVENT_NAMES.ONBOARDING_COMPLETED, { scenario: scenario.id, source: "custom_onboarding" });
+  await bot.sendMessage(chatId, [
+    "AI-эксперт собран.",
+    "",
+    "Сейчас главное не идеальность профиля, а первый живой результат. Я открою dashboard: там видно готовность, материалы и кнопка тестовой генерации.",
+  ].join("\n"));
   await sendExpertDashboard(chatId, userId);
 }
 
@@ -1909,15 +2254,16 @@ async function sendExpertDashboard(chatId, userId = chatId) {
     `Статус: ${statusLabel}\n` +
     `Активный сценарий: ${activeScenario?.label || "не выбран"}\n\n` +
     `${buildReadinessSummaryText(readiness)}\n\n` +
+    `Что уже есть:\n` +
     `Сценарии: ${inventory.scenarios.length}\n` +
-    `Материалы: ${inventory.counts.knowledge}\n` +
+    `Материалы знаний: ${inventory.counts.knowledge}\n` +
     `Примеры стиля: ${inventory.counts.style}\n` +
-    `Фото аватара: ${inventory.counts.avatar}\n` +
-    `Голосовые samples: ${inventory.counts.voice}\n\n` +
-    `${runtimeText}`,
+    `Фото: ${inventory.counts.avatar}\n` +
+    `Голос: ${inventory.counts.voice}\n\n` +
+    `Beta usage:\n${runtimeText}`,
     {
       reply_markup: { inline_keyboard: [
-        [{ text: "✨ Generate test post", callback_data: "ob_test_generation" }],
+        [{ text: "✨ Первый/тестовый пост", callback_data: "ob_test_generation" }],
         [
           { text: "🧩 List scenarios", callback_data: "ob_list_scenarios" },
           { text: "🔄 Switch scenario", callback_data: "ob_select_scenario" },
@@ -1935,7 +2281,7 @@ async function sendExpertDashboard(chatId, userId = chatId) {
           { text: "🖼 Upload avatar", callback_data: "ob_upload_more:avatar" },
           { text: "🎙 Upload voice", callback_data: "ob_upload_more:voice" },
         ],
-        [{ text: "Создать контент", callback_data: "back_to_topics" }],
+        [{ text: "Создать новый контент", callback_data: "back_to_topics" }],
       ]},
     }
   );
@@ -2073,6 +2419,7 @@ async function sendAdminTools(chatId, adminUserId, targetUserId = adminUserId) {
           { text: "Reset onboarding", callback_data: "admin_reset_onboarding" },
           { text: "Clone template", callback_data: "admin_clone_template_menu" },
         ],
+        [{ text: "Runtime tuning", callback_data: "admin_tuning" }],
         [{ text: "Dashboard as target", callback_data: "admin_target_dashboard" }],
       ]},
     }
@@ -2154,7 +2501,8 @@ async function sendTopicMenu(chatId) {
   }
   keyboard.push([{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }]);
   keyboard.push([{ text: "➕ Создать AI-эксперта с нуля", callback_data: "ob_start" }]);
-  await bot.sendMessage(chatId, `🌟 *С чего начнём?*\n\nВыберите сценарий:`, {
+  keyboard.push([{ text: "💌 Beta invite copy", callback_data: "demo_invite_copy" }]);
+  await bot.sendMessage(chatId, `С чего начнём?\n\nДемо покажет ценность быстро. Свой AI-эксперт даст лучший голос после материалов.`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: keyboard },
   });
@@ -3124,11 +3472,49 @@ function shareExpertKeyboard() {
   ]];
 }
 
-function buildRegenerationInstruction(variant = "default", feedbackNote = "") {
+async function sendBetaInviteCopy(chatId) {
+  await bot.sendMessage(chatId, [
+    "Текст для закрытого beta-инвайта:",
+    "",
+    "Я тестирую AI-эксперта для контента: он собирает роль, стиль и материалы, а потом пишет посты так, будто у автора уже есть свой живой голос.",
+    "",
+    "Можно начать с демо за минуту или создать своего эксперта из шаблона. Первые генерации бесплатные, дальше будем тестировать premium-доступ через Telegram Stars.",
+    "",
+    "Старт: отправьте /start этому боту.",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Попробовать демо", callback_data: "demo_start" }],
+      [{ text: "Создать AI-эксперта", callback_data: "ob_template_menu" }],
+    ]},
+  });
+}
+
+async function sendCreateExpertCta(chatId) {
+  await bot.sendMessage(chatId, [
+    "Создайте своего AI-эксперта.",
+    "",
+    "Быстро: шаблон даст первый пост сразу.",
+    "Точнее: добавьте материалы и примеры стиля, чтобы посты звучали ближе к вам.",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Быстрый старт с шаблоном", callback_data: "ob_template_menu" }],
+      [{ text: "Собрать с нуля", callback_data: "ob_start" }],
+      [{ text: "Сначала демо", callback_data: "demo_start" }],
+    ]},
+  });
+}
+
+function buildRegenerationInstruction(variant = "default", feedbackNote = "", tuning = DEFAULT_RUNTIME_TUNING) {
   const instruction = REGENERATION_VARIANTS[variant] || "";
   if (!instruction && !feedbackNote) return "";
   const note = feedbackNote ? `\nКомментарий пользователя: "${feedbackNote}"` : "";
-  return `\n\nВАРИАНТ ПЕРЕГЕНЕРАЦИИ:\n${instruction}${note}`;
+  const strength = tuning.regeneration_strength || "normal";
+  const strengthLine = strength === "high"
+    ? "\nRuntime tuning: делай изменение заметным, чтобы пользователь явно увидел разницу, но не ломай тему и голос."
+    : strength === "light"
+      ? "\nRuntime tuning: меняй мягко, сохраняя большую часть удачного текста."
+      : "";
+  return `\n\nВАРИАНТ ПЕРЕГЕНЕРАЦИИ:\n${instruction}${note}${strengthLine}`;
 }
 
 function humanizeGeneratedPostText(text) {
@@ -3180,6 +3566,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
   const userScenarioContext = chatId ? await buildUserScenarioContext(chatId, scenario, topic) : null;
   const runtimeState = chatId ? (userState.get(chatId) || {}) : {};
+  const runtimeConfig = chatId ? await loadExpertRuntime(chatId).catch(() => normalizeExpertRuntime()) : normalizeExpertRuntime();
+  const runtimeTuning = runtimeConfig.tuning || DEFAULT_RUNTIME_TUNING;
   const starterTemplateKey = userScenarioContext?.profile?.starter_template || runtimeState.demoTemplateKey || null;
   const starterTemplate = starterTemplateKey ? STARTER_EXPERT_TEMPLATES[starterTemplateKey] : null;
 
@@ -3292,37 +3680,48 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
   const useDinaraFallbackPrompts = !userScenarioContext?.scenario && !(starterTemplate && runtimeState.demoMode);
   const fewShotPrompt = useDinaraFallbackPrompts ? await buildDinaraFewShotPrompt(topic) : "";
-  const worldviewPrompt = useDinaraFallbackPrompts ? await buildDinaraWorldviewPrompt() : "";
+  const worldviewPrompt = useDinaraFallbackPrompts && runtimeTuning.worldview_injection !== "off" ? await buildDinaraWorldviewPrompt() : "";
   const realismPrompt = useDinaraFallbackPrompts ? DINARA_REALISM_PROMPT : "";
-  const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate });
+  const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate, tuning: runtimeTuning });
   const firstGenerationWowPrompt = buildFirstGenerationWowInstruction(runtimeState.firstGenerationBoost);
-  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt].filter(Boolean).join("\n\n");
+  const runtimeTuningPrompt = buildTuningPrompt(runtimeConfig);
+  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt, runtimeTuningPrompt].filter(Boolean).join("\n\n");
   const contentPresetInstruction = buildContentPresetInstruction(runtimeState.pendingContentPreset || runtimeState.lastContentPreset);
   const firstGenerationLine = runtimeState.firstGenerationBoost
     ? "\n- Это первая генерация: поставь эмоциональное узнавание выше аккуратной нейтральности."
     : "";
 
+  const tunedTemperature = runtimeTuning.temperature === null || runtimeTuning.temperature === undefined
+    ? 0.82
+    : Number(runtimeTuning.temperature);
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}\n\nSTABILIZATION:\n- Сделай первый экран сильным: конкретное узнаваемое переживание или тезис, без общих вступлений.\n- Не используй универсальные AI-фразы, канцелярит и безопасные пустые выводы.\n- Удерживай авторскую идентичность из persona/worldview/style guidance сильнее, чем общую экспертность.\n- Добавь 1-2 конкретные детали из контекста, если они есть, но не выдумывай факты.${firstGenerationLine}${buildRegenerationInstruction(variant, feedbackNote)}` }
+      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}\n\nSTABILIZATION:\n- Сделай первый экран сильным: конкретное узнаваемое переживание или тезис, без общих вступлений.\n- Не используй универсальные AI-фразы, канцелярит и безопасные пустые выводы.\n- Удерживай авторскую идентичность из persona/worldview/style guidance сильнее, чем общую экспертность.\n- Добавь 1-2 конкретные детали из контекста, если они есть, но не выдумывай факты.${firstGenerationLine}${buildRegenerationInstruction(variant, feedbackNote, runtimeTuning)}` }
     ],
-    temperature: 0.82,
+    temperature: tunedTemperature,
     max_tokens: maxTokens,
   });
 
   const firstPassText = humanizeGeneratedPostText(completion.choices[0].message.content);
-  const qualityPass = await rewriteGenericPostOnce({
-    text: firstPassText,
-    topic,
-    context,
-    lengthInstruction,
-    systemPrompt,
-    contentPresetInstruction,
-    styleLockPrompt,
-    maxTokens,
-  });
+  const qualityPass = runtimeTuning.quality_rewrite_enabled === false
+    ? {
+        text: firstPassText,
+        rewritten: false,
+        quality: genericQualitySignals(firstPassText),
+        firstPassQuality: genericQualitySignals(firstPassText),
+      }
+    : await rewriteGenericPostOnce({
+        text: firstPassText,
+        topic,
+        context,
+        lengthInstruction,
+        systemPrompt,
+        contentPresetInstruction,
+        styleLockPrompt,
+        maxTokens,
+      });
 
   return {
     text: qualityPass.text,
@@ -3413,6 +3812,14 @@ async function sendGeneratedText(chatId, text, scenario) {
     await bot.sendMessage(chatId, text);
   });
 
+  if (state.firstGenerationBoostApplied) {
+    await bot.sendMessage(chatId, [
+      "Первый пост готов.",
+      "",
+      "Сейчас важный момент beta-теста: посмотрите не только на пользу текста, а на ощущение голоса. Если стало «да, это похоже на меня/моего эксперта», значит профиль уже можно развивать дальше.",
+    ].join("\n"));
+  }
+
   await bot.sendMessage(chatId, buildWhyThisFeelsLikeYou(state));
 
   const demoRows = state.demoMode
@@ -3426,6 +3833,7 @@ async function sendGeneratedText(chatId, text, scenario) {
       ...feedbackKeyboard(answerId),
       ...directedRegenerationKeyboard(),
       ...shareExpertKeyboard(),
+      [{ text: "💎 Запросить premium", callback_data: "req_limit_text" }],
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
       [{ text: "👤 Улучшить AI-эксперта", callback_data: "ob_dashboard" }],
@@ -3492,11 +3900,12 @@ bot.onText(/\/start/, async (msg) => {
     );
   } else {
     await bot.sendMessage(chatId,
-      "Добро пожаловать. Можно сначала попробовать готового AI-эксперта за минуту, а потом собрать своего под ваш голос.",
+      "Добро пожаловать в закрытую beta.\n\nЦель простая: за пару минут увидеть, может ли AI-эксперт звучать как живой автор, а не как шаблонный GPT-пост.",
       { reply_markup: { inline_keyboard: [
         [{ text: "⚡ Попробовать демо сейчас", callback_data: "demo_start" }],
         [{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }],
         [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
+        [{ text: "💌 Текст инвайта", callback_data: "demo_invite_copy" }],
         [{ text: "У меня уже есть доступ", callback_data: "show_help" }],
       ]}}
     );
@@ -3513,6 +3922,14 @@ bot.onText(/\/demo/, async (msg) => {
   await sendStarterTemplateMenu(msg.chat.id, "demo");
 });
 
+bot.onText(/\/invite/, async (msg) => {
+  await sendBetaInviteCopy(msg.chat.id);
+});
+
+bot.onText(/\/create_expert/, async (msg) => {
+  await sendCreateExpertCta(msg.chat.id);
+});
+
 bot.onText(/\/my_expert/, async (msg) => {
   await sendExpertDashboard(msg.chat.id, msg.from?.id || msg.chat.id);
 });
@@ -3525,6 +3942,28 @@ bot.onText(/\/admin_expert(?:\s+(\S+))?/, async (msg, match) => {
   const adminUserId = msg.from?.id || msg.chat.id;
   const targetUserId = match?.[1] || adminUserId;
   await sendAdminTools(msg.chat.id, adminUserId, targetUserId);
+});
+
+bot.onText(/\/tune(?:\s+(\S+))?(?:\s+(\S+))?(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const adminUserId = msg.from?.id || msg.chat.id;
+  if (!isAdminUser(adminUserId)) {
+    await bot.sendMessage(msg.chat.id, "🔒 Tuning доступен только администратору.");
+    return;
+  }
+  const targetUserId = match?.[1] || adminUserId;
+  const key = match?.[2];
+  const value = match?.[3];
+  if (!key) {
+    await sendAdminTuningPanel(msg.chat.id, adminUserId, targetUserId);
+    return;
+  }
+  const result = await updateRuntimeSetting(targetUserId, key, value);
+  if (!result.ok) {
+    await bot.sendMessage(msg.chat.id, `Не удалось обновить ${key}: ${result.error}`);
+    return;
+  }
+  await bot.sendMessage(msg.chat.id, `✅ Updated ${key} for ${targetUserId}.`);
+  await sendAdminTuningPanel(msg.chat.id, adminUserId, targetUserId);
 });
 
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
@@ -3773,6 +4212,28 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "admin_tuning") {
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      await sendAdminTuningPanel(chatId, query.from?.id || chatId, targetUserId);
+      return;
+    }
+
+    if (data.startsWith("admin_tune:")) {
+      if (!isAdminUser(query.from?.id || chatId)) {
+        await bot.sendMessage(chatId, "🔒 Admin shortcut.");
+        return;
+      }
+      const [, key, value] = data.split(":");
+      const targetUserId = state.adminTargetUserId || query.from?.id || chatId;
+      const result = await updateRuntimeSetting(targetUserId, key, value);
+      if (!result.ok) {
+        await bot.sendMessage(chatId, `Tuning error: ${result.error}`);
+        return;
+      }
+      await sendAdminTuningPanel(chatId, query.from?.id || chatId, targetUserId);
+      return;
+    }
+
     if (data.startsWith("admin_rebuild:")) {
       if (!isAdminUser(query.from?.id || chatId)) {
         await bot.sendMessage(chatId, "🔒 Admin shortcut.");
@@ -3901,10 +4362,15 @@ bot.on("callback_query", async (query) => {
       const limitType = data.replace("req_limit_", "");
       const user = await getDemoUserByTgId(chatId);
       if (user) {
-        const labelMap = { text: "📝 Тексты", photo: "🖼 Фото", video: "🎬 Видео" };
+        const labelMap = { text: "📝 Тексты", photo: "🖼 Фото", video: "🎬 Видео", demo: "⚡ Демо" };
         await notifyLeadsBot(
           `📩 *Запрос на увеличение лимита*\n\n👤 ${user.name}, ${user.city}\n📱 ${user.phone}\n📊 Хочет больше: *${labelMap[limitType] || limitType}*`,
           { inline_keyboard: [[{ text: "💬 Написать пользователю", url: `tg://user?id=${user.tg_id}` }]] }
+        );
+      } else {
+        await notifyLeadsBot(
+          `📩 *Запрос premium/beta лимита*\n\nTelegram user: ${chatId}\nТип: ${limitType}`,
+          { inline_keyboard: [[{ text: "💬 Написать пользователю", url: `tg://user?id=${chatId}` }]] }
         );
       }
       await bot.sendMessage(chatId, "✅ Запрос отправлен администратору. Он свяжется с вами в ближайшее время.");
@@ -3967,6 +4433,16 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "demo_invite_copy") {
+      await sendBetaInviteCopy(chatId);
+      return;
+    }
+
+    if (data === "create_expert_cta") {
+      await sendCreateExpertCta(chatId);
+      return;
+    }
+
     if (data.startsWith("demo_template:")) {
       await startDemoMode(chatId, data.replace("demo_template:", ""));
       return;
@@ -3975,6 +4451,7 @@ bot.on("callback_query", async (query) => {
     if (data.startsWith("ob_template:")) {
       const templateKey = data.replace("ob_template:", "");
       const s = userState.get(chatId) || {};
+      const convertedFromDemo = Boolean(s.demoMode);
       const userId = query.from?.id || chatId;
       const { scenario, template } = await createStarterExpertFromTemplate(userId, templateKey);
       s.expertOnboarding = null;
@@ -3995,8 +4472,11 @@ bot.on("callback_query", async (query) => {
       s.pendingLengthMode = "normal";
       s.pendingContentPreset = "emotional";
       userState.set(chatId, s);
+      if (convertedFromDemo) {
+        await trackBetaEvent(userId, BETA_EVENT_NAMES.DEMO_CONVERTED, { template: templateKey, scenario: scenario.id });
+      }
       await bot.sendMessage(chatId,
-        `✅ Шаблон "${template.label}" создан.\n\nСейчас покажу первый пост сразу, а стиль и материалы можно усилить позже.`
+        `Шаблон "${template.label}" создан.\n\nСейчас покажу первый пост сразу. Если он уже близко попадает в голос, материалы сделают его ещё точнее.`
       );
       await runGeneration(chatId, scenario.id, "normal", "auto");
       return;
@@ -4111,6 +4591,7 @@ bot.on("callback_query", async (query) => {
         if (profile) await setActiveUserScenario(onboarding.userId, scenario.id);
         s.expertOnboarding = null;
         userState.set(chatId, s);
+        await trackBetaEvent(onboarding.userId, BETA_EVENT_NAMES.SCENARIO_CREATED, { scenario: scenario.id, source: "add_scenario", role: roleKey });
         await bot.sendMessage(chatId, `✅ Сценарий добавлен и выбран активным: ${scenario.label}`);
         await sendExpertDashboard(chatId, onboarding.userId);
         return;
@@ -4444,6 +4925,7 @@ bot.on("callback_query", async (query) => {
 
     if (data.startsWith("rp:")) {
       if (!(await guardMediaAction(chatId, "фото"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "photo", "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4481,8 +4963,10 @@ bot.on("callback_query", async (query) => {
 
     if (data === "vid_again") {
       if (!(await guardMediaAction(chatId, "видео"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "video", "видео"))) return;
       if (!state.lastImageUrl || !state.lastAudioUrl) { await bot.sendMessage(chatId, "Нет фото или аудио."); return; }
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, state.lastImageUrl, state.lastAudioUrl);
+      await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
@@ -4491,6 +4975,7 @@ bot.on("callback_query", async (query) => {
 
     if (data === "audlen_short" || data === "audlen_long") {
       if (!(await guardMediaAction(chatId, "аудио"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "audio", "аудио"))) return;
       const audioLength = data === "audlen_long" ? "long" : "short";
       const fullAnswer = state.lastFullAnswer;
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
@@ -4579,6 +5064,7 @@ bot.on("callback_query", async (query) => {
 
     if (data.startsWith("mv:")) {
       if (!(await guardMediaAction(chatId, "видео"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "video", "видео"))) return;
       const videoCheck = await checkLimit(chatId, "video");
       if (!videoCheck.ok) {
         if (videoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4601,6 +5087,7 @@ bot.on("callback_query", async (query) => {
 
     if (data === "photo_topic") {
       if (!(await guardMediaAction(chatId, "фото"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "photo", "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4617,6 +5104,7 @@ bot.on("callback_query", async (query) => {
       await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
     } else if (data === "photo_office") {
       if (!(await guardMediaAction(chatId, "фото"))) return;
+      if (!(await guardRuntimeQuotaForAction(chatId, "photo", "фото"))) return;
       const photoCheck = await checkLimit(chatId, "photo");
       if (!photoCheck.ok) {
         if (photoCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -4653,6 +5141,12 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   }
   state.lastGenerationAt = nowMs();
   userState.set(chatId, state);
+
+  const runtimeQuotaCheck = await checkRuntimeGenerationQuota(chatId, state, "text");
+  if (!runtimeQuotaCheck.ok) {
+    await handleRuntimeLimitExhausted(chatId, runtimeQuotaCheck.limitType || "text", runtimeQuotaCheck.runtime, { demoMode: state.demoMode });
+    return;
+  }
 
   if (!state.demoMode) {
     const textCheck = await checkLimit(chatId, "text");
@@ -4695,7 +5189,22 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
       scenario,
       lengthMode,
       demoMode: state.demoMode || variant === "demo",
+      premium: runtimeQuotaCheck.premium,
     });
+    if ((runtimeBeforeGeneration.counters?.text || 0) === 0) {
+      await trackBetaEvent(chatId, BETA_EVENT_NAMES.FIRST_GENERATION, {
+        scenario,
+        lengthMode,
+        demo_mode: state.demoMode || variant === "demo",
+      });
+    }
+    if (!["default", "demo"].includes(variant)) {
+      await trackBetaEvent(chatId, BETA_EVENT_NAMES.REGENERATION_USED, {
+        scenario,
+        lengthMode,
+        variant,
+      });
+    }
 
     const s = userState.get(chatId) || {};
     s.lastFullAnswer = fullAnswer;
