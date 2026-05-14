@@ -25,6 +25,21 @@ import { buildSexologistPrompt, normalizeSexologistStyleKey, SEXOLOGIST_STYLE_ME
 import { buildAuthorVoicePrompt, loadAuthorVoiceProfile, logAuthorVoiceStatus } from "./author_voice.js";
 import { getLengthConfig } from "./generation_config.js";
 import { runRuntimeGenerationAdapter } from "./scripts/runtime-generation-adapter.js";
+import {
+  ONBOARDING_ROLES,
+  buildUserScenarioContext,
+  createUserScenario,
+  ensureUserExpertFolders,
+  generatePersonaDrafts,
+  getOnboardingInventory,
+  loadUserProfile,
+  loadUserScenario,
+  listUserScenarios,
+  saveUserProfile,
+  storeOnboardingFile,
+  storeOnboardingText,
+  userHasCompletedExpert,
+} from "./expert-onboarding.js";
 let ffmpegPath = "ffmpeg";
 try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
 import ffmpeg from "fluent-ffmpeg";
@@ -86,6 +101,7 @@ async function getDemoUserByTgId(tgId) {
 
 async function checkDemoAccess(chatId) {
   if (chatId === ADMIN_TG_ID) return { allowed: true, user: null };
+  if (await userHasCompletedExpert(chatId)) return { allowed: true, user: null };
   const user = await getDemoUserByTgId(chatId);
   if (!user) return { allowed: false, reason: "not_registered" };
 
@@ -719,9 +735,213 @@ async function sendOnboarding(chatId, step = 1) {
   }
 }
 
+function getBuiltInScenarioLabel(scenario) {
+  if (scenario === "sexologist") return "💜 Сексолог Динара";
+  if (scenario === "psychologist") return "🧠 Психолог Динара";
+  return ONBOARDING_ROLES[scenario]?.label || scenario || "Эксперт";
+}
+
+async function getScenarioLabel(chatId, scenario) {
+  const userScenario = await loadUserScenario(chatId, scenario);
+  if (userScenario) return `⭐ ${userScenario.label}`;
+  return getBuiltInScenarioLabel(scenario);
+}
+
+function onboardingControls(category) {
+  return {
+    reply_markup: { inline_keyboard: [
+      [{ text: "✅ Готово, дальше", callback_data: `ob_done:${category}` }],
+      [{ text: "❌ Отменить", callback_data: "ob_cancel" }],
+    ]},
+  };
+}
+
+async function startExpertOnboarding(chatId, fromUserId) {
+  await ensureUserExpertFolders(fromUserId || chatId);
+  const s = userState.get(chatId) || {};
+  s.expertOnboarding = {
+    userId: fromUserId || chatId,
+    mode: "create_expert",
+    step: "name",
+    data: {},
+  };
+  userState.set(chatId, s);
+  await bot.sendMessage(chatId, "Создадим AI-эксперта. Напишите имя эксперта или бренда:");
+}
+
+async function startAddScenario(chatId, fromUserId) {
+  const s = userState.get(chatId) || {};
+  s.expertOnboarding = {
+    userId: fromUserId || chatId,
+    mode: "add_scenario",
+    step: "role",
+    data: {},
+  };
+  userState.set(chatId, s);
+  await sendOnboardingRoleChoice(chatId, "Выберите новый сценарий для этого эксперта:");
+}
+
+async function sendOnboardingRoleChoice(chatId, title = "Выберите роль/сценарий эксперта:") {
+  await bot.sendMessage(chatId, title, {
+    reply_markup: { inline_keyboard: [
+      [
+        { text: "Психолог", callback_data: "ob_role:psychologist" },
+        { text: "Сексолог", callback_data: "ob_role:sexologist" },
+      ],
+      [
+        { text: "Гештальт", callback_data: "ob_role:gestalt_therapist" },
+        { text: "Коуч", callback_data: "ob_role:coach" },
+      ],
+      [{ text: "Блогер", callback_data: "ob_role:blogger" }],
+    ]},
+  });
+}
+
+async function sendOnboardingUploadStep(chatId, category) {
+  const copy = {
+    knowledge: "Загрузите материалы знаний: PDF, DOCX, TXT, ссылки или Telegram-ссылки. Когда хватит, нажмите «Готово, дальше».",
+    style: "Теперь загрузите источники стиля автора: посты, тексты, ссылки, заметки. Это нужно для голоса эксперта.",
+    avatar: "Загрузите фото аватара эксперта. Можно отправить несколько фото.",
+    voice: "Загрузите голосовые samples: voice message, audio или файлы. Это только intake, генерация голоса позже.",
+  };
+  const s = userState.get(chatId) || {};
+  if (s.expertOnboarding) s.expertOnboarding.step = category;
+  userState.set(chatId, s);
+  await bot.sendMessage(chatId, copy[category], onboardingControls(category));
+}
+
+async function handleExpertOnboardingMessage(msg, state) {
+  const chatId = msg.chat.id;
+  const onboarding = state.expertOnboarding;
+  if (!onboarding) return false;
+  const userId = onboarding.userId || msg.from?.id || chatId;
+  const step = onboarding.step;
+
+  if (step === "name") {
+    const name = (msg.text || "").trim();
+    if (!name) {
+      await bot.sendMessage(chatId, "Напишите имя текстом.");
+      return true;
+    }
+    onboarding.data.expertName = name;
+    onboarding.step = "role";
+    userState.set(chatId, state);
+    await sendOnboardingRoleChoice(chatId);
+    return true;
+  }
+
+  if (["knowledge", "style", "avatar", "voice"].includes(step)) {
+    const before = await getOnboardingInventory(userId);
+    let stored = null;
+    if (msg.document) {
+      const buffer = await downloadTelegramDocument(msg.document.file_id);
+      stored = await storeOnboardingFile(userId, step, msg.document.file_name || "telegram_document", buffer, {
+        telegram_file_id: msg.document.file_id,
+        mime_type: msg.document.mime_type,
+      });
+    } else if (msg.photo && step === "avatar") {
+      const photo = msg.photo[msg.photo.length - 1];
+      const buffer = await downloadTelegramDocument(photo.file_id);
+      stored = await storeOnboardingFile(userId, "avatar", `${photo.file_unique_id || photo.file_id}.jpg`, buffer, {
+        telegram_file_id: photo.file_id,
+      });
+    } else if ((msg.voice || msg.audio) && step === "voice") {
+      const media = msg.voice || msg.audio;
+      const buffer = await downloadTelegramDocument(media.file_id);
+      stored = await storeOnboardingFile(userId, "voice", `${media.file_unique_id || media.file_id}.ogg`, buffer, {
+        telegram_file_id: media.file_id,
+        duration: media.duration,
+      });
+    } else if (msg.text && ["knowledge", "style"].includes(step)) {
+      stored = await storeOnboardingText(userId, step, msg.text.trim(), { source: "telegram_text_or_link" });
+    }
+
+    if (!stored) {
+      await bot.sendMessage(chatId, "Этот тип файла здесь пока не принимаю. Отправьте подходящий файл/ссылку или нажмите «Готово, дальше».", onboardingControls(step));
+      return true;
+    }
+
+    const after = await getOnboardingInventory(userId);
+    const count = after.counts[step] ?? before.counts[step] ?? 0;
+    await bot.sendMessage(chatId, `Принято: ${stored.original_name}\nВсего в этом разделе: ${count}`, onboardingControls(step));
+    return true;
+  }
+
+  return true;
+}
+
+async function finishExpertOnboarding(chatId, fromUserId) {
+  const state = userState.get(chatId) || {};
+  const onboarding = state.expertOnboarding;
+  if (!onboarding) return;
+  const userId = onboarding.userId || fromUserId || chatId;
+  const data = onboarding.data || {};
+  const existingProfile = await loadUserProfile(userId);
+  const expertName = data.expertName || existingProfile?.expert_name || "Новый эксперт";
+  const scenario = await createUserScenario(userId, data.roleKey || "blogger", {
+    expertName,
+    title: ONBOARDING_ROLES[data.roleKey]?.label || data.roleKey || "Эксперт",
+  });
+  const profile = {
+    ...(existingProfile || {}),
+    user_id: String(userId),
+    expert_name: expertName,
+    status: "completed",
+    active_scenario_id: scenario.id,
+    updated_at: new Date().toISOString(),
+    created_at: existingProfile?.created_at || new Date().toISOString(),
+  };
+  await saveUserProfile(userId, profile);
+
+  const status = await bot.sendMessage(chatId, "Собираю persona draft, worldview и style examples из загруженных материалов...");
+  try {
+    await generatePersonaDrafts(openai, userId);
+    await bot.editMessageText("AI-эксперт создан. Черновики персоны и стиля готовы.", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+  } catch (error) {
+    console.error("Persona draft error:", error.message);
+    await bot.editMessageText(`Эксперт создан, но автодрафт не собрался: ${error.message.slice(0, 160)}`, {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+  }
+
+  state.expertOnboarding = null;
+  userState.set(chatId, state);
+  await sendExpertDashboard(chatId, userId);
+}
+
+async function sendExpertDashboard(chatId, userId = chatId) {
+  const inventory = await getOnboardingInventory(userId);
+  const name = inventory.profile?.expert_name || "эксперт";
+  const scenarios = inventory.scenarios.map((s, i) => `${i + 1}. ${s.label} (${s.id})`).join("\n") || "пока нет";
+  await bot.sendMessage(chatId,
+    `AI-эксперт: ${name}\n\nСценарии:\n${scenarios}\n\nМатериалы: ${inventory.counts.knowledge}\nСтиль: ${inventory.counts.style}\nАватары: ${inventory.counts.avatar}\nГолос: ${inventory.counts.voice}`,
+    {
+      reply_markup: { inline_keyboard: [
+        [{ text: "Создать контент", callback_data: "back_to_topics" }],
+        [{ text: "Добавить сценарий", callback_data: "ob_add_scenario" }],
+        [
+          { text: "Догрузить знания", callback_data: "ob_upload_more:knowledge" },
+          { text: "Догрузить стиль", callback_data: "ob_upload_more:style" },
+        ],
+        [
+          { text: "Догрузить фото", callback_data: "ob_upload_more:avatar" },
+          { text: "Догрузить голос", callback_data: "ob_upload_more:voice" },
+        ],
+      ]},
+    }
+  );
+}
+
 async function sendTopicMenu(chatId) {
   const state = userState.get(chatId) || {};
   const presets = state.presets || [];
+  const userScenarios = await listUserScenarios(chatId).catch(() => []);
+  state.userScenarioMenu = userScenarios.map((scenario) => scenario.id);
+  userState.set(chatId, state);
   const keyboard = [
     [
       { text: "🧠 Психолог Динара", callback_data: "sc_psych" },
@@ -732,6 +952,15 @@ async function sendTopicMenu(chatId) {
   if (presets.length > 0) {
     keyboard.push([{ text: "⭐ Мои пресеты", callback_data: "show_presets" }]);
   }
+  if (userScenarios.length > 0) {
+    for (let i = 0; i < userScenarios.length; i += 2) {
+      keyboard.push(userScenarios.slice(i, i + 2).map((scenario, offset) => ({
+        text: `⭐ ${scenario.label}`,
+        callback_data: `usc:${i + offset}`,
+      })));
+    }
+  }
+  keyboard.push([{ text: "➕ Создать AI-эксперта", callback_data: "ob_start" }]);
   await bot.sendMessage(chatId, `🌟 *С чего начнём?*\n\nВыберите сценарий:`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: keyboard },
@@ -739,6 +968,13 @@ async function sendTopicMenu(chatId) {
 }
 
 async function sendTopicsForScenario(chatId, scenario) {
+  const userScenario = await loadUserScenario(chatId, scenario);
+  if (userScenario) {
+    await bot.sendMessage(chatId, `⭐ ${userScenario.label}\n\nНапишите тему поста:`, {
+      reply_markup: { inline_keyboard: [[{ text: "← Назад", callback_data: "back_to_topics" }]] },
+    });
+    return;
+  }
   const topics = scenario === "sexologist" ? QUICK_TOPICS_SEX : QUICK_TOPICS_PSYCH;
   const prefix = scenario === "sexologist" ? "qs" : "qp";
   const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог Динара" : "🧠 Психолог Динара";
@@ -771,7 +1007,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -879,13 +1115,22 @@ async function handleKnowledgeIntakeMessage(msg) {
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
+  const userScenarios = await listUserScenarios(chatId).catch(() => []);
+  state.userScenarioMenu = userScenarios.map((scenario) => scenario.id);
   userState.set(chatId, state);
+  const rows = [[
+    { text: "🧠 Психолог Динара", callback_data: "sc_psych_t" },
+    { text: "💜 Сексолог Динара", callback_data: "sc_sex_t" },
+  ]];
+  for (let i = 0; i < userScenarios.length; i += 2) {
+    rows.push(userScenarios.slice(i, i + 2).map((scenario, offset) => ({
+      text: `⭐ ${scenario.label}`,
+      callback_data: `usc_t:${i + offset}`,
+    })));
+  }
   await bot.sendMessage(chatId, `📝 Тема: *${topic}*\n\nКто будет отвечать?`, {
     parse_mode: "Markdown",
-    reply_markup: { inline_keyboard: [[
-      { text: "🧠 Психолог Динара", callback_data: "sc_psych_t" },
-      { text: "💜 Сексолог Динара", callback_data: "sc_sex_t" },
-    ]]},
+    reply_markup: { inline_keyboard: rows },
   });
 }
 
@@ -893,7 +1138,7 @@ async function sendLengthChoice(chatId, scenario) {
   const state = userState.get(chatId) || {};
   state.pendingScenario = scenario;
   userState.set(chatId, state);
-  const label = scenario === "sexologist" ? "💜 Сексолог Динара" : "🧠 Психолог Динара";
+  const label = await getScenarioLabel(chatId, scenario);
   await bot.sendMessage(chatId, `${label}\n\nВыберите длину поста:`, {
     reply_markup: { inline_keyboard: [[
       { text: "✂️ Короткий", callback_data: "len_short" },
@@ -1535,8 +1780,8 @@ async function processAudioWithTrack(chatId, trackId) {
 
 // ─── ГЕНЕРАЦИЯ ТЕКСТА ─────────────────────────────────────────────────────────
 
-async function generatePostText(topic, scenario, lengthMode = "normal", styleKey = "auto") {
-  const result = await generatePostTextResult(topic, scenario, lengthMode, styleKey);
+async function generatePostText(topic, scenario, lengthMode = "normal", styleKey = "auto", chatId = null) {
+  const result = await generatePostTextResult(topic, scenario, lengthMode, styleKey, "default", "", chatId);
   return result.text;
 }
 
@@ -1636,12 +1881,21 @@ function humanizeGeneratedPostText(text) {
     .trim();
 }
 
-async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto", variant = "default", feedbackNote = "") {
+async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto", variant = "default", feedbackNote = "", chatId = null) {
   let context = "";
   let retrievalMeta = null;
   const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
+  const userScenarioContext = chatId ? await buildUserScenarioContext(chatId, scenario, topic) : null;
 
-  if (scenario === "sexologist") {
+  if (userScenarioContext?.scenario) {
+    context = userScenarioContext.context;
+    retrievalMeta = {
+      sources: ["user-filesystem-onboarding"],
+      chunksCount: 0,
+      estimatedTokens: Math.ceil(context.length / 3.5),
+      productionVersion: null,
+    };
+  } else if (scenario === "sexologist") {
     const retrieval = await retrieveGroundingContext(topic, "sexologist");
     if (retrieval?.context) {
       context = retrieval.context;
@@ -1686,11 +1940,19 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     }
   }
 
-  const lengthConfig = getLengthConfig(scenario, lengthMode);
+  const lengthConfig = getLengthConfig(["psychologist", "sexologist"].includes(scenario) ? scenario : "psychologist", lengthMode);
   const maxTokens = lengthConfig.maxTokens;
   const lengthInstruction = lengthConfig.instruction;
 
-  const baseSystemPrompt = scenario === "sexologist"
+  const baseSystemPrompt = userScenarioContext?.scenario
+    ? [
+        `Ты — ${userScenarioContext.profile?.expert_name || userScenarioContext.scenario.expert_name || "эксперт"}.`,
+        userScenarioContext.scenario.system_prompt,
+        "Пишешь посты для Telegram/Instagram от первого лица или от лица экспертного бренда, если это естественно.",
+        "Не выдумывай биографические факты. Опирайся на загруженные материалы, persona draft, worldview draft и style examples.",
+        "Стиль: живой, конкретный, без канцелярита, без нумерованных списков, с мягким полезным финалом.",
+      ].filter(Boolean).join("\n")
+    : scenario === "sexologist"
     ? buildSexologistPrompt(normalizedStyleKey)
     : PSYCHOLOGIST_SYSTEM_PROMPT;
   const authorVoice = scenario === "sexologist"
@@ -1698,9 +1960,10 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     : { enabled: false, profileLoaded: false, content: "" };
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
-  const fewShotPrompt = await buildDinaraFewShotPrompt(topic);
-  const worldviewPrompt = await buildDinaraWorldviewPrompt();
-  const systemPrompt = [baseSystemPrompt, worldviewPrompt, DINARA_REALISM_PROMPT, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
+  const fewShotPrompt = userScenarioContext?.scenario ? "" : await buildDinaraFewShotPrompt(topic);
+  const worldviewPrompt = userScenarioContext?.scenario ? "" : await buildDinaraWorldviewPrompt();
+  const realismPrompt = userScenarioContext?.scenario ? "" : DINARA_REALISM_PROMPT;
+  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -1777,7 +2040,7 @@ async function generateAudioText(fullAnswer, audioLength = "short") {
 }
 
 async function sendGeneratedText(chatId, text, scenario) {
-  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+  const scenarioLabel = await getScenarioLabel(chatId, scenario);
   const state = userState.get(chatId) || {};
   const answerId = state.lastAnswerId || createAnswerId();
   state.lastAnswerId = answerId;
@@ -1794,7 +2057,7 @@ async function sendGeneratedText(chatId, text, scenario) {
       [
         { text: "🌿 Мягче", callback_data: "regen:softer" },
         { text: "🎯 Практичнее", callback_data: "regen:practical" },
-        { text: "🧠 Больше Динары", callback_data: "regen:voice" },
+        { text: "🎙 Ближе к голосу", callback_data: "regen:voice" },
       ],
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
@@ -1829,6 +2092,15 @@ bot.onText(/\/start/, async (msg) => {
     return;
   }
 
+  if (await userHasCompletedExpert(chatId)) {
+    const profile = await loadUserProfile(chatId);
+    await bot.sendMessage(chatId,
+      `👋 Добро пожаловать, *${profile?.expert_name || "эксперт"}*!\n\nВаш AI-эксперт уже создан. Нажмите кнопку чтобы начать 👇`,
+      { parse_mode: "Markdown", reply_markup: START_KEYBOARD }
+    );
+    return;
+  }
+
   const demoUser = await getDemoUserByTgId(chatId);
   if (demoUser) {
     const access = await checkDemoAccess(chatId);
@@ -1850,11 +2122,29 @@ bot.onText(/\/start/, async (msg) => {
       { parse_mode: "Markdown", reply_markup: START_KEYBOARD }
     );
   } else {
-    await handleNotRegistered(chatId);
+    await bot.sendMessage(chatId,
+      "Добро пожаловать. Можно создать своего AI-эксперта прямо здесь: загрузить материалы, стиль, фото и голос.",
+      { reply_markup: { inline_keyboard: [
+        [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
+        [{ text: "У меня уже есть доступ", callback_data: "show_help" }],
+      ]}}
+    );
   }
 });
 
 bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
+
+bot.onText(/\/onboard/, async (msg) => {
+  await startExpertOnboarding(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/my_expert/, async (msg) => {
+  await sendExpertDashboard(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/add_scenario/, async (msg) => {
+  await startAddScenario(msg.chat.id, msg.from?.id || msg.chat.id);
+});
 
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
@@ -1945,7 +2235,7 @@ bot.on("message", async (msg) => {
       const access = await checkDemoAccess(chatId);
       if (!access.allowed) {
         if (access.reason === "expired") { await handleExpired(chatId, access.user); }
-        else { await handleNotRegistered(chatId); }
+        else { await startExpertOnboarding(chatId, msg.from?.id || chatId); }
         return;
       }
       await bot.sendMessage(chatId, "🌟 Начинаем!", { reply_markup: REMOVE_KEYBOARD });
@@ -1954,6 +2244,10 @@ bot.on("message", async (msg) => {
       } else {
         await sendOnboarding(chatId, 1);
       }
+      return;
+    }
+
+    if (state.expertOnboarding && await handleExpertOnboardingMessage(msg, state)) {
       return;
     }
 
@@ -2179,6 +2473,87 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "ob_start") {
+      await startExpertOnboarding(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data === "ob_add_scenario") {
+      await startAddScenario(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data.startsWith("ob_upload_more:")) {
+      const category = data.replace("ob_upload_more:", "");
+      const s = userState.get(chatId) || {};
+      s.expertOnboarding = {
+        userId: query.from?.id || chatId,
+        mode: "upload_more",
+        step: category,
+        data: {},
+      };
+      userState.set(chatId, s);
+      await sendOnboardingUploadStep(chatId, category);
+      return;
+    }
+
+    if (data.startsWith("ob_role:")) {
+      const roleKey = data.replace("ob_role:", "");
+      const s = userState.get(chatId) || {};
+      const onboarding = s.expertOnboarding || {
+        userId: query.from?.id || chatId,
+        mode: "create_expert",
+        data: {},
+      };
+      onboarding.data = onboarding.data || {};
+      onboarding.data.roleKey = roleKey;
+      s.expertOnboarding = onboarding;
+      userState.set(chatId, s);
+
+      if (onboarding.mode === "add_scenario") {
+        const profile = await loadUserProfile(onboarding.userId);
+        const scenario = await createUserScenario(onboarding.userId, roleKey, {
+          expertName: profile?.expert_name || "Эксперт",
+          title: ONBOARDING_ROLES[roleKey]?.label || roleKey,
+        });
+        s.expertOnboarding = null;
+        userState.set(chatId, s);
+        await bot.sendMessage(chatId, `Сценарий добавлен: ${scenario.label}`);
+        await sendExpertDashboard(chatId, onboarding.userId);
+        return;
+      }
+
+      await sendOnboardingUploadStep(chatId, "knowledge");
+      return;
+    }
+
+    if (data.startsWith("ob_done:")) {
+      const category = data.replace("ob_done:", "");
+      const s = userState.get(chatId) || {};
+      if (s.expertOnboarding?.mode === "upload_more") {
+        const userId = s.expertOnboarding.userId || query.from?.id || chatId;
+        s.expertOnboarding = null;
+        userState.set(chatId, s);
+        await bot.sendMessage(chatId, "Материалы сохранены.");
+        await sendExpertDashboard(chatId, userId);
+        return;
+      }
+      if (category === "knowledge") { await sendOnboardingUploadStep(chatId, "style"); return; }
+      if (category === "style") { await sendOnboardingUploadStep(chatId, "avatar"); return; }
+      if (category === "avatar") { await sendOnboardingUploadStep(chatId, "voice"); return; }
+      if (category === "voice") { await finishExpertOnboarding(chatId, query.from?.id || chatId); return; }
+      return;
+    }
+
+    if (data === "ob_cancel") {
+      const s = userState.get(chatId) || {};
+      s.expertOnboarding = null;
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId, "Онбординг остановлен. Загруженные файлы остались в папке пользователя.");
+      await sendTopicMenu(chatId);
+      return;
+    }
+
     if (data === "show_help") { await sendHelp(chatId); return; }
     if (data === "back_to_topics") {
       const s = userState.get(chatId) || {};
@@ -2243,7 +2618,7 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       if (!s.lastScenario) { await bot.sendMessage(chatId, "Нет данных для сохранения."); return; }
       const styleLabel = SEXOLOGIST_STYLE_META[s.lastStyleKey]?.label || "✨ Авто";
-      const scLabel = s.lastScenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+      const scLabel = await getScenarioLabel(chatId, s.lastScenario);
       const lenLabel = { short: "✂️ Короткий", normal: "📄 Обычный", long: "📖 Длинный" }[s.lastLengthMode] || "📄";
       savePreset(chatId, {
         scenario: s.lastScenario,
@@ -2267,6 +2642,32 @@ bot.on("callback_query", async (query) => {
       s.presetStyleKey = preset.styleKey;
       userState.set(chatId, s);
       await bot.sendMessage(chatId, `⚡ Пресет: ${preset.label}\n\nНапишите тему поста:`);
+      return;
+    }
+
+    if (data.startsWith("usc:")) {
+      const idx = parseInt(data.replace("usc:", ""));
+      const scenarioId = state.userScenarioMenu?.[idx];
+      if (!scenarioId) {
+        await bot.sendMessage(chatId, "Сценарий не найден. Откройте меню заново.");
+        return;
+      }
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = scenarioId;
+      s.pendingTopic = null;
+      userState.set(chatId, s);
+      await sendTopicsForScenario(chatId, scenarioId);
+      return;
+    }
+
+    if (data.startsWith("usc_t:")) {
+      const idx = parseInt(data.replace("usc_t:", ""));
+      const scenarioId = state.userScenarioMenu?.[idx];
+      if (!scenarioId) {
+        await bot.sendMessage(chatId, "Сценарий не найден. Откройте меню заново.");
+        return;
+      }
+      await sendLengthChoice(chatId, scenarioId);
       return;
     }
 
@@ -2324,11 +2725,11 @@ bot.on("callback_query", async (query) => {
         await bot.sendMessage(chatId, "Напишите, что именно нужно поправить в этом ответе.");
       } else {
         const regenerationRows = {
-          not_voice: [[{ text: "🧠 Перегенерировать в голосе Динары", callback_data: "regen:voice" }]],
+          not_voice: [[{ text: "🎙 Перегенерировать ближе к голосу", callback_data: "regen:voice" }]],
           weak_expertise: [[{ text: "🎯 Сделать глубже и практичнее", callback_data: "regen:practical" }]],
           bad: [[
             { text: "🌿 Мягче", callback_data: "regen:softer" },
-            { text: "🧠 Больше Динары", callback_data: "regen:voice" },
+            { text: "🎙 Ближе к голосу", callback_data: "regen:voice" },
           ]],
         };
         const rows = regenerationRows[feedbackType];
@@ -2584,7 +2985,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   if (!topic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
 
   const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
-  const scenarioLabel = scenario === "sexologist" ? "💜 Сексолог" : "🧠 Психолог";
+  const scenarioLabel = await getScenarioLabel(chatId, scenario);
   const styleLabel = scenario === "sexologist" && styleKey !== "auto"
     ? ` · ${SEXOLOGIST_STYLE_META[styleKey]?.label || ""}` : "";
   const genMsg = await bot.sendMessage(chatId,
@@ -2592,7 +2993,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   );
 
   const feedbackNote = variant === "feedback" ? state.pendingGenerationNote || "" : "";
-  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote);
+  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote, chatId);
   const fullAnswer = generation.text;
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 

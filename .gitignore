@@ -8,3 +8,4 @@ sources/sexologist/*.docx
 .env.local
 kb/sexologist/test-ingestion/*.jsonl
 kb/sexologist/test-ingestion/*.manifest.json
+users/
