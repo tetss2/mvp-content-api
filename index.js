@@ -44,8 +44,10 @@ import {
   userHasCompletedExpert,
 } from "./expert-onboarding.js";
 let ffmpegPath = "ffmpeg";
+let ffmpegAvailable = false;
 try {
   ffmpegPath = execSync(process.platform === "win32" ? "where ffmpeg" : "which ffmpeg", { stdio: ["ignore", "pipe", "ignore"] }).toString().split(/\r?\n/)[0].trim();
+  ffmpegAvailable = true;
   console.log("ffmpeg available");
 } catch(e) {
   console.warn("ffmpeg not found; audio mixing will fall back to voice-only:", e.message);
@@ -338,6 +340,39 @@ async function getMediaProfileForExpert(expertId) {
   return profiles.find((profile) => profile.expertId === expertId) || getDefaultMediaProfile();
 }
 
+function cloudinaryAudioReady() {
+  return Boolean(CLOUDINARY_CLOUD && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET);
+}
+
+function getActiveExpertIdForChat(chatId) {
+  const state = chatId ? (userState.get(chatId) || {}) : {};
+  return state.lastExpertId || state.activeExpertId || process.env.DEFAULT_EXPERT_ID || DEFAULT_RUNTIME_EXPERT.expertId;
+}
+
+async function getVoiceReadiness(chatId) {
+  const expertId = getActiveExpertIdForChat(chatId);
+  const mediaProfile = await getMediaProfileForExpert(expertId);
+  const voiceProfileId = mediaProfile.voiceProfileId || FISH_AUDIO_VOICE_ID || null;
+  return {
+    enabled: Boolean(FISH_AUDIO_API_KEY && voiceProfileId),
+    expertId,
+    fishAudioKeyPresent: Boolean(FISH_AUDIO_API_KEY),
+    voiceProfileIdPresent: Boolean(voiceProfileId),
+    voiceProfileSource: mediaProfile.voiceProfileId ? "media_profile" : (FISH_AUDIO_VOICE_ID ? "env" : "missing"),
+    cloudinaryPresent: cloudinaryAudioReady(),
+    ffmpegRequired: true,
+    ffmpegPresent: ffmpegAvailable,
+    voiceProfileId,
+  };
+}
+
+async function guardConfiguredVoiceGeneration(chatId) {
+  const readiness = await getVoiceReadiness(chatId);
+  if (readiness.enabled) return readiness;
+  await bot.sendMessage(chatId, "Voice generation is not configured yet.");
+  return null;
+}
+
 async function getExpertById(expertId) {
   const experts = await loadExpertRegistry();
   return experts.find((expert) => expert.expertId === expertId) || null;
@@ -592,6 +627,7 @@ runtimeLog("Feature readiness:", {
   leadsBotTokenPresent: Boolean(LEADS_BOT_TOKEN),
   publishChannel: Boolean(TG_CHANNEL),
   fishAudio: Boolean(FISH_AUDIO_API_KEY && FISH_AUDIO_VOICE_ID),
+  ffmpeg: ffmpegAvailable,
   fal: Boolean(FAL_KEY),
   cloudinary: Boolean(CLOUDINARY_CLOUD && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET),
   telegramStars: TELEGRAM_STARS_ENABLED,
@@ -2405,9 +2441,12 @@ async function mixAudioWithMusic(voiceBuffer, musicUrl) {
 
 const AUDIO_PRICE_PER_CHAR = 0.000008;
 
-async function generateVoice(text) {
+async function generateVoice(text, voiceProfileId = FISH_AUDIO_VOICE_ID) {
+  if (!FISH_AUDIO_API_KEY || !voiceProfileId) {
+    throw new Error("Voice generation is not configured yet.");
+  }
   const payload = writeMsgpack({
-    text, reference_id: FISH_AUDIO_VOICE_ID,
+    text, reference_id: voiceProfileId,
     format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
   });
   const response = await fetch("https://api.fish.audio/v1/tts", {
@@ -5017,6 +5056,29 @@ bot.onText(/\/usage(?:\s+(\S+))?/, async (msg, match) => {
   await bot.sendMessage(chatId, formatEntitlement(entitlement));
 });
 
+bot.onText(/\/voice_status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 Voice status доступен только admin/full_access.");
+    return;
+  }
+  const readiness = await getVoiceReadiness(chatId);
+  const yesNo = (value) => value ? "yes" : "no";
+  await bot.sendMessage(chatId, [
+    "Voice generation beta readiness",
+    "",
+    `voice enabled: ${yesNo(readiness.enabled)}`,
+    `Fish Audio key present: ${yesNo(readiness.fishAudioKeyPresent)}`,
+    `voiceProfileId present: ${yesNo(readiness.voiceProfileIdPresent)}`,
+    `voiceProfileId source: ${readiness.voiceProfileSource}`,
+    `Cloudinary present: ${yesNo(readiness.cloudinaryPresent)}`,
+    `ffmpeg required: ${yesNo(readiness.ffmpegRequired)}`,
+    `ffmpeg present: ${yesNo(readiness.ffmpegPresent)}`,
+    `active expertId: ${readiness.expertId}`,
+  ].join("\n"));
+});
+
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id || chatId;
@@ -6053,18 +6115,24 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    if (data === "audio_gen") { await sendAudioLengthChoice(chatId); return; }
+    if (data === "audio_gen") {
+      if (!(await guardConfiguredVoiceGeneration(chatId))) return;
+      await sendAudioLengthChoice(chatId);
+      return;
+    }
 
     if (data === "audlen_short" || data === "audlen_long") {
       if (!(await guardMediaAction(chatId, "аудио"))) return;
       if (!(await guardRuntimeQuotaForAction(chatId, "audio", "аудио"))) return;
+      const voiceReadiness = await guardConfiguredVoiceGeneration(chatId);
+      if (!voiceReadiness) return;
       const audioLength = data === "audlen_long" ? "long" : "short";
       const fullAnswer = state.lastFullAnswer;
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
       const genMsg = await bot.sendMessage(chatId, "⏳ Генерирую голос...");
       const audioText = await generateAudioText(fullAnswer, audioLength);
       debugLog(`Audio text prepared (${audioLength}): ${audioText.length} chars`);
-      const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText);
+      const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText, voiceReadiness.voiceProfileId);
       await incrementExpertRuntime(chatId, "generate_audio", { counter: "audio", scenario: state.lastScenario });
       await recordRuntimeCost(chatId, "audio", "fish_audio_tts", audioCost, { scenario: state.lastScenario, chars: audioText.length }).catch(() => {});
       await bot.editMessageText("✅ Голос готов! Выберите музыку:", { chat_id: chatId, message_id: genMsg.message_id });
