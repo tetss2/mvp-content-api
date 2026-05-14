@@ -42,7 +42,12 @@ import {
   userHasCompletedExpert,
 } from "./expert-onboarding.js";
 let ffmpegPath = "ffmpeg";
-try { ffmpegPath = execSync("which ffmpeg").toString().trim(); console.log("ffmpeg path:", ffmpegPath); } catch(e) { console.error("ffmpeg not found:", e.message); }
+try {
+  ffmpegPath = execSync(process.platform === "win32" ? "where ffmpeg" : "which ffmpeg").toString().split(/\r?\n/)[0].trim();
+  console.log("ffmpeg available");
+} catch(e) {
+  console.warn("ffmpeg not found; audio mixing will fall back to voice-only:", e.message);
+}
 import ffmpeg from "fluent-ffmpeg";
 
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -64,6 +69,38 @@ const LEADS_BOT_TOKEN = process.env.LEADS_BOT_TOKEN;
 const TG_CHANNEL = process.env.TG_CHANNEL; // chat_id канала, напр. -1001234567890
 const FREESOUND_API_KEY = process.env.FREESOUND_API_KEY;
 const ADMIN_TG_ID = 109664871;
+const NODE_ENV = process.env.NODE_ENV || "development";
+const IS_PRODUCTION = NODE_ENV === "production";
+const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
+const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
+const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
+const STARTUP_WARNINGS = [];
+
+function requireEnv(name) {
+  if (!process.env[name]) throw new Error(`Missing required env var: ${name}`);
+}
+
+function warnOptionalEnv(name, feature) {
+  if (!process.env[name]) STARTUP_WARNINGS.push(`${name} missing; ${feature} disabled or degraded.`);
+}
+
+function validateRuntimeEnv() {
+  requireEnv("TELEGRAM_TOKEN");
+  requireEnv("OPENAI_API_KEY");
+  warnOptionalEnv("SUPABASE_URL", "vector retrieval");
+  warnOptionalEnv("SUPABASE_ANON_KEY", "vector retrieval");
+  warnOptionalEnv("FISH_AUDIO_API_KEY", "voice generation");
+  warnOptionalEnv("FISH_AUDIO_VOICE_ID", "voice generation");
+  warnOptionalEnv("FALAI_KEY", "photo/video generation");
+  warnOptionalEnv("CLOUDINARY_CLOUD", "video audio hosting");
+  warnOptionalEnv("CLOUDINARY_API_KEY", "video audio hosting");
+  warnOptionalEnv("CLOUDINARY_API_SECRET", "video audio hosting");
+  if (TELEGRAM_STARS_ENABLED && !TELEGRAM_STARS_PROVIDER_TOKEN) {
+    STARTUP_WARNINGS.push("TELEGRAM_STARS_ENABLED=true but provider token is not configured; Stars checkout will stay placeholder-only.");
+  }
+}
+
+validateRuntimeEnv();
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
 const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
@@ -73,12 +110,17 @@ const supabase = (SUPABASE_URL && SUPABASE_ANON_KEY)
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
   : null;
 
-console.log("Bot started");
-console.log(" TELEGRAM_TOKEN:", !!TELEGRAM_TOKEN);
-console.log(" OPENAI_API_KEY:", !!OPENAI_API_KEY);
-console.log(" SUPABASE:", !!supabase);
-console.log(" LEADS_BOT_TOKEN:", !!LEADS_BOT_TOKEN);
-console.log(" TG_CHANNEL:", TG_CHANNEL || "NOT SET");
+console.log(`Bot started (${NODE_ENV})`);
+console.log("Feature readiness:", {
+  supabase: Boolean(supabase),
+  leadsBot: Boolean(LEADS_BOT_TOKEN),
+  publishChannel: Boolean(TG_CHANNEL),
+  fishAudio: Boolean(FISH_AUDIO_API_KEY && FISH_AUDIO_VOICE_ID),
+  fal: Boolean(FAL_KEY),
+  cloudinary: Boolean(CLOUDINARY_CLOUD && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET),
+  telegramStars: TELEGRAM_STARS_ENABLED,
+});
+for (const warning of STARTUP_WARNINGS) console.warn(`[startup] ${warning}`);
 
 // ─── ДЕМО-ДОСТУП ─────────────────────────────────────────────────────────────
 
@@ -89,13 +131,29 @@ const BETA_EVENT_NAMES = {
   ONBOARDING_STARTED: "onboarding_started",
   ONBOARDING_COMPLETED: "onboarding_completed",
   FIRST_GENERATION: "first_generation",
+  GENERATION_COMPLETED: "generation_completed",
   REGENERATION_USED: "regeneration_used",
   UPLOAD_RECEIVED: "upload_received",
+  UPLOAD_REJECTED: "upload_rejected",
   DEMO_STARTED: "demo_started",
   DEMO_CONVERTED: "demo_conversion",
   SCENARIO_CREATED: "scenario_creation",
   GENERATION_EXHAUSTED: "generation_exhausted",
   UPGRADE_PROMPT_SHOWN: "upgrade_prompt_shown",
+  STARS_UPGRADE_CLICKED: "stars_upgrade_clicked",
+  PAID_GENERATION_PLACEHOLDER: "paid_generation_placeholder",
+  COST_RECORDED: "cost_recorded",
+};
+
+const COST_ESTIMATES_USD = {
+  text_short: 0.002,
+  text_normal: 0.004,
+  text_long: 0.007,
+  image: 0.035,
+  video: 1.47,
+  audio_char: 0.000008,
+  cloudinary_upload: 0,
+  audio_mix: 0,
 };
 
 async function loadDemoDB() {
@@ -237,6 +295,35 @@ function normalizeExpertRuntime(runtime = {}) {
       demo_converted_at: runtime.telemetry?.demo_converted_at || null,
       scenario_creations: runtime.telemetry?.scenario_creations || 0,
       regeneration_uses: runtime.telemetry?.regeneration_uses || 0,
+      generations_completed: runtime.telemetry?.generations_completed || 0,
+      generation_failures: runtime.telemetry?.generation_failures || 0,
+      dropoffs: {
+        onboarding_started_no_completion: runtime.telemetry?.dropoffs?.onboarding_started_no_completion || 0,
+        generated_no_media: runtime.telemetry?.dropoffs?.generated_no_media || 0,
+        demo_started_no_conversion: runtime.telemetry?.dropoffs?.demo_started_no_conversion || 0,
+        ...(runtime.telemetry?.dropoffs || {}),
+      },
+    },
+    cost_visibility: {
+      total_estimated_usd: Number(runtime.cost_visibility?.total_estimated_usd || 0),
+      categories: {
+        text: Number(runtime.cost_visibility?.categories?.text || 0),
+        audio: Number(runtime.cost_visibility?.categories?.audio || 0),
+        image: Number(runtime.cost_visibility?.categories?.image || 0),
+        video: Number(runtime.cost_visibility?.categories?.video || 0),
+        upload: Number(runtime.cost_visibility?.categories?.upload || 0),
+        other: Number(runtime.cost_visibility?.categories?.other || 0),
+        ...(runtime.cost_visibility?.categories || {}),
+      },
+      expensive_operations: {
+        text: Number(runtime.cost_visibility?.expensive_operations?.text || 0),
+        audio: Number(runtime.cost_visibility?.expensive_operations?.audio || 0),
+        image: Number(runtime.cost_visibility?.expensive_operations?.image || 0),
+        video: Number(runtime.cost_visibility?.expensive_operations?.video || 0),
+        uploads: Number(runtime.cost_visibility?.expensive_operations?.uploads || 0),
+        ...(runtime.cost_visibility?.expensive_operations || {}),
+      },
+      last_operation: runtime.cost_visibility?.last_operation || null,
     },
     tuning: {
       ...DEFAULT_RUNTIME_TUNING,
@@ -278,6 +365,7 @@ function betaEventPatch(eventName, meta = {}) {
   if (eventName === BETA_EVENT_NAMES.DEMO_CONVERTED) return { demo_converted_at: now };
   if (eventName === BETA_EVENT_NAMES.SCENARIO_CREATED) return { scenario_creations_delta: 1 };
   if (eventName === BETA_EVENT_NAMES.REGENERATION_USED) return { regeneration_uses_delta: 1 };
+  if (eventName === BETA_EVENT_NAMES.GENERATION_COMPLETED) return { generations_completed_delta: 1 };
   if (eventName === BETA_EVENT_NAMES.UPLOAD_RECEIVED) return { upload_category: meta.category || "unknown" };
   return {};
 }
@@ -307,6 +395,7 @@ async function trackBetaEvent(userId, eventName, meta = {}) {
     if (patch.demo_converted_at) runtime.telemetry.demo_converted_at = patch.demo_converted_at;
     if (patch.scenario_creations_delta) runtime.telemetry.scenario_creations = (runtime.telemetry.scenario_creations || 0) + 1;
     if (patch.regeneration_uses_delta) runtime.telemetry.regeneration_uses = (runtime.telemetry.regeneration_uses || 0) + 1;
+    if (patch.generations_completed_delta) runtime.telemetry.generations_completed = (runtime.telemetry.generations_completed || 0) + 1;
     if (patch.upload_category) {
       runtime.telemetry.uploads_total = (runtime.telemetry.uploads_total || 0) + 1;
       runtime.telemetry.upload_counts = runtime.telemetry.upload_counts || {};
@@ -348,6 +437,51 @@ async function incrementExpertRuntime(chatId, action, meta = {}) {
   return runtime;
 }
 
+function estimateTextCost(lengthMode = "normal") {
+  return COST_ESTIMATES_USD[`text_${lengthMode}`] || COST_ESTIMATES_USD.text_normal;
+}
+
+async function recordRuntimeCost(chatId, category, operation, amountUsd = 0, meta = {}) {
+  const runtime = await loadExpertRuntime(chatId);
+  const amount = Number.isFinite(Number(amountUsd)) ? Math.max(0, Number(amountUsd)) : 0;
+  const safeCategory = runtime.cost_visibility?.categories?.[category] !== undefined ? category : "other";
+  runtime.cost_visibility = runtime.cost_visibility || normalizeExpertRuntime(runtime).cost_visibility;
+  runtime.cost_visibility.categories[safeCategory] = Number((Number(runtime.cost_visibility.categories[safeCategory] || 0) + amount).toFixed(6));
+  runtime.cost_visibility.total_estimated_usd = Number((Number(runtime.cost_visibility.total_estimated_usd || 0) + amount).toFixed(6));
+  runtime.cost_visibility.expensive_operations = runtime.cost_visibility.expensive_operations || {};
+  if (["text", "audio", "image", "video"].includes(safeCategory)) {
+    runtime.cost_visibility.expensive_operations[safeCategory] = (runtime.cost_visibility.expensive_operations[safeCategory] || 0) + 1;
+  }
+  if (operation === "cloudinary_upload" || operation === "telegram_upload") {
+    runtime.cost_visibility.expensive_operations.uploads = (runtime.cost_visibility.expensive_operations.uploads || 0) + 1;
+  }
+  runtime.cost_visibility.last_operation = {
+    ts: new Date().toISOString(),
+    category: safeCategory,
+    operation,
+    estimated_usd: amount,
+    ...meta,
+  };
+  runtime.updated_at = runtime.cost_visibility.last_operation.ts;
+  await saveExpertRuntime(chatId, runtime);
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.COST_RECORDED, {
+    category: safeCategory,
+    operation,
+    estimated_usd: amount,
+  });
+  return runtime;
+}
+
+function buildRuntimeCostText(runtime) {
+  const cost = runtime.cost_visibility || normalizeExpertRuntime(runtime).cost_visibility;
+  return [
+    `Estimated runtime cost: $${Number(cost.total_estimated_usd || 0).toFixed(3)}`,
+    `Text: $${Number(cost.categories?.text || 0).toFixed(3)} · Audio: $${Number(cost.categories?.audio || 0).toFixed(3)}`,
+    `Image: $${Number(cost.categories?.image || 0).toFixed(3)} · Video: $${Number(cost.categories?.video || 0).toFixed(3)}`,
+    `Ops: text ${cost.expensive_operations?.text || 0}, audio ${cost.expensive_operations?.audio || 0}, image ${cost.expensive_operations?.image || 0}, video ${cost.expensive_operations?.video || 0}`,
+  ].join("\n");
+}
+
 function runtimeRemaining(runtime, key = "text") {
   if (runtime?.monetization?.premium_generation_enabled || runtime?.monetization?.paid_plan) return null;
   const limit = runtime.limits?.[key];
@@ -370,6 +504,7 @@ function buildRuntimeCounterText(runtime) {
     bits.push(`Осталось бесплатных текстов: ${textLeft}`);
     if (textLeft <= 3) bits.push("Монетизация: готов Stars-upgrade hook, можно тестировать оплату/расширение вручную");
   }
+  bits.push(`Cost visibility: $${Number(runtime.cost_visibility?.total_estimated_usd || 0).toFixed(3)} est.`);
   return bits.join("\n");
 }
 
@@ -467,6 +602,8 @@ async function sendAdminTuningPanel(chatId, adminUserId, targetUserId = adminUse
     `Admin tuning: ${targetUserId}`,
     "",
     buildRuntimeCounterText(runtime),
+    "",
+    buildRuntimeCostText(runtime),
     "",
     buildRuntimeTuningText(runtime),
     "",
@@ -578,12 +715,58 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
     "",
     quotaText,
     "",
-    "Можно создать своего AI-эксперта, усилить его материалами и запросить premium-доступ. Оплата Telegram Stars пока не включена, но hook уже готов для быстрого теста.",
+    TELEGRAM_STARS_ENABLED
+      ? "Можно докупить beta-пакет через Telegram Stars или запросить ручной premium-доступ."
+      : "Можно создать своего AI-эксперта, усилить его материалами и запросить premium-доступ. Оплата Telegram Stars пока в placeholder-режиме, hook готов для быстрого теста.",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: buildUpgradeKeyboard(isDemo ? "demo" : "text") },
+  });
+}
+
+function buildUpgradeKeyboard(limitType = "text") {
+  const rows = [
+    [{ text: TELEGRAM_STARS_ENABLED ? "Оплатить beta-пакет Stars" : "Stars beta-пакет (скоро)", callback_data: `stars_pack:${limitType}:text10` }],
+    [{ text: "Запросить premium-доступ", callback_data: `req_limit_${limitType}` }],
+    [{ text: "Создать/усилить AI-эксперта", callback_data: "ob_template_menu" }],
+    [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+  ];
+  return rows;
+}
+
+async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "text10") {
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.STARS_UPGRADE_CLICKED, { limit_type: limitType, pack, enabled: TELEGRAM_STARS_ENABLED });
+  const title = "Beta text pack";
+  const description = "10 extra text generations for closed beta testing.";
+  if (TELEGRAM_STARS_ENABLED && bot.sendInvoice) {
+    try {
+      await bot.sendInvoice(
+        chatId,
+        title,
+        description,
+        `beta_${limitType}_${pack}_${Date.now()}`,
+        TELEGRAM_STARS_PROVIDER_TOKEN,
+        "XTR",
+        [{ label: "10 text generations", amount: TELEGRAM_STARS_TEXT_PACK_PRICE }],
+        {
+          start_parameter: "beta_text_pack",
+          reply_markup: { inline_keyboard: [[{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }]] },
+        }
+      );
+      return;
+    } catch (error) {
+      console.warn("Stars invoice failed, falling back to placeholder:", error.message);
+    }
+  }
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.PAID_GENERATION_PLACEHOLDER, { limit_type: limitType, pack });
+  await bot.sendMessage(chatId, [
+    "Stars-оплата подготовлена как beta-hook.",
+    "",
+    `Пакет: 10 дополнительных текстовых генераций (${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars).`,
+    "В этом окружении checkout ещё не включён, поэтому я отправлю запрос администратору.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: [
-      [{ text: "Создать своего AI-эксперта", callback_data: "ob_template_menu" }],
-      [{ text: "Запросить premium-доступ", callback_data: `req_limit_${isDemo ? "demo" : "text"}` }],
-      [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+      [{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }],
+      [{ text: "Dashboard", callback_data: "ob_dashboard" }],
     ]},
   });
 }
@@ -1319,7 +1502,14 @@ function validateOnboardingUpload(step, msg) {
     if (msg.document && ALLOWED_ONBOARDING_EXTENSIONS[step] && !ALLOWED_ONBOARDING_EXTENSIONS[step].includes(ext)) {
       return { ok: false, reason: "bad_extension", ext };
     }
+    if (["knowledge", "style"].includes(step) && !msg.document) {
+      return { ok: false, reason: "bad_extension", ext: "media" };
+    }
+    if (step === "voice" && !(msg.voice || msg.audio || msg.document)) {
+      return { ok: false, reason: "bad_extension", ext };
+    }
   }
+  if (msg.photo && step !== "avatar") return { ok: false, reason: "bad_extension", ext: "photo" };
   return { ok: true };
 }
 
@@ -1397,7 +1587,7 @@ async function vectorSearch(query, scenario, limit = 5) {
       match_count: limit,
     });
     if (error) { console.error("Vector search error:", error.message); return null; }
-    console.log(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
+    if (!IS_PRODUCTION) console.log(`Vector search [${scenario}]: found ${data?.length || 0} chunks`);
     return data;
   } catch (err) {
     console.error("Vector search failed:", err.message);
@@ -1577,7 +1767,7 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   });
   const submitText = await submitRes.text();
   if (!submitRes.ok) {
-    await bot.editMessageText(`Ошибка (${submitRes.status}):\n${submitText.substring(0, 200)}`, { chat_id: chatId, message_id: msgId });
+    await bot.editMessageText(friendlyErrorMessage(new Error(`Aurora submit error ${submitRes.status}`), "generation"), { chat_id: chatId, message_id: msgId });
     throw new Error(`Aurora submit error: ${submitText}`);
   }
   let submitData;
@@ -1852,6 +2042,36 @@ async function sendUploadRecoveryGuide(chatId, category) {
     "Можно продолжить прямо здесь: отправьте текст, TXT/DOCX/PDF или ссылку плюс скопированный текст."
   ];
   await bot.sendMessage(chatId, lines.join("\n"), onboardingControls(category));
+}
+
+async function sendBetaOnboardingGuide(chatId) {
+  await bot.sendMessage(chatId, [
+    "Beta onboarding guide",
+    "",
+    "Как обучить AI-эксперта быстро:",
+    "1. Выберите роль: психолог, сексолог, коуч, блогер или другой сценарий.",
+    "2. Добавьте материалы знаний: подход, заметки, разборы, вопросы клиентов, ограничения и темы, которые нельзя обещать.",
+    "3. Добавьте стиль: 3-5 реальных постов автора целиком. Лучше текстом, TXT, DOCX или PDF.",
+    "4. Сделайте первый тестовый пост и отметьте, что не похоже: мягче, экспертнее, личнее, короче.",
+    "",
+    "Лучшие материалы:",
+    "• длинный пост с сильным мнением автора",
+    "• разбор частой боли аудитории",
+    "• текст, где видны любимые фразы, паузы и финалы",
+    "• список «я так не пишу / я так не обещаю»",
+    "",
+    "Слабые материалы:",
+    "• только ссылки без текста",
+    "• рекламные короткие подписи",
+    "• скриншоты вместо текста",
+    "• случайные статьи без авторской позиции",
+  ].join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Загрузить материалы", callback_data: "ob_upload_more:knowledge" }],
+      [{ text: "Загрузить стиль", callback_data: "ob_upload_more:style" }],
+      [{ text: "Dashboard", callback_data: "ob_dashboard" }],
+    ]},
+  });
 }
 
 async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю persona, worldview и examples из материалов...") {
@@ -2129,12 +2349,14 @@ async function handleExpertOnboardingMessage(msg, state) {
     const uploadGate = canAcceptUploadEvent(state);
     userState.set(chatId, state);
     if (!uploadGate.ok) {
+      await trackBetaEvent(userId, BETA_EVENT_NAMES.UPLOAD_REJECTED, { category: step, reason: uploadGate.reason });
       await bot.sendMessage(chatId, uploadRejectionText(uploadGate.reason, uploadGate), onboardingControls(step));
       return true;
     }
 
     const validation = validateOnboardingUpload(step, msg);
     if (!validation.ok) {
+      await trackBetaEvent(userId, BETA_EVENT_NAMES.UPLOAD_REJECTED, { category: step, reason: validation.reason });
       await bot.sendMessage(chatId, uploadRejectionText(validation.reason, validation), onboardingControls(step));
       return true;
     }
@@ -2143,20 +2365,20 @@ async function handleExpertOnboardingMessage(msg, state) {
     let stored = null;
     try {
       if (msg.document) {
-        const buffer = await downloadTelegramDocument(msg.document.file_id);
+        const buffer = await downloadTelegramDocument(msg.document.file_id, msg.document.file_size);
         stored = await storeOnboardingFile(userId, step, msg.document.file_name || "telegram_document", buffer, {
           telegram_file_id: msg.document.file_id,
           mime_type: msg.document.mime_type,
         });
       } else if (msg.photo && step === "avatar") {
         const photo = msg.photo[msg.photo.length - 1];
-        const buffer = await downloadTelegramDocument(photo.file_id);
+        const buffer = await downloadTelegramDocument(photo.file_id, photo.file_size);
         stored = await storeOnboardingFile(userId, "avatar", `${photo.file_unique_id || photo.file_id}.jpg`, buffer, {
           telegram_file_id: photo.file_id,
         });
       } else if ((msg.voice || msg.audio) && step === "voice") {
         const media = msg.voice || msg.audio;
-        const buffer = await downloadTelegramDocument(media.file_id);
+        const buffer = await downloadTelegramDocument(media.file_id, media.file_size);
         stored = await storeOnboardingFile(userId, "voice", `${media.file_unique_id || media.file_id}.ogg`, buffer, {
           telegram_file_id: media.file_id,
           duration: media.duration,
@@ -2277,6 +2499,7 @@ async function sendExpertDashboard(chatId, userId = chatId) {
           { text: "📚 Add materials", callback_data: "ob_upload_more:knowledge" },
           { text: "✍️ Add style", callback_data: "ob_upload_more:style" },
         ],
+        [{ text: "📘 Onboarding guide", callback_data: "ob_guide" }],
         [
           { text: "🖼 Upload avatar", callback_data: "ob_upload_more:avatar" },
           { text: "🎙 Upload voice", callback_data: "ob_upload_more:voice" },
@@ -2610,12 +2833,26 @@ async function sendIntakeSummary(chatId, session) {
   });
 }
 
-async function downloadTelegramDocument(fileId) {
+async function downloadTelegramDocument(fileId, expectedBytes = 0) {
+  if (Number(expectedBytes || 0) > ABUSE_LIMITS.maxUploadBytes) {
+    throw new Error("Telegram file too large");
+  }
   const fileInfo = await bot.getFile(fileId);
+  if (Number(fileInfo.file_size || 0) > ABUSE_LIMITS.maxUploadBytes) {
+    throw new Error("Telegram file too large");
+  }
   const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
-  const response = await fetch(fileUrl);
-  if (!response.ok) throw new Error(`Telegram file download failed: ${response.status}`);
-  return Buffer.from(await response.arrayBuffer());
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const response = await fetch(fileUrl, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Telegram file download failed: ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (buffer.length > ABUSE_LIMITS.maxUploadBytes) throw new Error("Telegram file too large");
+    return buffer;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function handleKnowledgeIntakeMessage(msg) {
@@ -2633,7 +2870,7 @@ async function handleKnowledgeIntakeMessage(msg) {
       await bot.sendMessage(chatId, uploadRejectionText("file_too_large"), KNOWLEDGE_INTAKE_ACTIONS);
       return true;
     }
-    const buffer = await downloadTelegramDocument(msg.document.file_id);
+    const buffer = await downloadTelegramDocument(msg.document.file_id, msg.document.file_size);
     const updated = await addFileItem(session, msg.document.file_name || "telegram_document", buffer);
     await bot.sendMessage(
       chatId,
@@ -3309,7 +3546,7 @@ async function showFinalPost(chatId, type) {
     );
   } else {
     await bot.sendMessage(chatId,
-      `❌ Ошибка публикации: ${result.error}\n\nПроверьте что бот добавлен в канал как администратор.`
+      "Публикация не прошла. Проверьте, что бот добавлен в канал администратором и TG_CHANNEL настроен корректно."
     );
   }
 }
@@ -3328,16 +3565,17 @@ async function processAudioWithTrack(chatId, trackId) {
   } catch(err) {
     console.error("Ошибка микширования:", err.message);
     finalBuffer = voiceBuffer;
-    await bot.editMessageText(`⚠️ Микширование не удалось: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: statusMsg.message_id });
+    await bot.editMessageText("Музыку не удалось добавить, отправляю голос без музыки.", { chat_id: chatId, message_id: statusMsg.message_id });
   }
   await bot.sendVoice(chatId, finalBuffer, {}, { filename: "voice_music.mp3", contentType: "audio/mpeg" });
   const uploadMsg = await bot.sendMessage(chatId, "🔄 Загружаю на сервер...");
   let audioUrl = null;
   try {
     audioUrl = await uploadAudioToCloudinary(finalBuffer);
+    await recordRuntimeCost(chatId, "upload", "cloudinary_upload", COST_ESTIMATES_USD.cloudinary_upload).catch(() => {});
     await bot.editMessageText("✅ Аудио готово для видео!", { chat_id: chatId, message_id: uploadMsg.message_id });
   } catch(err) {
-    await bot.editMessageText(`Ошибка: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
+    await bot.editMessageText("Аудио готово, но загрузка для видео сейчас недоступна.", { chat_id: chatId, message_id: uploadMsg.message_id });
   }
   const s = userState.get(chatId) || {};
   s.lastAudioUrl = audioUrl;
@@ -3918,12 +4156,20 @@ bot.onText(/\/onboard/, async (msg) => {
   await startExpertOnboarding(msg.chat.id, msg.from?.id || msg.chat.id);
 });
 
+bot.onText(/\/onboarding_guide/, async (msg) => {
+  await sendBetaOnboardingGuide(msg.chat.id);
+});
+
 bot.onText(/\/demo/, async (msg) => {
   await sendStarterTemplateMenu(msg.chat.id, "demo");
 });
 
 bot.onText(/\/invite/, async (msg) => {
   await sendBetaInviteCopy(msg.chat.id);
+});
+
+bot.onText(/\/upgrade/, async (msg) => {
+  await sendStarsUpgradePlaceholder(msg.chat.id, "text", "text10");
 });
 
 bot.onText(/\/create_expert/, async (msg) => {
@@ -4038,6 +4284,14 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
   }
 });
 
+bot.on("pre_checkout_query", async (query) => {
+  try {
+    await bot.answerPreCheckoutQuery(query.id, true);
+  } catch (error) {
+    console.error("Pre-checkout answer failed:", error.message);
+  }
+});
+
 bot.onText(/\/(?:knowledge|kb_intake)/, async (msg) => {
   await sendKnowledgeIntakeMenu(msg.chat.id, msg.from?.id || msg.chat.id);
 });
@@ -4048,6 +4302,18 @@ bot.on("message", async (msg) => {
   try {
     const chatId = msg.chat.id;
     const state = userState.get(chatId) || {};
+
+    if (msg.successful_payment) {
+      const runtime = await loadExpertRuntime(chatId);
+      runtime.limits.text = Number(runtime.limits.text || SOFT_FREE_LIMITS.text) + 10;
+      runtime.monetization.paid_plan = "stars_text10_beta";
+      runtime.monetization.telegram_stars_ready = true;
+      runtime.updated_at = new Date().toISOString();
+      await saveExpertRuntime(chatId, runtime);
+      await bot.sendMessage(chatId, "Оплата получена. Добавил 10 beta-генераций к вашему AI-эксперту.");
+      await sendExpertDashboard(chatId, msg.from?.id || chatId);
+      return;
+    }
 
     if (msg.text && msg.text.startsWith('/')) return;
 
@@ -4078,10 +4344,8 @@ bot.on("message", async (msg) => {
     if (msg.voice) {
       if (!state.awaitingVoiceRecord) return;
       const fileId = msg.voice.file_id;
-      const fileInfo = await bot.getFile(fileId);
-      const voiceFileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${fileInfo.file_path}`;
       const processingMsg = await bot.sendMessage(chatId, "⏳ Загружаю голосовое...");
-      const voiceBuffer = Buffer.from(await (await fetch(voiceFileUrl)).arrayBuffer());
+      const voiceBuffer = await downloadTelegramDocument(fileId, msg.voice.file_size);
       await bot.editMessageText("✅ Голосовое принято!", { chat_id: chatId, message_id: processingMsg.message_id });
       const voices = state.pendingVoices || [];
       voices.push({ voiceBuffer: voiceBuffer.toString('base64') });
@@ -4184,7 +4448,7 @@ bot.on("message", async (msg) => {
       return;
     }
 
-    console.log("New topic:", text);
+    if (!IS_PRODUCTION) console.log("New topic received", { chatId, length: text.length });
     if (text.length > ABUSE_LIMITS.maxTopicChars) {
       await bot.sendMessage(chatId, "Тема слишком длинная для первого шага. Напишите коротко: о чём пост и для кого.");
       return;
@@ -4377,6 +4641,12 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data.startsWith("stars_pack:")) {
+      const [, limitType, pack] = data.split(":");
+      await sendStarsUpgradePlaceholder(chatId, limitType || "text", pack || "text10");
+      return;
+    }
+
     if (data === "req_extend") {
       const user = await getDemoUserByTgId(chatId);
       if (user) {
@@ -4484,6 +4754,11 @@ bot.on("callback_query", async (query) => {
 
     if (data === "ob_dashboard") {
       await sendExpertDashboard(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data === "ob_guide") {
+      await sendBetaOnboardingGuide(chatId);
       return;
     }
 
@@ -4937,6 +5212,7 @@ bot.on("callback_query", async (query) => {
       const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
       await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -4967,6 +5243,7 @@ bot.on("callback_query", async (query) => {
       if (!state.lastImageUrl || !state.lastAudioUrl) { await bot.sendMessage(chatId, "Нет фото или аудио."); return; }
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, state.lastImageUrl, state.lastAudioUrl);
       await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
@@ -4981,9 +5258,10 @@ bot.on("callback_query", async (query) => {
       if (!fullAnswer) { await bot.sendMessage(chatId, "Нет текста для аудио."); return; }
       const genMsg = await bot.sendMessage(chatId, "⏳ Генерирую голос...");
       const audioText = await generateAudioText(fullAnswer, audioLength);
-      console.log(`Audio text (${audioLength}): ${audioText.length} chars: "${audioText}"`);
+      if (!IS_PRODUCTION) console.log(`Audio text prepared (${audioLength}): ${audioText.length} chars`);
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText);
       await incrementExpertRuntime(chatId, "generate_audio", { counter: "audio", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "audio", "fish_audio_tts", audioCost, { scenario: state.lastScenario, chars: audioText.length }).catch(() => {});
       await bot.editMessageText("✅ Голос готов! Выберите музыку:", { chat_id: chatId, message_id: genMsg.message_id });
       const s = userState.get(chatId) || {};
       s.pendingVoiceBuffer = audioBuffer.toString('base64');
@@ -5014,9 +5292,10 @@ bot.on("callback_query", async (query) => {
       let audioUrl = null;
       try {
         audioUrl = await uploadAudioToCloudinary(voiceBuffer);
+        await recordRuntimeCost(chatId, "upload", "cloudinary_upload", COST_ESTIMATES_USD.cloudinary_upload).catch(() => {});
         await bot.editMessageText("✅ Аудио готово!", { chat_id: chatId, message_id: uploadMsg.message_id });
       } catch(err) {
-        await bot.editMessageText(`Ошибка: ${err.message.substring(0, 80)}`, { chat_id: chatId, message_id: uploadMsg.message_id });
+        await bot.editMessageText("Аудио готово, но загрузка для видео сейчас недоступна.", { chat_id: chatId, message_id: uploadMsg.message_id });
       }
       const s = userState.get(chatId) || {};
       s.lastAudioUrl = audioUrl;
@@ -5081,6 +5360,7 @@ bot.on("callback_query", async (query) => {
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, state.lastAudioUrl);
       await incrementLimit(chatId, "video", state.lastScenario, null);
       await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
@@ -5098,6 +5378,7 @@ bot.on("callback_query", async (query) => {
       const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
       await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -5115,6 +5396,7 @@ bot.on("callback_query", async (query) => {
       const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
       await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -5198,6 +5480,17 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
         demo_mode: state.demoMode || variant === "demo",
       });
     }
+    await trackBetaEvent(chatId, BETA_EVENT_NAMES.GENERATION_COMPLETED, {
+      scenario,
+      lengthMode,
+      variant,
+      demo_mode: state.demoMode || variant === "demo",
+    });
+    await recordRuntimeCost(chatId, "text", "openai_text_generation", estimateTextCost(lengthMode), {
+      scenario,
+      lengthMode,
+      variant,
+    }).catch((error) => console.warn("Cost record failed:", error.message));
     if (!["default", "demo"].includes(variant)) {
       await trackBetaEvent(chatId, BETA_EVENT_NAMES.REGENERATION_USED, {
         scenario,
@@ -5262,6 +5555,11 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     s.pendingScenario = scenario;
     s.pendingLengthMode = lengthMode;
     s.lastGenerationFailedAt = new Date().toISOString();
+    const runtime = await loadExpertRuntime(chatId).catch(() => null);
+    if (runtime) {
+      runtime.telemetry.generation_failures = (runtime.telemetry.generation_failures || 0) + 1;
+      await saveExpertRuntime(chatId, runtime).catch(() => {});
+    }
     s.firstGenerationBoost = false;
     userState.set(chatId, s);
     await bot.editMessageText([

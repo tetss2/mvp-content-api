@@ -33,7 +33,8 @@
     "kb:test:ingest": "node scripts/safe-cleaned-kb-ingest-test.js",
     "kb:test:ingest:dry": "node scripts/safe-cleaned-kb-ingest-test.js --dry-run",
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js",
-    "verify:runtime-safety": "node scripts/verify-runtime-safety-gate.js"
+    "verify:runtime-safety": "node scripts/verify-runtime-safety-gate.js",
+    "beta:telemetry": "node scripts/beta-telemetry-summary.js"
   },
   "engines": {
     "node": ">=18"
