@@ -96,6 +96,26 @@ const POLLING_CONFLICT_RETRY_MS = Number(process.env.POLLING_CONFLICT_RETRY_MS |
 const POLLING_MAX_RETRIES = Number(process.env.POLLING_MAX_RETRIES || 3);
 const IS_CLOUD_RUNTIME = IS_BETA_RUNTIME || IS_PRODUCTION || Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID);
 const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || (IS_CLOUD_RUNTIME ? 4000 : 0));
+const ENTITLEMENTS_PATH = process.env.ENTITLEMENTS_PATH || join(RUNTIME_DATA_ROOT, "entitlements.json");
+const PAYMENT_EVENTS_PATH = process.env.PAYMENT_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "payment_events.jsonl");
+
+const PAID_BETA_PLANS = {
+  demo: {
+    plan: "demo",
+    generationLimit: Number(process.env.PAID_BETA_DEMO_GENERATION_LIMIT || 2),
+    days: null,
+  },
+  beta_paid: {
+    plan: "beta_paid",
+    generationLimit: Number(process.env.PAID_BETA_GENERATION_LIMIT || 50),
+    days: Number(process.env.PAID_BETA_DEFAULT_DAYS || 30),
+  },
+  admin: {
+    plan: "admin",
+    generationLimit: Number(process.env.PAID_BETA_ADMIN_GENERATION_LIMIT || 1000000),
+    days: null,
+  },
+};
 
 process.env.RUNTIME_DATA_ROOT = RUNTIME_DATA_ROOT;
 if (!process.env.USERS_ROOT) process.env.USERS_ROOT = join(RUNTIME_DATA_ROOT, "users");
@@ -209,6 +229,50 @@ async function releasePollingLock() {
   await fs.rm(POLLING_LOCK_PATH, { force: true }).catch(() => {});
 }
 
+async function readJsonFileSafe(path, fallback) {
+  try {
+    return JSON.parse(await fs.readFile(path, "utf-8"));
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      console.warn(`[${RUNTIME_NAME}] JSON read failed, using fallback: ${error.message}`);
+    }
+    return fallback;
+  }
+}
+
+async function writeJsonFileSafe(path, value) {
+  await ensureRuntimeDirectory(dirname(path), "runtime json directory");
+  const tempPath = `${path}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tempPath, JSON.stringify(value, null, 2), "utf-8");
+  await fs.rename(tempPath, path);
+}
+
+async function appendJsonlSafe(path, value) {
+  await ensureRuntimeDirectory(dirname(path), "runtime jsonl directory");
+  await fs.appendFile(path, `${JSON.stringify(value)}\n`, "utf-8");
+}
+
+async function ensurePaidBetaStorage() {
+  await ensureRuntimeDirectory(dirname(ENTITLEMENTS_PATH), "paid beta storage");
+  const entitlementsExisted = await fileExists(ENTITLEMENTS_PATH);
+  const paymentEventsExisted = await fileExists(PAYMENT_EVENTS_PATH);
+  if (!entitlementsExisted) await writeJsonFileSafe(ENTITLEMENTS_PATH, { users: {} });
+  if (!paymentEventsExisted) await fs.writeFile(PAYMENT_EVENTS_PATH, "", "utf-8");
+  runtimeLog("paid beta access layer enabled", {
+    entitlementsFileExists: await fileExists(ENTITLEMENTS_PATH),
+    paymentEventsFileExists: await fileExists(PAYMENT_EVENTS_PATH),
+  });
+}
+
+async function fileExists(path) {
+  try {
+    await fs.access(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function requireEnv(name) {
   if (!process.env[name]) throw new Error(`Missing required env var: ${name}`);
 }
@@ -248,6 +312,7 @@ await Promise.all([
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "users"), "users root"),
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "feedback_reports"), "feedback reports"),
 ]);
+await ensurePaidBetaStorage();
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 let pollingActive = false;
@@ -632,6 +697,161 @@ async function saveExpertRuntime(userId, runtime) {
   return runtime;
 }
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function entitlementUserId(userId) {
+  return String(userId);
+}
+
+function buildEntitlement(userId, planKey, patch = {}) {
+  const plan = PAID_BETA_PLANS[planKey] || PAID_BETA_PLANS.demo;
+  const now = nowIso();
+  const days = patch.days ?? plan.days;
+  const validUntil = patch.validUntil !== undefined
+    ? patch.validUntil
+    : (days ? new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000).toISOString() : null);
+  return {
+    userId: entitlementUserId(userId),
+    plan: plan.plan,
+    status: patch.status || "active",
+    generationLimit: Number(patch.generationLimit ?? plan.generationLimit),
+    generationUsed: Number(patch.generationUsed ?? 0),
+    validUntil,
+    updatedAt: now,
+  };
+}
+
+async function loadEntitlementsStore() {
+  const store = await readJsonFileSafe(ENTITLEMENTS_PATH, { users: {} });
+  if (!store || typeof store !== "object") return { users: {} };
+  if (!store.users || typeof store.users !== "object") store.users = {};
+  return store;
+}
+
+async function saveEntitlementsStore(store) {
+  await writeJsonFileSafe(ENTITLEMENTS_PATH, {
+    users: store?.users && typeof store.users === "object" ? store.users : {},
+  });
+}
+
+function isEntitlementExpired(entitlement, at = new Date()) {
+  return Boolean(entitlement?.validUntil && new Date(entitlement.validUntil) < at);
+}
+
+async function getOrCreateEntitlement(userId) {
+  const id = entitlementUserId(userId);
+  const store = await loadEntitlementsStore();
+  let entitlement = store.users[id];
+  if (!entitlement) {
+    entitlement = buildEntitlement(id, isAdminUser(id) ? "admin" : "demo");
+    store.users[id] = entitlement;
+    await saveEntitlementsStore(store);
+    return entitlement;
+  }
+  if (isAdminUser(id) && entitlement.plan !== "admin") {
+    entitlement = buildEntitlement(id, "admin", {
+      generationUsed: entitlement.generationUsed || 0,
+      validUntil: null,
+    });
+    store.users[id] = entitlement;
+    await saveEntitlementsStore(store);
+    return entitlement;
+  }
+  if (isEntitlementExpired(entitlement) && entitlement.status === "active") {
+    entitlement.status = "expired";
+    entitlement.updatedAt = nowIso();
+    store.users[id] = entitlement;
+    await saveEntitlementsStore(store);
+  }
+  return entitlement;
+}
+
+async function grantBetaEntitlement(userId, generationLimit, days, createdBy) {
+  const limit = Number(generationLimit);
+  const validDays = Number(days);
+  if (!Number.isInteger(limit) || limit <= 0) throw new Error("LIMIT must be a positive integer.");
+  if (!Number.isInteger(validDays) || validDays <= 0) throw new Error("DAYS must be a positive integer.");
+  const store = await loadEntitlementsStore();
+  const entitlement = buildEntitlement(userId, "beta_paid", {
+    generationLimit: limit,
+    days: validDays,
+  });
+  store.users[entitlement.userId] = entitlement;
+  await saveEntitlementsStore(store);
+  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+    type: "manual_grant",
+    userId: entitlement.userId,
+    plan: "beta_paid",
+    generationLimit: limit,
+    days: validDays,
+    createdAt: nowIso(),
+    createdBy: entitlementUserId(createdBy),
+  });
+  return entitlement;
+}
+
+async function revokeBetaEntitlement(userId, createdBy) {
+  const store = await loadEntitlementsStore();
+  const id = entitlementUserId(userId);
+  const current = store.users[id] || buildEntitlement(id, "demo");
+  const revoked = {
+    ...current,
+    status: "revoked",
+    updatedAt: nowIso(),
+  };
+  store.users[id] = revoked;
+  await saveEntitlementsStore(store);
+  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+    type: "manual_revoke",
+    userId: id,
+    createdAt: nowIso(),
+    createdBy: entitlementUserId(createdBy),
+  });
+  return revoked;
+}
+
+async function checkPaidBetaAccess(userId) {
+  const entitlement = await getOrCreateEntitlement(userId);
+  if (entitlement.status !== "active") {
+    return { ok: false, reason: `entitlement_${entitlement.status}`, entitlement };
+  }
+  if (isEntitlementExpired(entitlement)) {
+    return { ok: false, reason: "entitlement_expired", entitlement };
+  }
+  const remaining = Number(entitlement.generationLimit) - Number(entitlement.generationUsed || 0);
+  if (remaining <= 0) {
+    return { ok: false, reason: "entitlement_limit_exhausted", entitlement, remaining: 0 };
+  }
+  return { ok: true, entitlement, remaining };
+}
+
+async function incrementEntitlementUsage(userId) {
+  const store = await loadEntitlementsStore();
+  const id = entitlementUserId(userId);
+  const current = store.users[id] || buildEntitlement(id, isAdminUser(id) ? "admin" : "demo");
+  current.generationUsed = Number(current.generationUsed || 0) + 1;
+  current.updatedAt = nowIso();
+  store.users[id] = current;
+  await saveEntitlementsStore(store);
+  return current;
+}
+
+function formatEntitlement(entitlement) {
+  if (!entitlement) return "Entitlement not found.";
+  const remaining = Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0));
+  return [
+    `User: ${entitlement.userId}`,
+    `Plan: ${entitlement.plan}`,
+    `Status: ${entitlement.status}`,
+    `Generations: ${entitlement.generationUsed || 0}/${entitlement.generationLimit}`,
+    `Remaining: ${remaining}`,
+    `Valid until: ${entitlement.validUntil || "none"}`,
+    `Updated: ${entitlement.updatedAt || "none"}`,
+  ].join("\n");
+}
+
 function betaTelemetryPath() {
   const day = new Date().toISOString().slice(0, 10);
   return join(BETA_TELEMETRY_DIR, `${day}.jsonl`);
@@ -954,13 +1174,37 @@ async function handleLimitExhausted(chatId, limitType, user) {
 }
 
 async function checkRuntimeGenerationQuota(chatId, state, limitType = "text") {
-  if (chatId === ADMIN_TG_ID) {
-    return { ok: true, runtime: await loadExpertRuntime(chatId), premium: true };
+  const runtime = await loadExpertRuntime(chatId);
+  let entitlementCheck = null;
+  if (limitType === "text") {
+    entitlementCheck = await checkPaidBetaAccess(chatId);
+    if (!entitlementCheck.ok) {
+      return {
+        ok: false,
+        reason: entitlementCheck.reason,
+        entitlement: entitlementCheck.entitlement,
+        runtime,
+        remaining: entitlementCheck.remaining,
+      };
+    }
+
+    if (["admin", "beta_paid"].includes(entitlementCheck.entitlement.plan)) {
+      return {
+        ok: true,
+        runtime,
+        premium: true,
+        entitlement: entitlementCheck.entitlement,
+        entitlementRemaining: entitlementCheck.remaining,
+      };
+    }
   }
 
-  const runtime = await loadExpertRuntime(chatId);
+  if (chatId === ADMIN_TG_ID) {
+    return { ok: true, runtime, premium: true, entitlement: entitlementCheck?.entitlement, entitlementRemaining: entitlementCheck?.remaining };
+  }
+
   const premium = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan;
-  if (premium) return { ok: true, runtime, premium: true };
+  if (premium) return { ok: true, runtime, premium: true, entitlement: entitlementCheck?.entitlement, entitlementRemaining: entitlementCheck?.remaining };
 
   const key = state?.demoMode ? "demo" : limitType;
   const remaining = runtimeRemaining(runtime, key);
@@ -971,9 +1215,36 @@ async function checkRuntimeGenerationQuota(chatId, state, limitType = "text") {
       limitType: key,
       runtime,
       remaining,
+      entitlement: entitlementCheck?.entitlement,
     };
   }
-  return { ok: true, runtime, remaining };
+  return { ok: true, runtime, remaining, entitlement: entitlementCheck?.entitlement, entitlementRemaining: entitlementCheck?.remaining };
+}
+
+async function handlePaidBetaAccessDenied(chatId, entitlement, reason) {
+  const remaining = entitlement
+    ? Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0))
+    : 0;
+  await bot.sendMessage(chatId, [
+    "Доступ к генерации сейчас ограничен.",
+    "",
+    entitlement
+      ? `План: ${entitlement.plan}, статус: ${entitlement.status}.`
+      : "План ещё не создан.",
+    entitlement ? `Использовано: ${entitlement.generationUsed || 0}/${entitlement.generationLimit}.` : "",
+    entitlement?.validUntil ? `Действует до: ${entitlement.validUntil}.` : "",
+    remaining <= 0 ? "Лимит beta-генераций закончился." : "",
+    reason === "entitlement_expired"
+      ? "Срок доступа истёк."
+      : "",
+    "",
+    "Можно запросить beta-доступ у администратора или продолжить улучшать профиль эксперта.",
+  ].filter(Boolean).join("\n"), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Запросить beta-доступ", callback_data: "req_limit_text" }],
+      [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+    ]},
+  });
 }
 
 async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options = {}) {
@@ -2850,6 +3121,11 @@ function isAdminUser(userId) {
   return Number(userId) === ADMIN_TG_ID;
 }
 
+async function canManagePaidBeta(userId) {
+  if (isAdminUser(userId)) return true;
+  return canUseKnowledgeIntake(userId).catch(() => false);
+}
+
 async function listUploadNames(userId, folder) {
   const dir = join(getUserRoot(userId), folder);
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
@@ -4494,6 +4770,60 @@ bot.onText(/\/tune(?:\s+(\S+))?(?:\s+(\S+))?(?:\s+([\s\S]+))?/, async (msg, matc
   await sendAdminTuningPanel(msg.chat.id, adminUserId, targetUserId);
 });
 
+bot.onText(/\/grant_beta(?:\s+(\S+))?(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Paid beta grants доступны только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1];
+  const limit = match?.[2];
+  const days = match?.[3];
+  if (!targetUserId || !limit || !days) {
+    await bot.sendMessage(chatId, "Usage: /grant_beta USER_ID LIMIT DAYS");
+    return;
+  }
+  try {
+    const entitlement = await grantBetaEntitlement(targetUserId, Number(limit), Number(days), adminUserId);
+    await bot.sendMessage(chatId, ["✅ Beta paid access granted.", "", formatEntitlement(entitlement)].join("\n"));
+  } catch (error) {
+    await bot.sendMessage(chatId, `Grant failed: ${error.message}\nUsage: /grant_beta USER_ID LIMIT DAYS`);
+  }
+});
+
+bot.onText(/\/revoke_beta(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Paid beta revoke доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1];
+  if (!targetUserId) {
+    await bot.sendMessage(chatId, "Usage: /revoke_beta USER_ID");
+    return;
+  }
+  const entitlement = await revokeBetaEntitlement(targetUserId, adminUserId);
+  await bot.sendMessage(chatId, ["✅ Beta access revoked.", "", formatEntitlement(entitlement)].join("\n"));
+});
+
+bot.onText(/\/usage(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Usage доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1];
+  if (!targetUserId) {
+    await bot.sendMessage(chatId, "Usage: /usage USER_ID");
+    return;
+  }
+  const entitlement = await getOrCreateEntitlement(targetUserId);
+  await bot.sendMessage(chatId, formatEntitlement(entitlement));
+});
+
 bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const userId = msg.from?.id || chatId;
@@ -5708,6 +6038,10 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
 
   const runtimeQuotaCheck = await checkRuntimeGenerationQuota(chatId, state, "text");
   if (!runtimeQuotaCheck.ok) {
+    if (String(runtimeQuotaCheck.reason || "").startsWith("entitlement_")) {
+      await handlePaidBetaAccessDenied(chatId, runtimeQuotaCheck.entitlement, runtimeQuotaCheck.reason);
+      return;
+    }
     await handleRuntimeLimitExhausted(chatId, runtimeQuotaCheck.limitType || "text", runtimeQuotaCheck.runtime, { demoMode: state.demoMode });
     return;
   }
@@ -5747,6 +6081,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     const fullAnswer = generation.text;
     await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
+    const entitlementAfterGeneration = await incrementEntitlementUsage(chatId);
     await incrementLimit(chatId, "text", scenario, lengthMode);
     const runtimeAfterGeneration = await incrementExpertRuntime(chatId, "generate_text", {
       counter: "text",
@@ -5812,12 +6147,15 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     }).catch(() => {});
 
     await sendGeneratedText(chatId, fullAnswer, scenario);
-    const remaining = runtimeRemaining(runtimeAfterGeneration, "text");
+    const entitlementRemaining = Math.max(0, Number(entitlementAfterGeneration.generationLimit || 0) - Number(entitlementAfterGeneration.generationUsed || 0));
+    const remaining = ["admin", "beta_paid"].includes(entitlementAfterGeneration.plan)
+      ? entitlementRemaining
+      : runtimeRemaining(runtimeAfterGeneration, "text");
     if (remaining !== null && (remaining <= 3 || state.demoMode || variant === "demo")) {
       await bot.sendMessage(
         chatId,
         [
-          `Осталось бесплатных текстовых генераций: ${remaining}/${runtimeAfterGeneration.limits.text}.`,
+          `Осталось текстовых генераций: ${remaining}/${["admin", "beta_paid"].includes(entitlementAfterGeneration.plan) ? entitlementAfterGeneration.generationLimit : runtimeAfterGeneration.limits.text}.`,
           remaining <= 0
             ? "Лимит закончился. Можно запросить расширение, а пока улучшить AI-эксперта материалами."
             : "Чтобы следующий текст был сильнее, можно продолжить онбординг: добавить стиль, материалы или собрать своего AI-эксперта.",
