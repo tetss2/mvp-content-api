@@ -261,7 +261,7 @@ const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, пра
 — Риторические вопросы вовлекают читателя
 — Метафоры: "мы едим и перевариваем эту жизнь", "смотримся в разные зеркала"
 
-ЭМОДЗИ: Используй ОБЯЗАТЕЛЬНО 10-15 эмодзи в тексте, расставляй их щедро по всему тексту!
+ЭМОДЗИ: Используй умеренно, только там, где они звучат живо. Не добивай норму эмодзи ради количества.
 Доступные: 💙 🌿 🍀 🌟 💫 🧚‍♀️ 🙏 ❗️ 🟢 🤗 ✨ 🌞 🫶 💛 🌸 🦋 🌈 💝 🔥 👀 💭 🌻 🪴 💪 🎯
 
 СТРУКТУРА:
@@ -270,8 +270,33 @@ const PSYCHOLOGIST_SYSTEM_PROMPT = `Ты — Динара Качаева, пра
 3. Личный угол или практическая деталь
 4. Мягкое завершение или вопрос читателю
 
-ЗАПРЕЩЕНО: нумерованные списки, заголовки, слова "безусловно/следует отметить/таким образом/данный", повторы.
-ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы. Эмодзи щедро по всему тексту — минимум 10 штук!`;
+ЗАПРЕЩЕНО: нумерованные списки, заголовки, слова "безусловно/следует отметить/таким образом/данный", повторы, канцелярит, мотивационные лозунги.
+ОФОРМЛЕНИЕ: *жирный* для одной ключевой фразы. Эмодзи умеренно, без россыпи.`;
+
+const DINARA_REALISM_PROMPT = `ПРАВИЛА РЕАЛИЗМА ДИНАРЫ:
+— Главный критерий: текст должен звучать как живой пост Динары в Telegram, а не как универсальная AI-статья.
+— Начинай с конкретного внутреннего состояния, наблюдения из жизни или мягкого вопроса. Не начинай с общих фраз вроде "в современном мире", "важно понимать", "сегодня поговорим".
+— Двигайся так: чувство читателя → нормализация → психологический смысл → один маленький практический сдвиг → мягкое завершение.
+— Пиши короткими, разными по длине абзацами. Иногда одно предложение может быть отдельным абзацем.
+— Добавь одну живую авторскую интонацию: "я часто вижу", "мне хочется здесь замедлиться", "знаете, что здесь важно?", "иногда это не про слабость".
+— Не превращай пост в инструкцию, лекцию, чек-лист или продающий текст.
+— CTA только мягкий: вопрос к себе, приглашение заметить, бережное "можно начать с малого".
+
+МИНИ-ПРИМЕРЫ ИНТОНАЦИИ:
+1) "Иногда тревога приходит не потому, что с вами что-то не так. А потому что внутри слишком долго не было места, где можно выдохнуть."
+2) "Мне хочется здесь замедлиться. Потому что за раздражением часто прячется не злость, а очень усталая просьба о близости."
+3) "Попробуйте сегодня не исправлять себя сразу. Сначала просто спросить: что я сейчас чувствую, если не ругать себя за это?"
+
+АНТИ-ПАТТЕРНЫ:
+Не используй: "важно понимать", "следует отметить", "таким образом", "в современном мире", "данная тема", "каждый из нас", "просто полюбите себя", "работайте над собой", "в заключение".
+Не делай много эмодзи, заголовки, нумерованные списки, академический тон, одинаковые абзацы.`;
+
+const REGENERATION_VARIANTS = {
+  default: "",
+  softer: "Сделай вариант мягче и интимнее: больше эмоционального признания, меньше советов и категоричности.",
+  practical: "Сделай вариант практичнее: оставь тепло, но добавь один ясный маленький шаг, без чек-листа.",
+  voice: "Сделай вариант сильнее похожим на Динару: больше живой авторской интонации, меньше универсальных AI-формулировок.",
+};
 
 // ─── СТИЛИ СЕКСОЛОГА ─────────────────────────────────────────────────────────
 
@@ -1466,7 +1491,37 @@ function feedbackKeyboard(answerId) {
   ];
 }
 
-async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto") {
+function buildRegenerationInstruction(variant = "default") {
+  const instruction = REGENERATION_VARIANTS[variant] || "";
+  return instruction ? `\n\nВАРИАНТ ПЕРЕГЕНЕРАЦИИ:\n${instruction}` : "";
+}
+
+function humanizeGeneratedPostText(text) {
+  let result = String(text || "").trim();
+  const replacements = [
+    [/\bВажно понимать,?\s*/gi, ""],
+    [/\bСледует отметить,?\s*/gi, ""],
+    [/\bТаким образом,?\s*/gi, ""],
+    [/\bВ современном мире\s*/gi, ""],
+    [/\bДанная тема\b/gi, "Эта тема"],
+    [/\bДанная проблема\b/gi, "Эта сложность"],
+    [/\bВ заключение,?\s*/gi, ""],
+    [/\bКаждый из нас\b/gi, "Многие из нас"],
+  ];
+
+  for (const [pattern, replacement] of replacements) {
+    result = result.replace(pattern, replacement);
+  }
+
+  return result
+    .replace(/^\s*\d+[\).]\s+/gm, "")
+    .replace(/^\s*(#{1,6}\s*)/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .trim();
+}
+
+async function generatePostTextResult(topic, scenario, lengthMode = "normal", styleKey = "auto", variant = "default") {
   let context = "";
   let retrievalMeta = null;
   const normalizedStyleKey = scenario === "sexologist" ? normalizeSexologistStyleKey(styleKey) : styleKey;
@@ -1528,20 +1583,20 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     : { enabled: false, profileLoaded: false, content: "" };
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
-  const systemPrompt = [baseSystemPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
+  const systemPrompt = [baseSystemPrompt, DINARA_REALISM_PROMPT, authorVoicePrompt].filter(Boolean).join("\n\n");
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).` }
+      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${buildRegenerationInstruction(variant)}` }
     ],
     temperature: 0.82,
     max_tokens: maxTokens,
   });
 
   return {
-    text: completion.choices[0].message.content,
+    text: humanizeGeneratedPostText(completion.choices[0].message.content),
     retrieval: retrievalMeta,
     authorVoice: {
       enabled: authorVoice.enabled,
@@ -1551,6 +1606,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     },
     styleKey: normalizedStyleKey,
     lengthMode,
+    variant,
   };
 }
 
@@ -1618,6 +1674,11 @@ async function sendGeneratedText(chatId, text, scenario) {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: [
       ...feedbackKeyboard(answerId),
+      [
+        { text: "🌿 Мягче", callback_data: "regen:softer" },
+        { text: "🎯 Практичнее", callback_data: "regen:practical" },
+        { text: "🧠 Больше Динары", callback_data: "regen:voice" },
+      ],
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
       [{ text: "✅ Текст готов", callback_data: "txt_ready" }],
@@ -2138,7 +2199,18 @@ bot.on("callback_query", async (query) => {
         userState.set(chatId, s);
         await bot.sendMessage(chatId, "Напишите, что именно нужно поправить в этом ответе.");
       } else {
-        await bot.sendMessage(chatId, "✅ Обратная связь сохранена.");
+        const regenerationRows = {
+          not_voice: [[{ text: "🧠 Перегенерировать в голосе Динары", callback_data: "regen:voice" }]],
+          weak_expertise: [[{ text: "🎯 Сделать глубже и практичнее", callback_data: "regen:practical" }]],
+          bad: [[
+            { text: "🌿 Мягче", callback_data: "regen:softer" },
+            { text: "🧠 Больше Динары", callback_data: "regen:voice" },
+          ]],
+        };
+        const rows = regenerationRows[feedbackType];
+        await bot.sendMessage(chatId, "✅ Обратная связь сохранена.", rows ? {
+          reply_markup: { inline_keyboard: rows },
+        } : undefined);
       }
       return;
     }
@@ -2164,7 +2236,20 @@ bot.on("callback_query", async (query) => {
 
     if (data === "regen_txt") {
       if (!state.lastTopic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
+      const s = userState.get(chatId) || {};
+      s.pendingTopic = state.lastTopic;
+      userState.set(chatId, s);
       await runGeneration(chatId, state.lastScenario || "psychologist", state.lastLengthMode || "normal", state.lastStyleKey || "auto");
+      return;
+    }
+
+    if (data.startsWith("regen:")) {
+      if (!state.lastTopic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
+      const variant = data.replace("regen:", "");
+      const s = userState.get(chatId) || {};
+      s.pendingTopic = state.lastTopic;
+      userState.set(chatId, s);
+      await runGeneration(chatId, state.lastScenario || "psychologist", state.lastLengthMode || "normal", state.lastStyleKey || "auto", variant);
       return;
     }
 
@@ -2362,7 +2447,7 @@ bot.on("callback_query", async (query) => {
 
 // ─── ГЕНЕРАЦИЯ ────────────────────────────────────────────────────────────────
 
-async function runGeneration(chatId, scenario, lengthMode, styleKey) {
+async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "default") {
   const textCheck = await checkLimit(chatId, "text");
   if (!textCheck.ok) {
     if (textCheck.reason === "not_registered") { await handleNotRegistered(chatId); return; }
@@ -2371,7 +2456,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
   }
 
   const state = userState.get(chatId) || {};
-  const topic = state.pendingTopic;
+  const topic = state.pendingTopic || state.lastTopic;
   if (!topic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
 
   const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
@@ -2382,7 +2467,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
     `⏳ Генерирую ${labelMap[lengthMode]} пост [${scenarioLabel}${styleLabel}]\nТема: "${topic}"...`
   );
 
-  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey);
+  const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant);
   const fullAnswer = generation.text;
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
@@ -2397,6 +2482,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey) {
   s.lastAnswerId = createAnswerId();
   s.lastRetrievalMeta = generation.retrieval;
   s.lastAuthorVoiceMeta = generation.authorVoice;
+  s.lastGenerationVariant = generation.variant || variant;
   s.lastAudioUrl = null;
   s.lastVideoUrl = null;
   s.pendingVoices = [];
