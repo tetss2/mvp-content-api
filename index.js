@@ -160,6 +160,61 @@ async function incrementLimit(chatId, limitType, scenario, lengthMode) {
   await saveDemoDB(db);
 }
 
+async function loadExpertRuntime(userId) {
+  await ensureUserExpertFolders(userId);
+  const path = join("users", String(userId), "profile", "runtime.json");
+  try {
+    return JSON.parse(await fs.readFile(path, "utf-8"));
+  } catch {
+    return {
+      mode: "free_demo",
+      counters: {
+        text: 0,
+        photo: 0,
+        video: 0,
+        audio: 0,
+      },
+      limits: {
+        text: null,
+        photo: null,
+        video: null,
+        audio: null,
+      },
+      monetization: {
+        telegram_stars_ready: false,
+        paid_plan: null,
+      },
+      events: [],
+      updated_at: new Date().toISOString(),
+    };
+  }
+}
+
+async function saveExpertRuntime(userId, runtime) {
+  await ensureUserExpertFolders(userId);
+  const path = join("users", String(userId), "profile", "runtime.json");
+  await fs.writeFile(path, JSON.stringify(runtime, null, 2), "utf-8");
+  return runtime;
+}
+
+async function incrementExpertRuntime(chatId, action, meta = {}) {
+  const runtime = await loadExpertRuntime(chatId);
+  const counterKey = meta.counter || action;
+  runtime.counters[counterKey] = (runtime.counters[counterKey] || 0) + 1;
+  runtime.events = runtime.events || [];
+  runtime.events.push({
+    ts: new Date().toISOString(),
+    action,
+    scenario: meta.scenario || null,
+    length: meta.lengthMode || null,
+    mode: runtime.mode || "free_demo",
+  });
+  runtime.events = runtime.events.slice(-100);
+  runtime.updated_at = new Date().toISOString();
+  await saveExpertRuntime(chatId, runtime);
+  return runtime;
+}
+
 async function notifyLeadsBot(text, keyboard = null) {
   if (!LEADS_BOT_TOKEN) return;
   try {
@@ -756,6 +811,60 @@ function onboardingControls(category) {
   };
 }
 
+function onboardingCategoryLabel(category) {
+  return {
+    knowledge: "материалы",
+    style: "примеры стиля",
+    avatar: "аватар",
+    voice: "голос",
+  }[category] || category;
+}
+
+function buildUploadVisibilityText(category, stored, count) {
+  const label = onboardingCategoryLabel(category);
+  const lines = [
+    `✅ Принято: ${stored.original_name}`,
+    `Раздел: ${label}`,
+    `Всего в разделе: ${count}`,
+    "",
+    "Статус обработки:",
+    "• processed: файл сохранён",
+  ];
+
+  if (category === "knowledge") {
+    lines.push("• queued: добавлен в базу материалов эксперта");
+    lines.push("• worldview updated: обновится при сборке persona");
+  } else if (category === "style") {
+    lines.push("• queued: добавлен в примеры авторского голоса");
+    lines.push("• examples updated: обновится при сборке persona");
+  } else if (category === "avatar") {
+    lines.push("• queued: фото доступно для будущей генерации визуала");
+  } else if (category === "voice") {
+    lines.push("• queued: sample доступен для будущей настройки голоса");
+  }
+
+  return lines.join("\n");
+}
+
+async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю persona, worldview и examples из материалов...") {
+  const status = await bot.sendMessage(chatId, intro);
+  try {
+    await generatePersonaDrafts(openai, userId);
+    await bot.editMessageText(
+      "✅ Persona updated\n✅ Worldview updated\n✅ Examples updated",
+      { chat_id: chatId, message_id: status.message_id }
+    ).catch(() => {});
+    return true;
+  } catch (error) {
+    console.error("Persona draft error:", error.message);
+    await bot.editMessageText(`Persona не обновилась: ${error.message.slice(0, 160)}`, {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    return false;
+  }
+}
+
 async function startExpertOnboarding(chatId, fromUserId) {
   await ensureUserExpertFolders(fromUserId || chatId);
   const s = userState.get(chatId) || {};
@@ -779,6 +888,18 @@ async function startAddScenario(chatId, fromUserId) {
   };
   userState.set(chatId, s);
   await sendOnboardingRoleChoice(chatId, "Выберите новый сценарий для этого эксперта:");
+}
+
+async function setActiveUserScenario(userId, scenarioId) {
+  const profile = await loadUserProfile(userId);
+  if (!profile) return null;
+  const updated = {
+    ...profile,
+    active_scenario_id: scenarioId,
+    updated_at: new Date().toISOString(),
+  };
+  await saveUserProfile(userId, updated);
+  return updated;
 }
 
 async function sendOnboardingRoleChoice(chatId, title = "Выберите роль/сценарий эксперта:") {
@@ -863,7 +984,7 @@ async function handleExpertOnboardingMessage(msg, state) {
 
     const after = await getOnboardingInventory(userId);
     const count = after.counts[step] ?? before.counts[step] ?? 0;
-    await bot.sendMessage(chatId, `Принято: ${stored.original_name}\nВсего в этом разделе: ${count}`, onboardingControls(step));
+    await bot.sendMessage(chatId, buildUploadVisibilityText(step, stored, count), onboardingControls(step));
     return true;
   }
 
@@ -893,20 +1014,7 @@ async function finishExpertOnboarding(chatId, fromUserId) {
   };
   await saveUserProfile(userId, profile);
 
-  const status = await bot.sendMessage(chatId, "Собираю persona draft, worldview и style examples из загруженных материалов...");
-  try {
-    await generatePersonaDrafts(openai, userId);
-    await bot.editMessageText("AI-эксперт создан. Черновики персоны и стиля готовы.", {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
-  } catch (error) {
-    console.error("Persona draft error:", error.message);
-    await bot.editMessageText(`Эксперт создан, но автодрафт не собрался: ${error.message.slice(0, 160)}`, {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
-  }
+  await rebuildPersonaAndNotify(chatId, userId, "Собираю persona draft, worldview и style examples из загруженных материалов...");
 
   state.expertOnboarding = null;
   userState.set(chatId, state);
@@ -916,30 +1024,82 @@ async function finishExpertOnboarding(chatId, fromUserId) {
 async function sendExpertDashboard(chatId, userId = chatId) {
   const inventory = await getOnboardingInventory(userId);
   const name = inventory.profile?.expert_name || "эксперт";
-  const scenarios = inventory.scenarios.map((s, i) => `${i + 1}. ${s.label} (${s.id})`).join("\n") || "пока нет";
+  const activeScenarioId = inventory.profile?.active_scenario_id || inventory.scenarios[0]?.id || null;
+  const activeScenario = inventory.scenarios.find((s) => s.id === activeScenarioId);
+  const statusLabel = inventory.profile?.status === "completed" ? "готов к генерации" : "онбординг не завершён";
+  const runtime = await loadExpertRuntime(userId);
+  const runtimeText = `Режим: ${runtime.mode || "free_demo"}\nГенерации: ${runtime.counters?.text || 0} текст / ${runtime.counters?.photo || 0} фото / ${runtime.counters?.video || 0} видео`;
   await bot.sendMessage(chatId,
-    `AI-эксперт: ${name}\n\nСценарии:\n${scenarios}\n\nМатериалы: ${inventory.counts.knowledge}\nСтиль: ${inventory.counts.style}\nАватары: ${inventory.counts.avatar}\nГолос: ${inventory.counts.voice}`,
+    `AI-эксперт: ${name}\n` +
+    `Статус: ${statusLabel}\n` +
+    `Активный сценарий: ${activeScenario?.label || "не выбран"}\n\n` +
+    `Сценарии: ${inventory.scenarios.length}\n` +
+    `Материалы: ${inventory.counts.knowledge}\n` +
+    `Примеры стиля: ${inventory.counts.style}\n` +
+    `Фото аватара: ${inventory.counts.avatar}\n` +
+    `Голосовые samples: ${inventory.counts.voice}\n\n` +
+    `${runtimeText}`,
     {
       reply_markup: { inline_keyboard: [
+        [{ text: "✨ Generate test post", callback_data: "ob_test_generation" }],
+        [
+          { text: "🧩 List scenarios", callback_data: "ob_list_scenarios" },
+          { text: "🔄 Switch scenario", callback_data: "ob_select_scenario" },
+        ],
+        [{ text: "🧠 Regenerate persona", callback_data: "ob_regen_persona" }],
+        [{ text: "➕ Add scenario", callback_data: "ob_add_scenario" }],
+        [
+          { text: "📚 Add materials", callback_data: "ob_upload_more:knowledge" },
+          { text: "✍️ Add style", callback_data: "ob_upload_more:style" },
+        ],
+        [
+          { text: "🖼 Upload avatar", callback_data: "ob_upload_more:avatar" },
+          { text: "🎙 Upload voice", callback_data: "ob_upload_more:voice" },
+        ],
         [{ text: "Создать контент", callback_data: "back_to_topics" }],
-        [{ text: "Добавить сценарий", callback_data: "ob_add_scenario" }],
-        [
-          { text: "Догрузить знания", callback_data: "ob_upload_more:knowledge" },
-          { text: "Догрузить стиль", callback_data: "ob_upload_more:style" },
-        ],
-        [
-          { text: "Догрузить фото", callback_data: "ob_upload_more:avatar" },
-          { text: "Догрузить голос", callback_data: "ob_upload_more:voice" },
-        ],
       ]},
     }
   );
+}
+
+async function sendScenarioList(chatId, userId = chatId, mode = "list") {
+  const inventory = await getOnboardingInventory(userId);
+  const activeScenarioId = inventory.profile?.active_scenario_id || inventory.scenarios[0]?.id || null;
+  if (inventory.scenarios.length === 0) {
+    await bot.sendMessage(chatId, "Сценариев пока нет.", {
+      reply_markup: { inline_keyboard: [[{ text: "Добавить сценарий", callback_data: "ob_add_scenario" }]] },
+    });
+    return;
+  }
+
+  const text = inventory.scenarios.map((scenario, index) => {
+    const activeMark = scenario.id === activeScenarioId ? " ← active" : "";
+    return `${index + 1}. ${scenario.label} (${scenario.id})${activeMark}`;
+  }).join("\n");
+
+  const rows = mode === "select"
+    ? inventory.scenarios.map((scenario, index) => ([{
+        text: `${scenario.id === activeScenarioId ? "✅ " : ""}${scenario.label}`,
+        callback_data: `ob_set_active:${index}`,
+      }]))
+    : [];
+
+  rows.push([{ text: "← Dashboard", callback_data: "ob_dashboard" }]);
+  const state = userState.get(chatId) || {};
+  state.userScenarioMenu = inventory.scenarios.map((scenario) => scenario.id);
+  userState.set(chatId, state);
+
+  await bot.sendMessage(chatId, `Сценарии эксперта:\n\n${text}`, {
+    reply_markup: { inline_keyboard: rows },
+  });
 }
 
 async function sendTopicMenu(chatId) {
   const state = userState.get(chatId) || {};
   const presets = state.presets || [];
   const userScenarios = await listUserScenarios(chatId).catch(() => []);
+  const profile = await loadUserProfile(chatId).catch(() => null);
+  const activeScenarioId = profile?.active_scenario_id;
   state.userScenarioMenu = userScenarios.map((scenario) => scenario.id);
   userState.set(chatId, state);
   const keyboard = [
@@ -953,12 +1113,17 @@ async function sendTopicMenu(chatId) {
     keyboard.push([{ text: "⭐ Мои пресеты", callback_data: "show_presets" }]);
   }
   if (userScenarios.length > 0) {
+    const activeScenario = userScenarios.find((scenario) => scenario.id === activeScenarioId);
+    if (activeScenario) {
+      keyboard.push([{ text: `✅ Active: ${activeScenario.label}`, callback_data: `prompt_topic_sc:${activeScenario.id}` }]);
+    }
     for (let i = 0; i < userScenarios.length; i += 2) {
       keyboard.push(userScenarios.slice(i, i + 2).map((scenario, offset) => ({
-        text: `⭐ ${scenario.label}`,
+        text: `${scenario.id === activeScenarioId ? "✅" : "⭐"} ${scenario.label}`,
         callback_data: `usc:${i + offset}`,
       })));
     }
+    keyboard.push([{ text: "👤 Expert dashboard", callback_data: "ob_dashboard" }]);
   }
   keyboard.push([{ text: "➕ Создать AI-эксперта", callback_data: "ob_start" }]);
   await bot.sendMessage(chatId, `🌟 *С чего начнём?*\n\nВыберите сценарий:`, {
@@ -2095,9 +2260,10 @@ bot.onText(/\/start/, async (msg) => {
   if (await userHasCompletedExpert(chatId)) {
     const profile = await loadUserProfile(chatId);
     await bot.sendMessage(chatId,
-      `👋 Добро пожаловать, *${profile?.expert_name || "эксперт"}*!\n\nВаш AI-эксперт уже создан. Нажмите кнопку чтобы начать 👇`,
+      `👋 Добро пожаловать, *${profile?.expert_name || "эксперт"}*!\n\nВаш AI-эксперт уже создан. Открыл dashboard, чтобы сразу протестировать результат.`,
       { parse_mode: "Markdown", reply_markup: START_KEYBOARD }
     );
+    await sendExpertDashboard(chatId, chatId);
     return;
   }
 
@@ -2478,8 +2644,65 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "ob_dashboard") {
+      await sendExpertDashboard(chatId, query.from?.id || chatId);
+      return;
+    }
+
     if (data === "ob_add_scenario") {
       await startAddScenario(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data === "ob_list_scenarios") {
+      await sendScenarioList(chatId, query.from?.id || chatId, "list");
+      return;
+    }
+
+    if (data === "ob_select_scenario") {
+      await sendScenarioList(chatId, query.from?.id || chatId, "select");
+      return;
+    }
+
+    if (data.startsWith("ob_set_active:")) {
+      const idx = parseInt(data.replace("ob_set_active:", ""));
+      const scenarioId = state.userScenarioMenu?.[idx];
+      if (!scenarioId) {
+        await bot.sendMessage(chatId, "Сценарий не найден. Откройте dashboard заново.");
+        return;
+      }
+      await setActiveUserScenario(query.from?.id || chatId, scenarioId);
+      const scenario = await loadUserScenario(query.from?.id || chatId, scenarioId);
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = scenarioId;
+      s.pendingTopic = null;
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId, `✅ Активный сценарий: ${scenario?.label || scenarioId}`);
+      await sendTopicsForScenario(chatId, scenarioId);
+      return;
+    }
+
+    if (data === "ob_regen_persona") {
+      await rebuildPersonaAndNotify(chatId, query.from?.id || chatId);
+      await sendExpertDashboard(chatId, query.from?.id || chatId);
+      return;
+    }
+
+    if (data === "ob_test_generation") {
+      const inventory = await getOnboardingInventory(query.from?.id || chatId);
+      const scenarioId = inventory.profile?.active_scenario_id || inventory.scenarios[0]?.id;
+      if (!scenarioId) {
+        await bot.sendMessage(chatId, "Сначала добавьте сценарий, и сразу сделаем тестовый пост.");
+        await startAddScenario(chatId, query.from?.id || chatId);
+        return;
+      }
+      const s = userState.get(chatId) || {};
+      s.pendingScenario = scenarioId;
+      s.pendingTopic = "почему клиенту важно почувствовать, что эксперт его понимает";
+      s.pendingLengthMode = "normal";
+      userState.set(chatId, s);
+      await bot.sendMessage(chatId, "Сейчас покажу тестовый пост на активном сценарии. Это быстрый WOW-пруф после онбординга.");
+      await runGeneration(chatId, scenarioId, "normal", "auto");
       return;
     }
 
@@ -2516,9 +2739,10 @@ bot.on("callback_query", async (query) => {
           expertName: profile?.expert_name || "Эксперт",
           title: ONBOARDING_ROLES[roleKey]?.label || roleKey,
         });
+        if (profile) await setActiveUserScenario(onboarding.userId, scenario.id);
         s.expertOnboarding = null;
         userState.set(chatId, s);
-        await bot.sendMessage(chatId, `Сценарий добавлен: ${scenario.label}`);
+        await bot.sendMessage(chatId, `✅ Сценарий добавлен и выбран активным: ${scenario.label}`);
         await sendExpertDashboard(chatId, onboarding.userId);
         return;
       }
@@ -2534,7 +2758,10 @@ bot.on("callback_query", async (query) => {
         const userId = s.expertOnboarding.userId || query.from?.id || chatId;
         s.expertOnboarding = null;
         userState.set(chatId, s);
-        await bot.sendMessage(chatId, "Материалы сохранены.");
+        await bot.sendMessage(chatId, "✅ Upload finished\nprocessed: сохранено\nqueued: готово к использованию в эксперте");
+        if (["knowledge", "style"].includes(category)) {
+          await rebuildPersonaAndNotify(chatId, userId, "Обновляю persona после новых материалов...");
+        }
         await sendExpertDashboard(chatId, userId);
         return;
       }
@@ -2652,6 +2879,7 @@ bot.on("callback_query", async (query) => {
         await bot.sendMessage(chatId, "Сценарий не найден. Откройте меню заново.");
         return;
       }
+      await setActiveUserScenario(query.from?.id || chatId, scenarioId).catch(() => null);
       const s = userState.get(chatId) || {};
       s.pendingScenario = scenarioId;
       s.pendingTopic = null;
@@ -2667,6 +2895,7 @@ bot.on("callback_query", async (query) => {
         await bot.sendMessage(chatId, "Сценарий не найден. Откройте меню заново.");
         return;
       }
+      await setActiveUserScenario(query.from?.id || chatId, scenarioId).catch(() => null);
       await sendLengthChoice(chatId, scenarioId);
       return;
     }
@@ -2792,6 +3021,7 @@ bot.on("callback_query", async (query) => {
       if (!scenePrompt) { await bot.sendMessage(chatId, "Не могу воспроизвести сцену."); return; }
       const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
+      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -2833,6 +3063,7 @@ bot.on("callback_query", async (query) => {
       const audioText = await generateAudioText(fullAnswer, audioLength);
       console.log(`Audio text (${audioLength}): ${audioText.length} chars: "${audioText}"`);
       const { buffer: audioBuffer, cost: audioCost } = await generateVoice(audioText);
+      await incrementExpertRuntime(chatId, "generate_audio", { counter: "audio", scenario: state.lastScenario });
       await bot.editMessageText("✅ Голос готов! Выберите музыку:", { chat_id: chatId, message_id: genMsg.message_id });
       const s = userState.get(chatId) || {};
       s.pendingVoiceBuffer = audioBuffer.toString('base64');
@@ -2927,6 +3158,7 @@ bot.on("callback_query", async (query) => {
       userState.set(chatId, s);
       const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, state.lastAudioUrl);
       await incrementLimit(chatId, "video", state.lastScenario, null);
+      await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
       await sendVideoWithButtons(chatId, videoUrl, videoCost);
       return;
     }
@@ -2941,6 +3173,7 @@ bot.on("callback_query", async (query) => {
       const scenePrompt = await buildTopicScenePrompt(state.lastTopic || "психология");
       const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
+      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -2955,6 +3188,7 @@ bot.on("callback_query", async (query) => {
       const officeScene = `sitting in cozy therapist office, bookshelf background, soft warm lamp light, wooden furniture, indoor plants, bokeh background`;
       const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
       await incrementLimit(chatId, "photo", state.lastScenario, null);
+      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
@@ -2998,6 +3232,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
   await incrementLimit(chatId, "text", scenario, lengthMode);
+  await incrementExpertRuntime(chatId, "generate_text", { counter: "text", scenario, lengthMode });
 
   const s = userState.get(chatId) || {};
   s.lastFullAnswer = fullAnswer;
