@@ -98,6 +98,7 @@ const IS_CLOUD_RUNTIME = IS_BETA_RUNTIME || IS_PRODUCTION || Boolean(process.env
 const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || (IS_CLOUD_RUNTIME ? 4000 : 0));
 const ENTITLEMENTS_PATH = process.env.ENTITLEMENTS_PATH || join(RUNTIME_DATA_ROOT, "entitlements.json");
 const PAYMENT_EVENTS_PATH = process.env.PAYMENT_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "payment_events.jsonl");
+const EXPERTS_RUNTIME_PATH = process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json");
 
 const PAID_BETA_PLANS = {
   demo: {
@@ -247,6 +248,103 @@ async function writeJsonFileSafe(path, value) {
   await fs.rename(tempPath, path);
 }
 
+const DEFAULT_RUNTIME_EXPERT = Object.freeze({
+  expertId: "dinara",
+  displayName: "Динара",
+  knowledgeBase: "psychologist",
+  styleProfile: "dinara_style",
+  status: "active",
+});
+
+function normalizeRuntimeExpert(expert = {}) {
+  return {
+    expertId: String(expert.expertId || DEFAULT_RUNTIME_EXPERT.expertId),
+    displayName: expert.displayName || DEFAULT_RUNTIME_EXPERT.displayName,
+    knowledgeBase: expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase,
+    styleProfile: expert.styleProfile || DEFAULT_RUNTIME_EXPERT.styleProfile,
+    status: expert.status || DEFAULT_RUNTIME_EXPERT.status,
+    createdAt: expert.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeExpertRegistry(raw) {
+  if (Array.isArray(raw)) return raw.map(normalizeRuntimeExpert);
+  if (Array.isArray(raw?.experts)) return raw.experts.map(normalizeRuntimeExpert);
+  if (raw && typeof raw === "object" && raw.expertId) return [normalizeRuntimeExpert(raw)];
+  return [normalizeRuntimeExpert()];
+}
+
+async function loadExpertRegistry() {
+  const raw = await readJsonFileSafe(EXPERTS_RUNTIME_PATH, null);
+  return normalizeExpertRegistry(raw);
+}
+
+async function ensureExpertRegistry() {
+  const existed = await fileExists(EXPERTS_RUNTIME_PATH);
+  const experts = await loadExpertRegistry();
+  const activeExperts = experts.filter((expert) => expert.status === "active");
+  if (!existed) {
+    await writeJsonFileSafe(EXPERTS_RUNTIME_PATH, experts[0] || normalizeRuntimeExpert());
+  }
+  runtimeLog("expert registry ready", {
+    path: EXPERTS_RUNTIME_PATH,
+    fileCreated: !existed,
+    totalExperts: experts.length,
+    activeExperts: activeExperts.length,
+    defaultExpertId: activeExperts[0]?.expertId || experts[0]?.expertId || DEFAULT_RUNTIME_EXPERT.expertId,
+  });
+  return experts;
+}
+
+async function getExpertById(expertId) {
+  const experts = await loadExpertRegistry();
+  return experts.find((expert) => expert.expertId === expertId) || null;
+}
+
+async function listActiveExperts() {
+  const experts = await loadExpertRegistry();
+  return experts.filter((expert) => expert.status === "active");
+}
+
+async function getDefaultExpert() {
+  const activeExperts = await listActiveExperts();
+  return activeExperts[0] || normalizeRuntimeExpert();
+}
+
+function buildExpertIsolationFoundation(expert) {
+  const expertId = expert?.expertId || DEFAULT_RUNTIME_EXPERT.expertId;
+  return {
+    expertId,
+    embeddingNamespace: expertId,
+    retrievalConfigId: expert?.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase,
+    authorProfileId: expert?.styleProfile || DEFAULT_RUNTIME_EXPERT.styleProfile,
+    embeddingsPath: join("knowledge_indexes", expert?.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase, "production", "current"),
+    authorProfilePath: join("author_profiles", expertId),
+  };
+}
+
+async function resolveGenerationOwnership(chatId, scenario, styleKey = "auto") {
+  const state = chatId ? (userState.get(chatId) || {}) : {};
+  const expertId = state.activeExpertId || process.env.DEFAULT_EXPERT_ID || DEFAULT_RUNTIME_EXPERT.expertId;
+  const expert = await getExpertById(expertId) || await getDefaultExpert();
+  const knowledgeBase = scenario === "sexologist"
+    ? "sexologist"
+    : scenario === "psychologist"
+      ? expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase
+      : scenario || expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase;
+  const styleProfile = scenario === "sexologist"
+    ? `sexologist:${normalizeSexologistStyleKey(styleKey)}`
+    : expert.styleProfile || DEFAULT_RUNTIME_EXPERT.styleProfile;
+  return {
+    expertId: expert.expertId,
+    displayName: expert.displayName,
+    knowledgeBase,
+    styleProfile,
+    registryStatus: expert.status,
+    isolation: buildExpertIsolationFoundation({ ...expert, knowledgeBase, styleProfile }),
+  };
+}
+
 async function appendJsonlSafe(path, value) {
   await ensureRuntimeDirectory(dirname(path), "runtime jsonl directory");
   await fs.appendFile(path, `${JSON.stringify(value)}\n`, "utf-8");
@@ -312,6 +410,7 @@ await Promise.all([
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "users"), "users root"),
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "feedback_reports"), "feedback reports"),
 ]);
+await ensureExpertRegistry();
 await ensurePaidBetaStorage();
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
@@ -437,6 +536,7 @@ runtimeLog(`Bot started`, {
   polling: TELEGRAM_POLLING_ENABLED,
   dataRoot: RUNTIME_DATA_ROOT,
   usersRoot: process.env.USERS_ROOT,
+  expertsRegistry: EXPERTS_RUNTIME_PATH,
   telegramTokenPresent: Boolean(process.env.TELEGRAM_TOKEN),
   telegramBetaTokenPresent: Boolean(process.env.TELEGRAM_BETA_TOKEN),
   selectedTelegramToken: TELEGRAM_TOKEN_SOURCE,
@@ -929,6 +1029,9 @@ async function incrementExpertRuntime(chatId, action, meta = {}) {
     ts: new Date().toISOString(),
     action,
     scenario: meta.scenario || null,
+    expertId: meta.expertId || null,
+    knowledgeBase: meta.knowledgeBase || null,
+    styleProfile: meta.styleProfile || null,
     length: meta.lengthMode || null,
     mode: runtime.mode || "free_demo",
   });
@@ -4366,6 +4469,40 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const runtimeTuning = runtimeConfig.tuning || DEFAULT_RUNTIME_TUNING;
   const starterTemplateKey = userScenarioContext?.profile?.starter_template || runtimeState.demoTemplateKey || null;
   const starterTemplate = starterTemplateKey ? STARTER_EXPERT_TEMPLATES[starterTemplateKey] : null;
+  let generationOwnership = await resolveGenerationOwnership(chatId, scenario, normalizedStyleKey);
+  if (userScenarioContext?.scenario) {
+    generationOwnership = {
+      ...generationOwnership,
+      expertId: userScenarioContext.scenario.id || generationOwnership.expertId,
+      displayName: userScenarioContext.profile?.expert_name || userScenarioContext.scenario.expert_name || generationOwnership.displayName,
+      knowledgeBase: `user-filesystem:${userScenarioContext.scenario.id || scenario}`,
+      styleProfile: userScenarioContext.profile?.starter_template || userScenarioContext.scenario.id || generationOwnership.styleProfile,
+      isolation: {
+        ...generationOwnership.isolation,
+        expertId: userScenarioContext.scenario.id || generationOwnership.expertId,
+        embeddingNamespace: userScenarioContext.scenario.id || generationOwnership.expertId,
+        retrievalConfigId: `user-filesystem:${userScenarioContext.scenario.id || scenario}`,
+        authorProfileId: userScenarioContext.profile?.starter_template || userScenarioContext.scenario.id || generationOwnership.styleProfile,
+        authorProfilePath: join("users", String(chatId), "experts", userScenarioContext.scenario.id || scenario),
+      },
+    };
+  } else if (starterTemplate && runtimeState.demoMode) {
+    generationOwnership = {
+      ...generationOwnership,
+      expertId: `starter:${starterTemplateKey}`,
+      displayName: starterTemplate.expertName || starterTemplate.label,
+      knowledgeBase: `starter-template:${starterTemplateKey}`,
+      styleProfile: `starter-template:${starterTemplateKey}`,
+      isolation: {
+        ...generationOwnership.isolation,
+        expertId: `starter:${starterTemplateKey}`,
+        embeddingNamespace: `starter:${starterTemplateKey}`,
+        retrievalConfigId: `starter-template:${starterTemplateKey}`,
+        authorProfileId: `starter-template:${starterTemplateKey}`,
+        authorProfilePath: join("templates", "starter-experts", starterTemplateKey),
+      },
+    };
+  }
 
   if (userScenarioContext?.scenario) {
     context = userScenarioContext.context;
@@ -4374,6 +4511,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       chunksCount: 0,
       estimatedTokens: Math.ceil(context.length / 3.5),
       productionVersion: null,
+      knowledgeBase: generationOwnership.knowledgeBase,
     };
   } else if (starterTemplate && runtimeState.demoMode) {
     context = [
@@ -4394,9 +4532,10 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       chunksCount: 0,
       estimatedTokens: Math.ceil(context.length / 3.5),
       productionVersion: null,
+      knowledgeBase: generationOwnership.knowledgeBase,
     };
   } else if (scenario === "sexologist") {
-    const retrieval = await retrieveGroundingContext(topic, "sexologist").catch((error) => {
+    const retrieval = await retrieveGroundingContext(topic, generationOwnership.knowledgeBase).catch((error) => {
       console.warn("Production retrieval failed:", error.message);
       return null;
     });
@@ -4407,9 +4546,10 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
         chunksCount: retrieval.chunks?.length || 0,
         estimatedTokens: retrieval.estimatedTokens || 0,
         productionVersion: retrieval.productionVersion || null,
+        knowledgeBase: generationOwnership.knowledgeBase,
       };
     } else {
-      const fallbackChunks = await vectorSearch(topic, "sexologist", 3);
+      const fallbackChunks = await vectorSearch(topic, generationOwnership.knowledgeBase, 3);
       if (fallbackChunks && fallbackChunks.length > 0) {
         context = fallbackChunks.map(c => c.chunk_text).join("\n\n");
         retrievalMeta = {
@@ -4417,6 +4557,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
           chunksCount: fallbackChunks.length,
           estimatedTokens: Math.ceil(context.length / 3.5),
           productionVersion: null,
+          knowledgeBase: generationOwnership.knowledgeBase,
           warning: "Production retrieval unavailable; used legacy vector fallback.",
         };
       } else {
@@ -4426,12 +4567,13 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
           chunksCount: 0,
           estimatedTokens: Math.ceil(context.length / 3.5),
           productionVersion: null,
+          knowledgeBase: generationOwnership.knowledgeBase,
           warning: "Retrieval unavailable; used generic professional fallback.",
         };
       }
     }
   } else {
-    const chunks = await vectorSearch(topic, scenario, 5);
+    const chunks = await vectorSearch(topic, generationOwnership.knowledgeBase, 5);
     if (chunks && chunks.length > 0) {
       context = chunks.map(c => c.chunk_text).join("\n\n");
     } else if (scenario === "psychologist") {
@@ -4441,6 +4583,14 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
         .slice(0, 3);
       context = topArticles.map(a => `Статья: ${a.title}\n${a.content}`).join("\n\n");
     }
+    retrievalMeta = retrievalMeta || {
+      sources: chunks?.length ? chunks.map((chunk) => chunk.source || chunk.filename || "legacy-vector-source") : [],
+      chunksCount: chunks?.length || 0,
+      estimatedTokens: Math.ceil(context.length / 3.5),
+      productionVersion: null,
+      knowledgeBase: generationOwnership.knowledgeBase,
+      warning: chunks?.length ? null : "Used article fallback or generic scenario context.",
+    };
   }
 
   const effectiveLengthMode = variant === "shorter" ? "short" : variant === "longer" ? "long" : lengthMode;
@@ -4522,6 +4672,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   return {
     text: qualityPass.text,
     retrieval: retrievalMeta,
+    ownership: generationOwnership,
     authorVoice: {
       enabled: authorVoice.enabled,
       author: authorVoice.author,
@@ -6079,6 +6230,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     const feedbackNote = variant === "feedback" ? state.pendingGenerationNote || "" : "";
     const generation = await generatePostTextResult(topic, scenario, lengthMode, styleKey, variant, feedbackNote, chatId);
     const fullAnswer = generation.text;
+    const ownership = generation.ownership || await resolveGenerationOwnership(chatId, scenario, generation.styleKey || styleKey);
     await bot.deleteMessage(chatId, genMsg.message_id).catch(() => {});
 
     const entitlementAfterGeneration = await incrementEntitlementUsage(chatId);
@@ -6086,6 +6238,9 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     const runtimeAfterGeneration = await incrementExpertRuntime(chatId, "generate_text", {
       counter: "text",
       scenario,
+      expertId: ownership.expertId,
+      knowledgeBase: ownership.knowledgeBase,
+      styleProfile: ownership.styleProfile,
       lengthMode,
       demoMode: state.demoMode || variant === "demo",
       premium: runtimeQuotaCheck.premium,
@@ -6093,24 +6248,36 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     if ((runtimeBeforeGeneration.counters?.text || 0) === 0) {
       await trackBetaEvent(chatId, BETA_EVENT_NAMES.FIRST_GENERATION, {
         scenario,
+        expert_id: ownership.expertId,
+        knowledge_base: ownership.knowledgeBase,
+        style_profile: ownership.styleProfile,
         lengthMode,
         demo_mode: state.demoMode || variant === "demo",
       });
     }
     await trackBetaEvent(chatId, BETA_EVENT_NAMES.GENERATION_COMPLETED, {
       scenario,
+      expert_id: ownership.expertId,
+      knowledge_base: ownership.knowledgeBase,
+      style_profile: ownership.styleProfile,
       lengthMode,
       variant,
       demo_mode: state.demoMode || variant === "demo",
     });
     await recordRuntimeCost(chatId, "text", "openai_text_generation", estimateTextCost(lengthMode), {
       scenario,
+      expertId: ownership.expertId,
+      knowledgeBase: ownership.knowledgeBase,
+      styleProfile: ownership.styleProfile,
       lengthMode,
       variant,
     }).catch((error) => console.warn("Cost record failed:", error.message));
     if (!["default", "demo"].includes(variant)) {
       await trackBetaEvent(chatId, BETA_EVENT_NAMES.REGENERATION_USED, {
         scenario,
+        expert_id: ownership.expertId,
+        knowledge_base: ownership.knowledgeBase,
+        style_profile: ownership.styleProfile,
         lengthMode,
         variant,
       });
@@ -6122,6 +6289,10 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     s.lastScenario = scenario;
     s.lastLengthMode = lengthMode;
     s.lastStyleKey = generation.styleKey || styleKey;
+    s.lastExpertId = ownership.expertId;
+    s.lastKnowledgeBase = ownership.knowledgeBase;
+    s.lastStyleProfile = ownership.styleProfile;
+    s.lastGenerationOwnership = ownership;
     s.lastContentPreset = s.pendingContentPreset || null;
     s.lastAnswerId = createAnswerId();
     s.lastRetrievalMeta = generation.retrieval;
