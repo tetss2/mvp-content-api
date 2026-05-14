@@ -578,11 +578,31 @@ async function buildDinaraWorldviewPrompt() {
 
 const REGENERATION_VARIANTS = {
   default: "",
-  softer: "Сделай вариант мягче и интимнее: больше эмоционального признания, меньше советов и категоричности.",
+  softer: "Сделай вариант мягче и интимнее: больше эмоционального признания, меньше советов, давления и категоричности.",
+  stronger: "Сделай вариант сильнее: более уверенный тезис, плотнее смысл, меньше сглаживания. Не уходи в агрессию и кликбейт.",
+  emotional: "Сделай вариант эмоциональнее: больше телесной и внутренней узнаваемости, живых пауз, ощущения «она правда меня поняла».",
+  provocative: "Сделай вариант провокационнее: начни с этичного, но цепляющего тезиса, который ломает привычный миф. Без грубости и манипуляций.",
+  expert: "Сделай вариант экспертнее: добавь терапевтическую рамку, причинно-следственную глубину и 1 точное профессиональное наблюдение без сухой лекции.",
+  telegram: "Сделай вариант более Telegram-style: сильный первый экран, короткие живые абзацы, разговорные фрагменты, финал как мысль для сохранения.",
+  shorter: "Сделай вариант короче: сохрани главную эмоцию и авторский голос, убери вторичные объяснения и повторы.",
+  longer: "Сделай вариант длиннее: глубже раскрой переживание, добавь 1-2 смысловых поворота и более объемный терапевтический финал.",
   practical: "Сделай вариант практичнее: оставь тепло, но добавь один ясный маленький шаг, без чек-листа.",
-  voice: "Сделай вариант сильнее похожим на Динару: больше живой авторской интонации, меньше универсальных AI-формулировок.",
+  voice: "Сделай вариант сильнее похожим на автора: больше живой авторской интонации, меньше универсальных AI-формулировок.",
   feedback: "Исправь текст по конкретному комментарию пользователя, сохрани тему, длину и формат Telegram-поста.",
 };
+
+function buildFirstGenerationWowInstruction(isFirstGeneration = false) {
+  if (!isFirstGeneration) return "";
+  return [
+    "FIRST POST WOW MODE — КРИТИЧНО:",
+    "Это первый сгенерированный пост для пользователя. Нужен максимальный эффект «этот AI-эксперт меня понимает».",
+    "- Style lock, worldview, examples и persona важнее универсальной полезности.",
+    "- Первый абзац должен быть эмоционально точным и узнаваемым, без разгона и вводных.",
+    "- Добавь больше живой психологической реалистичности: внутренний конфликт, маленькая честная деталь, человеческая пауза.",
+    "- Не делай безопасный средний вариант. Лучше чуть смелее, теплее и конкретнее, чем гладко и обезличенно.",
+    "- Финал должен звучать как авторская мысль, которую хочется сохранить или переслать.",
+  ].join("\n");
+}
 
 // ─── СТИЛИ СЕКСОЛОГА ─────────────────────────────────────────────────────────
 
@@ -2474,15 +2494,87 @@ function buildFeedbackPayload(query, answerId, feedbackType) {
 function feedbackKeyboard(answerId) {
   return [
     [
-      { text: "✅ ОК", callback_data: `feedback:ok:${answerId}` },
-      { text: "✏️ Исправить", callback_data: `feedback:edit:${answerId}` },
+      { text: "👍 Похоже на меня", callback_data: `feedback:like:${answerId}` },
+      { text: "👎 Не похоже", callback_data: `feedback:not_voice:${answerId}` },
     ],
     [
-      { text: "❌ Плохо", callback_data: `feedback:bad:${answerId}` },
-      { text: "🧠 Не похоже на меня", callback_data: `feedback:not_voice:${answerId}` },
+      { text: "🔁 Перегенерировать", callback_data: "regen:telegram" },
+      { text: "🔥 Эмоциональнее", callback_data: "regen:emotional" },
     ],
-    [{ text: "📚 Слабая экспертность", callback_data: `feedback:weak_expertise:${answerId}` }],
+    [
+      { text: "🧠 Экспертнее", callback_data: "regen:expert" },
+      { text: "💬 Личнее", callback_data: "regen:voice" },
+    ],
+    [{ text: "✏️ Дать правку словами", callback_data: `feedback:edit:${answerId}` }],
   ];
+}
+
+function directedRegenerationKeyboard() {
+  return [
+    [
+      { text: "🌿 Мягче", callback_data: "regen:softer" },
+      { text: "⚡ Сильнее", callback_data: "regen:stronger" },
+    ],
+    [
+      { text: "🔥 Эмоциональнее", callback_data: "regen:emotional" },
+      { text: "🧲 Провокационнее", callback_data: "regen:provocative" },
+    ],
+    [
+      { text: "🧠 Экспертнее", callback_data: "regen:expert" },
+      { text: "💬 Telegram-style", callback_data: "regen:telegram" },
+    ],
+    [
+      { text: "✂️ Короче", callback_data: "regen:shorter" },
+      { text: "📚 Длиннее", callback_data: "regen:longer" },
+    ],
+  ];
+}
+
+function buildWhyThisFeelsLikeYou(state = {}) {
+  const signals = [];
+  const text = String(state.lastFullAnswer || "");
+  const quality = state.lastQualityPass || {};
+  const retrieval = state.lastRetrievalMeta || {};
+  const variant = state.lastGenerationVariant || "default";
+
+  if (state.firstGenerationBoostApplied) {
+    signals.push("усиленный style lock для первого WOW-поста");
+  }
+  if (state.lastAuthorVoiceMeta?.profileLoaded) {
+    signals.push("авторский voice profile");
+  }
+  if (retrieval.sources?.length) {
+    signals.push("смыслы из ваших материалов");
+  }
+  if (quality.rewritten) {
+    signals.push("anti-generic pass после черновика");
+  }
+  if (variant !== "default") {
+    signals.push(`направление правки: ${variant}`);
+  }
+
+  const paragraphs = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+  const shortFragments = paragraphs.filter((p) => p.length <= 90).length;
+  if (shortFragments) signals.push("короткие разговорные фрагменты");
+  if (/[?？]\s*$/m.test(text) || /спросить себя|заметить|прислушаться/i.test(text)) {
+    signals.push("рефлексивный финал");
+  }
+  if (/терап|внутри|границ|стыд|тревог|контакт|чувств|тело|опор/i.test(text)) {
+    signals.push("терапевтическая рамка");
+  }
+
+  const picked = signals.slice(0, 4);
+  if (!picked.length) picked.push("эмоциональная каденция", "живые паузы", "мягкий авторский вывод");
+
+  return `Почему это похоже на вас:\n${picked.map((item) => `• ${item}`).join("\n")}`;
+}
+
+function shareExpertKeyboard() {
+  const shareText = encodeURIComponent("Посмотри, как мой AI-эксперт пишет в моём стиле. Можно показать свой первый пост и собрать такого же под себя.");
+  return [[
+    { text: "📣 Показать AI-эксперта другу", url: `https://t.me/share/url?text=${shareText}` },
+    { text: "💌 Текст для пересылки", callback_data: "share_friend" },
+  ]];
 }
 
 function buildRegenerationInstruction(variant = "default", feedbackNote = "") {
@@ -2597,7 +2689,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     }
   }
 
-  const lengthConfig = getLengthConfig(["psychologist", "sexologist"].includes(scenario) ? scenario : "psychologist", lengthMode);
+  const effectiveLengthMode = variant === "shorter" ? "short" : variant === "longer" ? "long" : lengthMode;
+  const lengthConfig = getLengthConfig(["psychologist", "sexologist"].includes(scenario) ? scenario : "psychologist", effectiveLengthMode);
   const maxTokens = lengthConfig.maxTokens;
   const lengthInstruction = lengthConfig.instruction;
 
@@ -2623,14 +2716,18 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const worldviewPrompt = userScenarioContext?.scenario ? "" : await buildDinaraWorldviewPrompt();
   const realismPrompt = userScenarioContext?.scenario ? "" : DINARA_REALISM_PROMPT;
   const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate });
-  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt].filter(Boolean).join("\n\n");
+  const firstGenerationWowPrompt = buildFirstGenerationWowInstruction(runtimeState.firstGenerationBoost);
+  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt].filter(Boolean).join("\n\n");
   const contentPresetInstruction = buildContentPresetInstruction(runtimeState.pendingContentPreset || runtimeState.lastContentPreset);
+  const firstGenerationLine = runtimeState.firstGenerationBoost
+    ? "\n- Это первая генерация: поставь эмоциональное узнавание выше аккуратной нейтральности."
+    : "";
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}\n\nSTABILIZATION:\n- Сделай первый экран сильным: конкретное узнаваемое переживание или тезис, без общих вступлений.\n- Не используй универсальные AI-фразы, канцелярит и безопасные пустые выводы.\n- Удерживай авторскую идентичность из persona/worldview/style guidance сильнее, чем общую экспертность.\n- Добавь 1-2 конкретные детали из контекста, если они есть, но не выдумывай факты.${buildRegenerationInstruction(variant, feedbackNote)}` }
+      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}\n\nSTABILIZATION:\n- Сделай первый экран сильным: конкретное узнаваемое переживание или тезис, без общих вступлений.\n- Не используй универсальные AI-фразы, канцелярит и безопасные пустые выводы.\n- Удерживай авторскую идентичность из persona/worldview/style guidance сильнее, чем общую экспертность.\n- Добавь 1-2 конкретные детали из контекста, если они есть, но не выдумывай факты.${firstGenerationLine}${buildRegenerationInstruction(variant, feedbackNote)}` }
     ],
     temperature: 0.82,
     max_tokens: maxTokens,
@@ -2659,6 +2756,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     },
     styleKey: normalizedStyleKey,
     lengthMode,
+    firstGenerationBoost: Boolean(runtimeState.firstGenerationBoost),
     variant,
     qualityPass: {
       rewritten: qualityPass.rewritten,
@@ -2731,6 +2829,8 @@ async function sendGeneratedText(chatId, text, scenario) {
     await bot.sendMessage(chatId, text);
   });
 
+  await bot.sendMessage(chatId, buildWhyThisFeelsLikeYou(state));
+
   const demoRows = state.demoMode
     ? [[{ text: "⚡ Создать такого эксперта себе", callback_data: `ob_template:${state.demoTemplateKey || "psychologist"}` }]]
     : [];
@@ -2740,11 +2840,8 @@ async function sendGeneratedText(chatId, text, scenario) {
     reply_markup: { inline_keyboard: [
       ...demoRows,
       ...feedbackKeyboard(answerId),
-      [
-        { text: "🌿 Мягче", callback_data: "regen:softer" },
-        { text: "🎯 Практичнее", callback_data: "regen:practical" },
-        { text: "🎙 Ближе к голосу", callback_data: "regen:voice" },
-      ],
+      ...directedRegenerationKeyboard(),
+      ...shareExpertKeyboard(),
       [{ text: "⭐ Сохранить этот сценарий", callback_data: "save_preset" }, { text: "🔄 Новый запрос", callback_data: "new_topic" }],
       [{ text: "✏️ Редактировать", callback_data: "txt_edit" }, { text: "♻️ Другой текст", callback_data: "regen_txt" }],
       [{ text: "✅ Текст готов", callback_data: "txt_ready" }],
@@ -3561,18 +3658,32 @@ bot.on("callback_query", async (query) => {
         await bot.sendMessage(chatId, "Напишите, что именно нужно поправить в этом ответе.");
       } else {
         const regenerationRows = {
-          not_voice: [[{ text: "🎙 Перегенерировать ближе к голосу", callback_data: "regen:voice" }]],
-          weak_expertise: [[{ text: "🎯 Сделать глубже и практичнее", callback_data: "regen:practical" }]],
-          bad: [[
-            { text: "🌿 Мягче", callback_data: "regen:softer" },
-            { text: "🎙 Ближе к голосу", callback_data: "regen:voice" },
+          not_voice: [[
+            { text: "💬 Личнее", callback_data: "regen:voice" },
+            { text: "🔥 Эмоциональнее", callback_data: "regen:emotional" },
           ]],
+          weak_expertise: [[{ text: "🧠 Экспертнее", callback_data: "regen:expert" }]],
+          bad: directedRegenerationKeyboard().slice(0, 2),
         };
         const rows = regenerationRows[feedbackType];
-        await bot.sendMessage(chatId, "✅ Обратная связь сохранена.", rows ? {
+        const feedbackReply = feedbackType === "like"
+          ? "✅ Зафиксировал: этот вариант похож на вас. Можно усилить его в любую сторону или сразу идти дальше."
+          : "✅ Обратная связь сохранена.";
+        await bot.sendMessage(chatId, feedbackReply, rows ? {
           reply_markup: { inline_keyboard: rows },
         } : undefined);
       }
+      return;
+    }
+
+    if (data === "share_friend") {
+      await bot.sendMessage(chatId, [
+        "Можно переслать другу так:",
+        "",
+        "Я собрал(а) AI-эксперта, который пишет в моём стиле. Посмотри на этот пост — интересно, похоже ли на меня?",
+        "",
+        "Если хочешь, покажу, как он собирается из материалов, worldview и примеров голоса.",
+      ].join("\n"));
       return;
     }
 
@@ -3600,7 +3711,7 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.pendingTopic = state.lastTopic;
       userState.set(chatId, s);
-      await runGeneration(chatId, state.lastScenario || "psychologist", state.lastLengthMode || "normal", state.lastStyleKey || "auto");
+      await runGeneration(chatId, state.lastScenario || "psychologist", state.lastLengthMode || "normal", state.lastStyleKey || "auto", "telegram");
       return;
     }
 
@@ -3826,6 +3937,13 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
 
   const topic = state.pendingTopic || state.lastTopic;
   if (!topic) { await bot.sendMessage(chatId, "Тема не найдена."); return; }
+  const runtimeBeforeGeneration = await loadExpertRuntime(chatId);
+  const firstGenerationBoost = (runtimeBeforeGeneration.counters?.text || 0) === 0 && variant === "default";
+  if (firstGenerationBoost) {
+    const boostedState = userState.get(chatId) || {};
+    boostedState.firstGenerationBoost = true;
+    userState.set(chatId, boostedState);
+  }
 
   const labelMap = { short: "короткий", normal: "обычный", long: "длинный" };
   const scenarioLabel = state.demoMode && state.demoTemplateKey
@@ -3857,6 +3975,8 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   s.lastAuthorVoiceMeta = generation.authorVoice;
   s.lastQualityPass = generation.qualityPass;
   s.lastGenerationVariant = generation.variant || variant;
+  s.firstGenerationBoostApplied = Boolean(generation.firstGenerationBoost);
+  s.firstGenerationBoost = false;
   s.lastAudioUrl = null;
   s.lastVideoUrl = null;
   s.pendingVoices = [];
