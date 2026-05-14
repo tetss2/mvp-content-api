@@ -27,6 +27,7 @@ import { getLengthConfig } from "./generation_config.js";
 import { runRuntimeGenerationAdapter } from "./scripts/runtime-generation-adapter.js";
 import {
   ONBOARDING_ROLES,
+  analyzeOnboardingMaterial,
   buildUserScenarioContext,
   createUserScenario,
   ensureUserExpertFolders,
@@ -468,6 +469,66 @@ const REGENERATION_VARIANTS = {
 
 // ─── ПРЕСЕТЫ ─────────────────────────────────────────────────────────────────
 
+const CONTENT_PRESETS = [
+  {
+    id: "emotional",
+    label: "💔 Emotional post",
+    lengthMode: "normal",
+    instruction: "Формат: эмоциональный пост. Начни с узнаваемого внутреннего переживания, дай ощущение «меня поняли», затем мягко переведи к осознанию. Минимум объяснений, максимум живой человеческой правды.",
+  },
+  {
+    id: "expert",
+    label: "🧠 Expert post",
+    lengthMode: "normal",
+    instruction: "Формат: экспертный пост. Дай ясную профессиональную рамку, 1-2 точных наблюдения и практичный вывод. Без сухой лекции, без академического тона.",
+  },
+  {
+    id: "reels",
+    label: "🎬 Reels script",
+    lengthMode: "short",
+    instruction: "Формат: сценарий Reels. Короткий крючок, 3-5 реплик для голоса, финальная фраза. Пиши как устную речь, без длинных абзацев.",
+  },
+  {
+    id: "storytelling",
+    label: "📖 Storytelling",
+    lengthMode: "long",
+    instruction: "Формат: storytelling. Построй текст через маленькую сцену или узнаваемую ситуацию, затем раскрой смысл и заверши теплым вопросом.",
+  },
+  {
+    id: "provocative",
+    label: "⚡ Provocative post",
+    lengthMode: "normal",
+    instruction: "Формат: провокационный пост. Начни с сильного, но этичного тезиса, который ломает привычный миф. Не скатывайся в агрессию или кликбейт.",
+  },
+  {
+    id: "warm",
+    label: "🌿 Warm audience",
+    lengthMode: "normal",
+    instruction: "Формат: теплый пост для своей аудитории. Больше заботы, принятия и спокойного контакта. Финал должен звучать как приглашение, а не как инструкция.",
+  },
+  {
+    id: "sales_soft",
+    label: "🤝 Sales soft",
+    lengthMode: "normal",
+    instruction: "Формат: мягкая продажа. Сначала ценность и узнавание проблемы, затем естественный мост к консультации/продукту без давления, обещаний результата и манипуляций.",
+  },
+  {
+    id: "longread",
+    label: "📚 Longread",
+    lengthMode: "long",
+    instruction: "Формат: longread. Разверни тему глубже: проблема, почему она держится, что человек может заметить в себе, мягкий практический вывод. Без списков ради списков.",
+  },
+];
+
+function getContentPreset(id) {
+  return CONTENT_PRESETS.find((preset) => preset.id === id) || null;
+}
+
+function buildContentPresetInstruction(presetId) {
+  const preset = getContentPreset(presetId);
+  return preset ? `\n\nCONTENT PRESET:\n${preset.instruction}` : "";
+}
+
 function getPresets(chatId) {
   return (userState.get(chatId) || {}).presets || [];
 }
@@ -846,12 +907,42 @@ function buildUploadVisibilityText(category, stored, count) {
   return lines.join("\n");
 }
 
+function qualityLabel(score) {
+  return {
+    good: "good",
+    medium: "medium",
+    weak: "weak",
+  }[score] || "unknown";
+}
+
+function buildMaterialQualityText(quality) {
+  if (!quality) return "";
+  const warnings = Array.isArray(quality.warnings) ? quality.warnings.filter(Boolean).slice(0, 3) : [];
+  const useful = Array.isArray(quality.useful_signals) ? quality.useful_signals.filter(Boolean).slice(0, 2) : [];
+  const lines = [
+    "",
+    "Material quality:",
+    `• overall: ${qualityLabel(quality.score)}`,
+    `• style learning: ${qualityLabel(quality.style_learning)}`,
+    `• expert learning: ${qualityLabel(quality.expert_learning)}`,
+  ];
+  if (warnings.length > 0) {
+    lines.push("Warnings:");
+    for (const warning of warnings) lines.push(`• ${warning}`);
+  }
+  if (useful.length > 0) {
+    lines.push("Useful signals:");
+    for (const signal of useful) lines.push(`• ${signal}`);
+  }
+  return lines.join("\n");
+}
+
 async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю persona, worldview и examples из материалов...") {
   const status = await bot.sendMessage(chatId, intro);
   try {
     await generatePersonaDrafts(openai, userId);
     await bot.editMessageText(
-      "✅ Persona updated\n✅ Worldview updated\n✅ Examples updated",
+      "✅ Persona updated\n✅ Worldview updated\n✅ Style guidance extracted\n✅ Examples updated\n✅ Material quality scored",
       { chat_id: chatId, message_id: status.message_id }
     ).catch(() => {});
     return true;
@@ -984,7 +1075,14 @@ async function handleExpertOnboardingMessage(msg, state) {
 
     const after = await getOnboardingInventory(userId);
     const count = after.counts[step] ?? before.counts[step] ?? 0;
-    await bot.sendMessage(chatId, buildUploadVisibilityText(step, stored, count), onboardingControls(step));
+    let quality = null;
+    if (["knowledge", "style"].includes(step)) {
+      quality = await analyzeOnboardingMaterial(openai, userId, stored, step).catch((error) => {
+        console.warn("Material quality analysis failed:", error.message);
+        return null;
+      });
+    }
+    await bot.sendMessage(chatId, `${buildUploadVisibilityText(step, stored, count)}${buildMaterialQualityText(quality)}`, onboardingControls(step));
     return true;
   }
 
@@ -1280,6 +1378,7 @@ async function handleKnowledgeIntakeMessage(msg) {
 async function sendScenarioChoice(chatId, topic) {
   const state = userState.get(chatId) || {};
   state.pendingTopic = topic;
+  state.pendingContentPreset = null;
   const userScenarios = await listUserScenarios(chatId).catch(() => []);
   state.userScenarioMenu = userScenarios.map((scenario) => scenario.id);
   userState.set(chatId, state);
@@ -1310,6 +1409,24 @@ async function sendLengthChoice(chatId, scenario) {
       { text: "📄 Обычный", callback_data: "len_normal" },
       { text: "📖 Длинный", callback_data: "len_long" },
     ]]},
+  });
+}
+
+async function sendContentPresetChoice(chatId, scenario) {
+  const state = userState.get(chatId) || {};
+  state.pendingScenario = scenario;
+  userState.set(chatId, state);
+  const label = await getScenarioLabel(chatId, scenario);
+  const rows = [];
+  for (let i = 0; i < CONTENT_PRESETS.length; i += 2) {
+    rows.push(CONTENT_PRESETS.slice(i, i + 2).map((preset) => ({
+      text: preset.label,
+      callback_data: `cp:${preset.id}`,
+    })));
+  }
+  rows.push([{ text: "⚙️ Выбрать длину вручную", callback_data: "cp:manual" }]);
+  await bot.sendMessage(chatId, `${label}\n\nВыберите формат. Так первый текст получится ближе к задаче:`, {
+    reply_markup: { inline_keyboard: rows },
   });
 }
 
@@ -2116,6 +2233,8 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
         "Пишешь посты для Telegram/Instagram от первого лица или от лица экспертного бренда, если это естественно.",
         "Не выдумывай биографические факты. Опирайся на загруженные материалы, persona draft, worldview draft и style examples.",
         "Стиль: живой, конкретный, без канцелярита, без нумерованных списков, с мягким полезным финалом.",
+        "Для нового эксперта особенно важно звучать узнаваемо: повторяй его ритм абзацев, типичные открытия, CTA и эмоциональную температуру из style guidance.",
+        "Если материалов мало или они слабые, не становись универсальным блогером: честно держись роли, темы и тех немногих речевых сигналов, которые есть.",
       ].filter(Boolean).join("\n")
     : scenario === "sexologist"
     ? buildSexologistPrompt(normalizedStyleKey)
@@ -2129,12 +2248,14 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
   const worldviewPrompt = userScenarioContext?.scenario ? "" : await buildDinaraWorldviewPrompt();
   const realismPrompt = userScenarioContext?.scenario ? "" : DINARA_REALISM_PROMPT;
   const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt].filter(Boolean).join("\n\n");
+  const runtimeState = chatId ? (userState.get(chatId) || {}) : {};
+  const contentPresetInstruction = buildContentPresetInstruction(runtimeState.pendingContentPreset || runtimeState.lastContentPreset);
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
-      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${buildRegenerationInstruction(variant, feedbackNote)}` }
+      { role: "user", content: `Тема: "${topic}"\n\nКонтекст:\n${context}\n\n${lengthInstruction} С одной жирной фразой (*жирный*).${contentPresetInstruction}\n\nSTABILIZATION:\n- Сделай первый экран сильным: конкретное узнаваемое переживание или тезис, без общих вступлений.\n- Не используй универсальные AI-фразы, канцелярит и безопасные пустые выводы.\n- Удерживай авторскую идентичность из persona/worldview/style guidance сильнее, чем общую экспертность.\n- Добавь 1-2 конкретные детали из контекста, если они есть, но не выдумывай факты.${buildRegenerationInstruction(variant, feedbackNote)}` }
     ],
     temperature: 0.82,
     max_tokens: maxTokens,
@@ -2516,8 +2637,9 @@ bot.on("message", async (msg) => {
     if (state.pendingScenario && !state.pendingTopic) {
       const s = userState.get(chatId) || {};
       s.pendingTopic = text;
+      s.pendingContentPreset = null;
       userState.set(chatId, s);
-      await sendLengthChoice(chatId, state.pendingScenario);
+      await sendContentPresetChoice(chatId, state.pendingScenario);
       return;
     }
 
@@ -2810,6 +2932,7 @@ bot.on("callback_query", async (query) => {
       const scenario = data.replace("prompt_topic_sc:", "");
       const s = userState.get(chatId) || {};
       s.pendingScenario = scenario;
+      s.pendingContentPreset = null;
       userState.set(chatId, s);
       await bot.sendMessage(chatId, "📝 Напишите тему:\n\nНапример: _тревога_, _выгорание_, _одиночество_", { parse_mode: "Markdown" });
       return;
@@ -2822,8 +2945,9 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.pendingTopic = topic;
       s.pendingScenario = "psychologist";
+      s.pendingContentPreset = null;
       userState.set(chatId, s);
-      await sendLengthChoice(chatId, "psychologist");
+      await sendContentPresetChoice(chatId, "psychologist");
       return;
     }
 
@@ -2834,8 +2958,9 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.pendingTopic = topic;
       s.pendingScenario = "sexologist";
+      s.pendingContentPreset = null;
       userState.set(chatId, s);
-      await sendLengthChoice(chatId, "sexologist");
+      await sendContentPresetChoice(chatId, "sexologist");
       return;
     }
 
@@ -2896,7 +3021,7 @@ bot.on("callback_query", async (query) => {
         return;
       }
       await setActiveUserScenario(query.from?.id || chatId, scenarioId).catch(() => null);
-      await sendLengthChoice(chatId, scenarioId);
+      await sendContentPresetChoice(chatId, scenarioId);
       return;
     }
 
@@ -2917,13 +3042,35 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
-    if (data === "sc_psych_t") { await sendLengthChoice(chatId, "psychologist"); return; }
-    if (data === "sc_sex_t") { await sendLengthChoice(chatId, "sexologist"); return; }
+    if (data === "sc_psych_t") { await sendContentPresetChoice(chatId, "psychologist"); return; }
+    if (data === "sc_sex_t") { await sendContentPresetChoice(chatId, "sexologist"); return; }
+
+    if (data.startsWith("cp:")) {
+      const presetId = data.replace("cp:", "");
+      if (presetId === "manual") {
+        await sendLengthChoice(chatId, state.pendingScenario || "psychologist");
+        return;
+      }
+      const preset = getContentPreset(presetId);
+      if (!preset) return;
+      const s = userState.get(chatId) || {};
+      const scenario = s.pendingScenario || state.pendingScenario || "psychologist";
+      s.pendingContentPreset = preset.id;
+      s.pendingLengthMode = preset.lengthMode;
+      userState.set(chatId, s);
+      if (scenario === "sexologist") {
+        await sendStyleChoice(chatId);
+      } else {
+        await runGeneration(chatId, scenario, preset.lengthMode, "auto");
+      }
+      return;
+    }
 
     if (data === "len_short" || data === "len_normal" || data === "len_long") {
       const lengthMode = data.replace("len_", "");
       const s = userState.get(chatId) || {};
       s.pendingLengthMode = lengthMode;
+      s.pendingContentPreset = null;
       userState.set(chatId, s);
       const scenario = state.pendingScenario || "psychologist";
       if (scenario === "sexologist") {
@@ -3240,6 +3387,7 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
   s.lastScenario = scenario;
   s.lastLengthMode = lengthMode;
   s.lastStyleKey = generation.styleKey || styleKey;
+  s.lastContentPreset = s.pendingContentPreset || null;
   s.lastAnswerId = createAnswerId();
   s.lastRetrievalMeta = generation.retrieval;
   s.lastAuthorVoiceMeta = generation.authorVoice;

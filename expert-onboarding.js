@@ -126,6 +126,64 @@ function safeStoredName(originalName, prefix = "item") {
   return `${Date.now()}_${clean || prefix}`;
 }
 
+function safeJsonParse(text, fallback = null) {
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = String(text || "").match(/\{[\s\S]*\}/);
+    if (!match) return fallback;
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      return fallback;
+    }
+  }
+}
+
+function compactForAnalysis(text, maxChars = 10000) {
+  return String(text || "")
+    .replace(/\r/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{4,}/g, "\n\n\n")
+    .trim()
+    .slice(0, maxChars);
+}
+
+function fallbackQualityScore(text, category = "knowledge") {
+  const value = String(text || "").trim();
+  const wordCount = value.split(/\s+/).filter(Boolean).length;
+  const hasUrlOnly = /^https?:\/\/\S+$/i.test(value);
+  const paragraphCount = value.split(/\n{2,}/).filter((p) => p.trim().length > 40).length;
+  const cyrillicShare = value ? (value.match(/[А-Яа-яЁё]/g) || []).length / value.length : 0;
+  let score = "weak";
+  if (wordCount >= 180 && cyrillicShare > 0.35 && (paragraphCount >= 2 || category === "knowledge")) score = "good";
+  else if (wordCount >= 60 && cyrillicShare > 0.25) score = "medium";
+  return {
+    score,
+    style_learning: category === "style" ? score : (paragraphCount >= 2 ? "medium" : "weak"),
+    expert_learning: category === "knowledge" ? score : (wordCount >= 120 ? "medium" : "weak"),
+    warnings: [
+      ...(hasUrlOnly ? ["Only a link was uploaded; add copied post/article text for stronger learning."] : []),
+      ...(wordCount < 60 ? ["Very little text; the AI has weak evidence to learn from."] : []),
+      ...(category === "style" && paragraphCount < 2 ? ["Few paragraph patterns; style rhythm may be guessed."] : []),
+    ],
+    useful_signals: [],
+  };
+}
+
+async function updateStoredMetadata(metadata, patch) {
+  if (!metadata?.path) return metadata;
+  const metaPath = `${metadata.path}.json`;
+  const current = await readJson(metaPath, metadata);
+  const updated = {
+    ...(current || metadata),
+    ...patch,
+    updated_at: new Date().toISOString(),
+  };
+  await fs.writeFile(metaPath, JSON.stringify(updated, null, 2), "utf-8");
+  return updated;
+}
+
 export async function storeOnboardingFile(userId, category, originalName, buffer, meta = {}) {
   const root = await ensureUserExpertFolders(userId);
   const folderByCategory = {
@@ -195,6 +253,91 @@ async function extractText(path) {
   return "";
 }
 
+export async function analyzeOnboardingMaterial(openai, userId, metadata, category = metadata?.category) {
+  if (!metadata?.path || !["knowledge", "style"].includes(category)) return null;
+  const rawText = compactForAnalysis(await extractText(metadata.path), 9000);
+  const fallback = fallbackQualityScore(rawText, category);
+  if (!rawText) {
+    const emptyResult = {
+      ...fallback,
+      score: "weak",
+      warnings: ["Could not extract readable text from this material."],
+      source_name: metadata.original_name || basename(metadata.path),
+      analyzed_at: new Date().toISOString(),
+    };
+    await updateStoredMetadata(metadata, { quality: emptyResult });
+    return emptyResult;
+  }
+
+  let quality = null;
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.15,
+      max_tokens: 420,
+      messages: [
+        {
+          role: "system",
+          content: [
+            "You score uploaded expert materials for a Russian AI-content onboarding flow.",
+            "Return strict JSON only. Scores must be one of: good, medium, weak.",
+            "style_learning means usefulness for learning author voice. expert_learning means usefulness for learning expertise/worldview.",
+          ].join("\n"),
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            category,
+            source_name: metadata.original_name || basename(metadata.path),
+            text: rawText,
+            required_json_shape: {
+              score: "good|medium|weak",
+              style_learning: "good|medium|weak",
+              expert_learning: "good|medium|weak",
+              warnings: ["short practical warning if weak/medium"],
+              useful_signals: ["what can be learned from this material"],
+            },
+          }),
+        },
+      ],
+    });
+    quality = safeJsonParse(completion.choices[0].message.content, null);
+  } catch (error) {
+    console.warn(`[expert-onboarding] material analysis failed: ${error.message}`);
+  }
+
+  const result = {
+    ...fallback,
+    ...(quality || {}),
+    score: ["good", "medium", "weak"].includes(quality?.score) ? quality.score : fallback.score,
+    style_learning: ["good", "medium", "weak"].includes(quality?.style_learning) ? quality.style_learning : fallback.style_learning,
+    expert_learning: ["good", "medium", "weak"].includes(quality?.expert_learning) ? quality.expert_learning : fallback.expert_learning,
+    warnings: Array.isArray(quality?.warnings) ? quality.warnings.slice(0, 4) : fallback.warnings,
+    useful_signals: Array.isArray(quality?.useful_signals) ? quality.useful_signals.slice(0, 5) : fallback.useful_signals,
+    source_name: metadata.original_name || basename(metadata.path),
+    analyzed_at: new Date().toISOString(),
+  };
+  await updateStoredMetadata(metadata, { quality: result });
+  return result;
+}
+
+function buildStyleExtractionPrompt() {
+  return [
+    "Ты извлекаешь стиль и экспертную идентичность нового автора для генерации постов.",
+    "Работай только по материалам. Не выдумывай биографию, дипломы, опыт, кейсы и личные факты.",
+    "Нужно добиться эффекта: пользователь читает первый пост и думает «это правда похоже на меня».",
+    "Извлеки: tone, cadence, emotional_style, paragraph_rhythm, recurring_phrases, cta_style, forbidden_phrases, opening_styles.",
+    "Также оцени материалы good/medium/weak отдельно для style learning и expert learning.",
+    "Верни Markdown с заголовками строго: PERSONA, WORLDVIEW, STYLE_GUIDANCE, STYLE_EXAMPLES, MATERIAL_QUALITY.",
+  ].join("\n");
+}
+
+function extractSection(raw, name, nextNames = []) {
+  const names = nextNames.length ? nextNames.join("|") : "$";
+  const regex = new RegExp(`${name}([\\s\\S]*?)(?:${names}|$)`, "i");
+  return raw.match(regex)?.[1]?.trim() || "";
+}
+
 export async function buildUserScenarioContext(userId, scenarioId, topic = "") {
   const [profile, scenario] = await Promise.all([
     loadUserProfile(userId),
@@ -206,6 +349,7 @@ export async function buildUserScenarioContext(userId, scenarioId, topic = "") {
   const draftFiles = [
     join(root, "profile", "persona.md"),
     join(root, "profile", "worldview.md"),
+    join(root, "profile", "style_guidance.md"),
     join(root, "profile", "style_examples.md"),
   ];
   const draftText = [];
@@ -234,7 +378,7 @@ export async function buildUserScenarioContext(userId, scenarioId, topic = "") {
   };
 }
 
-export async function generatePersonaDrafts(openai, userId) {
+async function generatePersonaDraftsLegacy(openai, userId) {
   const root = await ensureUserExpertFolders(userId);
   const profile = await loadUserProfile(userId);
   const scenarios = await listUserScenarios(userId);
@@ -279,6 +423,54 @@ export async function generatePersonaDrafts(openai, userId) {
   await fs.writeFile(join(root, "profile", "persona.md"), sections.persona, "utf-8");
   await fs.writeFile(join(root, "profile", "worldview.md"), sections.worldview, "utf-8");
   await fs.writeFile(join(root, "profile", "style_examples.md"), sections.style_examples, "utf-8");
+  return { root, raw, sections };
+}
+
+export async function generatePersonaDrafts(openai, userId) {
+  const root = await ensureUserExpertFolders(userId);
+  const profile = await loadUserProfile(userId);
+  const scenarios = await listUserScenarios(userId);
+  const knowledgeFiles = await listCategoryFiles(userId, "knowledge");
+  const styleFiles = await listCategoryFiles(userId, "style");
+
+  const snippets = [];
+  for (const file of [...knowledgeFiles.slice(0, 5), ...styleFiles.slice(0, 6)]) {
+    const text = compactForAnalysis(await extractText(file), 3200);
+    const meta = await readJson(`${file}.json`, {});
+    const quality = meta?.quality ? `\nQuality: ${JSON.stringify(meta.quality)}` : "";
+    if (text) snippets.push(`File ${basename(file)} [${meta?.category || "material"}]${quality}:\n${text}`);
+  }
+
+  const base = [
+    `Expert name: ${profile?.expert_name || ""}`,
+    `Scenarios: ${scenarios.map((s) => s.label).join(", ") || "not specified"}`,
+    snippets.join("\n\n") || "The user has uploaded very little text. Make a cautious draft from name and role only; mark material quality as weak.",
+  ].join("\n\n");
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    temperature: 0.35,
+    max_tokens: 1700,
+    messages: [
+      { role: "system", content: buildStyleExtractionPrompt() },
+      { role: "user", content: `Создай прикладные черновики на русском для генерации контента.\n\n${base}` },
+    ],
+  });
+
+  const raw = completion.choices[0].message.content.trim();
+  const sections = {
+    persona: extractSection(raw, "PERSONA", ["WORLDVIEW", "STYLE_GUIDANCE", "STYLE_EXAMPLES", "MATERIAL_QUALITY"]) || raw,
+    worldview: extractSection(raw, "WORLDVIEW", ["STYLE_GUIDANCE", "STYLE_EXAMPLES", "MATERIAL_QUALITY"]),
+    style_guidance: extractSection(raw, "STYLE_GUIDANCE", ["STYLE_EXAMPLES", "MATERIAL_QUALITY"]),
+    style_examples: extractSection(raw, "STYLE_EXAMPLES", ["MATERIAL_QUALITY"]),
+    material_quality: extractSection(raw, "MATERIAL_QUALITY"),
+  };
+
+  await fs.writeFile(join(root, "profile", "persona.md"), sections.persona, "utf-8");
+  await fs.writeFile(join(root, "profile", "worldview.md"), sections.worldview, "utf-8");
+  await fs.writeFile(join(root, "profile", "style_guidance.md"), sections.style_guidance, "utf-8");
+  await fs.writeFile(join(root, "profile", "style_examples.md"), sections.style_examples, "utf-8");
+  await fs.writeFile(join(root, "profile", "material_quality.md"), sections.material_quality, "utf-8");
   return { root, raw, sections };
 }
 
