@@ -93,6 +93,7 @@ const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
 const MINIAPP_PUBLIC_URL = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+const TELEGRAM_STARS_CURRENCY = "XTR";
 const GENERATION_QUEUE_LIMITS = {
   image: Number(process.env.GENERATION_IMAGE_CONCURRENCY || 2),
   video: Number(process.env.GENERATION_VIDEO_CONCURRENCY || 1),
@@ -823,8 +824,8 @@ function validateRuntimeEnv() {
   warnOptionalEnv("CLOUDINARY_CLOUD", "video audio hosting");
   warnOptionalEnv("CLOUDINARY_API_KEY", "video audio hosting");
   warnOptionalEnv("CLOUDINARY_API_SECRET", "video audio hosting");
-  if (TELEGRAM_STARS_ENABLED && !TELEGRAM_STARS_PROVIDER_TOKEN) {
-    STARTUP_WARNINGS.push("TELEGRAM_STARS_ENABLED=true but provider token is not configured; Stars checkout will stay placeholder-only.");
+  if (TELEGRAM_STARS_ENABLED && TELEGRAM_STARS_PROVIDER_TOKEN) {
+    STARTUP_WARNINGS.push("TELEGRAM_STARS_PROVIDER_TOKEN is ignored for XTR payments; Telegram Stars invoices use an empty provider token.");
   }
 }
 
@@ -1556,7 +1557,15 @@ async function hasPaymentEvent(chargeId) {
   if (!chargeId) return false;
   try {
     const raw = await fs.readFile(PAYMENT_EVENTS_PATH, "utf-8");
-    return raw.split(/\r?\n/).some((line) => line && line.includes(`"chargeId":"${chargeId}"`));
+    return raw.split(/\r?\n/).some((line) => {
+      if (!line.trim()) return false;
+      try {
+        const event = JSON.parse(line);
+        return event.chargeId === chargeId || event.telegramPaymentChargeId === chargeId || event.providerPaymentChargeId === chargeId;
+      } catch {
+        return line.includes(`"chargeId":"${chargeId}"`);
+      }
+    });
   } catch {
     return false;
   }
@@ -1752,16 +1761,20 @@ function planLimitLabel(plan) {
   return Number(plan.generationLimit) >= 1000000 ? "почти без лимита" : `${plan.generationLimit} генераций`;
 }
 
+function formatStarsPrice(plan) {
+  return TELEGRAM_STARS_ENABLED ? `${plan.starsPrice} Stars` : "Stars checkout disabled";
+}
+
 function buildPaidBetaPlansText() {
   return [
     "Планы доступа",
     "",
     `FREE — ${PLAN_CATALOG.FREE.generationLimit} текстовых генераций. ${PLAN_CATALOG.FREE.description}`,
-    `START — ${PLAN_CATALOG.START.generationLimit} генераций на ${PLAN_CATALOG.START.days} дней. ${PLAN_CATALOG.START.description}`,
-    `PRO — ${PLAN_CATALOG.PRO.generationLimit} генераций на ${PLAN_CATALOG.PRO.days} дней. ${PLAN_CATALOG.PRO.description}`,
+    `START — ${PLAN_CATALOG.START.generationLimit} генераций на ${PLAN_CATALOG.START.days} дней, ${formatStarsPrice(PLAN_CATALOG.START)}. ${PLAN_CATALOG.START.description}`,
+    `PRO — ${PLAN_CATALOG.PRO.generationLimit} генераций на ${PLAN_CATALOG.PRO.days} дней, ${formatStarsPrice(PLAN_CATALOG.PRO)}. ${PLAN_CATALOG.PRO.description}`,
     "",
     TELEGRAM_STARS_ENABLED
-      ? "Telegram Stars checkout включён через lightweight hook."
+      ? "Telegram Stars checkout включён. Нажмите кнопку плана, Telegram покажет invoice в Stars."
       : "Telegram Stars checkout подготовлен, но в этом окружении отключён. Можно запросить premium вручную через /upgrade.",
   ].join("\n");
 }
@@ -2230,6 +2243,7 @@ function buildUpgradeKeyboard(limitType = "text") {
   const rows = [
     [{ text: "Посмотреть планы", callback_data: "show_plans" }],
     [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+    [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
     [{ text: "Запросить premium-доступ", callback_data: `req_limit_${limitType}` }],
     [{ text: "Создать/усилить AI-эксперта", callback_data: "ob_template_menu" }],
     [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
@@ -2237,27 +2251,70 @@ function buildUpgradeKeyboard(limitType = "text") {
   return rows;
 }
 
-async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "START") {
+function buildStarsInvoicePayload(planType, userId) {
+  return `stars_plan:${normalizePlanType(planType)}:${entitlementUserId(userId)}:${Date.now()}`;
+}
+
+function parseStarsInvoicePayload(payload = "") {
+  const parts = String(payload || "").split(":");
+  if (parts[0] === "stars_plan" && parts.length >= 4) {
+    return {
+      ok: true,
+      planType: normalizePlanType(parts[1]),
+      userId: parts[2],
+      createdAtMs: Number(parts[3]) || null,
+      legacy: false,
+    };
+  }
+  if (parts[0] === "plan") {
+    return {
+      ok: true,
+      planType: normalizePlanType(parts[1]),
+      userId: null,
+      createdAtMs: Number(parts[2]) || null,
+      legacy: true,
+    };
+  }
+  return { ok: false, reason: "invalid_payload" };
+}
+
+function validateStarsPurchase({ payload, userId, currency, totalAmount }) {
+  const parsed = parseStarsInvoicePayload(payload);
+  if (!parsed.ok) return { ok: false, reason: parsed.reason || "invalid_payload", parsed };
+  const plan = PLAN_CATALOG[parsed.planType];
+  if (!plan || !plan.premium) return { ok: false, reason: "unknown_plan", parsed };
+  if (parsed.userId && parsed.userId !== entitlementUserId(userId)) return { ok: false, reason: "user_mismatch", parsed };
+  if (currency && currency !== TELEGRAM_STARS_CURRENCY) return { ok: false, reason: "invalid_currency", parsed };
+  if (totalAmount !== undefined && Number(totalAmount) !== Number(plan.starsPrice)) return { ok: false, reason: "invalid_amount", parsed };
+  return { ok: true, planType: parsed.planType, plan, parsed };
+}
+
+async function sendStarsPlanInvoice(chatId, limitType = "text", pack = "START") {
   const planType = normalizePlanType(pack);
   const plan = PLAN_CATALOG[planType] || PLAN_CATALOG.START;
   await trackBetaEvent(chatId, BETA_EVENT_NAMES.STARS_UPGRADE_CLICKED, { limit_type: limitType, pack: planType, enabled: TELEGRAM_STARS_ENABLED });
   const title = `${plan.label} premium access`;
   const description = `${plan.generationLimit} text generations for ${plan.days || 30} days.`;
+  const payload = buildStarsInvoicePayload(planType, chatId);
   if (TELEGRAM_STARS_ENABLED && bot.sendInvoice) {
     try {
       await bot.sendInvoice(
         chatId,
         title,
         description,
-        `plan:${planType}:${Date.now()}`,
-        TELEGRAM_STARS_PROVIDER_TOKEN,
-        "XTR",
+        payload,
+        "",
+        TELEGRAM_STARS_CURRENCY,
         [{ label: `${plan.label} plan`, amount: plan.starsPrice }],
         {
           start_parameter: `plan_${planType.toLowerCase()}`,
-          reply_markup: { inline_keyboard: [[{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }]] },
+          reply_markup: { inline_keyboard: [
+            [{ text: `Оплатить ${plan.starsPrice} Stars`, pay: true }],
+            [{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }],
+          ]},
         }
       );
+      await bot.sendMessage(chatId, `Invoice для ${plan.label} отправлен. После оплаты Telegram Stars premium активируется автоматически.`);
       return;
     } catch (error) {
       console.warn("Stars invoice failed, falling back to placeholder:", error.message);
@@ -2265,10 +2322,10 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "S
   }
   await trackBetaEvent(chatId, BETA_EVENT_NAMES.PAID_GENERATION_PLACEHOLDER, { limit_type: limitType, pack });
   await bot.sendMessage(chatId, [
-    "Stars-оплата подготовлена как beta-hook.",
+    "Stars-оплата сейчас недоступна в этом окружении.",
     "",
     `План: ${plan.label}, ${plan.generationLimit} генераций (${plan.starsPrice} Stars).`,
-    "В этом окружении checkout ещё не включён, поэтому я отправлю запрос администратору.",
+    "Можно отправить ручной запрос администратору.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: [
       [{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }],
@@ -2277,23 +2334,39 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "S
   });
 }
 
-function planTypeFromStarsPayload(payload = "") {
-  const parts = String(payload || "").split(":");
-  if (parts[0] === "plan") return normalizePlanType(parts[1]);
-  if (String(payload).includes("PRO")) return "PRO";
-  return "START";
-}
-
 async function handleSuccessfulStarsPayment(msg) {
   const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
   const payment = msg.successful_payment;
   const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || payment.invoice_payload;
   if (await hasPaymentEvent(chargeId)) {
     await bot.sendMessage(chatId, "Оплата уже учтена. Premium-доступ активен.");
-    return loadUserPlan(chatId);
+    return loadUserPlan(userId);
   }
-  const planType = planTypeFromStarsPayload(payment.invoice_payload);
-  const plan = await activateUserPlan(chatId, planType, {
+  const validation = validateStarsPurchase({
+    payload: payment.invoice_payload,
+    userId,
+    currency: payment.currency,
+    totalAmount: payment.total_amount,
+  });
+  if (!validation.ok) {
+    await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+      type: "telegram_stars_rejected",
+      userId: entitlementUserId(userId),
+      chatId: entitlementUserId(chatId),
+      reason: validation.reason,
+      payload: payment.invoice_payload,
+      telegramPaymentChargeId: payment.telegram_payment_charge_id || null,
+      providerPaymentChargeId: payment.provider_payment_charge_id || null,
+      currency: payment.currency || null,
+      totalAmount: payment.total_amount ?? null,
+      createdAt: nowIso(),
+    });
+    await bot.sendMessage(chatId, "Оплата получена, но payload не прошёл runtime-проверку. Я передал событие в audit log, premium не активирован автоматически.");
+    return null;
+  }
+  const planType = validation.planType;
+  const plan = await activateUserPlan(userId, planType, {
     source: "telegram_stars",
     eventType: "telegram_stars_success",
     chargeId,
@@ -2302,21 +2375,40 @@ async function handleSuccessfulStarsPayment(msg) {
       ready: true,
       lastChargeId: chargeId,
       lastPayload: payment.invoice_payload,
+      currency: payment.currency,
+      totalAmount: payment.total_amount,
+      telegramPaymentChargeId: payment.telegram_payment_charge_id || null,
+      providerPaymentChargeId: payment.provider_payment_charge_id || null,
     },
   });
-  const runtime = await loadExpertRuntime(chatId);
+  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+    type: "telegram_stars_invoice_paid",
+    userId: entitlementUserId(userId),
+    chatId: entitlementUserId(chatId),
+    planType,
+    chargeId,
+    telegramPaymentChargeId: payment.telegram_payment_charge_id || null,
+    providerPaymentChargeId: payment.provider_payment_charge_id || null,
+    currency: payment.currency,
+    totalAmount: payment.total_amount,
+    payload: payment.invoice_payload,
+    createdAt: nowIso(),
+  });
+  const runtime = await loadExpertRuntime(userId);
   runtime.monetization.paid_plan = plan.planType;
   runtime.monetization.telegram_stars_ready = true;
   runtime.monetization.premium_generation_enabled = plan.premium;
   runtime.limits.text = plan.limits.text;
   runtime.updated_at = new Date().toISOString();
-  await saveExpertRuntime(chatId, runtime);
+  await saveExpertRuntime(userId, runtime);
   await bot.sendMessage(chatId, [
-    "Оплата получена.",
-    `Активирован план ${plan.planType}: ${plan.limits.text} текстовых генераций.`,
+    "Оплата Telegram Stars получена.",
+    `Активирован premium-план ${plan.planType}: ${plan.limits.text} текстовых генераций на ${PLAN_CATALOG[plan.planType]?.days || 30} дней.`,
     `Осталось: ${planRemaining(plan, "text")}.`,
+    "",
+    "Можно продолжать генерацию прямо здесь, в Telegram.",
   ].join("\n"));
-  await sendExpertDashboard(chatId, msg.from?.id || chatId);
+  await sendExpertDashboard(chatId, userId);
   return plan;
 }
 
@@ -8178,6 +8270,7 @@ bot.onText(/\/upgrade/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildManualUpgradeText(), {
     reply_markup: { inline_keyboard: [
       [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+      [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
       [{ text: "Посмотреть планы", callback_data: "show_plans" }],
       [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
     ]},
@@ -8780,10 +8873,20 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
 
 bot.on("pre_checkout_query", async (query) => {
   try {
-    const planType = planTypeFromStarsPayload(query.invoice_payload);
-    await bot.answerPreCheckoutQuery(query.id, Boolean(PLAN_CATALOG[planType]));
+    const validation = validateStarsPurchase({
+      payload: query.invoice_payload,
+      userId: query.from?.id,
+      currency: query.currency,
+      totalAmount: query.total_amount,
+    });
+    await bot.answerPreCheckoutQuery(
+      query.id,
+      validation.ok,
+      validation.ok ? undefined : { error_message: "Не удалось подтвердить план Telegram Stars. Откройте /plans и попробуйте ещё раз." },
+    );
   } catch (error) {
     console.error("Pre-checkout answer failed:", error.message);
+    await bot.answerPreCheckoutQuery(query.id, false, { error_message: "Payment validation failed. Please try /plans again." }).catch(() => {});
   }
 });
 
@@ -9160,6 +9263,7 @@ bot.on("callback_query", async (query) => {
       await bot.sendMessage(chatId, buildManualUpgradeText(), {
         reply_markup: { inline_keyboard: [
           [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+          [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
           [{ text: "Планы", callback_data: "show_plans" }],
           [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
         ]},
@@ -9179,12 +9283,12 @@ bot.on("callback_query", async (query) => {
     }
 
     if (data.startsWith("stars_plan:")) {
-      await sendStarsUpgradePlaceholder(chatId, "text", data.replace("stars_plan:", ""));
+      await sendStarsPlanInvoice(chatId, "text", data.replace("stars_plan:", ""));
       return;
     }
 
     if (data.startsWith("stars_pack:")) {
-      await sendStarsUpgradePlaceholder(chatId, "text", data.replace("stars_pack:", ""));
+      await sendStarsPlanInvoice(chatId, "text", data.replace("stars_pack:", ""));
       return;
     }
 
