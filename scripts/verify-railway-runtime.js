@@ -29,12 +29,16 @@ const optional = [
 const missingRequired = required.filter((name) => !process.env[name]);
 const missingOptional = optional.filter(([name]) => !process.env[name]);
 const warnings = [];
+const finalLiveCheck = process.env.FINAL_LIVE_CHECK === "true";
 
 if (betaMode && process.env.TELEGRAM_TOKEN && process.env.TELEGRAM_TOKEN === process.env.TELEGRAM_BETA_TOKEN) {
   missingRequired.push("TELEGRAM_BETA_TOKEN must differ from TELEGRAM_TOKEN in beta mode");
 }
 if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && process.env.MINIAPP_DEV_AUTH !== "false") {
   warnings.push("MINIAPP_DEV_AUTH should be false in production/Railway.");
+}
+if (process.env.NODE_ENV !== "production") {
+  warnings.push("NODE_ENV is not production.");
 }
 if (process.env.TELEGRAM_STARS_ENABLED === "true" && process.env.PAYMENT_TEST_MODE === "true") {
   warnings.push("PAYMENT_TEST_MODE=true while Telegram Stars checkout is enabled.");
@@ -49,9 +53,25 @@ const miniappUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAP
 if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && miniappUrl && !/^https:\/\//i.test(miniappUrl)) {
   missingRequired.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway");
 }
+if (miniappUrl) {
+  try {
+    const parsedMiniappUrl = new URL(miniappUrl);
+    if (!parsedMiniappUrl.pathname.startsWith("/miniapp")) warnings.push("Mini App URL should point to /miniapp for the production shell.");
+  } catch {
+    missingRequired.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL is not a valid URL");
+  }
+}
 for (const name of ["PLAN_START_STARS_PRICE", "PLAN_PRO_STARS_PRICE"]) {
   if (process.env[name] && (!Number.isFinite(Number(process.env[name])) || Number(process.env[name]) <= 0)) {
     missingRequired.push(`${name} must be a positive Stars amount`);
+  }
+}
+if (finalLiveCheck) {
+  if (!miniappUrl) missingRequired.push("FINAL_LIVE_CHECK requires MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL");
+  if (process.env.MINIAPP_DEV_AUTH !== "false") missingRequired.push("FINAL_LIVE_CHECK requires MINIAPP_DEV_AUTH=false");
+  if (process.env.TELEGRAM_STARS_ENABLED !== "true") missingRequired.push("FINAL_LIVE_CHECK requires TELEGRAM_STARS_ENABLED=true");
+  if (process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true") {
+    missingRequired.push("FINAL_LIVE_CHECK requires payment test mode disabled");
   }
 }
 
@@ -92,6 +112,7 @@ const status = {
   miniappConfigured: Boolean(miniappUrl),
   starsCheckout: process.env.TELEGRAM_STARS_ENABLED === "true",
   paymentTestMode: process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true",
+  finalLiveCheck,
   required,
   missingRequired,
   missingOptional: missingOptional.map(([name, feature]) => ({ name, feature })),

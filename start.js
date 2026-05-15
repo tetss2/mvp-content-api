@@ -105,24 +105,42 @@ function boolStatus(value) {
   return value ? "ready" : "missing";
 }
 
+function safeUrlPath(value) {
+  try {
+    return new URL(value).pathname || "/";
+  } catch {
+    return "invalid";
+  }
+}
+
 function buildRuntimeStatusPayload() {
   const miniappUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+  const polling = process.env.TELEGRAM_POLLING !== "false";
+  const webhookConfigured = Boolean(process.env.TELEGRAM_WEBHOOK_URL);
   return {
     ok: startupErrors.length === 0,
     service: "mvp-content-api",
     runtimeMode,
+    nodeEnv: process.env.NODE_ENV || "development",
     betaMode,
     startedAt,
+    productionStartup: {
+      productionLike: process.env.NODE_ENV === "production" || Boolean(process.env.RAILWAY_ENVIRONMENT),
+      miniappDevAuthDisabled: process.env.MINIAPP_DEV_AUTH === "false",
+      liveMode: polling ? "polling" : "webhook",
+      webhookConfigured,
+      modeConflict: polling && webhookConfigured,
+    },
     railway: {
       detected: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID),
       portPresent: Boolean(process.env.PORT),
     },
     telegram: {
-      polling: process.env.TELEGRAM_POLLING !== "false",
+      polling,
       mainBotEnabled,
       tokenName: mainTokenName,
       tokenPresent: Boolean(mainToken),
-      webhookConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_URL),
+      webhookConfigured,
       webhookHttps: process.env.TELEGRAM_WEBHOOK_URL ? /^https:\/\//i.test(process.env.TELEGRAM_WEBHOOK_URL) : null,
     },
     ai: {
@@ -136,11 +154,25 @@ function buildRuntimeStatusPayload() {
 }
 
 function buildPaymentStatusPayload() {
+  const startPrice = Number(planCatalog.START.starsPrice);
+  const proPrice = Number(planCatalog.PRO.starsPrice);
+  const diagnostics = [];
+  if (process.env.TELEGRAM_STARS_ENABLED !== "true") diagnostics.push("TELEGRAM_STARS_ENABLED=false; real invoices use manual fallback.");
+  if (process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true") diagnostics.push("Payment test mode must be disabled for first live Stars payment.");
+  if (!Number.isFinite(startPrice) || startPrice <= 0) diagnostics.push("START Stars price is invalid.");
+  if (!Number.isFinite(proPrice) || proPrice <= 0) diagnostics.push("PRO Stars price is invalid.");
   return {
-    ok: startupErrors.filter((item) => item.includes("Stars") || item.includes("TELEGRAM")).length === 0,
+    ok: startupErrors.filter((item) => item.includes("Stars") || item.includes("TELEGRAM")).length === 0 && diagnostics.every((item) => item.startsWith("TELEGRAM_STARS_ENABLED=false")),
     starsCheckout: process.env.TELEGRAM_STARS_ENABLED === "true",
     paymentTestMode: process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true",
     currency: "XTR",
+    invoiceRuntime: {
+      providerTokenRequired: false,
+      providerTokenPresent: Boolean(process.env.TELEGRAM_STARS_PROVIDER_TOKEN),
+      providerTokenBehavior: "ignored_for_xtr",
+      startPlanReady: Number.isFinite(startPrice) && startPrice > 0,
+      proPlanReady: Number.isFinite(proPrice) && proPrice > 0,
+    },
     plans: Object.fromEntries(Object.entries(planCatalog).map(([key, plan]) => [key, {
       premium: Boolean(plan.premium),
       textLimit: plan.textLimit,
@@ -148,6 +180,7 @@ function buildPaymentStatusPayload() {
       starsPrice: plan.starsPrice || null,
     }])),
     providerTokenRequired: false,
+    diagnostics,
     warnings: startupWarnings.filter((item) => /PAYMENT|Stars|TELEGRAM_STARS/i.test(item)),
   };
 }
@@ -160,8 +193,12 @@ function buildMiniappStatusPayload() {
     configured: Boolean(publicUrl),
     publicUrl: publicUrl ? "[configured]" : null,
     publicUrlHttps: publicUrl ? /^https:\/\//i.test(publicUrl) : null,
+    publicUrlPath: publicUrl ? safeUrlPath(publicUrl) : null,
     devAuth: process.env.MINIAPP_DEV_AUTH !== "false",
     devAuthRecommended: productionLike ? "false" : "any",
+    sessionValidation: (productionLike || process.env.MINIAPP_DEV_AUTH === "false")
+      ? "telegram_init_data_required"
+      : "dev_fallback_allowed",
     shellPath: "/miniapp",
     apiPaths: ["/miniapp/api/session", "/miniapp/api/plans", "/miniapp/api/dashboard"],
     telegramBotUsernamePresent: Boolean(process.env.TELEGRAM_BOT_USERNAME),

@@ -1828,7 +1828,38 @@ async function buildPremiumUsersOverviewText() {
   ].join("\n");
 }
 
-function buildDeploySelfCheckText() {
+async function getTelegramWebhookDiagnostics() {
+  if (!TELEGRAM_TOKEN) return { checked: false, ok: false, reason: "telegram_token_missing" };
+  try {
+    const res = await fetchWithTimeout(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getWebhookInfo`, {}, 8000, "Telegram getWebhookInfo");
+    const payload = await res.json().catch(() => null);
+    if (!res.ok || !payload?.ok) {
+      return { checked: true, ok: false, reason: payload?.description || `http_${res.status}` };
+    }
+    const info = payload.result || {};
+    return {
+      checked: true,
+      ok: true,
+      urlConfigured: Boolean(info.url),
+      urlHttps: info.url ? /^https:\/\//i.test(info.url) : null,
+      pendingUpdateCount: Number(info.pending_update_count || 0),
+      lastErrorDate: info.last_error_date || null,
+      lastErrorMessage: info.last_error_message || null,
+    };
+  } catch (error) {
+    return { checked: true, ok: false, reason: String(error.message || error).slice(0, 240) };
+  }
+}
+
+function safeUrlPath(value) {
+  try {
+    return new URL(value).pathname || "/";
+  } catch {
+    return "invalid";
+  }
+}
+
+async function buildDeploySelfCheckText() {
   const required = [
     TELEGRAM_POLLING_ENABLED ? TELEGRAM_TOKEN_SOURCE : null,
     "OPENAI_API_KEY",
@@ -1854,24 +1885,37 @@ function buildDeploySelfCheckText() {
     ...STARTUP_ERRORS,
   ];
   const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "";
+  const webhook = await getTelegramWebhookDiagnostics();
+  if (TELEGRAM_POLLING_ENABLED && webhook.urlConfigured) {
+    blockers.push("Telegram webhook is configured while polling mode is enabled");
+  }
+  if (!TELEGRAM_POLLING_ENABLED && !webhookUrl) {
+    blockers.push("TELEGRAM_POLLING=false but TELEGRAM_WEBHOOK_URL is not configured");
+  }
   return [
     "Deploy self-check",
     "",
     `ok: ${blockers.length === 0 ? "yes" : "no"}`,
     `runtime: ${RUNTIME_NAME}`,
     `mode: ${RUNTIME_MODE}`,
+    `nodeEnv: ${NODE_ENV}`,
     `railway: ${process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID ? "yes" : "no"}`,
     `polling: ${TELEGRAM_POLLING_ENABLED ? "enabled" : "disabled"}`,
     `main bot: ${MAIN_BOT_ENABLED ? "enabled" : "disabled"}`,
     `token source: ${TELEGRAM_TOKEN_SOURCE || "none"}`,
     `webhook configured: ${webhookUrl ? "yes" : "no"}`,
     `webhook https: ${webhookUrl ? (/^https:\/\//i.test(webhookUrl) ? "yes" : "no") : "n/a"}`,
+    `telegram webhook active: ${webhook.checked ? (webhook.urlConfigured ? "yes" : "no") : "not checked"}`,
+    `telegram pending updates: ${webhook.pendingUpdateCount ?? "n/a"}`,
     `miniapp: ${MINIAPP_PUBLIC_URL ? "configured" : "missing"}`,
     `miniapp https: ${MINIAPP_PUBLIC_URL ? (/^https:\/\//i.test(MINIAPP_PUBLIC_URL) ? "yes" : "no") : "n/a"}`,
+    `miniapp path: ${MINIAPP_PUBLIC_URL ? safeUrlPath(MINIAPP_PUBLIC_URL) : "n/a"}`,
+    `miniapp dev auth: ${process.env.MINIAPP_DEV_AUTH !== "false" ? "enabled" : "disabled"}`,
     `stars checkout: ${TELEGRAM_STARS_ENABLED ? "enabled" : "disabled"}`,
     `payment test mode: ${PAYMENT_TEST_MODE ? "enabled" : "disabled"}`,
     "",
     blockers.length ? `Blockers:\n${blockers.map((item) => `- ${item}`).join("\n")}` : "Blockers: none",
+    webhook.lastErrorMessage ? `\nTelegram webhook last error:\n- ${webhook.lastErrorMessage}` : "",
     "",
     missingOptional.length ? `Degraded optional features:\n${missingOptional.map(([name, feature]) => `- ${name}: ${feature}`).join("\n")}` : "Degraded optional features: none",
     "",
@@ -1879,7 +1923,7 @@ function buildDeploySelfCheckText() {
   ].join("\n");
 }
 
-function buildPaymentFlowCheckText(userId, planType = "START") {
+async function buildPaymentFlowCheckText(userId, planType = "START") {
   const normalizedType = normalizePlanType(planType);
   const plan = PLAN_CATALOG[normalizedType];
   const payload = buildStarsInvoicePayload(normalizedType, userId);
@@ -1893,6 +1937,10 @@ function buildPaymentFlowCheckText(userId, planType = "START") {
   if (!plan?.premium) blockers.push("plan is not premium");
   if (!validation.ok) blockers.push(`invoice payload validation failed: ${validation.reason}`);
   if (!TELEGRAM_STARS_ENABLED) blockers.push("TELEGRAM_STARS_ENABLED is false; real invoice send will use manual fallback");
+  if (PAYMENT_TEST_MODE) blockers.push("PAYMENT_TEST_MODE must be false for the first real Stars payment");
+  if (!bot.sendInvoice) blockers.push("Telegram bot client does not expose sendInvoice");
+  const replayed = validation.ok ? await hasPaidInvoicePayload(payload) : false;
+  if (replayed) blockers.push("generated invoice payload is already marked as paid");
   return [
     "Payment flow check",
     "",
@@ -1902,9 +1950,12 @@ function buildPaymentFlowCheckText(userId, planType = "START") {
     `currency: ${TELEGRAM_STARS_CURRENCY}`,
     `stars price: ${plan?.starsPrice || "n/a"}`,
     `payload shape: ${validation.ok ? "valid" : "invalid"}`,
+    `preCheckout validation: ${validation.ok && !replayed ? "pass" : "fail"}`,
     `sendInvoice available: ${bot.sendInvoice ? "yes" : "no"}`,
     `stars checkout enabled: ${TELEGRAM_STARS_ENABLED ? "yes" : "no"}`,
+    `payment test mode: ${PAYMENT_TEST_MODE ? "enabled" : "disabled"}`,
     `provider token required: no`,
+    `legacy provider token present: ${TELEGRAM_STARS_PROVIDER_TOKEN ? "yes (ignored)" : "no"}`,
     "",
     blockers.length ? blockers.map((item) => `- ${item}`).join("\n") : "Ready for controlled Stars invoice test.",
   ].join("\n");
@@ -1924,23 +1975,38 @@ async function buildPremiumActivationCheckText(userId) {
 }
 
 async function buildMiniappAvailabilityCheckText() {
+  const publicUrl = MINIAPP_PUBLIC_URL;
   const lines = [
     "Mini App availability check",
     "",
-    `configured: ${MINIAPP_PUBLIC_URL ? "yes" : "no"}`,
-    `url https: ${MINIAPP_PUBLIC_URL ? (/^https:\/\//i.test(MINIAPP_PUBLIC_URL) ? "yes" : "no") : "n/a"}`,
+    `configured: ${publicUrl ? "yes" : "no"}`,
+    `url https: ${publicUrl ? (/^https:\/\//i.test(publicUrl) ? "yes" : "no") : "n/a"}`,
+    `url path: ${publicUrl ? safeUrlPath(publicUrl) : "n/a"}`,
     `dev auth: ${process.env.MINIAPP_DEV_AUTH !== "false" ? "enabled" : "disabled"}`,
+    `production session mode: ${(NODE_ENV === "production" || process.env.MINIAPP_DEV_AUTH === "false") ? "telegram init data required" : "dev fallback allowed"}`,
     `bot username: ${process.env.TELEGRAM_BOT_USERNAME ? "configured" : "missing"}`,
   ];
-  if (!MINIAPP_PUBLIC_URL) {
+  if (!publicUrl) {
     lines.push("", "Result: Mini App button is disabled until MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL is set.");
     return lines.join("\n");
   }
   try {
-    const res = await fetchWithTimeout(MINIAPP_PUBLIC_URL, { method: "GET" }, 8000, "Mini App availability");
+    const res = await fetchWithTimeout(publicUrl, { method: "GET" }, 8000, "Mini App availability");
     lines.push("", `HTTP: ${res.status}`, `available: ${res.ok ? "yes" : "no"}`);
   } catch (error) {
     lines.push("", `available: no`, `error: ${String(error.message || error).slice(0, 240)}`);
+    return lines.join("\n");
+  }
+  try {
+    const url = new URL(publicUrl);
+    url.pathname = "/miniapp/api/dashboard";
+    url.search = "";
+    const res = await fetchWithTimeout(url.toString(), { method: "GET" }, 8000, "Mini App protected API check");
+    const expectsUnauthorized = NODE_ENV === "production" || process.env.MINIAPP_DEV_AUTH === "false";
+    lines.push(`protected API without init data: HTTP ${res.status}`);
+    lines.push(`session validation: ${expectsUnauthorized ? (res.status === 401 ? "pass" : "unexpected") : "dev mode"}`);
+  } catch (error) {
+    lines.push(`protected API check: failed (${String(error.message || error).slice(0, 180)})`);
   }
   return lines.join("\n");
 }
@@ -8817,7 +8883,7 @@ bot.onText(/\/(?:deploy_check|self_check|runtime_self_check)/, async (msg) => {
     await bot.sendMessage(chatId, "🔒 Deploy self-check доступен только admin/full_access.");
     return;
   }
-  await bot.sendMessage(chatId, buildDeploySelfCheckText());
+  await bot.sendMessage(chatId, await buildDeploySelfCheckText());
 });
 
 bot.onText(/\/payment_diag/, async (msg) => {
@@ -8839,7 +8905,7 @@ bot.onText(/\/payment_flow_check(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) 
   }
   const targetUserId = match?.[1] || adminUserId;
   const planType = match?.[2] || "START";
-  await bot.sendMessage(chatId, buildPaymentFlowCheckText(targetUserId, planType));
+  await bot.sendMessage(chatId, await buildPaymentFlowCheckText(targetUserId, planType));
 });
 
 bot.onText(/\/premium_users/, async (msg) => {
