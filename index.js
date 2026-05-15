@@ -21,7 +21,9 @@ import {
   setSessionStatus,
   summarizeSession,
 } from "./knowledge-intake.js";
-import { retrieveGroundingContext } from "./retrieval_service.js";
+import { buildKnowledgeBaseContext, retrieveGroundingContext } from "./retrieval_service.js";
+import { buildFaissIndex, chunkText, embedChunks, validateStaging } from "./knowledge_ingest.js";
+import { retrieveFromIndexDir } from "./knowledge_retrieval.js";
 import { buildSexologistPrompt, normalizeSexologistStyleKey, SEXOLOGIST_STYLE_META } from "./sexologist_prompt.js";
 import { buildAuthorVoicePrompt, loadAuthorVoiceProfile, logAuthorVoiceStatus } from "./author_voice.js";
 import { getLengthConfig } from "./generation_config.js";
@@ -90,6 +92,14 @@ const LEADS_BOT_ENABLED = LEADS_BOT_REQUESTED && Boolean(LEADS_BOT_TOKEN);
 const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
+const GENERATION_QUEUE_LIMITS = {
+  image: Number(process.env.GENERATION_IMAGE_CONCURRENCY || 2),
+  video: Number(process.env.GENERATION_VIDEO_CONCURRENCY || 1),
+};
+const GENERATION_QUEUE_TIMEOUTS_MS = {
+  image: Number(process.env.GENERATION_IMAGE_TIMEOUT_MS || 120000),
+  video: Number(process.env.GENERATION_VIDEO_TIMEOUT_MS || 600000),
+};
 const STARTUP_WARNINGS = [];
 const POLLING_LOCK_PATH = process.env.POLLING_LOCK_PATH || join(RUNTIME_DATA_ROOT, "telegram-polling.lock");
 const POLLING_LOCK_STALE_MS = Number(process.env.POLLING_LOCK_STALE_MS || 120000);
@@ -100,8 +110,19 @@ const IS_CLOUD_RUNTIME = IS_BETA_RUNTIME || IS_PRODUCTION || Boolean(process.env
 const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || (IS_CLOUD_RUNTIME ? 4000 : 0));
 const ENTITLEMENTS_PATH = process.env.ENTITLEMENTS_PATH || join(RUNTIME_DATA_ROOT, "entitlements.json");
 const PAYMENT_EVENTS_PATH = process.env.PAYMENT_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "payment_events.jsonl");
+const USER_PLANS_ROOT = process.env.USER_PLANS_ROOT || join(__dirname, "runtime_data", "user_plans");
 const EXPERTS_RUNTIME_PATH = process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json");
 const MEDIA_PROFILES_RUNTIME_PATH = process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json");
+const EXPERT_KB_REGISTRY_PATH = process.env.EXPERT_KB_REGISTRY_PATH || join(__dirname, "runtime_data", "expert_kb_registry.json");
+const EXPERT_SOURCES_ROOT = process.env.EXPERT_SOURCES_ROOT || join(__dirname, "runtime_data", "expert_sources");
+const EXPERT_INDEXES_ROOT = process.env.EXPERT_INDEXES_ROOT || join(__dirname, "runtime_data", "expert_indexes");
+const EXPERT_IDENTITY_PROFILES_ROOT = process.env.EXPERT_IDENTITY_PROFILES_ROOT || join(__dirname, "runtime_data", "expert_identity_profiles");
+const EXPERT_CONTENT_MEMORY_ROOT = process.env.EXPERT_CONTENT_MEMORY_ROOT || join(__dirname, "runtime_data", "expert_content_memory");
+const EXPERT_CONTENT_BRAIN_ROOT = process.env.EXPERT_CONTENT_BRAIN_ROOT || join(__dirname, "runtime_data", "expert_content_brain");
+const EXPERT_CONTENT_STRATEGY_ROOT = process.env.EXPERT_CONTENT_STRATEGY_ROOT || join(__dirname, "runtime_data", "expert_content_strategy");
+const INGESTION_TIMEOUT_MS = Number(process.env.INGESTION_RUNTIME_TIMEOUT_MS || 180000);
+const INGESTION_MAX_RETRIES = Number(process.env.INGESTION_RUNTIME_MAX_RETRIES || 2);
+const INGESTION_RETRY_DELAY_MS = Number(process.env.INGESTION_RUNTIME_RETRY_DELAY_MS || 30000);
 
 const PAID_BETA_PLANS = {
   demo: {
@@ -118,6 +139,36 @@ const PAID_BETA_PLANS = {
     plan: "admin",
     generationLimit: Number(process.env.PAID_BETA_ADMIN_GENERATION_LIMIT || 1000000),
     days: null,
+  },
+};
+
+const PLAN_CATALOG = {
+  FREE: {
+    planType: "FREE",
+    label: "FREE",
+    premium: false,
+    generationLimit: Number(process.env.PLAN_FREE_TEXT_LIMIT || 3),
+    days: null,
+    starsPrice: null,
+    description: "Первые генерации для проверки качества.",
+  },
+  START: {
+    planType: "START",
+    label: "START",
+    premium: true,
+    generationLimit: Number(process.env.PLAN_START_TEXT_LIMIT || 50),
+    days: Number(process.env.PLAN_START_DAYS || 30),
+    starsPrice: Number(process.env.PLAN_START_STARS_PRICE || TELEGRAM_STARS_TEXT_PACK_PRICE || 149),
+    description: "Рабочий старт для регулярных постов.",
+  },
+  PRO: {
+    planType: "PRO",
+    label: "PRO",
+    premium: true,
+    generationLimit: Number(process.env.PLAN_PRO_TEXT_LIMIT || 200),
+    days: Number(process.env.PLAN_PRO_DAYS || 30),
+    starsPrice: Number(process.env.PLAN_PRO_STARS_PRICE || 499),
+    description: "Больший лимит для активного контент-завода.",
   },
 };
 
@@ -251,12 +302,31 @@ async function writeJsonFileSafe(path, value) {
   await fs.rename(tempPath, path);
 }
 
+async function readJsonlFileSafe(path) {
+  try {
+    const raw = await fs.readFile(path, "utf-8");
+    return raw
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+  } catch (error) {
+    if (error?.code !== "ENOENT") {
+      console.warn(`[${RUNTIME_NAME}] JSONL read failed: ${error.message}`);
+    }
+    return [];
+  }
+}
+
 const DEFAULT_RUNTIME_EXPERT = Object.freeze({
   expertId: "dinara",
   displayName: "Динара",
+  niche: "психология, отношения, самоценность",
+  styleDescription: "тёплый, глубинный, бережный голос практикующего психолога",
   knowledgeBase: "psychologist",
   styleProfile: "dinara_style",
   status: "active",
+  kbConfigured: true,
 });
 
 const DEFAULT_MEDIA_PROFILE = Object.freeze({
@@ -264,18 +334,31 @@ const DEFAULT_MEDIA_PROFILE = Object.freeze({
   voiceProfileId: null,
   imageAvatarProfileId: null,
   videoAvatarProfileId: null,
+  imagePromptBase: null,
   status: "draft",
   updatedAt: "2026-05-15T00:00:00.000Z",
 });
 
 function normalizeRuntimeExpert(expert = {}) {
+  const expertId = String(expert.expertId || DEFAULT_RUNTIME_EXPERT.expertId).trim() || DEFAULT_RUNTIME_EXPERT.expertId;
+  const isDefaultExpert = expertId === DEFAULT_RUNTIME_EXPERT.expertId;
   return {
-    expertId: String(expert.expertId || DEFAULT_RUNTIME_EXPERT.expertId),
+    expertId,
     displayName: expert.displayName || DEFAULT_RUNTIME_EXPERT.displayName,
-    knowledgeBase: expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase,
-    styleProfile: expert.styleProfile || DEFAULT_RUNTIME_EXPERT.styleProfile,
+    niche: expert.niche || expert.topic || (isDefaultExpert ? DEFAULT_RUNTIME_EXPERT.niche : ""),
+    styleDescription: expert.styleDescription || expert.style || (isDefaultExpert ? DEFAULT_RUNTIME_EXPERT.styleDescription : ""),
+    knowledgeBase: expert.knowledgeBase || (isDefaultExpert ? DEFAULT_RUNTIME_EXPERT.knowledgeBase : `runtime:${expertId}`),
+    styleProfile: expert.styleProfile || (isDefaultExpert ? DEFAULT_RUNTIME_EXPERT.styleProfile : `runtime:${expertId}`),
     status: expert.status || DEFAULT_RUNTIME_EXPERT.status,
     createdAt: expert.createdAt || new Date().toISOString(),
+    updatedAt: expert.updatedAt || expert.createdAt || new Date().toISOString(),
+    kbConfigured: expert.kbConfigured === undefined ? Boolean(isDefaultExpert) : Boolean(expert.kbConfigured),
+    onboarding: {
+      expertId: Boolean(expert.onboarding?.expertId ?? expertId),
+      displayName: Boolean(expert.onboarding?.displayName ?? expert.displayName),
+      niche: Boolean(expert.onboarding?.niche ?? (expert.niche || expert.topic)),
+      styleDescription: Boolean(expert.onboarding?.styleDescription ?? (expert.styleDescription || expert.style)),
+    },
   };
 }
 
@@ -292,6 +375,7 @@ function normalizeMediaProfile(profile = {}) {
     voiceProfileId: profile.voiceProfileId || null,
     imageAvatarProfileId: profile.imageAvatarProfileId || null,
     videoAvatarProfileId: profile.videoAvatarProfileId || null,
+    imagePromptBase: profile.imagePromptBase || null,
     status: profile.status || DEFAULT_MEDIA_PROFILE.status,
     updatedAt: profile.updatedAt || DEFAULT_MEDIA_PROFILE.updatedAt,
   };
@@ -304,6 +388,65 @@ function normalizeMediaProfileRegistry(raw) {
   return [normalizeMediaProfile()];
 }
 
+const KB_INGEST_STATUSES = Object.freeze(["pending", "queued", "cleaning", "chunking", "embedding", "indexing", "completed", "failed", "processing", "indexed"]);
+const ALLOWED_KB_ATTACH_EXTENSIONS = Object.freeze([".txt", ".md", ".pdf", ".docx"]);
+
+function normalizeKbFile(file = {}) {
+  const ingestStatus = KB_INGEST_STATUSES.includes(file.ingestStatus) ? file.ingestStatus : "pending";
+  return {
+    fileId: file.fileId || randomUUID(),
+    originalName: file.originalName || file.name || "telegram_document",
+    storedName: file.storedName || file.originalName || file.name || "telegram_document",
+    relativePath: file.relativePath || null,
+    uploadedAt: file.uploadedAt || new Date().toISOString(),
+    uploadedBy: file.uploadedBy ? String(file.uploadedBy) : null,
+    sizeBytes: Number(file.sizeBytes || 0),
+    mimeType: file.mimeType || null,
+    kbType: file.kbType || "runtime_onboarding",
+    ingestStatus,
+    ingestError: file.ingestError || null,
+    retryCount: Number(file.retryCount || 0),
+    maxRetries: Number(file.maxRetries || INGESTION_MAX_RETRIES),
+    indexedAt: file.indexedAt || file.completedAt || null,
+    completedAt: file.completedAt || file.indexedAt || null,
+    chunksCount: Number(file.chunksCount || 0),
+    embeddingCount: Number(file.embeddingCount || 0),
+    lastIngestAt: file.lastIngestAt || file.indexedAt || file.completedAt || null,
+  };
+}
+
+function normalizeKbEntry(entry = {}) {
+  const expertId = String(entry.expertId || DEFAULT_RUNTIME_EXPERT.expertId).trim() || DEFAULT_RUNTIME_EXPERT.expertId;
+  return {
+    expertId,
+    kbType: entry.kbType || (expertId === DEFAULT_RUNTIME_EXPERT.expertId ? "production_dinara" : "runtime_onboarding"),
+    files: Array.isArray(entry.files) ? entry.files.map(normalizeKbFile) : [],
+    ingestStatus: entry.ingestStatus || null,
+    indexed: entry.indexed === undefined ? undefined : Boolean(entry.indexed),
+    chunksCount: Number(entry.chunksCount || 0),
+    embeddingCount: Number(entry.embeddingCount || 0),
+    lastIngestAt: entry.lastIngestAt || null,
+    retrievalReady: entry.retrievalReady === undefined ? undefined : Boolean(entry.retrievalReady),
+    createdAt: entry.createdAt || new Date().toISOString(),
+    updatedAt: entry.updatedAt || entry.createdAt || new Date().toISOString(),
+  };
+}
+
+function normalizeExpertKbRegistry(raw) {
+  const entries = Array.isArray(raw?.experts)
+    ? raw.experts
+    : Array.isArray(raw)
+      ? raw
+      : raw?.expertId
+        ? [raw]
+        : [];
+  return {
+    version: 1,
+    experts: entries.map(normalizeKbEntry),
+    updatedAt: raw?.updatedAt || new Date().toISOString(),
+  };
+}
+
 async function loadExpertRegistry() {
   const raw = await readJsonFileSafe(EXPERTS_RUNTIME_PATH, null);
   return normalizeExpertRegistry(raw);
@@ -314,12 +457,50 @@ async function loadMediaProfileRegistry() {
   return normalizeMediaProfileRegistry(raw);
 }
 
+async function loadExpertKbRegistry() {
+  const raw = await readJsonFileSafe(EXPERT_KB_REGISTRY_PATH, null);
+  return normalizeExpertKbRegistry(raw);
+}
+
+async function saveExpertKbRegistry(registry) {
+  const normalized = normalizeExpertKbRegistry(registry);
+  normalized.updatedAt = new Date().toISOString();
+  await writeJsonFileSafe(EXPERT_KB_REGISTRY_PATH, normalized);
+  return normalized;
+}
+
+async function ensureExpertKbRegistry() {
+  const existed = await fileExists(EXPERT_KB_REGISTRY_PATH);
+  const registry = await loadExpertKbRegistry();
+  let changed = false;
+  if (!registry.experts.find((entry) => entry.expertId === DEFAULT_RUNTIME_EXPERT.expertId)) {
+    registry.experts.unshift(normalizeKbEntry({
+      expertId: DEFAULT_RUNTIME_EXPERT.expertId,
+      kbType: "production_dinara",
+      files: [],
+    }));
+    changed = true;
+  }
+  if (!existed || changed) await saveExpertKbRegistry(registry);
+  runtimeLog("expert kb registry ready", {
+    path: EXPERT_KB_REGISTRY_PATH,
+    fileCreated: !existed,
+    totalExperts: registry.experts.length,
+  });
+  return registry;
+}
+
+async function getKbEntryForExpert(expertId) {
+  const registry = await loadExpertKbRegistry();
+  return registry.experts.find((entry) => entry.expertId === expertId) || normalizeKbEntry({ expertId });
+}
+
 async function ensureExpertRegistry() {
   const existed = await fileExists(EXPERTS_RUNTIME_PATH);
   const experts = await loadExpertRegistry();
   const activeExperts = experts.filter((expert) => expert.status === "active");
   if (!existed) {
-    await writeJsonFileSafe(EXPERTS_RUNTIME_PATH, experts[0] || normalizeRuntimeExpert());
+    await writeJsonFileSafe(EXPERTS_RUNTIME_PATH, { experts: [experts[0] || normalizeRuntimeExpert()] });
   }
   runtimeLog("expert registry ready", {
     path: EXPERTS_RUNTIME_PATH,
@@ -329,6 +510,20 @@ async function ensureExpertRegistry() {
     defaultExpertId: activeExperts[0]?.expertId || experts[0]?.expertId || DEFAULT_RUNTIME_EXPERT.expertId,
   });
   return experts;
+}
+
+async function ensureMediaProfileRegistry() {
+  const existed = await fileExists(MEDIA_PROFILES_RUNTIME_PATH);
+  const profiles = await loadMediaProfileRegistry();
+  if (!existed) {
+    await writeJsonFileSafe(MEDIA_PROFILES_RUNTIME_PATH, { profiles: [profiles[0] || normalizeMediaProfile()] });
+  }
+  runtimeLog("media profile registry ready", {
+    path: MEDIA_PROFILES_RUNTIME_PATH,
+    fileCreated: !existed,
+    totalProfiles: profiles.length,
+  });
+  return profiles;
 }
 
 function getDefaultMediaProfile() {
@@ -346,19 +541,20 @@ function cloudinaryAudioReady() {
 
 function getActiveExpertIdForChat(chatId) {
   const state = chatId ? (userState.get(chatId) || {}) : {};
-  return state.lastExpertId || state.activeExpertId || process.env.DEFAULT_EXPERT_ID || DEFAULT_RUNTIME_EXPERT.expertId;
+  return state.activeExpertId || state.lastExpertId || process.env.DEFAULT_EXPERT_ID || DEFAULT_RUNTIME_EXPERT.expertId;
 }
 
 async function getVoiceReadiness(chatId) {
   const expertId = getActiveExpertIdForChat(chatId);
   const mediaProfile = await getMediaProfileForExpert(expertId);
-  const voiceProfileId = mediaProfile.voiceProfileId || FISH_AUDIO_VOICE_ID || null;
+  const isDefaultExpert = expertId === DEFAULT_RUNTIME_EXPERT.expertId;
+  const voiceProfileId = mediaProfile.voiceProfileId || (isDefaultExpert ? FISH_AUDIO_VOICE_ID : null) || null;
   return {
     enabled: Boolean(FISH_AUDIO_API_KEY && voiceProfileId),
     expertId,
     fishAudioKeyPresent: Boolean(FISH_AUDIO_API_KEY),
     voiceProfileIdPresent: Boolean(voiceProfileId),
-    voiceProfileSource: mediaProfile.voiceProfileId ? "media_profile" : (FISH_AUDIO_VOICE_ID ? "env" : "missing"),
+    voiceProfileSource: mediaProfile.voiceProfileId ? "media_profile" : (isDefaultExpert && FISH_AUDIO_VOICE_ID ? "env" : "missing"),
     cloudinaryPresent: cloudinaryAudioReady(),
     ffmpegRequired: true,
     ffmpegPresent: ffmpegAvailable,
@@ -369,19 +565,23 @@ async function getVoiceReadiness(chatId) {
 async function getImageReadiness(chatId) {
   const expertId = getActiveExpertIdForChat(chatId);
   const mediaProfile = await getMediaProfileForExpert(expertId);
+  const isDefaultExpert = expertId === DEFAULT_RUNTIME_EXPERT.expertId;
   const imageAvatarProfileId = mediaProfile.imageAvatarProfileId || null;
-  const loraUrl = imageAvatarProfileId || LORA_URL;
+  const loraUrl = imageAvatarProfileId || (isDefaultExpert ? LORA_URL : null);
+  const imagePromptBase = mediaProfile.imagePromptBase
+    || (isDefaultExpert ? BASE_PROMPT : "professional expert portrait, realistic person, natural face, high quality");
   return {
     enabled: Boolean(FAL_KEY && loraUrl),
     expertId,
     falKeyPresent: Boolean(FAL_KEY),
     mediaProfileStatus: mediaProfile.status || "unknown",
     imageAvatarProfileIdPresent: Boolean(imageAvatarProfileId),
-    imageAvatarProfileSource: imageAvatarProfileId ? "media_profile" : "built_in_dinara_lora",
+    imageAvatarProfileSource: imageAvatarProfileId ? "media_profile" : (isDefaultExpert ? "built_in_dinara_lora" : "missing"),
     loraUrlPresent: Boolean(loraUrl),
     loraUrl,
     modelEndpoint: "fal-ai/flux-lora",
     imageSize: "square_hd",
+    imagePromptBase,
   };
 }
 
@@ -492,6 +692,30 @@ async function getExpertById(expertId) {
   return experts.find((expert) => expert.expertId === expertId) || null;
 }
 
+async function upsertRuntimeExpert(expert) {
+  const normalized = normalizeRuntimeExpert(expert);
+  const experts = await loadExpertRegistry();
+  const index = experts.findIndex((item) => item.expertId === normalized.expertId);
+  if (index >= 0) experts[index] = { ...experts[index], ...normalized, updatedAt: new Date().toISOString() };
+  else experts.push(normalized);
+  await writeJsonFileSafe(EXPERTS_RUNTIME_PATH, { experts });
+  return normalized;
+}
+
+async function ensureMediaProfileForExpert(expertId) {
+  const profiles = await loadMediaProfileRegistry();
+  const existing = profiles.find((profile) => profile.expertId === expertId);
+  if (existing) return existing;
+  const profile = normalizeMediaProfile({
+    expertId,
+    status: expertId === DEFAULT_RUNTIME_EXPERT.expertId ? DEFAULT_MEDIA_PROFILE.status : "scaffold",
+    updatedAt: new Date().toISOString(),
+  });
+  profiles.push(profile);
+  await writeJsonFileSafe(MEDIA_PROFILES_RUNTIME_PATH, { profiles });
+  return profile;
+}
+
 async function listActiveExperts() {
   const experts = await loadExpertRegistry();
   return experts.filter((expert) => expert.status === "active");
@@ -518,20 +742,28 @@ async function resolveGenerationOwnership(chatId, scenario, styleKey = "auto") {
   const state = chatId ? (userState.get(chatId) || {}) : {};
   const expertId = state.activeExpertId || process.env.DEFAULT_EXPERT_ID || DEFAULT_RUNTIME_EXPERT.expertId;
   const expert = await getExpertById(expertId) || await getDefaultExpert();
-  const knowledgeBase = scenario === "sexologist"
+  const isDefaultExpert = expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId;
+  const knowledgeBase = !isDefaultExpert
+    ? expert.knowledgeBase || `runtime:${expert.expertId}`
+    : scenario === "sexologist"
     ? "sexologist"
     : scenario === "psychologist"
       ? expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase
       : scenario || expert.knowledgeBase || DEFAULT_RUNTIME_EXPERT.knowledgeBase;
-  const styleProfile = scenario === "sexologist"
+  const styleProfile = !isDefaultExpert
+    ? expert.styleProfile || `runtime:${expert.expertId}`
+    : scenario === "sexologist"
     ? `sexologist:${normalizeSexologistStyleKey(styleKey)}`
     : expert.styleProfile || DEFAULT_RUNTIME_EXPERT.styleProfile;
   return {
     expertId: expert.expertId,
     displayName: expert.displayName,
+    niche: expert.niche || "",
+    styleDescription: expert.styleDescription || "",
     knowledgeBase,
     styleProfile,
     registryStatus: expert.status,
+    kbConfigured: Boolean(expert.kbConfigured),
     isolation: buildExpertIsolationFoundation({ ...expert, knowledgeBase, styleProfile }),
   };
 }
@@ -543,6 +775,7 @@ async function appendJsonlSafe(path, value) {
 
 async function ensurePaidBetaStorage() {
   await ensureRuntimeDirectory(dirname(ENTITLEMENTS_PATH), "paid beta storage");
+  await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
   const entitlementsExisted = await fileExists(ENTITLEMENTS_PATH);
   const paymentEventsExisted = await fileExists(PAYMENT_EVENTS_PATH);
   if (!entitlementsExisted) await writeJsonFileSafe(ENTITLEMENTS_PATH, { users: {} });
@@ -550,6 +783,7 @@ async function ensurePaidBetaStorage() {
   runtimeLog("paid beta access layer enabled", {
     entitlementsFileExists: await fileExists(ENTITLEMENTS_PATH),
     paymentEventsFileExists: await fileExists(PAYMENT_EVENTS_PATH),
+    userPlansRoot: USER_PLANS_ROOT,
   });
 }
 
@@ -600,8 +834,14 @@ await Promise.all([
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "reports", "runtime-preview"), "runtime preview"),
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "users"), "users root"),
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "feedback_reports"), "feedback reports"),
+  ensureRuntimeDirectory(EXPERT_IDENTITY_PROFILES_ROOT, "expert identity profiles"),
+  ensureRuntimeDirectory(EXPERT_CONTENT_MEMORY_ROOT, "expert content memory"),
+  ensureRuntimeDirectory(EXPERT_CONTENT_BRAIN_ROOT, "expert content brain"),
+  ensureRuntimeDirectory(EXPERT_CONTENT_STRATEGY_ROOT, "expert content strategy"),
 ]);
 await ensureExpertRegistry();
+await ensureMediaProfileRegistry();
+await ensureExpertKbRegistry();
 await ensurePaidBetaStorage();
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
@@ -609,6 +849,167 @@ let pollingActive = false;
 let pollingConflictHandled = false;
 let pollingRetryCount = 0;
 let pollingRetryTimer = null;
+
+const generationQueue = {
+  image: [],
+  video: [],
+};
+const generationActiveJobs = {
+  image: new Map(),
+  video: new Map(),
+};
+const generationJobs = new Map();
+
+function formatJobLine(job) {
+  const ageSec = Math.max(0, Math.round((Date.now() - job.createdAt) / 1000));
+  return `${job.id} ${job.type} ${job.state} user:${job.userId} ${job.progress || "queued"} ${ageSec}s`;
+}
+
+function generationQueueSnapshot() {
+  const queued = Object.fromEntries(Object.entries(generationQueue).map(([type, jobs]) => [type, jobs.length]));
+  const active = Object.fromEntries(Object.entries(generationActiveJobs).map(([type, jobs]) => [type, jobs.size]));
+  const processingUsers = new Set();
+  for (const jobs of Object.values(generationActiveJobs)) {
+    for (const job of jobs.values()) processingUsers.add(String(job.userId));
+  }
+  for (const jobs of Object.values(generationQueue)) {
+    for (const job of jobs) processingUsers.add(String(job.userId));
+  }
+  return {
+    active,
+    queued,
+    processingUsers: [...processingUsers],
+    recentJobs: [...generationJobs.values()].slice(-10),
+  };
+}
+
+function buildQueueStatusText() {
+  const snapshot = generationQueueSnapshot();
+  const activeJobs = Object.values(generationActiveJobs).flatMap((jobs) => [...jobs.values()]);
+  const queuedJobs = Object.values(generationQueue).flatMap((jobs) => jobs);
+  const lines = [
+    "Generation queue status",
+    "",
+    `active jobs: image ${snapshot.active.image || 0}/${GENERATION_QUEUE_LIMITS.image}, video ${snapshot.active.video || 0}/${GENERATION_QUEUE_LIMITS.video}`,
+    `queued jobs: image ${snapshot.queued.image || 0}, video ${snapshot.queued.video || 0}`,
+    `processing users: ${snapshot.processingUsers.length ? snapshot.processingUsers.join(", ") : "none"}`,
+    `queue sizes: image=${snapshot.queued.image || 0}, video=${snapshot.queued.video || 0}`,
+    "",
+    "Active:",
+    ...(activeJobs.length ? activeJobs.map(formatJobLine) : ["none"]),
+    "",
+    "Queued:",
+    ...(queuedJobs.length ? queuedJobs.slice(0, 10).map(formatJobLine) : ["none"]),
+  ];
+  return lines.join("\n");
+}
+
+async function updateGenerationJobProgress(job, progress) {
+  job.progress = progress;
+  job.updatedAt = Date.now();
+  const text = [
+    `Generation ${job.state}`,
+    `job: ${job.id}`,
+    `status: ${progress}`,
+  ].join("\n");
+  if (job.statusMessageId) {
+    await bot.editMessageText(text, {
+      chat_id: job.chatId,
+      message_id: job.statusMessageId,
+    }).catch(() => {});
+  }
+}
+
+async function failGenerationJob(job, error) {
+  job.state = "failed";
+  job.error = String(error?.message || error || "unknown error").slice(0, 700);
+  job.updatedAt = Date.now();
+  const text = [
+    "Generation failed",
+    `job: ${job.id}`,
+    `status: failed`,
+    `reason: ${job.error}`,
+  ].join("\n");
+  if (job.statusMessageId) {
+    await bot.editMessageText(text, {
+      chat_id: job.chatId,
+      message_id: job.statusMessageId,
+    }).catch(async () => {
+      await bot.sendMessage(job.chatId, text).catch(() => {});
+    });
+  } else {
+    await bot.sendMessage(job.chatId, text).catch(() => {});
+  }
+}
+
+async function withGenerationTimeout(job, promise) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${job.type} generation timeout after ${Math.round(job.timeoutMs / 1000)}s`)), job.timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function pumpGenerationQueue(type) {
+  const limit = Math.max(1, GENERATION_QUEUE_LIMITS[type] || 1);
+  const active = generationActiveJobs[type];
+  const queue = generationQueue[type];
+  while (active.size < limit && queue.length > 0) {
+    const job = queue.shift();
+    job.state = "processing";
+    job.startedAt = Date.now();
+    job.updatedAt = Date.now();
+    active.set(job.id, job);
+    updateGenerationJobProgress(job, "processing").catch(() => {});
+    (async () => {
+      try {
+        await withGenerationTimeout(job, job.run({
+          job,
+          progress: (value) => updateGenerationJobProgress(job, value),
+        }));
+        job.state = "completed";
+        job.completedAt = Date.now();
+        job.updatedAt = Date.now();
+        await updateGenerationJobProgress(job, "completed");
+      } catch (error) {
+        console.error(`[generation-queue] ${job.type} job failed`, { jobId: job.id, error: error?.message || error });
+        await failGenerationJob(job, error);
+      } finally {
+        active.delete(job.id);
+        pumpGenerationQueue(type);
+      }
+    })();
+  }
+}
+
+async function enqueueGenerationJob(type, { chatId, userId = chatId, label = type, timeoutMs = null, run }) {
+  if (!generationQueue[type] || !generationActiveJobs[type]) throw new Error(`Unknown generation queue type: ${type}`);
+  const id = `${type}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+  const status = await bot.sendMessage(chatId, "Generation queued...");
+  const job = {
+    id,
+    type,
+    label,
+    chatId,
+    userId,
+    state: "queued",
+    progress: "queued",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    timeoutMs: timeoutMs || GENERATION_QUEUE_TIMEOUTS_MS[type] || 300000,
+    statusMessageId: status.message_id,
+    run,
+  };
+  generationJobs.set(id, job);
+  generationQueue[type].push(job);
+  await updateGenerationJobProgress(job, "queued");
+  pumpGenerationQueue(type);
+  return job;
+}
 
 bot.on("polling_error", (error) => {
   const message = error?.response?.body?.description || error?.message || String(error);
@@ -997,6 +1398,183 @@ function entitlementUserId(userId) {
   return String(userId);
 }
 
+function normalizePlanType(value) {
+  const key = String(value || "FREE").trim().toUpperCase();
+  if (["BETA_PAID", "PAID", "STARS_TEXT10_BETA"].includes(key)) return "START";
+  if (["DEMO", "FREE_DEMO"].includes(key)) return "FREE";
+  if (["ADMIN", "FULL_ACCESS"].includes(key)) return "PRO";
+  return PLAN_CATALOG[key] ? key : "FREE";
+}
+
+function userPlanPath(userId) {
+  const safeId = entitlementUserId(userId).replace(/[^a-zA-Z0-9_-]/g, "_");
+  return join(USER_PLANS_ROOT, `${safeId}.json`);
+}
+
+function buildPlanState(userId, planType = "FREE", patch = {}) {
+  const normalizedType = normalizePlanType(planType);
+  const catalog = PLAN_CATALOG[normalizedType] || PLAN_CATALOG.FREE;
+  const now = nowIso();
+  const days = patch.days ?? catalog.days;
+  const validUntil = patch.validUntil !== undefined
+    ? patch.validUntil
+    : (days ? new Date(Date.now() + Number(days) * 24 * 60 * 60 * 1000).toISOString() : null);
+  const previousUsage = patch.usage || {};
+  return {
+    userId: entitlementUserId(userId),
+    planType: normalizedType,
+    status: patch.status || "active",
+    premium: Boolean(patch.premium ?? catalog.premium),
+    limits: {
+      text: Number(patch.limits?.text ?? patch.generationLimit ?? catalog.generationLimit),
+      photo: Number(patch.limits?.photo ?? (catalog.premium ? 10 : SOFT_FREE_LIMITS.photo)),
+      audio: Number(patch.limits?.audio ?? (catalog.premium ? 20 : SOFT_FREE_LIMITS.audio)),
+      video: Number(patch.limits?.video ?? (normalizedType === "PRO" ? 20 : SOFT_FREE_LIMITS.video)),
+    },
+    usage: {
+      text: Number(previousUsage.text ?? patch.generationUsed ?? 0),
+      photo: Number(previousUsage.photo ?? 0),
+      audio: Number(previousUsage.audio ?? 0),
+      video: Number(previousUsage.video ?? 0),
+    },
+    source: patch.source || "runtime",
+    validUntil,
+    telegramStars: {
+      ready: TELEGRAM_STARS_ENABLED,
+      lastChargeId: patch.telegramStars?.lastChargeId || null,
+      lastPayload: patch.telegramStars?.lastPayload || null,
+    },
+    createdAt: patch.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+function normalizePlanState(userId, raw = {}) {
+  const migratedPlanType = raw.planType || raw.plan || "FREE";
+  return buildPlanState(userId, migratedPlanType, {
+    ...raw,
+    generationLimit: raw.generationLimit,
+    generationUsed: raw.generationUsed,
+    limits: raw.limits,
+    usage: raw.usage,
+    source: raw.source || "runtime",
+    createdAt: raw.createdAt,
+    validUntil: raw.validUntil,
+    telegramStars: raw.telegramStars,
+  });
+}
+
+async function loadUserPlan(userId) {
+  await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
+  const id = entitlementUserId(userId);
+  const path = userPlanPath(id);
+  try {
+    return normalizePlanState(id, JSON.parse(await fs.readFile(path, "utf-8")));
+  } catch (error) {
+    if (error?.code !== "ENOENT") console.warn(`[plans] failed to read ${path}: ${error.message}`);
+  }
+
+  let legacy = null;
+  try {
+    const store = await loadEntitlementsStore();
+    legacy = store.users?.[id] || null;
+  } catch {}
+
+  const initial = isAdminUser(id)
+    ? buildPlanState(id, "PRO", { source: "admin", validUntil: null, limits: { text: PLAN_CATALOG.PRO.generationLimit }, usage: { text: legacy?.generationUsed || 0 } })
+    : legacy
+      ? normalizePlanState(id, legacy)
+      : buildPlanState(id, "FREE", { source: "default" });
+  await saveUserPlan(id, initial);
+  return initial;
+}
+
+async function saveUserPlan(userId, plan) {
+  const normalized = normalizePlanState(userId, plan);
+  await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
+  await fs.writeFile(userPlanPath(userId), JSON.stringify(normalized, null, 2), "utf-8");
+  return normalized;
+}
+
+function isPlanExpired(plan, at = new Date()) {
+  return Boolean(plan?.validUntil && new Date(plan.validUntil) < at);
+}
+
+function planRemaining(plan, key = "text") {
+  const limit = Number(plan?.limits?.[key] ?? 0);
+  const used = Number(plan?.usage?.[key] ?? 0);
+  return Math.max(0, limit - used);
+}
+
+async function checkUserPlanAccess(userId, key = "text") {
+  const plan = await loadUserPlan(userId);
+  if (plan.status !== "active") return { ok: false, reason: `plan_${plan.status}`, plan };
+  if (isPlanExpired(plan)) {
+    plan.status = "expired";
+    plan.updatedAt = nowIso();
+    await saveUserPlan(userId, plan);
+    return { ok: false, reason: "plan_expired", plan };
+  }
+  const remaining = planRemaining(plan, key);
+  if (remaining <= 0) return { ok: false, reason: "plan_limit_exhausted", plan, remaining: 0 };
+  return { ok: true, plan, remaining, premium: Boolean(plan.premium) };
+}
+
+async function incrementUserPlanUsage(userId, key = "text") {
+  const plan = await loadUserPlan(userId);
+  plan.usage = plan.usage || {};
+  plan.usage[key] = Number(plan.usage[key] || 0) + 1;
+  plan.updatedAt = nowIso();
+  return saveUserPlan(userId, plan);
+}
+
+async function activateUserPlan(userId, planType, options = {}) {
+  const current = await loadUserPlan(userId).catch(() => null);
+  const next = buildPlanState(userId, planType, {
+    source: options.source || "manual",
+    days: options.days,
+    validUntil: options.validUntil,
+    usage: options.resetUsage === false ? current?.usage : {},
+    telegramStars: options.telegramStars,
+  });
+  const saved = await saveUserPlan(userId, next);
+  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+    type: options.eventType || "plan_activated",
+    userId: entitlementUserId(userId),
+    planType: saved.planType,
+    source: saved.source,
+    chargeId: options.chargeId || null,
+    payload: options.payload || null,
+    createdAt: nowIso(),
+    createdBy: options.createdBy ? entitlementUserId(options.createdBy) : null,
+  });
+  return saved;
+}
+
+async function hasPaymentEvent(chargeId) {
+  if (!chargeId) return false;
+  try {
+    const raw = await fs.readFile(PAYMENT_EVENTS_PATH, "utf-8");
+    return raw.split(/\r?\n/).some((line) => line && line.includes(`"chargeId":"${chargeId}"`));
+  } catch {
+    return false;
+  }
+}
+
+function formatPlanState(plan) {
+  const textRemaining = planRemaining(plan, "text");
+  return [
+    `User: ${plan.userId}`,
+    `Plan: ${plan.planType}`,
+    `Status: ${plan.status}`,
+    `Premium: ${plan.premium ? "yes" : "no"}`,
+    `Text generations: ${plan.usage?.text || 0}/${plan.limits?.text}`,
+    `Remaining: ${textRemaining}`,
+    `Valid until: ${plan.validUntil || "none"}`,
+    `Updated: ${plan.updatedAt || "none"}`,
+  ].join("\n");
+}
+
 function buildEntitlement(userId, planKey, patch = {}) {
   const plan = PAID_BETA_PLANS[planKey] || PAID_BETA_PLANS.demo;
   const now = nowIso();
@@ -1065,6 +1643,14 @@ async function grantBetaEntitlement(userId, generationLimit, days, createdBy) {
   const validDays = Number(days);
   if (!Number.isInteger(limit) || limit <= 0) throw new Error("LIMIT must be a positive integer.");
   if (!Number.isInteger(validDays) || validDays <= 0) throw new Error("DAYS must be a positive integer.");
+  const planState = await activateUserPlan(userId, "START", {
+    source: "manual_grant",
+    days: validDays,
+    createdBy,
+    eventType: "manual_grant",
+  });
+  planState.limits.text = limit;
+  await saveUserPlan(userId, planState);
   const store = await loadEntitlementsStore();
   const entitlement = buildEntitlement(userId, "beta_paid", {
     generationLimit: limit,
@@ -1085,6 +1671,10 @@ async function grantBetaEntitlement(userId, generationLimit, days, createdBy) {
 }
 
 async function revokeBetaEntitlement(userId, createdBy) {
+  const plan = await loadUserPlan(userId);
+  plan.status = "revoked";
+  plan.updatedAt = nowIso();
+  await saveUserPlan(userId, plan);
   const store = await loadEntitlementsStore();
   const id = entitlementUserId(userId);
   const current = store.users[id] || buildEntitlement(id, "demo");
@@ -1105,25 +1695,37 @@ async function revokeBetaEntitlement(userId, createdBy) {
 }
 
 async function checkPaidBetaAccess(userId) {
-  const entitlement = await getOrCreateEntitlement(userId);
-  if (entitlement.status !== "active") {
-    return { ok: false, reason: `entitlement_${entitlement.status}`, entitlement };
-  }
-  if (isEntitlementExpired(entitlement)) {
-    return { ok: false, reason: "entitlement_expired", entitlement };
-  }
-  const remaining = Number(entitlement.generationLimit) - Number(entitlement.generationUsed || 0);
-  if (remaining <= 0) {
-    return { ok: false, reason: "entitlement_limit_exhausted", entitlement, remaining: 0 };
-  }
-  return { ok: true, entitlement, remaining };
+  const access = await checkUserPlanAccess(userId, "text");
+  return {
+    ok: access.ok,
+    reason: access.reason ? access.reason.replace(/^plan_/, "entitlement_") : null,
+    entitlement: {
+      userId: access.plan.userId,
+      plan: access.plan.planType === "FREE" ? "demo" : access.plan.planType.toLowerCase(),
+      status: access.plan.status,
+      generationLimit: access.plan.limits.text,
+      generationUsed: access.plan.usage.text,
+      validUntil: access.plan.validUntil,
+      updatedAt: access.plan.updatedAt,
+      premium: access.plan.premium,
+      planType: access.plan.planType,
+    },
+    plan: access.plan,
+    remaining: access.remaining,
+    premium: access.premium,
+  };
 }
 
 async function incrementEntitlementUsage(userId) {
+  const plan = await incrementUserPlanUsage(userId, "text");
   const store = await loadEntitlementsStore();
   const id = entitlementUserId(userId);
   const current = store.users[id] || buildEntitlement(id, isAdminUser(id) ? "admin" : "demo");
   current.generationUsed = Number(current.generationUsed || 0) + 1;
+  current.generationLimit = Number(plan.limits?.text || current.generationLimit || 0);
+  current.plan = plan.planType === "FREE" ? "demo" : plan.planType.toLowerCase();
+  current.status = plan.status;
+  current.validUntil = plan.validUntil;
   current.updatedAt = nowIso();
   store.users[id] = current;
   await saveEntitlementsStore(store);
@@ -1151,13 +1753,15 @@ function planLimitLabel(plan) {
 
 function buildPaidBetaPlansText() {
   return [
-    "Beta-планы",
+    "Планы доступа",
     "",
-    `demo — ${planLimitLabel(PAID_BETA_PLANS.demo)}. Стартовый доступ, чтобы быстро проверить качество AI-эксперта.`,
-    `beta_paid — ${planLimitLabel(PAID_BETA_PLANS.beta_paid)} на ${PAID_BETA_PLANS.beta_paid.days} дней. Включается вручную администратором для закрытой beta.`,
-    `admin — ${planLimitLabel(PAID_BETA_PLANS.admin)}. Служебный доступ для тестов и поддержки.`,
+    `FREE — ${PLAN_CATALOG.FREE.generationLimit} текстовых генераций. ${PLAN_CATALOG.FREE.description}`,
+    `START — ${PLAN_CATALOG.START.generationLimit} генераций на ${PLAN_CATALOG.START.days} дней. ${PLAN_CATALOG.START.description}`,
+    `PRO — ${PLAN_CATALOG.PRO.generationLimit} генераций на ${PLAN_CATALOG.PRO.days} дней. ${PLAN_CATALOG.PRO.description}`,
     "",
-    "Реальные платежи пока не подключены. Для подключения beta_paid используйте /upgrade.",
+    TELEGRAM_STARS_ENABLED
+      ? "Telegram Stars checkout включён через lightweight hook."
+      : "Telegram Stars checkout подготовлен, но в этом окружении отключён. Можно запросить premium вручную через /upgrade.",
   ].join("\n");
 }
 
@@ -1167,30 +1771,32 @@ async function getActiveExpertId(userId) {
 }
 
 async function buildPremiumStatusText(userId) {
-  const entitlement = await getOrCreateEntitlement(userId);
-  const remaining = Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0));
+  const plan = await loadUserPlan(userId);
   const activeExpertId = await getActiveExpertId(userId);
   return [
-    "Premium status",
+    "Subscription",
     "",
-    `userId: ${entitlement.userId}`,
-    `current plan: ${entitlement.plan}`,
-    `status: ${entitlement.status}`,
-    `generationUsed: ${entitlement.generationUsed || 0}`,
-    `generationLimit: ${entitlement.generationLimit}`,
-    `remaining: ${remaining}`,
-    `validUntil: ${entitlement.validUntil || "none"}`,
+    `userId: ${plan.userId}`,
+    `plan: ${plan.planType}`,
+    `premium: ${plan.premium ? "yes" : "no"}`,
+    `status: ${plan.status}`,
+    `generationUsed: ${plan.usage?.text || 0}`,
+    `generationLimit: ${plan.limits?.text}`,
+    `remaining: ${planRemaining(plan, "text")}`,
+    `validUntil: ${plan.validUntil || "none"}`,
     `active expertId: ${activeExpertId}`,
   ].join("\n");
 }
 
 function buildManualUpgradeText() {
   return [
-    "Платный доступ пока включается вручную.",
-    "Напишите администратору для подключения beta_paid.",
+    "Premium-доступ можно включить через Telegram Stars или вручную на beta.",
+    TELEGRAM_STARS_ENABLED
+      ? "Выберите план в /plans и оплатите Stars."
+      : "В этом окружении checkout отключён, поэтому безопасно доступен ручной запрос.",
     "",
     "Команда для просмотра планов: /plans",
-    "Статус доступа: /premium_status",
+    "Статус доступа: /subscription",
   ].join("\n");
 }
 
@@ -1533,7 +2139,7 @@ async function checkRuntimeGenerationQuota(chatId, state, limitType = "text") {
       };
     }
 
-    if (["admin", "beta_paid"].includes(entitlementCheck.entitlement.plan)) {
+    if (entitlementCheck.premium || ["admin", "beta_paid", "start", "pro"].includes(entitlementCheck.entitlement.plan)) {
       return {
         ok: true,
         runtime,
@@ -1548,7 +2154,7 @@ async function checkRuntimeGenerationQuota(chatId, state, limitType = "text") {
     return { ok: true, runtime, premium: true, entitlement: entitlementCheck?.entitlement, entitlementRemaining: entitlementCheck?.remaining };
   }
 
-  const premium = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan;
+  const premium = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan || entitlementCheck?.premium;
   if (premium) return { ok: true, runtime, premium: true, entitlement: entitlementCheck?.entitlement, entitlementRemaining: entitlementCheck?.remaining };
 
   const key = state?.demoMode ? "demo" : limitType;
@@ -1583,10 +2189,10 @@ async function handlePaidBetaAccessDenied(chatId, entitlement, reason) {
       ? "Срок доступа истёк."
       : "",
     "",
-    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
+    "Чтобы продолжить генерации, откройте /plans и подключите START или PRO.",
   ].filter(Boolean).join("\n"), {
     reply_markup: { inline_keyboard: [
-      [{ text: "Открыть /upgrade", callback_data: "manual_upgrade" }],
+      [{ text: "Открыть планы", callback_data: "show_plans" }],
       [{ text: "Запросить beta-доступ", callback_data: "req_limit_text" }],
       [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
     ]},
@@ -1613,7 +2219,7 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
     "",
     quotaText,
     "",
-    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
+    "Чтобы продолжить генерации, откройте /plans и подключите START или PRO.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: buildUpgradeKeyboard(isDemo ? "demo" : "text") },
   });
@@ -1621,7 +2227,8 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
 
 function buildUpgradeKeyboard(limitType = "text") {
   const rows = [
-    [{ text: "Как подключить beta_paid", callback_data: "manual_upgrade" }],
+    [{ text: "Посмотреть планы", callback_data: "show_plans" }],
+    [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
     [{ text: "Запросить premium-доступ", callback_data: `req_limit_${limitType}` }],
     [{ text: "Создать/усилить AI-эксперта", callback_data: "ob_template_menu" }],
     [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
@@ -1629,22 +2236,24 @@ function buildUpgradeKeyboard(limitType = "text") {
   return rows;
 }
 
-async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "text10") {
-  await trackBetaEvent(chatId, BETA_EVENT_NAMES.STARS_UPGRADE_CLICKED, { limit_type: limitType, pack, enabled: TELEGRAM_STARS_ENABLED });
-  const title = "Beta text pack";
-  const description = "10 extra text generations for closed beta testing.";
+async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "START") {
+  const planType = normalizePlanType(pack);
+  const plan = PLAN_CATALOG[planType] || PLAN_CATALOG.START;
+  await trackBetaEvent(chatId, BETA_EVENT_NAMES.STARS_UPGRADE_CLICKED, { limit_type: limitType, pack: planType, enabled: TELEGRAM_STARS_ENABLED });
+  const title = `${plan.label} premium access`;
+  const description = `${plan.generationLimit} text generations for ${plan.days || 30} days.`;
   if (TELEGRAM_STARS_ENABLED && bot.sendInvoice) {
     try {
       await bot.sendInvoice(
         chatId,
         title,
         description,
-        `beta_${limitType}_${pack}_${Date.now()}`,
+        `plan:${planType}:${Date.now()}`,
         TELEGRAM_STARS_PROVIDER_TOKEN,
         "XTR",
-        [{ label: "10 text generations", amount: TELEGRAM_STARS_TEXT_PACK_PRICE }],
+        [{ label: `${plan.label} plan`, amount: plan.starsPrice }],
         {
-          start_parameter: "beta_text_pack",
+          start_parameter: `plan_${planType.toLowerCase()}`,
           reply_markup: { inline_keyboard: [[{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }]] },
         }
       );
@@ -1657,7 +2266,7 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
   await bot.sendMessage(chatId, [
     "Stars-оплата подготовлена как beta-hook.",
     "",
-    `Пакет: 10 дополнительных текстовых генераций (${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars).`,
+    `План: ${plan.label}, ${plan.generationLimit} генераций (${plan.starsPrice} Stars).`,
     "В этом окружении checkout ещё не включён, поэтому я отправлю запрос администратору.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: [
@@ -1665,6 +2274,49 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
       [{ text: "Dashboard", callback_data: "ob_dashboard" }],
     ]},
   });
+}
+
+function planTypeFromStarsPayload(payload = "") {
+  const parts = String(payload || "").split(":");
+  if (parts[0] === "plan") return normalizePlanType(parts[1]);
+  if (String(payload).includes("PRO")) return "PRO";
+  return "START";
+}
+
+async function handleSuccessfulStarsPayment(msg) {
+  const chatId = msg.chat.id;
+  const payment = msg.successful_payment;
+  const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || payment.invoice_payload;
+  if (await hasPaymentEvent(chargeId)) {
+    await bot.sendMessage(chatId, "Оплата уже учтена. Premium-доступ активен.");
+    return loadUserPlan(chatId);
+  }
+  const planType = planTypeFromStarsPayload(payment.invoice_payload);
+  const plan = await activateUserPlan(chatId, planType, {
+    source: "telegram_stars",
+    eventType: "telegram_stars_success",
+    chargeId,
+    payload: payment.invoice_payload,
+    telegramStars: {
+      ready: true,
+      lastChargeId: chargeId,
+      lastPayload: payment.invoice_payload,
+    },
+  });
+  const runtime = await loadExpertRuntime(chatId);
+  runtime.monetization.paid_plan = plan.planType;
+  runtime.monetization.telegram_stars_ready = true;
+  runtime.monetization.premium_generation_enabled = plan.premium;
+  runtime.limits.text = plan.limits.text;
+  runtime.updated_at = new Date().toISOString();
+  await saveExpertRuntime(chatId, runtime);
+  await bot.sendMessage(chatId, [
+    "Оплата получена.",
+    `Активирован план ${plan.planType}: ${plan.limits.text} текстовых генераций.`,
+    `Осталось: ${planRemaining(plan, "text")}.`,
+  ].join("\n"));
+  await sendExpertDashboard(chatId, msg.from?.id || chatId);
+  return plan;
 }
 
 async function handleNotRegistered(chatId) {
@@ -2329,6 +2981,7 @@ function shuffleArray(arr) {
 }
 
 const userState = new Map();
+const ingestionJobs = new Map();
 
 const ABUSE_LIMITS = {
   generationCooldownMs: 45_000,
@@ -2529,7 +3182,7 @@ async function uploadAudioToCloudinary(audioBuffer, filename = "voice.mp3") {
   formData.append("timestamp", timestamp.toString());
   formData.append("api_key", CLOUDINARY_API_KEY);
   formData.append("signature", signature);
-  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, { method: "POST", body: formData });
+  const res = await fetchWithTimeout(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/video/upload`, { method: "POST", body: formData }, 60000, "Cloudinary upload");
   const resText = await res.text();
   if (!res.ok) throw new Error(`Cloudinary error: ${resText}`);
   const url = JSON.parse(resText).secure_url;
@@ -2568,6 +3221,22 @@ async function downloadTrack(url) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
     return Buffer.from(await res.arrayBuffer());
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 60000, label = "request") {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") throw new Error(`${label} timeout after ${Math.round(timeoutMs / 1000)}s`);
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -2614,11 +3283,11 @@ async function generateVoice(text, voiceProfileId = FISH_AUDIO_VOICE_ID) {
     text, reference_id: voiceProfileId,
     format: "mp3", mp3_bitrate: 128, normalize: true, latency: "normal",
   });
-  const response = await fetch("https://api.fish.audio/v1/tts", {
+  const response = await fetchWithTimeout("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: { "Authorization": `Bearer ${FISH_AUDIO_API_KEY}`, "Content-Type": "application/msgpack" },
     body: payload,
-  });
+  }, 90000, "Fish Audio TTS");
   if (!response.ok) throw new Error(`Fish Audio error: ${await response.text()}`);
   const buffer = Buffer.from(await response.arrayBuffer());
   return { buffer, cost: text.length * AUDIO_PRICE_PER_CHAR };
@@ -2644,13 +3313,18 @@ async function translateScene(text) {
 
 async function generateImage(chatId, scenePrompt, imageProfile = {}) {
   await bot.sendMessage(chatId, "\u23F3 Генерирую фото ~60 сек...");
-  const fullPrompt = `${BASE_PROMPT}, ${scenePrompt}`;
-  const loraUrl = imageProfile.loraUrl || LORA_URL;
-  const res = await fetch("https://fal.run/fal-ai/flux-lora", {
+  const readiness = imageProfile.loraUrl ? null : await getImageReadiness(chatId);
+  const imagePromptBase = imageProfile.imagePromptBase || readiness?.imagePromptBase || BASE_PROMPT;
+  const fullPrompt = `${imagePromptBase}, ${scenePrompt}`;
+  const loraUrl = imageProfile.loraUrl || readiness?.loraUrl || null;
+  if (!loraUrl) {
+    throw new Error("Image avatar profile is not configured for the active expert.");
+  }
+  const res = await fetchWithTimeout("https://fal.run/fal-ai/flux-lora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ prompt: fullPrompt, loras: [{ path: loraUrl, scale: 0.85 }], num_inference_steps: 28, image_size: "square_hd" }),
-  });
+  }, GENERATION_QUEUE_TIMEOUTS_MS.image, "FAL image generation");
   const rawText = await res.text();
   if (!res.ok) throw new Error(`fal photo error ${res.status}: ${rawText}`);
   const data = JSON.parse(rawText);
@@ -2663,11 +3337,11 @@ async function generateImage(chatId, scenePrompt, imageProfile = {}) {
 async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   const statusMsg = await bot.sendMessage(chatId, "\uD83C\uDFAC Шаг 1/3 — Отправляю запрос...");
   const msgId = statusMsg.message_id;
-  const submitRes = await fetch("https://queue.fal.run/fal-ai/creatify/aurora", {
+  const submitRes = await fetchWithTimeout("https://queue.fal.run/fal-ai/creatify/aurora", {
     method: "POST",
     headers: { "Authorization": `Key ${FAL_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({ image_url: imageUrl, audio_url: audioUrl, prompt: AURORA_PROMPT, resolution: "720p" }),
-  });
+  }, 60000, "Aurora submit");
   const submitText = await submitRes.text();
   if (!submitRes.ok) {
     await bot.editMessageText(friendlyErrorMessage(new Error(`Aurora submit error ${submitRes.status}`), "generation"), { chat_id: chatId, message_id: msgId });
@@ -2682,7 +3356,7 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
   const resultUrl = response_url || `https://queue.fal.run/fal-ai/creatify/aurora/requests/${request_id}`;
   for (let i = 0; i < 48; i++) {
     await new Promise(r => setTimeout(r, 5000));
-    const statusRes = await fetch(pollUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
+    const statusRes = await fetchWithTimeout(pollUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } }, 30000, "Aurora status poll");
     const statusText = await statusRes.text();
     if (!statusText.trim()) continue;
     let status;
@@ -2693,7 +3367,7 @@ async function generateVideoAurora(chatId, imageUrl, audioUrl) {
     }
     if (status.status === "COMPLETED") {
       await bot.editMessageText("\u2705 Шаг 3/3 — Видео готово!", { chat_id: chatId, message_id: msgId });
-      const resultRes = await fetch(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } });
+      const resultRes = await fetchWithTimeout(resultUrl, { headers: { "Authorization": `Key ${FAL_KEY}` } }, 60000, "Aurora result");
       const result = JSON.parse(await resultRes.text());
       const videoUrl = result.video?.url || result.data?.video?.url || result.output?.video_url;
       if (!videoUrl) throw new Error(`Aurora: no video URL`);
@@ -2747,6 +3421,11 @@ function getBuiltInScenarioLabel(scenario) {
 async function getScenarioLabel(chatId, scenario) {
   const userScenario = await loadUserScenario(chatId, scenario);
   if (userScenario) return `⭐ ${userScenario.label}`;
+  const activeExpertId = getActiveExpertIdForChat(chatId);
+  if (activeExpertId && activeExpertId !== DEFAULT_RUNTIME_EXPERT.expertId) {
+    const expert = await getExpertById(activeExpertId);
+    if (expert) return `👤 ${expert.displayName}`;
+  }
   return getBuiltInScenarioLabel(scenario);
 }
 
@@ -3679,7 +4358,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Runtime KB:*\n/kb_status — статус базы активного эксперта\n/kb_attach — прикрепить файл к активному эксперту\n/kb_list — список файлов\n/kb_active — текущий retrieval source\n/retry_failed — повторить failed ingestion\n/runtime_metrics — runtime метрики\n\n*Content brain:*\n/brain_status — статус памяти и рекомендаций\n/brain_show — профиль brain активного эксперта\n/content_memory — последние темы/hooks/CTA\n/brain_rebuild — пересобрать brain из identity + memory\n\n*Content strategy:*\n/strategy_status — статус strategy активного эксперта\n/strategy_show — баланс, слабые зоны и next content\n/strategy_rebuild — пересобрать strategy из memory + identity + brain\n/content_plan — lightweight roadmap на 7 идей\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -4750,6 +5429,27 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       },
     };
   }
+  const isRuntimeOnlyExpert = generationOwnership.expertId !== DEFAULT_RUNTIME_EXPERT.expertId
+    && !userScenarioContext?.scenario
+    && !(starterTemplate && runtimeState.demoMode);
+  const runtimeIdentityProfile = isRuntimeOnlyExpert
+    ? (await loadIdentityProfile(generationOwnership.expertId) || buildMinimalIdentityProfileFromExpert(generationOwnership))
+    : null;
+  const runtimeContentMemory = isRuntimeOnlyExpert
+    ? await loadContentMemory(generationOwnership.expertId)
+    : null;
+  const runtimeContentBrain = isRuntimeOnlyExpert
+    ? await loadContentBrainProfile(generationOwnership.expertId)
+    : null;
+  const contentBrainPrompt = isRuntimeOnlyExpert
+    ? buildContentBrainPrompt(runtimeContentBrain, runtimeContentMemory)
+    : "";
+  const runtimeContentStrategy = isRuntimeOnlyExpert
+    ? await loadContentStrategyProfile(generationOwnership.expertId)
+    : null;
+  const contentStrategyPrompt = isRuntimeOnlyExpert
+    ? buildContentStrategyPrompt(runtimeContentStrategy)
+    : "";
 
   if (userScenarioContext?.scenario) {
     context = userScenarioContext.context;
@@ -4781,6 +5481,41 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
       productionVersion: null,
       knowledgeBase: generationOwnership.knowledgeBase,
     };
+  } else if (isRuntimeOnlyExpert) {
+    const runtimeRetrieval = await retrieveRuntimeExpertGroundingContext(topic, generationOwnership).catch((error) => {
+      console.warn("Runtime expert retrieval failed:", error.message);
+      return null;
+    });
+    if (runtimeRetrieval?.context) {
+      context = runtimeRetrieval.context;
+      retrievalMeta = {
+        sources: runtimeRetrieval.sources || [],
+        chunksCount: runtimeRetrieval.chunks?.length || 0,
+        estimatedTokens: runtimeRetrieval.estimatedTokens || 0,
+        productionVersion: null,
+        knowledgeBase: runtimeRetrieval.knowledgeBase,
+      };
+    } else {
+      context = [
+        `Runtime expert: ${generationOwnership.displayName}`,
+        `Niche/topic: ${generationOwnership.niche || "not specified"}`,
+        `Style description: ${generationOwnership.styleDescription || "not specified"}`,
+        runtimeIdentityProfile ? buildIdentityPrompt(runtimeIdentityProfile, generationOwnership) : "",
+        `User topic: ${topic}`,
+        "",
+        "Knowledge base is not configured yet or runtime retrieval is temporarily unavailable.",
+        "Do not pretend that expert-specific source files exist.",
+        "Write from the declared niche and style only; avoid Dinara-specific biography, voice, cases, metaphors or claims.",
+      ].join("\n");
+      retrievalMeta = {
+        sources: [],
+        chunksCount: 0,
+        estimatedTokens: Math.ceil(context.length / 3.5),
+        productionVersion: null,
+        knowledgeBase: generationOwnership.knowledgeBase,
+        warning: "Runtime expert index unavailable; used runtime profile only.",
+      };
+    }
   } else if (scenario === "sexologist") {
     const retrieval = await retrieveGroundingContext(topic, generationOwnership.knowledgeBase).catch((error) => {
       console.warn("Production retrieval failed:", error.message);
@@ -4823,7 +5558,7 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     const chunks = await vectorSearch(topic, generationOwnership.knowledgeBase, 5);
     if (chunks && chunks.length > 0) {
       context = chunks.map(c => c.chunk_text).join("\n\n");
-    } else if (scenario === "psychologist") {
+    } else if (scenario === "psychologist" && !isRuntimeOnlyExpert) {
       const topArticles = articles
         .map(a => ({ ...a, score: scoreArticle(a, topic) }))
         .sort((a, b) => b.score - a.score)
@@ -4863,6 +5598,18 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
         "Главный критерий: текст должен звучать как конкретный эксперт из выбранного starter template, а не как универсальный психологический пост.",
         "Держи worldview, cadence, emotional style, openings и CTA patterns из контекста сильнее, чем встроенные сценарии Динары.",
       ].join("\n")
+    : isRuntimeOnlyExpert
+    ? [
+        `Ты — ${generationOwnership.displayName}, эксперт в нише: ${generationOwnership.niche || "не указана"}.`,
+        "Пишешь живые русские посты для Telegram/Instagram от лица этого эксперта.",
+        `Стиль эксперта: ${generationOwnership.styleDescription || "живой, конкретный, профессиональный, без канцелярита"}.`,
+        buildIdentityPrompt(runtimeIdentityProfile, generationOwnership),
+        "Не используй идентичность, биографию, голос, примеры или визуальный образ Динары.",
+        "Не выдумывай дипломы, клиентов, исследования, кейсы и личную историю, если они не указаны в runtime profile.",
+        "Если identity profile пока draft, используй его как мягкий style guide вместе с onboarding profile.",
+        "Если база знаний ещё не настроена, честно опирайся только на тему, нишу, описание стиля и minimal identity profile.",
+        "Текст должен звучать как конкретный эксперт из runtime identity/profile, а не как универсальный GPT-пост.",
+      ].filter(Boolean).join("\n")
     : scenario === "sexologist"
     ? buildSexologistPrompt(normalizedStyleKey)
     : PSYCHOLOGIST_SYSTEM_PROMPT;
@@ -4871,14 +5618,14 @@ async function generatePostTextResult(topic, scenario, lengthMode = "normal", st
     : { enabled: false, profileLoaded: false, content: "" };
   if (scenario === "sexologist") logAuthorVoiceStatus(authorVoice);
   const authorVoicePrompt = buildAuthorVoicePrompt(authorVoice);
-  const useDinaraFallbackPrompts = !userScenarioContext?.scenario && !(starterTemplate && runtimeState.demoMode);
+  const useDinaraFallbackPrompts = !isRuntimeOnlyExpert && !userScenarioContext?.scenario && !(starterTemplate && runtimeState.demoMode);
   const fewShotPrompt = useDinaraFallbackPrompts ? await buildDinaraFewShotPrompt(topic) : "";
   const worldviewPrompt = useDinaraFallbackPrompts && runtimeTuning.worldview_injection !== "off" ? await buildDinaraWorldviewPrompt() : "";
   const realismPrompt = useDinaraFallbackPrompts ? DINARA_REALISM_PROMPT : "";
   const styleLockPrompt = buildStyleLockPrompt({ userScenarioContext, scenario, template: starterTemplate, tuning: runtimeTuning });
   const firstGenerationWowPrompt = buildFirstGenerationWowInstruction(runtimeState.firstGenerationBoost);
   const runtimeTuningPrompt = buildTuningPrompt(runtimeConfig);
-  const systemPrompt = [baseSystemPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt, runtimeTuningPrompt].filter(Boolean).join("\n\n");
+  const systemPrompt = [baseSystemPrompt, contentBrainPrompt, contentStrategyPrompt, worldviewPrompt, realismPrompt, fewShotPrompt, authorVoicePrompt, styleLockPrompt, firstGenerationWowPrompt, runtimeTuningPrompt].filter(Boolean).join("\n\n");
   const contentPresetInstruction = buildContentPresetInstruction(runtimeState.pendingContentPreset || runtimeState.lastContentPreset);
   const firstGenerationLine = runtimeState.firstGenerationBoost
     ? "\n- Это первая генерация: поставь эмоциональное узнавание выше аккуратной нейтральности."
@@ -5036,6 +5783,2092 @@ async function sendGeneratedText(chatId, text, scenario) {
   });
 }
 
+function sanitizeRuntimeExpertId(value = "") {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48);
+}
+
+function sanitizeRuntimeFileName(value = "telegram_document") {
+  const cleaned = String(value || "telegram_document")
+    .replace(/[<>:"/\\|?*\u0000-\u001F]+/g, "_")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
+  return cleaned || "telegram_document";
+}
+
+function fileExtension(name = "") {
+  const clean = String(name || "");
+  return clean.includes(".") ? clean.slice(clean.lastIndexOf(".")).toLowerCase() : "";
+}
+
+async function getActiveRuntimeExpertForChat(chatId) {
+  const activeExpertId = getActiveExpertIdForChat(chatId);
+  return await getExpertById(activeExpertId) || await getDefaultExpert();
+}
+
+function summarizeKbEntry(entry, expert) {
+  const files = entry.files || [];
+  const indexedCount = files.filter((file) => ["completed", "indexed"].includes(file.ingestStatus)).length;
+  const pendingCount = files.filter((file) => file.ingestStatus === "pending").length;
+  const queuedCount = files.filter((file) => file.ingestStatus === "queued").length;
+  const processingCount = files.filter((file) => ["processing", "cleaning", "chunking", "embedding", "indexing"].includes(file.ingestStatus)).length;
+  const failedCount = files.filter((file) => file.ingestStatus === "failed").length;
+  const isDefaultExpert = expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId;
+  const chunksCount = Number(entry.chunksCount || files.reduce((sum, file) => sum + Number(file.chunksCount || 0), 0));
+  const embeddingCount = Number(entry.embeddingCount || files.reduce((sum, file) => sum + Number(file.embeddingCount || 0), 0));
+  return {
+    filesCount: files.length,
+    indexedCount,
+    pendingCount,
+    queuedCount,
+    processingCount,
+    failedCount,
+    chunksCount,
+    embeddingCount,
+    indexed: isDefaultExpert || entry.indexed === true || indexedCount > 0,
+    retrievalReady: isDefaultExpert || entry.retrievalReady === true || indexedCount > 0,
+    kbType: entry.kbType || (isDefaultExpert ? "production_dinara" : "runtime_onboarding"),
+  };
+}
+
+function identityProfilePath(expertId) {
+  return join(EXPERT_IDENTITY_PROFILES_ROOT, `${sanitizeRuntimeExpertId(expertId)}.json`);
+}
+
+function emptyIdentityProfile(expertId, patch = {}) {
+  const now = new Date().toISOString();
+  return {
+    expertId,
+    styleProfile: {
+      tone: [],
+      phrases: [],
+      structure: [],
+      ctaPatterns: [],
+      forbiddenPatterns: [],
+      ...(patch.styleProfile || {}),
+    },
+    nicheProfile: {
+      niche: "",
+      topics: [],
+      audience: "",
+      terminology: [],
+      ...(patch.nicheProfile || {}),
+    },
+    contentProfile: {
+      preferredFormats: [],
+      postLength: "",
+      hookPatterns: [],
+      examples: [],
+      ...(patch.contentProfile || {}),
+    },
+    status: patch.status || "draft",
+    createdAt: patch.createdAt || now,
+    updatedAt: patch.updatedAt || now,
+  };
+}
+
+function normalizeStringArray(value, limit = 12) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function normalizeIdentityProfile(profile, expertId) {
+  const normalized = emptyIdentityProfile(expertId, profile || {});
+  normalized.expertId = sanitizeRuntimeExpertId(profile?.expertId || expertId) || expertId;
+  normalized.styleProfile = {
+    tone: normalizeStringArray(profile?.styleProfile?.tone, 8),
+    phrases: normalizeStringArray(profile?.styleProfile?.phrases, 12),
+    structure: normalizeStringArray(profile?.styleProfile?.structure, 10),
+    ctaPatterns: normalizeStringArray(profile?.styleProfile?.ctaPatterns, 8),
+    forbiddenPatterns: normalizeStringArray(profile?.styleProfile?.forbiddenPatterns, 10),
+  };
+  normalized.nicheProfile = {
+    niche: String(profile?.nicheProfile?.niche || "").trim().slice(0, 240),
+    topics: normalizeStringArray(profile?.nicheProfile?.topics, 20),
+    audience: String(profile?.nicheProfile?.audience || "").trim().slice(0, 280),
+    terminology: normalizeStringArray(profile?.nicheProfile?.terminology, 20),
+  };
+  normalized.contentProfile = {
+    preferredFormats: normalizeStringArray(profile?.contentProfile?.preferredFormats, 10),
+    postLength: String(profile?.contentProfile?.postLength || "").trim().slice(0, 160),
+    hookPatterns: normalizeStringArray(profile?.contentProfile?.hookPatterns, 10),
+    examples: normalizeStringArray(profile?.contentProfile?.examples, 6),
+  };
+  normalized.status = ["draft", "ready", "failed"].includes(profile?.status) ? profile.status : "draft";
+  normalized.createdAt = profile?.createdAt || normalized.createdAt;
+  normalized.updatedAt = profile?.updatedAt || new Date().toISOString();
+  return normalized;
+}
+
+async function loadIdentityProfile(expertId) {
+  const cleanId = sanitizeRuntimeExpertId(expertId);
+  if (!cleanId || cleanId === DEFAULT_RUNTIME_EXPERT.expertId) return null;
+  const path = identityProfilePath(cleanId);
+  const raw = await readJsonFileSafe(path, null);
+  return raw ? normalizeIdentityProfile(raw, cleanId) : null;
+}
+
+async function saveIdentityProfile(profile) {
+  const cleanId = sanitizeRuntimeExpertId(profile.expertId);
+  const normalized = normalizeIdentityProfile(profile, cleanId);
+  await writeJsonFileSafe(identityProfilePath(cleanId), normalized);
+  return normalized;
+}
+
+function extractJsonObject(text) {
+  const raw = String(text || "").trim();
+  if (!raw) throw new Error("Empty identity extraction response.");
+  try {
+    return JSON.parse(raw);
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Identity extraction response did not contain JSON.");
+    return JSON.parse(match[0]);
+  }
+}
+
+function buildIdentitySourceDigest(rows, maxChars = 28000) {
+  const parts = [];
+  let total = 0;
+  for (const row of rows.slice(0, 80)) {
+    const text = String(row.text || row.chunk_text || "").replace(/\s+/g, " ").trim();
+    if (!text) continue;
+    const source = row.metadata?.source_file || row.source?.source_file || row.chunk_id || "runtime_chunk";
+    const part = `SOURCE: ${source}\n${text.slice(0, 1400)}`;
+    if (total + part.length > maxChars) break;
+    parts.push(part);
+    total += part.length;
+  }
+  return parts.join("\n\n---\n\n");
+}
+
+async function loadRuntimeIndexedRows(expertId) {
+  const indexDir = runtimeExpertIndexDir(expertId);
+  return readJsonlFileSafe(join(indexDir, "docstore.jsonl"));
+}
+
+function buildMinimalIdentityProfileFromExpert(expert) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || "");
+  return emptyIdentityProfile(expertId, {
+    status: "draft",
+    styleProfile: {
+      tone: expert?.styleDescription ? [expert.styleDescription] : [],
+      phrases: [],
+      structure: ["живой экспертный пост без универсальных GPT-формул"],
+      ctaPatterns: ["мягкий практический следующий шаг"],
+      forbiddenPatterns: ["не использовать идентичность, биографию и голос Динары"],
+    },
+    nicheProfile: {
+      niche: expert?.niche || "",
+      topics: expert?.niche ? String(expert.niche).split(/[,;]+/).map((item) => item.trim()).filter(Boolean).slice(0, 8) : [],
+      audience: "",
+      terminology: [],
+    },
+    contentProfile: {
+      preferredFormats: ["Telegram/Instagram post"],
+      postLength: "normal",
+      hookPatterns: [],
+      examples: [],
+    },
+  });
+}
+
+function identityStyleReady(profile) {
+  return Boolean(
+    profile
+    && profile.status !== "failed"
+    && (
+      profile.styleProfile?.tone?.length
+      || profile.styleProfile?.phrases?.length
+      || profile.styleProfile?.structure?.length
+      || profile.styleProfile?.ctaPatterns?.length
+    )
+  );
+}
+
+function buildIdentityPrompt(profile, expert) {
+  if (!profile) return "";
+  const line = (label, values) => {
+    const items = Array.isArray(values) ? values.filter(Boolean).slice(0, 8).join("; ") : String(values || "").trim();
+    return items ? `${label}: ${items}` : null;
+  };
+  return [
+    "RUNTIME IDENTITY PROFILE:",
+    `Expert: ${expert.displayName || profile.expertId} (${profile.expertId})`,
+    line("Niche", profile.nicheProfile?.niche || expert.niche),
+    line("Audience", profile.nicheProfile?.audience),
+    line("Topics", profile.nicheProfile?.topics),
+    line("Tone", profile.styleProfile?.tone),
+    line("Phrases", profile.styleProfile?.phrases),
+    line("Structure", profile.styleProfile?.structure),
+    line("CTA patterns", profile.styleProfile?.ctaPatterns),
+    line("Forbidden patterns", profile.styleProfile?.forbiddenPatterns),
+    line("Preferred formats", profile.contentProfile?.preferredFormats),
+    line("Hook patterns", profile.contentProfile?.hookPatterns),
+    "Use this identity profile as the strongest style source for this non-Dinara expert. Do not copy examples verbatim.",
+  ].filter(Boolean).join("\n");
+}
+
+function contentMemoryPath(expertId) {
+  return join(EXPERT_CONTENT_MEMORY_ROOT, `${sanitizeRuntimeExpertId(expertId)}.json`);
+}
+
+function contentBrainPath(expertId) {
+  return join(EXPERT_CONTENT_BRAIN_ROOT, `${sanitizeRuntimeExpertId(expertId)}.json`);
+}
+
+function contentStrategyPath(expertId) {
+  return join(EXPERT_CONTENT_STRATEGY_ROOT, `${sanitizeRuntimeExpertId(expertId)}.json`);
+}
+
+function emptyContentMemory(expertId, patch = {}) {
+  return {
+    expertId,
+    items: Array.isArray(patch.items) ? patch.items : [],
+    totals: {
+      generations: Number(patch.totals?.generations || 0),
+      byPlatform: patch.totals?.byPlatform || {},
+      byContentType: patch.totals?.byContentType || {},
+    },
+    createdAt: patch.createdAt || new Date().toISOString(),
+    updatedAt: patch.updatedAt || new Date().toISOString(),
+  };
+}
+
+function emptyContentBrainProfile(expertId, patch = {}) {
+  return {
+    expertId,
+    audienceProfile: patch.audienceProfile || {},
+    contentBalance: patch.contentBalance || {},
+    usedHooks: normalizeStringArray(patch.usedHooks, 50),
+    usedTopics: normalizeStringArray(patch.usedTopics, 80),
+    usedCTA: normalizeStringArray(patch.usedCTA, 50),
+    recommendedTopics: normalizeStringArray(patch.recommendedTopics, 20),
+    recommendedFormats: normalizeStringArray(patch.recommendedFormats, 12),
+    recommendedHooks: normalizeStringArray(patch.recommendedHooks, 12),
+    lastUpdated: patch.lastUpdated || "",
+  };
+}
+
+function emptyContentStrategyProfile(expertId, patch = {}) {
+  return {
+    expertId,
+    contentBalance: {
+      expert: Number(patch.contentBalance?.expert || 0),
+      engagement: Number(patch.contentBalance?.engagement || 0),
+      personal: Number(patch.contentBalance?.personal || 0),
+      conversion: Number(patch.contentBalance?.conversion || 0),
+    },
+    platformStrategies: patch.platformStrategies && typeof patch.platformStrategies === "object"
+      ? {
+          telegram: patch.platformStrategies.telegram || {},
+          instagram: patch.platformStrategies.instagram || {},
+          reels: patch.platformStrategies.reels || {},
+        }
+      : {
+          telegram: {},
+          instagram: {},
+          reels: {},
+        },
+    recommendedNextTopics: normalizeStringArray(patch.recommendedNextTopics, 20),
+    recommendedHooks: normalizeStringArray(patch.recommendedHooks, 20),
+    recommendedFormats: normalizeStringArray(patch.recommendedFormats, 16),
+    missingContentTypes: normalizeStringArray(patch.missingContentTypes, 16),
+    overusedTopics: normalizeStringArray(patch.overusedTopics, 16),
+    overusedCTA: normalizeStringArray(patch.overusedCTA, 16),
+    seriesIdeas: normalizeStringArray(patch.seriesIdeas, 12),
+    lastUpdated: patch.lastUpdated || "",
+  };
+}
+
+function normalizeTextSignal(value = "", limit = 180) {
+  return String(value || "")
+    .replace(/[*_`#>]+/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, limit);
+}
+
+function normalizeSignalKey(value = "") {
+  return normalizeTextSignal(value, 220).toLowerCase();
+}
+
+function uniqueStrings(values = [], limit = 50) {
+  const seen = new Set();
+  const result = [];
+  for (const value of values) {
+    const text = normalizeTextSignal(value, 220);
+    const key = text.toLowerCase();
+    if (!text || seen.has(key)) continue;
+    seen.add(key);
+    result.push(text);
+    if (result.length >= limit) break;
+  }
+  return result;
+}
+
+function countBy(values = []) {
+  return values.reduce((acc, value) => {
+    const key = normalizeTextSignal(value, 120) || "unknown";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+}
+
+function topFrequencyItems(values = [], limit = 6) {
+  const counts = countBy(values);
+  return Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([value, count]) => ({ value, count }));
+}
+
+function detectGeneratedHook(text) {
+  const paragraphs = String(text || "")
+    .split(/\n{2,}|\r?\n/)
+    .map((part) => normalizeTextSignal(part, 220))
+    .filter(Boolean);
+  return paragraphs[0] || "";
+}
+
+function detectGeneratedCta(text) {
+  const paragraphs = String(text || "")
+    .split(/\n{2,}|\r?\n/)
+    .map((part) => normalizeTextSignal(part, 220))
+    .filter(Boolean);
+  const candidates = paragraphs.slice(-3).filter((part) => {
+    const lower = part.toLowerCase();
+    return /[?？]$/.test(part)
+      || /(напишите|заметьте|сохраните|попробуйте|поделитесь|приходите|запишитесь|задайте|выберите|посмотрите|вернитесь|оставьте)/iu.test(lower);
+  });
+  return candidates[candidates.length - 1] || paragraphs[paragraphs.length - 1] || "";
+}
+
+function inferContentType({ lengthMode, preset, variant } = {}) {
+  if (variant && variant !== "default") return `text_${variant}`;
+  if (preset) return `text_${preset}`;
+  return lengthMode ? `text_${lengthMode}` : "text_post";
+}
+
+function normalizeContentMemory(raw, expertId) {
+  const normalized = emptyContentMemory(expertId, raw || {});
+  normalized.expertId = sanitizeRuntimeExpertId(raw?.expertId || expertId) || expertId;
+  normalized.items = (Array.isArray(raw?.items) ? raw.items : [])
+    .map((item) => ({
+      id: item.id || randomUUID(),
+      topic: normalizeTextSignal(item.topic, 220),
+      hook: normalizeTextSignal(item.hook, 220),
+      cta: normalizeTextSignal(item.cta, 220),
+      contentType: normalizeTextSignal(item.contentType || "text_post", 80),
+      platform: normalizeTextSignal(item.platform || "telegram", 80),
+      generationCount: Number(item.generationCount || 1),
+      scenario: normalizeTextSignal(item.scenario, 80),
+      lengthMode: normalizeTextSignal(item.lengthMode, 40),
+      variant: normalizeTextSignal(item.variant || "default", 60),
+      timestamp: item.timestamp || item.createdAt || new Date().toISOString(),
+    }))
+    .filter((item) => item.topic || item.hook || item.cta)
+    .slice(-500);
+  normalized.totals = {
+    generations: normalized.items.reduce((sum, item) => sum + Number(item.generationCount || 1), 0),
+    byPlatform: countBy(normalized.items.map((item) => item.platform)),
+    byContentType: countBy(normalized.items.map((item) => item.contentType)),
+  };
+  normalized.updatedAt = raw?.updatedAt || new Date().toISOString();
+  return normalized;
+}
+
+async function loadContentMemory(expertId) {
+  const cleanId = sanitizeRuntimeExpertId(expertId);
+  if (!cleanId || cleanId === DEFAULT_RUNTIME_EXPERT.expertId) return emptyContentMemory(cleanId || expertId);
+  return normalizeContentMemory(await readJsonFileSafe(contentMemoryPath(cleanId), null), cleanId);
+}
+
+async function saveContentMemory(memory) {
+  const cleanId = sanitizeRuntimeExpertId(memory.expertId);
+  const normalized = normalizeContentMemory({ ...memory, updatedAt: new Date().toISOString() }, cleanId);
+  await writeJsonFileSafe(contentMemoryPath(cleanId), normalized);
+  return normalized;
+}
+
+function buildRecommendedTopics(identityProfile, memory, expert) {
+  const usedKeys = new Set(memory.items.map((item) => normalizeSignalKey(item.topic)).filter(Boolean));
+  const identityTopics = [
+    ...(identityProfile?.nicheProfile?.topics || []),
+    ...(expert?.niche ? String(expert.niche).split(/[,;]+/) : []),
+  ];
+  const seedTopics = uniqueStrings(identityTopics, 20).filter((topic) => !usedKeys.has(normalizeSignalKey(topic)));
+  const fallback = [
+    "разбор частой ошибки аудитории",
+    "миф, который мешает результату",
+    "пошаговый мини-практикум",
+    "личная позиция эксперта по спорной теме",
+    "чек-лист для самодиагностики",
+    "история клиента без персональных данных",
+  ];
+  return uniqueStrings([...seedTopics, ...fallback], 10);
+}
+
+function buildRecommendedHooks(identityProfile, memory) {
+  const usedKeys = new Set(memory.items.map((item) => normalizeSignalKey(item.hook)).filter(Boolean));
+  const identityHooks = identityProfile?.contentProfile?.hookPatterns || [];
+  const fallback = [
+    "Начните с конкретного наблюдения из жизни аудитории.",
+    "Откройте пост коротким контрастом: что кажется проблемой и что ей является на самом деле.",
+    "Сформулируйте один неудобный, но бережный тезис.",
+    "Начните с вопроса, который аудитория обычно боится произнести.",
+  ];
+  return uniqueStrings([...identityHooks, ...fallback], 8).filter((hook) => !usedKeys.has(normalizeSignalKey(hook)));
+}
+
+function buildRecommendedFormats(identityProfile, memory) {
+  const usedTypes = new Set(memory.items.slice(-20).map((item) => item.contentType));
+  const preferred = identityProfile?.contentProfile?.preferredFormats || [];
+  const fallback = ["text_short", "text_normal", "text_long", "text_emotional", "text_expert", "text_telegram"];
+  return uniqueStrings([...preferred, ...fallback], 10).filter((format) => !usedTypes.has(format)).slice(0, 6);
+}
+
+function rebuildContentBrainProfile({ expert, identityProfile, memory }) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || memory?.expertId || "");
+  const topics = memory.items.map((item) => item.topic).filter(Boolean);
+  const hooks = memory.items.map((item) => item.hook).filter(Boolean);
+  const ctas = memory.items.map((item) => item.cta).filter(Boolean);
+  const topTopics = topFrequencyItems(topics, 8);
+  const topHooks = topFrequencyItems(hooks, 8);
+  const topCtas = topFrequencyItems(ctas, 8);
+  return emptyContentBrainProfile(expertId, {
+    audienceProfile: {
+      assumedAudience: identityProfile?.nicheProfile?.audience || "not specified",
+      niche: identityProfile?.nicheProfile?.niche || expert?.niche || "",
+      terminology: identityProfile?.nicheProfile?.terminology || [],
+      source: identityProfile ? `identity:${identityProfile.status}` : "minimal expert profile",
+    },
+    contentBalance: {
+      totalItems: memory.items.length,
+      generationCount: memory.totals.generations,
+      uniqueTopics: uniqueStrings(topics, 500).length,
+      uniqueHooks: uniqueStrings(hooks, 500).length,
+      uniqueCTA: uniqueStrings(ctas, 500).length,
+      platform: memory.totals.byPlatform,
+      contentTypes: memory.totals.byContentType,
+      topTopics,
+      overusedHooks: topHooks.filter((item) => item.count > 1),
+      ctaBalance: topCtas,
+    },
+    usedHooks: uniqueStrings(hooks.slice().reverse(), 50),
+    usedTopics: uniqueStrings(topics.slice().reverse(), 80),
+    usedCTA: uniqueStrings(ctas.slice().reverse(), 50),
+    recommendedTopics: buildRecommendedTopics(identityProfile, memory, expert),
+    recommendedFormats: buildRecommendedFormats(identityProfile, memory),
+    recommendedHooks: buildRecommendedHooks(identityProfile, memory),
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
+async function loadContentBrainProfile(expertId) {
+  const cleanId = sanitizeRuntimeExpertId(expertId);
+  if (!cleanId || cleanId === DEFAULT_RUNTIME_EXPERT.expertId) return emptyContentBrainProfile(cleanId || expertId);
+  return emptyContentBrainProfile(cleanId, await readJsonFileSafe(contentBrainPath(cleanId), null) || {});
+}
+
+async function rebuildContentBrainForExpert(expert) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || "");
+  if (!expertId || expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    throw new Error("Content brain is disabled for Dinara stable path.");
+  }
+  const memory = await loadContentMemory(expertId);
+  const identityProfile = await loadIdentityProfile(expertId) || buildMinimalIdentityProfileFromExpert(expert);
+  const brain = rebuildContentBrainProfile({ expert, identityProfile, memory });
+  await writeJsonFileSafe(contentBrainPath(expertId), brain);
+  return { brain, memory, identityProfile };
+}
+
+function buildContentBrainPrompt(brain, memory) {
+  if (!brain || !memory) return "";
+  const recentItems = memory.items.slice(-8);
+  const recentTopics = uniqueStrings(recentItems.map((item) => item.topic), 8);
+  const recentHooks = uniqueStrings(recentItems.map((item) => item.hook), 8);
+  const recentCtas = uniqueStrings(recentItems.map((item) => item.cta), 8);
+  return [
+    "RUNTIME CONTENT BRAIN:",
+    recentTopics.length ? `Recent topics to avoid repeating: ${recentTopics.join("; ")}` : null,
+    recentHooks.length ? `Recent hooks to avoid repeating: ${recentHooks.join("; ")}` : null,
+    recentCtas.length ? `Recent CTA patterns to avoid repeating: ${recentCtas.join("; ")}` : null,
+    brain.recommendedTopics?.length ? `Recommended next topic angles: ${brain.recommendedTopics.slice(0, 6).join("; ")}` : null,
+    brain.recommendedFormats?.length ? `Missing or underused formats: ${brain.recommendedFormats.slice(0, 5).join("; ")}` : null,
+    brain.recommendedHooks?.length ? `Fresh hook directions: ${brain.recommendedHooks.slice(0, 5).join("; ")}` : null,
+    "Anti-repetition rules: do not reuse the same opening, CTA, or semantic angle from recent memory. If the user topic repeats, choose a new sub-angle and a different final action.",
+  ].filter(Boolean).join("\n");
+}
+
+function normalizeContentBalanceScoreMap(scores) {
+  const keys = ["expert", "engagement", "personal", "conversion"];
+  const clean = keys.reduce((acc, key) => {
+    acc[key] = Math.max(0, Number(scores?.[key] || 0));
+    return acc;
+  }, {});
+  const total = keys.reduce((sum, key) => sum + clean[key], 0);
+  if (!total) {
+    return { expert: 0, engagement: 0, personal: 0, conversion: 0 };
+  }
+  const rounded = {};
+  let used = 0;
+  keys.forEach((key, index) => {
+    rounded[key] = index === keys.length - 1 ? Math.max(0, 100 - used) : Math.round((clean[key] / total) * 100);
+    used += rounded[key];
+  });
+  return rounded;
+}
+
+function classifyStrategyContentType(item = {}) {
+  const text = [item.topic, item.hook, item.cta, item.contentType, item.variant].map((value) => String(value || "").toLowerCase()).join(" ");
+  const scores = { expert: 1, engagement: 1, personal: 0, conversion: 0 };
+  if (/(почему|ошибк|миф|разбор|чек.?лист|шаг|практик|инструмент|метод|исслед|объясн|как)/iu.test(text)) scores.expert += 3;
+  if (/[?？]|напишите|поделитесь|обсудим|что вы думаете|выберите|опрос|коммент/iu.test(text)) scores.engagement += 3;
+  if (/(истори|личн|мой|моя|мне|клиент|пример|наблюден|за кулис|опыт)/iu.test(text)) scores.personal += 3;
+  if (/(запис|консультац|курс|встреч|разбор|приходите|купить|места|тариф|оплат|заявк)/iu.test(text)) scores.conversion += 3;
+  return scores;
+}
+
+function inferStrategyContentBalance(memory) {
+  const aggregate = { expert: 0, engagement: 0, personal: 0, conversion: 0 };
+  for (const item of memory?.items || []) {
+    const scores = classifyStrategyContentType(item);
+    aggregate.expert += scores.expert;
+    aggregate.engagement += scores.engagement;
+    aggregate.personal += scores.personal;
+    aggregate.conversion += scores.conversion;
+  }
+  return normalizeContentBalanceScoreMap(aggregate);
+}
+
+function detectMissingContentTypes(balance, memory) {
+  const missing = [];
+  if (!memory?.items?.length) return ["expert", "engagement", "personal", "conversion"];
+  if (balance.expert < 25) missing.push("expert");
+  if (balance.engagement < 20) missing.push("engagement");
+  if (balance.personal < 12) missing.push("personal");
+  if (balance.conversion < 8) missing.push("conversion");
+  return missing;
+}
+
+function scoreViralitySignal(text = "") {
+  const value = normalizeTextSignal(text, 500);
+  const lower = value.toLowerCase();
+  const hookStrength = Math.min(100, 20 + (value.length > 45 ? 20 : 0) + (/[?？]/.test(value) ? 20 : 0) + (/(почему|как|что если|ошибк|миф|никто|важно|правда)/iu.test(lower) ? 25 : 0));
+  const emotionality = Math.min(100, 15 + (/(страх|стыд|боль|злость|любов|радост|устал|тревог|стыдно|обид|хочу|не могу)/iu.test(lower) ? 35 : 0) + (/(вы|тебя|вам|себя)/iu.test(lower) ? 15 : 0));
+  const controversy = Math.min(100, 10 + (/(миф|ошибк|на самом деле|не работает|нельзя|хватит|перестаньте|спорн)/iu.test(lower) ? 45 : 0));
+  const engagementPotential = Math.min(100, Math.round((hookStrength + emotionality + controversy) / 3) + (/[?？]/.test(value) ? 10 : 0));
+  return { hookStrength, emotionality, controversy, engagementPotential };
+}
+
+function averageViralitySignals(items = []) {
+  const signals = items.map((item) => scoreViralitySignal([item.hook, item.topic, item.cta].filter(Boolean).join(" ")));
+  if (!signals.length) return { hookStrength: 0, emotionality: 0, controversy: 0, engagementPotential: 0 };
+  const keys = ["hookStrength", "emotionality", "controversy", "engagementPotential"];
+  return keys.reduce((acc, key) => {
+    acc[key] = Math.round(signals.reduce((sum, signal) => sum + signal[key], 0) / signals.length);
+    return acc;
+  }, {});
+}
+
+function buildStrategyRecommendedTopics(identityProfile, brain, memory, expert) {
+  const recentKeys = new Set((memory?.items || []).slice(-12).map((item) => normalizeSignalKey(item.topic)).filter(Boolean));
+  const base = [
+    ...(brain?.recommendedTopics || []),
+    ...(identityProfile?.nicheProfile?.topics || []),
+    ...(expert?.niche ? String(expert.niche).split(/[,;]+/) : []),
+    "контрастный разбор частой ошибки аудитории",
+    "практический мини-разбор одного симптома или запроса",
+    "личная позиция эксперта по спорному вопросу",
+    "мягкий продающий пост через критерии готовности",
+    "история наблюдения без персональных данных",
+  ];
+  return uniqueStrings(base, 18).filter((topic) => !recentKeys.has(normalizeSignalKey(topic))).slice(0, 12);
+}
+
+function buildStrategySeriesIdeas(topics = [], missingTypes = []) {
+  const seed = topics.length ? topics.slice(0, 4) : ["главная боль аудитории", "частые ошибки", "путь к результату"];
+  const ideas = seed.flatMap((topic) => [
+    `Mini-series: 3 поста про "${topic}" - миф, практика, мягкий CTA`,
+    `Topic chain: "${topic}" - боль аудитории -> экспертный разбор -> следующий шаг`,
+  ]);
+  if (missingTypes.includes("personal")) ideas.push("Recurring format: личное наблюдение недели без раскрытия приватных кейсов");
+  if (missingTypes.includes("engagement")) ideas.push("Recurring format: вопрос недели с разбором ответов аудитории");
+  if (missingTypes.includes("conversion")) ideas.push("Recurring format: кому сейчас полезен следующий шаг с экспертом");
+  return uniqueStrings(ideas, 10);
+}
+
+function buildPlatformStrategies({ balance, missingTypes, virality, topics, hooks, formats }) {
+  return {
+    telegram: {
+      focus: missingTypes.includes("personal") ? "add warmer personal/expert observations" : "deepen expert trust and audience replies",
+      nextTopics: topics.slice(0, 5),
+      hookDirections: hooks.slice(0, 4),
+      formatMix: formats.slice(0, 5),
+      ctaGuidance: balance.conversion > 25 ? "reduce direct selling; use reflective or comment CTA next" : "use soft discussion CTA, then one conversion touchpoint",
+      virality,
+    },
+    instagram: {
+      focus: "carousel-ready practical angles with one clear save/share reason",
+      nextTopics: topics.slice(0, 4),
+      formatMix: ["carousel", "caption_story", ...formats].slice(0, 5),
+      ctaGuidance: "alternate save/share CTA with comment CTA",
+      virality,
+    },
+    reels: {
+      focus: virality.hookStrength < 55 ? "stronger first-line contradiction or audience pain" : "turn strongest hooks into short scripts",
+      nextTopics: topics.slice(0, 3),
+      formatMix: ["talking_head", "myth_vs_truth", "3_signs"].concat(formats).slice(0, 5),
+      ctaGuidance: "ask one small reaction or save action",
+      virality,
+    },
+  };
+}
+
+function normalizeContentStrategyProfile(raw, expertId) {
+  const normalized = emptyContentStrategyProfile(expertId, raw || {});
+  normalized.expertId = sanitizeRuntimeExpertId(raw?.expertId || expertId) || expertId;
+  return normalized;
+}
+
+async function loadContentStrategyProfile(expertId) {
+  const cleanId = sanitizeRuntimeExpertId(expertId);
+  if (!cleanId || cleanId === DEFAULT_RUNTIME_EXPERT.expertId) return emptyContentStrategyProfile(cleanId || expertId);
+  return normalizeContentStrategyProfile(await readJsonFileSafe(contentStrategyPath(cleanId), null), cleanId);
+}
+
+async function saveContentStrategyProfile(strategy) {
+  const cleanId = sanitizeRuntimeExpertId(strategy.expertId);
+  const normalized = normalizeContentStrategyProfile({ ...strategy, lastUpdated: strategy.lastUpdated || new Date().toISOString() }, cleanId);
+  await writeJsonFileSafe(contentStrategyPath(cleanId), normalized);
+  return normalized;
+}
+
+function rebuildContentStrategyProfile({ expert, identityProfile, memory, brain }) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || memory?.expertId || "");
+  const balance = inferStrategyContentBalance(memory);
+  const missingTypes = detectMissingContentTypes(balance, memory);
+  const topTopics = (brain?.contentBalance?.topTopics || topFrequencyItems((memory?.items || []).map((item) => item.topic), 8));
+  const ctaBalance = brain?.contentBalance?.ctaBalance || topFrequencyItems((memory?.items || []).map((item) => item.cta), 8);
+  const overusedTopics = topTopics.filter((item) => item.count > 1).map((item) => item.value);
+  const overusedCTA = ctaBalance.filter((item) => item.count > 1).map((item) => item.value);
+  const recommendedNextTopics = buildStrategyRecommendedTopics(identityProfile, brain, memory, expert);
+  const recommendedHooks = uniqueStrings([
+    ...(brain?.recommendedHooks || []),
+    ...(identityProfile?.contentProfile?.hookPatterns || []),
+    "Сильный контраст: что аудитория думает о проблеме и что происходит на самом деле.",
+    "Бережный спорный тезис, который хочется обсудить.",
+    "Один конкретный симптом или ситуация из повседневности аудитории.",
+  ], 16);
+  const recommendedFormats = uniqueStrings([
+    ...(brain?.recommendedFormats || []),
+    ...missingTypes.map((type) => `${type}_post`),
+    "mini_series",
+    "topic_chain",
+    "recurring_format",
+  ], 14);
+  const virality = averageViralitySignals((memory?.items || []).slice(-20));
+  return emptyContentStrategyProfile(expertId, {
+    contentBalance: balance,
+    platformStrategies: buildPlatformStrategies({
+      balance,
+      missingTypes,
+      virality,
+      topics: recommendedNextTopics,
+      hooks: recommendedHooks,
+      formats: recommendedFormats,
+    }),
+    recommendedNextTopics,
+    recommendedHooks,
+    recommendedFormats,
+    missingContentTypes: missingTypes,
+    overusedTopics,
+    overusedCTA,
+    seriesIdeas: buildStrategySeriesIdeas(recommendedNextTopics, missingTypes),
+    lastUpdated: new Date().toISOString(),
+  });
+}
+
+async function rebuildContentStrategyForExpert(expert) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || "");
+  if (!expertId || expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    throw new Error("Content strategy is disabled for Dinara stable path.");
+  }
+  const memory = await loadContentMemory(expertId);
+  const identityProfile = await loadIdentityProfile(expertId) || buildMinimalIdentityProfileFromExpert(expert);
+  const brain = await loadContentBrainProfile(expertId);
+  const effectiveBrain = brain.lastUpdated || !memory.items.length
+    ? brain
+    : rebuildContentBrainProfile({ expert, identityProfile, memory });
+  const strategy = rebuildContentStrategyProfile({ expert, identityProfile, memory, brain: effectiveBrain });
+  await saveContentStrategyProfile(strategy);
+  return { strategy, memory, identityProfile, brain: effectiveBrain };
+}
+
+function buildContentStrategyPrompt(strategy) {
+  if (!strategy || !strategy.lastUpdated) return "";
+  return [
+    "RUNTIME CONTENT STRATEGY:",
+    strategy.missingContentTypes?.length ? `Balance to improve next: ${strategy.missingContentTypes.slice(0, 4).join("; ")}` : null,
+    strategy.recommendedNextTopics?.length ? `Strategic next topic angles: ${strategy.recommendedNextTopics.slice(0, 5).join("; ")}` : null,
+    strategy.recommendedFormats?.length ? `Recommended next formats: ${strategy.recommendedFormats.slice(0, 4).join("; ")}` : null,
+    strategy.overusedCTA?.length ? `CTA fatigue to avoid: ${strategy.overusedCTA.slice(0, 4).join("; ")}` : null,
+    strategy.seriesIdeas?.length ? `Series opportunities: ${strategy.seriesIdeas.slice(0, 3).join("; ")}` : null,
+    "Use strategy softly: respect the user's topic first, but choose a fresher angle, format, and CTA when possible.",
+  ].filter(Boolean).join("\n");
+}
+
+function strategyReadiness(strategy, memory, identityProfile, brain) {
+  const score = [
+    Boolean(strategy?.lastUpdated),
+    Boolean(memory?.items?.length),
+    Boolean(identityProfile),
+    Boolean(brain?.lastUpdated),
+    Boolean(strategy?.recommendedNextTopics?.length),
+  ].filter(Boolean).length;
+  if (score >= 4) return "ready";
+  if (score >= 2) return "warming_up";
+  return "not_ready";
+}
+
+function formatStrategyBalance(balance = {}) {
+  return [
+    `expert ${Number(balance.expert || 0)}%`,
+    `engagement ${Number(balance.engagement || 0)}%`,
+    `personal ${Number(balance.personal || 0)}%`,
+    `conversion ${Number(balance.conversion || 0)}%`,
+  ].join(" / ");
+}
+
+async function buildStrategyStatusText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    return [
+      "Content strategy status",
+      "",
+      `active expert: ${expert.expertId} (${expert.displayName})`,
+      "strategy exists: no",
+      "strategy readiness: disabled",
+      "Dinara stays on the old stable production path.",
+    ].join("\n");
+  }
+  const memory = await loadContentMemory(expert.expertId);
+  const identityProfile = await loadIdentityProfile(expert.expertId) || buildMinimalIdentityProfileFromExpert(expert);
+  const brain = await loadContentBrainProfile(expert.expertId);
+  const strategy = await loadContentStrategyProfile(expert.expertId);
+  return [
+    "Content strategy status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `strategy exists: ${strategy.lastUpdated ? "yes" : "no"}`,
+    `content balance: ${formatStrategyBalance(strategy.contentBalance)}`,
+    `overused topics: ${strategy.overusedTopics.length}`,
+    `recommended topics count: ${strategy.recommendedNextTopics.length}`,
+    `strategy readiness: ${strategyReadiness(strategy, memory, identityProfile, brain)}`,
+  ].join("\n");
+}
+
+async function buildStrategyShowText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) return "Content strategy is disabled for Dinara stable path.";
+  const memory = await loadContentMemory(expert.expertId);
+  const current = await loadContentStrategyProfile(expert.expertId);
+  const strategy = current.lastUpdated || !memory.items.length ? current : (await rebuildContentStrategyForExpert(expert)).strategy;
+  const telegram = strategy.platformStrategies?.telegram || {};
+  return [
+    "Content strategy",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `last updated: ${strategy.lastUpdated || "not built"}`,
+    `current content balance: ${formatStrategyBalance(strategy.contentBalance)}`,
+    "",
+    "Missing content types:",
+    ...(strategy.missingContentTypes.length ? strategy.missingContentTypes.map((item) => `- ${item}`) : ["- none detected"]),
+    "",
+    "Recommended next content:",
+    ...(strategy.recommendedNextTopics.length ? strategy.recommendedNextTopics.slice(0, 7).map((item) => `- ${item}`) : ["- generate a few posts first"]),
+    "",
+    "Weak areas:",
+    ...(strategy.overusedTopics.length ? strategy.overusedTopics.slice(0, 5).map((item) => `- repeated topic: ${item}`) : ["- no repeated topics yet"]),
+    ...(strategy.overusedCTA.length ? strategy.overusedCTA.slice(0, 5).map((item) => `- repeated CTA: ${item}`) : []),
+    "",
+    "CTA balance:",
+    `- ${telegram.ctaGuidance || "not enough data yet"}`,
+    "",
+    "Audience engagement assumptions:",
+    `- ${telegram.focus || "needs more generated content memory"}`,
+    `- virality: hook ${telegram.virality?.hookStrength || 0}, emotion ${telegram.virality?.emotionality || 0}, controversy ${telegram.virality?.controversy || 0}, engagement ${telegram.virality?.engagementPotential || 0}`,
+    "",
+    "Series ideas:",
+    ...(strategy.seriesIdeas.length ? strategy.seriesIdeas.slice(0, 5).map((item) => `- ${item}`) : ["- none yet"]),
+  ].join("\n");
+}
+
+function buildContentPlanFromStrategy(strategy, expert) {
+  const topics = strategy.recommendedNextTopics.length ? strategy.recommendedNextTopics : buildStrategyRecommendedTopics(null, null, emptyContentMemory(expert.expertId), expert);
+  const hooks = strategy.recommendedHooks.length ? strategy.recommendedHooks : buildRecommendedHooks(null, emptyContentMemory(expert.expertId));
+  const formats = strategy.recommendedFormats.length ? strategy.recommendedFormats : ["expert_post", "engagement_post", "personal_observation", "soft_conversion", "mini_series"];
+  const ctaCycle = strategy.overusedCTA.length
+    ? ["comment", "save", "reflection", "share", "soft_consultation", "question", "no_direct_cta"]
+    : ["comment", "save", "reflection", "soft_consultation", "share", "question", "mini_action"];
+  const platforms = ["telegram", "instagram", "reels", "telegram", "instagram", "telegram", "reels"];
+  return Array.from({ length: 7 }, (_, index) => ({
+    idea: topics[index % topics.length] || `content idea ${index + 1}`,
+    hook: hooks[index % hooks.length] || "Start with one concrete audience pain point.",
+    format: formats[index % formats.length] || "text_post",
+    ctaType: ctaCycle[index % ctaCycle.length],
+    platform: platforms[index % platforms.length],
+  }));
+}
+
+async function buildContentPlanText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) return "Content plan strategy runtime is disabled for Dinara stable path.";
+  const memory = await loadContentMemory(expert.expertId);
+  const current = await loadContentStrategyProfile(expert.expertId);
+  const strategy = current.lastUpdated || !memory.items.length ? current : (await rebuildContentStrategyForExpert(expert)).strategy;
+  const plan = buildContentPlanFromStrategy(strategy, expert);
+  return [
+    "7-day lightweight content roadmap",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `strategy readiness: ${strategy.lastUpdated ? "ready" : "seed plan"}`,
+    "",
+    ...plan.map((item, index) => [
+      `${index + 1}. ${item.idea}`,
+      `hook: ${item.hook}`,
+      `format: ${item.format}`,
+      `CTA type: ${item.ctaType}`,
+      `platform: ${item.platform}`,
+    ].join("\n")),
+  ].join("\n\n");
+}
+
+async function appendGeneratedContentMemory(expert, metadata) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || metadata?.expertId || "");
+  if (!expertId || expertId === DEFAULT_RUNTIME_EXPERT.expertId) return null;
+  const memory = await loadContentMemory(expertId);
+  const now = new Date().toISOString();
+  const topic = normalizeTextSignal(metadata.topic, 220);
+  const hook = normalizeTextSignal(metadata.hook, 220);
+  const cta = normalizeTextSignal(metadata.cta, 220);
+  const itemKey = [topic, hook, cta].map(normalizeSignalKey).join("|");
+  const existing = memory.items.find((item) => [item.topic, item.hook, item.cta].map(normalizeSignalKey).join("|") === itemKey);
+  if (existing) {
+    existing.generationCount = Number(existing.generationCount || 1) + 1;
+    existing.timestamp = now;
+    existing.contentType = metadata.contentType || existing.contentType;
+    existing.platform = metadata.platform || existing.platform;
+  } else {
+    memory.items.push({
+      id: randomUUID(),
+      topic,
+      hook,
+      cta,
+      contentType: normalizeTextSignal(metadata.contentType || "text_post", 80),
+      platform: normalizeTextSignal(metadata.platform || "telegram", 80),
+      generationCount: 1,
+      scenario: normalizeTextSignal(metadata.scenario, 80),
+      lengthMode: normalizeTextSignal(metadata.lengthMode, 40),
+      variant: normalizeTextSignal(metadata.variant || "default", 60),
+      timestamp: now,
+    });
+  }
+  const savedMemory = await saveContentMemory(memory);
+  const { brain } = await rebuildContentBrainForExpert(expert);
+  const { strategy } = await rebuildContentStrategyForExpert(expert);
+  return { memory: savedMemory, brain, strategy };
+}
+
+async function buildBrainStatusText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    return [
+      "Content brain status",
+      "",
+      `active expert: ${expert.expertId} (${expert.displayName})`,
+      "brain ready: no",
+      "Dinara uses the old stable production path; content brain is only for non-Dinara runtime experts.",
+    ].join("\n");
+  }
+  const memory = await loadContentMemory(expert.expertId);
+  const brain = await loadContentBrainProfile(expert.expertId);
+  return [
+    "Content brain status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `memory items: ${memory.items.length}`,
+    `unique topics: ${uniqueStrings(memory.items.map((item) => item.topic), 500).length}`,
+    `unique hooks: ${uniqueStrings(memory.items.map((item) => item.hook), 500).length}`,
+    `recommended topics count: ${brain.recommendedTopics.length}`,
+    `brain ready: ${brain.lastUpdated && memory.items.length ? "yes" : "no"}`,
+  ].join("\n");
+}
+
+async function buildBrainShowText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) return "Content brain is disabled for Dinara stable path.";
+  const memory = await loadContentMemory(expert.expertId);
+  const brain = await loadContentBrainProfile(expert.expertId);
+  const rebuilt = !brain.lastUpdated && memory.items.length ? (await rebuildContentBrainForExpert(expert)).brain : brain;
+  const topTopics = rebuilt.contentBalance?.topTopics || [];
+  const overusedHooks = rebuilt.contentBalance?.overusedHooks || [];
+  const ctaBalance = rebuilt.contentBalance?.ctaBalance || [];
+  return [
+    "Content brain",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `last updated: ${rebuilt.lastUpdated || "not built"}`,
+    "",
+    "Top topics:",
+    ...(topTopics.length ? topTopics.map((item) => `- ${item.value} (${item.count})`) : ["- none yet"]),
+    "",
+    "Audience assumptions:",
+    `- niche: ${rebuilt.audienceProfile?.niche || expert.niche || "not specified"}`,
+    `- audience: ${rebuilt.audienceProfile?.assumedAudience || "not specified"}`,
+    "",
+    "Overused hooks:",
+    ...(overusedHooks.length ? overusedHooks.map((item) => `- ${item.value} (${item.count})`) : ["- none yet"]),
+    "",
+    "Recommended next content:",
+    ...(rebuilt.recommendedTopics.length ? rebuilt.recommendedTopics.slice(0, 6).map((item) => `- ${item}`) : ["- add a few generations first"]),
+    "",
+    "CTA balance:",
+    ...(ctaBalance.length ? ctaBalance.map((item) => `- ${item.value} (${item.count})`) : ["- none yet"]),
+  ].join("\n");
+}
+
+async function buildContentMemoryText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) return "Content memory is disabled for Dinara stable path.";
+  const memory = await loadContentMemory(expert.expertId);
+  const recent = memory.items.slice(-10).reverse();
+  return [
+    "Content memory",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `items: ${memory.items.length}`,
+    "",
+    ...(recent.length ? recent.map((item, index) => [
+      `${index + 1}. ${item.topic || "topic unknown"}`,
+      `hook: ${item.hook || "none"}`,
+      `CTA: ${item.cta || "none"}`,
+      `type/platform: ${item.contentType || "text_post"} / ${item.platform || "telegram"}`,
+    ].join("\n")) : ["No generated content memory yet."]),
+  ].join("\n\n");
+}
+
+async function extractIdentityProfileForExpert(expert, options = {}) {
+  const expertId = sanitizeRuntimeExpertId(expert?.expertId || "");
+  if (!expertId) throw new Error("Missing expertId.");
+  if (expertId === DEFAULT_RUNTIME_EXPERT.expertId) throw new Error("Identity extraction is disabled for Dinara.");
+  const previous = await loadIdentityProfile(expertId);
+  const rows = await loadRuntimeIndexedRows(expertId);
+  if (!rows.length) throw new Error(`No indexed chunks found for ${expertId}. Run /ingest_run first.`);
+  if (!OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required for identity extraction.");
+
+  const digest = buildIdentitySourceDigest(rows);
+  const now = new Date().toISOString();
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "system",
+        content: [
+          "You extract a lightweight runtime identity profile for a Russian AI content expert.",
+          "Return only strict JSON with the requested schema. No markdown.",
+          "Infer style only from provided indexed chunks and minimal expert metadata.",
+          "Do not invent biography, credentials, clients, guarantees, or Dinara-specific voice.",
+          "Keep arrays compact and practical for prompt injection.",
+        ].join("\n"),
+      },
+      {
+        role: "user",
+        content: [
+          "Schema:",
+          JSON.stringify(emptyIdentityProfile(expertId), null, 2),
+          "",
+          "Expert metadata:",
+          JSON.stringify({
+            expertId,
+            displayName: expert.displayName,
+            niche: expert.niche,
+            styleDescription: expert.styleDescription,
+          }, null, 2),
+          "",
+          "Indexed chunks:",
+          digest,
+        ].join("\n"),
+      },
+    ],
+    temperature: 0.2,
+    max_tokens: 1200,
+  });
+  const parsed = extractJsonObject(completion.choices[0].message.content);
+  const normalized = normalizeIdentityProfile({
+    ...parsed,
+    expertId,
+    status: identityStyleReady(parsed) && parsed?.nicheProfile?.topics?.length ? "ready" : "draft",
+    createdAt: previous?.createdAt || now,
+    updatedAt: now,
+  }, expertId);
+  await saveIdentityProfile(normalized);
+  runtimeLog("identity profile extracted", {
+    expertId,
+    status: normalized.status,
+    topics: normalized.nicheProfile.topics.length,
+    sourceRows: rows.length,
+    manual: Boolean(options.manual),
+  });
+  return { profile: normalized, rowsCount: rows.length };
+}
+
+async function markIdentityExtractionFailed(expertId, error) {
+  const cleanId = sanitizeRuntimeExpertId(expertId);
+  const previous = await loadIdentityProfile(cleanId);
+  const failed = normalizeIdentityProfile({
+    ...(previous || emptyIdentityProfile(cleanId)),
+    status: "failed",
+    updatedAt: new Date().toISOString(),
+  }, cleanId);
+  await writeJsonFileSafe(identityProfilePath(cleanId), failed);
+  return failed;
+}
+
+async function runIdentityExtractionForActiveExpert(chatId, userId) {
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /identity_extract доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    await bot.sendMessage(chatId, "Dinara остается на старом стабильном поведении. Identity extraction для нее не запускаю.");
+    return;
+  }
+  await bot.sendMessage(chatId, `Identity extraction started: ${expert.expertId}`);
+  try {
+    const result = await extractIdentityProfileForExpert(expert, { manual: true });
+    await bot.sendMessage(chatId, [
+      `✅ Identity profile ready: ${expert.expertId}`,
+      `status: ${result.profile.status}`,
+      `indexed chunks analyzed: ${result.rowsCount}`,
+      `topics: ${result.profile.nicheProfile.topics.length}`,
+      `style readiness: ${identityStyleReady(result.profile) ? "yes" : "no"}`,
+      `path: runtime_data/expert_identity_profiles/${expert.expertId}.json`,
+    ].join("\n"));
+  } catch (error) {
+    await markIdentityExtractionFailed(expert.expertId, error).catch(() => null);
+    await bot.sendMessage(chatId, `❌ Identity extraction failed: ${String(error.message || error).slice(0, 900)}`);
+  }
+}
+
+async function buildIdentityStatusText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const profile = await loadIdentityProfile(expert.expertId);
+  const exists = Boolean(profile);
+  return [
+    "Identity status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `identity profile exists: ${exists ? "yes" : "no"}`,
+    `status: ${profile?.status || "none"}`,
+    `extracted topics count: ${profile?.nicheProfile?.topics?.length || 0}`,
+    `style readiness: ${identityStyleReady(profile) ? "yes" : "no"}`,
+  ].join("\n");
+}
+
+async function buildIdentityShowText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const profile = await loadIdentityProfile(expert.expertId);
+  if (!profile) {
+    const minimal = buildMinimalIdentityProfileFromExpert(expert);
+    return [
+      "Identity summary",
+      "",
+      `active expert: ${expert.expertId} (${expert.displayName})`,
+      "profile: not extracted yet; using minimal onboarding profile",
+      `tone: ${minimal.styleProfile.tone.join("; ") || "not specified"}`,
+      `niche: ${minimal.nicheProfile.niche || "not specified"}`,
+      `audience: ${minimal.nicheProfile.audience || "not specified"}`,
+      `top topics: ${minimal.nicheProfile.topics.slice(0, 6).join(", ") || "not specified"}`,
+      `CTA style: ${minimal.styleProfile.ctaPatterns.join("; ") || "soft next step"}`,
+    ].join("\n");
+  }
+  return [
+    "Identity summary",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `status: ${profile.status}`,
+    `tone: ${profile.styleProfile.tone.slice(0, 5).join("; ") || "not specified"}`,
+    `niche: ${profile.nicheProfile.niche || expert.niche || "not specified"}`,
+    `audience: ${profile.nicheProfile.audience || "not specified"}`,
+    `top topics: ${profile.nicheProfile.topics.slice(0, 8).join(", ") || "not specified"}`,
+    `CTA style: ${profile.styleProfile.ctaPatterns.slice(0, 5).join("; ") || "not specified"}`,
+  ].join("\n");
+}
+
+async function buildKbStatusText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const entry = await getKbEntryForExpert(expert.expertId);
+  const summary = summarizeKbEntry(entry, expert);
+  const yesNo = (value) => value ? "yes" : "no";
+  return [
+    "Knowledge runtime status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `kb type: ${summary.kbType}`,
+    `attached files: ${summary.filesCount}`,
+    `indexed: ${yesNo(summary.indexed)}`,
+    `retrieval ready: ${yesNo(summary.retrievalReady)}`,
+    "",
+    `pending: ${summary.pendingCount}`,
+    `queued: ${summary.queuedCount}`,
+    `processing: ${summary.processingCount}`,
+    `indexed files: ${summary.indexedCount}`,
+    `failed: ${summary.failedCount}`,
+    `chunks: ${summary.chunksCount}`,
+    `embeddings: ${summary.embeddingCount}`,
+    `last ingest: ${entry.lastIngestAt || "none"}`,
+    `registry: runtime_data/expert_kb_registry.json`,
+  ].join("\n");
+}
+
+async function buildKbListText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const entry = await getKbEntryForExpert(expert.expertId);
+  const files = entry.files || [];
+  if (!files.length) {
+    return [
+      "Knowledge files",
+      "",
+      `active expert: ${expert.expertId} (${expert.displayName})`,
+      "",
+      "No attached files yet.",
+      "Use /kb_attach and send TXT, MD, PDF or DOCX.",
+    ].join("\n");
+  }
+  return [
+    "Knowledge files",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    "",
+    ...files.slice(-20).map((file, index) => {
+      const uploadedAt = file.uploadedAt ? file.uploadedAt.slice(0, 19).replace("T", " ") : "unknown";
+      const retrySuffix = file.retryCount ? `, retries ${file.retryCount}/${file.maxRetries}` : "";
+      return `${index + 1}. ${file.originalName} — ${file.ingestStatus}${retrySuffix}, ${Math.round(Number(file.sizeBytes || 0) / 1024)} KB, ${uploadedAt}`;
+    }),
+  ].join("\n");
+}
+
+async function buildKbActiveText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const entry = await getKbEntryForExpert(expert.expertId);
+  const summary = summarizeKbEntry(entry, expert);
+  const source = expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId
+    ? "Dinara production retrieval: Supabase match_chunks/vector fallback + articles fallback"
+      : summary.indexedCount > 0
+      ? `runtime indexed files for ${expert.expertId}`
+      : `runtime profile only for ${expert.expertId}; attached files are not indexed yet`;
+  return [
+    "Active retrieval source",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `source: ${source}`,
+    `knowledgeBase: ${expert.knowledgeBase || "not set"}`,
+    `registry kb type: ${summary.kbType}`,
+    `retrieval ready: ${summary.retrievalReady ? "yes" : "no"}`,
+  ].join("\n");
+}
+
+async function attachKnowledgeFileToActiveExpert(msg) {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /kb_attach доступен только для admin/full_access.");
+    return true;
+  }
+  if (!msg.document) {
+    await bot.sendMessage(chatId, "Отправьте TXT, MD, PDF или DOCX документ после /kb_attach.");
+    return true;
+  }
+
+  const originalName = sanitizeRuntimeFileName(msg.document.file_name || "telegram_document");
+  const ext = fileExtension(originalName);
+  if (!ALLOWED_KB_ATTACH_EXTENSIONS.includes(ext)) {
+    await bot.sendMessage(chatId, "Этот формат для runtime KB пока не принимаю. Подойдут TXT, MD, PDF или DOCX.");
+    return true;
+  }
+  if (Number(msg.document.file_size || 0) > ABUSE_LIMITS.maxUploadBytes) {
+    await bot.sendMessage(chatId, uploadRejectionText("file_too_large"));
+    return true;
+  }
+
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const expertId = sanitizeRuntimeExpertId(expert.expertId) || DEFAULT_RUNTIME_EXPERT.expertId;
+  const fileId = randomUUID();
+  const storedName = `${new Date().toISOString().replace(/[:.]/g, "-")}_${fileId.slice(0, 8)}_${originalName}`;
+  const expertDir = join(EXPERT_SOURCES_ROOT, expertId);
+  const storedPath = join(expertDir, storedName);
+  const relativePath = join("runtime_data", "expert_sources", expertId, storedName);
+
+  const buffer = await downloadTelegramDocument(msg.document.file_id, msg.document.file_size);
+  await ensureRuntimeDirectory(expertDir, "expert source directory");
+  await fs.writeFile(storedPath, buffer);
+
+  const uploadedAt = new Date().toISOString();
+  const fileMeta = normalizeKbFile({
+    fileId,
+    originalName,
+    storedName,
+    relativePath,
+    uploadedAt,
+    uploadedBy: userId,
+    sizeBytes: buffer.length,
+    mimeType: msg.document.mime_type || null,
+    kbType: "runtime_onboarding",
+    ingestStatus: "pending",
+  });
+  await writeJsonFileSafe(`${storedPath}.metadata.json`, {
+    ...fileMeta,
+    expertId,
+    telegramFileId: msg.document.file_id,
+    telegramFileUniqueId: msg.document.file_unique_id || null,
+  });
+
+  const registry = await loadExpertKbRegistry();
+  const existingIndex = registry.experts.findIndex((entry) => entry.expertId === expertId);
+  const entry = existingIndex >= 0 ? registry.experts[existingIndex] : normalizeKbEntry({ expertId, kbType: "runtime_onboarding" });
+  entry.files = [...(entry.files || []), fileMeta];
+  entry.kbType = expertId === DEFAULT_RUNTIME_EXPERT.expertId ? "production_dinara" : "runtime_onboarding";
+  entry.updatedAt = uploadedAt;
+  if (existingIndex >= 0) registry.experts[existingIndex] = entry;
+  else registry.experts.push(entry);
+  await saveExpertKbRegistry(registry);
+
+  const state = userState.get(chatId) || {};
+  state.kbAttachAwaiting = false;
+  userState.set(chatId, state);
+
+  await bot.sendMessage(chatId, [
+    "✅ Knowledge file attached.",
+    "",
+    `expert: ${expertId} (${expert.displayName})`,
+    `file: ${originalName}`,
+    `status: pending`,
+    "",
+    expertId === DEFAULT_RUNTIME_EXPERT.expertId
+      ? "Dinara оставлена на production retrieval; runtime ingestion для неё не запускаю."
+      : "Добавляю файл в ingestion queue автоматически.",
+    "Проверить: /kb_status или /kb_list",
+  ].join("\n"));
+  if (expertId !== DEFAULT_RUNTIME_EXPERT.expertId) {
+    await enqueueRuntimeIngestion({
+      chatId,
+      userId,
+      expert,
+      fileIds: [fileId],
+      reason: "kb_attach",
+      notify: true,
+    });
+  }
+  return true;
+}
+
+function isRuntimeIndexableStatus(status) {
+  return ["pending", "queued", "completed", "indexed"].includes(status);
+}
+
+function isRuntimePendingStatus(status) {
+  return ["pending", "queued"].includes(status);
+}
+
+function isRuntimeProcessingStatus(status) {
+  return ["processing", "cleaning", "chunking", "embedding", "indexing"].includes(status);
+}
+
+function runtimeExpertIndexDir(expertId) {
+  return join(EXPERT_INDEXES_ROOT, sanitizeRuntimeExpertId(expertId));
+}
+
+function resolveRuntimeKnowledgePath(relativeOrAbsolutePath) {
+  if (!relativeOrAbsolutePath) return null;
+  const value = String(relativeOrAbsolutePath);
+  if (/^[a-zA-Z]:[\\/]/.test(value) || value.startsWith("/") || value.startsWith("\\\\")) return value;
+  return join(__dirname, value);
+}
+
+async function readRuntimeKnowledgeFile(file) {
+  const path = resolveRuntimeKnowledgePath(file.relativePath);
+  if (!path) throw new Error("Missing file path.");
+  const ext = fileExtension(file.originalName || file.storedName || path);
+  if (ext === ".txt" || ext === ".md") {
+    return await fs.readFile(path, "utf-8");
+  }
+  if (ext === ".docx") {
+    const mammoth = await import("mammoth");
+    const result = await mammoth.default.extractRawText({ path });
+    return result.value || "";
+  }
+  if (ext === ".pdf") {
+    const pdfParse = require("pdf-parse");
+    const buffer = await fs.readFile(path);
+    const result = await pdfParse(buffer);
+    return result.text || "";
+  }
+  throw new Error(`Unsupported runtime KB extension: ${ext}`);
+}
+
+function cleanRuntimeKnowledgeText(text) {
+  return String(text || "")
+    .normalize("NFKC")
+    .replace(/\uFEFF/g, "")
+    .replace(/\u00AD/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+async function updateRuntimeKbEntry(expertId, updater) {
+  const registry = await loadExpertKbRegistry();
+  const index = registry.experts.findIndex((entry) => entry.expertId === expertId);
+  const entry = index >= 0 ? registry.experts[index] : normalizeKbEntry({ expertId, kbType: "runtime_onboarding" });
+  const updated = normalizeKbEntry(await updater(entry) || entry);
+  updated.updatedAt = new Date().toISOString();
+  if (index >= 0) registry.experts[index] = updated;
+  else registry.experts.push(updated);
+  await saveExpertKbRegistry(registry);
+  return updated;
+}
+
+async function setRuntimeFileIngestStatus(expertId, fileIds, status, patch = {}) {
+  const ids = new Set(Array.isArray(fileIds) ? fileIds : [fileIds]);
+  return updateRuntimeKbEntry(expertId, (entry) => {
+    entry.files = (entry.files || []).map((file) => ids.has(file.fileId)
+      ? normalizeKbFile({
+          ...file,
+          ...patch,
+          ingestStatus: status,
+          ingestError: status === "failed" ? patch.ingestError || file.ingestError : null,
+          retryCount: patch.retryCount === undefined ? file.retryCount : patch.retryCount,
+          maxRetries: patch.maxRetries === undefined ? file.maxRetries : patch.maxRetries,
+          lastIngestAt: patch.lastIngestAt || file.lastIngestAt,
+        })
+      : file);
+    entry.ingestStatus = status;
+    return entry;
+  });
+}
+
+async function buildRuntimeIngestionSnapshot(expertId) {
+  const entry = await getKbEntryForExpert(expertId);
+  const files = (entry.files || []).map(normalizeKbFile);
+  const pendingFiles = files.filter((file) => isRuntimePendingStatus(file.ingestStatus));
+  const rawPendingFiles = files.filter((file) => file.ingestStatus === "pending");
+  const queuedFiles = files.filter((file) => file.ingestStatus === "queued");
+  const indexedFiles = files.filter((file) => ["completed", "indexed"].includes(file.ingestStatus));
+  const failedFiles = files.filter((file) => file.ingestStatus === "failed");
+  const processingFiles = files.filter((file) => isRuntimeProcessingStatus(file.ingestStatus));
+  const summary = summarizeKbEntry(entry, { expertId });
+  return { entry, files, pendingFiles, rawPendingFiles, queuedFiles, indexedFiles, failedFiles, processingFiles, summary };
+}
+
+async function runWithRuntimeTimeout(promise, timeoutMs, label) {
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${label} timeout after ${Math.round(timeoutMs / 1000)}s`)), timeoutMs);
+  });
+  try {
+    return await Promise.race([promise, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function buildRuntimeIndexForExpert({ expert, files, progress }) {
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required for runtime ingestion.");
+  const expertId = sanitizeRuntimeExpertId(expert.expertId);
+  const pendingIds = files.filter((file) => isRuntimePendingStatus(file.ingestStatus)).map((file) => file.fileId);
+  const indexableFiles = files.filter((file) => isRuntimeIndexableStatus(file.ingestStatus));
+  if (!pendingIds.length) throw new Error("No pending files for active expert.");
+  if (!indexableFiles.length) throw new Error("No files available for runtime indexing.");
+
+  await setRuntimeFileIngestStatus(expertId, pendingIds, "cleaning");
+  await progress(`cleaning ${pendingIds.length} pending file(s)`);
+
+  const cleanedSources = [];
+  for (const file of indexableFiles) {
+    const raw = await readRuntimeKnowledgeFile(file);
+    const cleaned = cleanRuntimeKnowledgeText(raw);
+    if (!cleaned || cleaned.length < 80) {
+      if (pendingIds.includes(file.fileId)) {
+        await setRuntimeFileIngestStatus(expertId, file.fileId, "failed", { ingestError: "Extracted text is empty or too short." });
+      }
+      continue;
+    }
+    cleanedSources.push({ file, text: cleaned });
+  }
+  if (!cleanedSources.length) throw new Error("No readable runtime knowledge text after cleaning.");
+  const ingestedPendingIds = cleanedSources
+    .filter((source) => pendingIds.includes(source.file.fileId))
+    .map((source) => source.file.fileId);
+  if (!ingestedPendingIds.length) throw new Error("No pending files were readable after cleaning.");
+
+  await setRuntimeFileIngestStatus(expertId, ingestedPendingIds, "chunking");
+  await progress(`chunking ${cleanedSources.length} source file(s)`);
+  const plannedChunks = [];
+  for (const source of cleanedSources) {
+    const chunks = chunkText(source.text);
+    chunks.forEach((text, index) => {
+      plannedChunks.push({
+        text,
+        fileId: source.file.fileId,
+        metadata: {
+          expert_id: expertId,
+          kb_id: `runtime:${expertId}`,
+          source_id: source.file.fileId,
+          source_file: source.file.originalName,
+          stored_file: source.file.relativePath,
+          chunk_id: `${expertId}_${source.file.fileId}_${index}`,
+          chunk_index: index,
+          token_estimate: Math.ceil(text.length / 4),
+          source_type: "runtime_onboarding",
+          ingestion_timestamp: new Date().toISOString(),
+          embedding_model: "text-embedding-3-small",
+          embedding_dim: 1536,
+        },
+      });
+    });
+  }
+  if (!plannedChunks.length) throw new Error("No chunks generated for runtime index.");
+
+  await setRuntimeFileIngestStatus(expertId, ingestedPendingIds, "embedding");
+  await progress(`embedding ${plannedChunks.length} chunk(s)`);
+  const embeddings = await embedChunks(plannedChunks, process.env.OPENAI_API_KEY);
+
+  await setRuntimeFileIngestStatus(expertId, ingestedPendingIds, "indexing");
+  await progress("building runtime FAISS index");
+  const indexDir = runtimeExpertIndexDir(expertId);
+  const tempDir = `${indexDir}.tmp_${Date.now()}`;
+  await fs.rm(tempDir, { recursive: true, force: true });
+  await fs.mkdir(tempDir, { recursive: true });
+  try {
+    const vectorsPath = join(tempDir, "vectors.jsonl");
+    const docstorePath = join(tempDir, "docstore.jsonl");
+    const vectorLines = [];
+    const docstoreLines = [];
+    plannedChunks.forEach((chunk, index) => {
+      const embedding = embeddings[index];
+      if (!Array.isArray(embedding) || embedding.length !== 1536) {
+        throw new Error(`Embedding dim mismatch for chunk ${chunk.metadata.chunk_id}`);
+      }
+      vectorLines.push(JSON.stringify({ chunk_id: chunk.metadata.chunk_id, embedding }));
+      docstoreLines.push(JSON.stringify({
+        vector_id: index,
+        chunk_id: chunk.metadata.chunk_id,
+        text: chunk.text,
+        metadata: chunk.metadata,
+        embedding_model: "text-embedding-3-small",
+        embedding_dim: 1536,
+      }));
+    });
+    await fs.writeFile(vectorsPath, `${vectorLines.join("\n")}\n`, "utf-8");
+    await fs.writeFile(docstorePath, `${docstoreLines.join("\n")}\n`, "utf-8");
+    await buildFaissIndex(tempDir, vectorsPath);
+    const now = new Date().toISOString();
+    await fs.writeFile(join(tempDir, "index_manifest.json"), JSON.stringify({
+      generated_at: now,
+      expert_id: expertId,
+      kb_id: `runtime:${expertId}`,
+      index_type: "faiss.IndexFlatIP",
+      similarity: "cosine_similarity_via_l2_normalized_inner_product",
+      embedding_model: "text-embedding-3-small",
+      embedding_dim: 1536,
+      vectors: plannedChunks.length,
+      faiss_index: "faiss.index",
+      docstore: "docstore.jsonl",
+    }, null, 2), "utf-8");
+    await fs.writeFile(join(tempDir, "ingestion_manifest.json"), JSON.stringify({
+      generated_at: now,
+      expert_id: expertId,
+      pending_files_ingested: pendingIds.length,
+      total_files_indexed: cleanedSources.length,
+      chunks: plannedChunks.length,
+      embeddings: embeddings.length,
+      source_files: cleanedSources.map((source) => ({
+        fileId: source.file.fileId,
+        originalName: source.file.originalName,
+        status_before_run: source.file.ingestStatus,
+      })),
+      safeguards: {
+        production_main_touched: false,
+        dinara_retrieval_touched: false,
+        database_migration: false,
+        redis: false,
+      },
+    }, null, 2), "utf-8");
+    const validation = await validateStaging(tempDir);
+    if (!validation.ok) throw new Error(`Runtime index validation failed: ${validation.errors.join("; ")}`);
+    await fs.rm(indexDir, { recursive: true, force: true });
+    await fs.rename(tempDir, indexDir);
+
+    const chunkCountsByFile = new Map();
+    for (const chunk of plannedChunks) chunkCountsByFile.set(chunk.fileId, (chunkCountsByFile.get(chunk.fileId) || 0) + 1);
+    await updateRuntimeKbEntry(expertId, (entry) => {
+      entry.files = (entry.files || []).map((file) => {
+        if (!ingestedPendingIds.includes(file.fileId)) return normalizeKbFile(file);
+        const count = chunkCountsByFile.get(file.fileId) || 0;
+        return normalizeKbFile({
+          ...file,
+          ingestStatus: "completed",
+          indexedAt: now,
+          completedAt: now,
+          lastIngestAt: now,
+          chunksCount: count,
+          embeddingCount: count,
+          ingestError: null,
+        });
+      });
+      entry.ingestStatus = "completed";
+      entry.indexed = true;
+      entry.retrievalReady = true;
+      entry.chunksCount = plannedChunks.length;
+      entry.embeddingCount = embeddings.length;
+      entry.lastIngestAt = now;
+      return entry;
+    });
+    return { indexDir, chunks: plannedChunks.length, embeddings: embeddings.length, filesIndexed: cleanedSources.length };
+  } catch (error) {
+    await fs.rm(tempDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+function scheduleIngestionWorker(delayMs = 0) {
+  setTimeout(() => {
+    processIngestionQueue().catch((error) => {
+      console.warn("Runtime ingestion worker failed:", error.message);
+    });
+  }, Math.max(0, delayMs));
+}
+
+async function enqueueRuntimeIngestion({ chatId, userId, expert, fileIds = [], reason = "manual", notify = true }) {
+  const expertId = sanitizeRuntimeExpertId(expert.expertId);
+  if (expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    if (notify) await bot.sendMessage(chatId, "Dinara использует production retrieval. Runtime ingestion для неё не запускаю.");
+    return null;
+  }
+  const snapshot = await buildRuntimeIngestionSnapshot(expertId);
+  const targetIds = fileIds.length
+    ? snapshot.files.filter((file) => fileIds.includes(file.fileId) && isRuntimePendingStatus(file.ingestStatus)).map((file) => file.fileId)
+    : snapshot.pendingFiles.map((file) => file.fileId);
+  if (!targetIds.length) {
+    if (notify) await bot.sendMessage(chatId, `Нет pending/queued files для ${expertId}.`);
+    return null;
+  }
+
+  const existing = [...ingestionJobs.values()].find((job) => job.expertId === expertId && ["queued", "retry_wait"].includes(job.status));
+  await setRuntimeFileIngestStatus(expertId, targetIds, "queued", {
+    maxRetries: INGESTION_MAX_RETRIES,
+    lastIngestAt: new Date().toISOString(),
+  });
+  if (existing) {
+    existing.pendingFiles = Math.max(Number(existing.pendingFiles || 0), targetIds.length);
+    existing.updatedAt = new Date().toISOString();
+    ingestionJobs.set(existing.jobId, existing);
+    if (notify) await bot.sendMessage(chatId, `File queued for ${expertId}. Existing job: ${existing.jobId}`);
+    scheduleIngestionWorker();
+    return existing;
+  }
+
+  const jobId = `ing_${Date.now()}_${randomUUID().slice(0, 8)}`;
+  const job = {
+    jobId,
+    expertId,
+    chatId,
+    userId,
+    status: "queued",
+    stage: "queued",
+    reason,
+    createdAt: new Date().toISOString(),
+    startedAt: null,
+    updatedAt: new Date().toISOString(),
+    finishedAt: null,
+    pendingFiles: targetIds.length,
+    retryCount: 0,
+    maxRetries: INGESTION_MAX_RETRIES,
+    retryDelayMs: INGESTION_RETRY_DELAY_MS,
+    notBefore: null,
+    error: null,
+  };
+  ingestionJobs.set(jobId, job);
+  if (notify) await bot.sendMessage(chatId, `File queued: ${expertId}\njob: ${jobId}\nstatus: queued`);
+  scheduleIngestionWorker();
+  return job;
+}
+
+async function processIngestionQueue() {
+  if ([...ingestionJobs.values()].some((job) => job.status === "running")) return;
+  const now = Date.now();
+  const job = [...ingestionJobs.values()]
+    .filter((candidate) => ["queued", "retry_wait"].includes(candidate.status))
+    .filter((candidate) => !candidate.notBefore || Date.parse(candidate.notBefore) <= now)
+    .sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))[0];
+  if (!job) {
+    const nextRetry = [...ingestionJobs.values()]
+      .filter((candidate) => candidate.status === "retry_wait" && candidate.notBefore)
+      .sort((a, b) => Date.parse(a.notBefore) - Date.parse(b.notBefore))[0];
+    if (nextRetry) scheduleIngestionWorker(Math.max(1000, Date.parse(nextRetry.notBefore) - now));
+    return;
+  }
+
+  const expert = await getExpertById(job.expertId) || normalizeRuntimeExpert({ expertId: job.expertId, displayName: job.expertId });
+  const snapshot = await buildRuntimeIngestionSnapshot(job.expertId);
+  if (!snapshot.pendingFiles.length) {
+    job.status = "completed";
+    job.stage = "completed";
+    job.finishedAt = new Date().toISOString();
+    job.updatedAt = job.finishedAt;
+    ingestionJobs.set(job.jobId, job);
+    scheduleIngestionWorker();
+    return;
+  }
+
+  job.status = "running";
+  job.stage = "pending";
+  job.startedAt = job.startedAt || new Date().toISOString();
+  job.updatedAt = new Date().toISOString();
+  job.pendingFiles = snapshot.pendingFiles.length;
+  job.error = null;
+  ingestionJobs.set(job.jobId, job);
+
+  const progress = async (stage) => {
+    job.stage = stage;
+    job.updatedAt = new Date().toISOString();
+    ingestionJobs.set(job.jobId, job);
+    await bot.sendMessage(job.chatId, `Ingestion ${job.jobId}: ${stage}`).catch(() => {});
+  };
+
+  await progress(`pending -> ${snapshot.pendingFiles.length} file(s)`);
+  try {
+    const result = await runWithRuntimeTimeout(
+      buildRuntimeIndexForExpert({ expert, files: snapshot.files, progress }),
+      INGESTION_TIMEOUT_MS,
+      "Runtime ingestion"
+    );
+    job.status = "completed";
+    job.stage = "completed";
+    job.finishedAt = new Date().toISOString();
+    job.updatedAt = job.finishedAt;
+    job.result = result;
+    ingestionJobs.set(job.jobId, job);
+    await bot.sendMessage(job.chatId, [
+      `✅ Retrieval ready: ${job.expertId}`,
+      `job: ${job.jobId}`,
+      `files indexed: ${result.filesIndexed}`,
+      `chunks: ${result.chunks}`,
+      `embeddings: ${result.embeddings}`,
+      `index: runtime_data/expert_indexes/${job.expertId}/`,
+    ].join("\n")).catch(() => {});
+    if (job.expertId !== DEFAULT_RUNTIME_EXPERT.expertId) {
+      try {
+        const identityResult = await extractIdentityProfileForExpert(expert, { reason: "post_ingestion" });
+        await bot.sendMessage(job.chatId, [
+          `✅ Identity extracted: ${job.expertId}`,
+          `status: ${identityResult.profile.status}`,
+          `topics: ${identityResult.profile.nicheProfile.topics.length}`,
+          `style readiness: ${identityStyleReady(identityResult.profile) ? "yes" : "no"}`,
+        ].join("\n")).catch(() => {});
+      } catch (identityError) {
+        await markIdentityExtractionFailed(job.expertId, identityError).catch(() => null);
+        await bot.sendMessage(job.chatId, `⚠️ Identity extraction failed for ${job.expertId}: ${String(identityError.message || identityError).slice(0, 700)}\nRun /identity_extract after fixing the cause.`).catch(() => {});
+      }
+    }
+  } catch (error) {
+    const retryCount = Number(job.retryCount || 0) + 1;
+    const errorMessage = String(error.message || error);
+    if (retryCount <= Number(job.maxRetries || 0)) {
+      const notBefore = new Date(Date.now() + Number(job.retryDelayMs || INGESTION_RETRY_DELAY_MS)).toISOString();
+      job.status = "retry_wait";
+      job.stage = "queued";
+      job.retryCount = retryCount;
+      job.notBefore = notBefore;
+      job.error = errorMessage;
+      job.updatedAt = new Date().toISOString();
+      ingestionJobs.set(job.jobId, job);
+      await setRuntimeFileIngestStatus(job.expertId, snapshot.pendingFiles.map((file) => file.fileId), "queued", {
+        retryCount,
+        maxRetries: job.maxRetries,
+        ingestError: errorMessage,
+        lastIngestAt: new Date().toISOString(),
+      }).catch(() => {});
+      await bot.sendMessage(job.chatId, [
+        `⚠️ Ingestion retry scheduled: ${job.expertId}`,
+        `job: ${job.jobId}`,
+        `retry: ${retryCount}/${job.maxRetries}`,
+        `next try: ${notBefore}`,
+        `error: ${errorMessage.slice(0, 500)}`,
+      ].join("\n")).catch(() => {});
+      scheduleIngestionWorker(Number(job.retryDelayMs || INGESTION_RETRY_DELAY_MS));
+      return;
+    }
+    job.status = "failed";
+    job.stage = "failed";
+    job.retryCount = retryCount - 1;
+    job.error = errorMessage;
+    job.finishedAt = new Date().toISOString();
+    job.updatedAt = job.finishedAt;
+    ingestionJobs.set(job.jobId, job);
+    await setRuntimeFileIngestStatus(job.expertId, snapshot.pendingFiles.map((file) => file.fileId), "failed", {
+      retryCount: job.retryCount,
+      maxRetries: job.maxRetries,
+      ingestError: job.error,
+      lastIngestAt: new Date().toISOString(),
+    }).catch(() => {});
+    await bot.sendMessage(job.chatId, `❌ Ingestion failed after retries: ${job.error.slice(0, 900)}\nUse /retry_failed after fixing the cause.`).catch(() => {});
+  } finally {
+    scheduleIngestionWorker();
+  }
+}
+
+async function runIngestionForActiveExpert(chatId, userId) {
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /ingest_run доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const expertId = sanitizeRuntimeExpertId(expert.expertId);
+  if (expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    await bot.sendMessage(chatId, "Dinara использует production retrieval. Runtime ingestion для неё не запускаю.");
+    return;
+  }
+  const snapshot = await buildRuntimeIngestionSnapshot(expertId);
+  if (!snapshot.pendingFiles.length) {
+    await bot.sendMessage(chatId, `Нет pending files для ${expertId}.`);
+    return;
+  }
+  await enqueueRuntimeIngestion({ chatId, userId, expert, reason: "ingest_run", notify: true });
+}
+
+async function buildIngestStatusText(chatId) {
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const snapshot = await buildRuntimeIngestionSnapshot(expert.expertId);
+  const summary = snapshot.summary;
+  return [
+    "Ingestion status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `pending files: ${snapshot.rawPendingFiles.length}`,
+    `queued files: ${snapshot.queuedFiles.length}`,
+    `indexed files: ${snapshot.indexedFiles.length}`,
+    `failed files: ${snapshot.failedFiles.length}`,
+    `retrieval ready: ${summary.retrievalReady ? "yes" : "no"}`,
+    `chunks count: ${summary.chunksCount}`,
+    `embedding count: ${summary.embeddingCount}`,
+    `last ingest date: ${snapshot.entry.lastIngestAt || "none"}`,
+  ].join("\n");
+}
+
+function buildIngestQueueText() {
+  const jobs = [...ingestionJobs.values()].sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)));
+  if (!jobs.length) return "Ingestion jobs\n\nQueue is empty.";
+  return [
+    "Ingestion jobs",
+    "",
+    ...jobs.slice(0, 20).map((job) => [
+      `${job.jobId} — ${job.status}`,
+      `expert: ${job.expertId}`,
+      `stage: ${job.stage}`,
+      `pending files: ${job.pendingFiles}`,
+      `retry: ${job.retryCount || 0}/${job.maxRetries || 0}`,
+      job.notBefore ? `next try: ${job.notBefore}` : null,
+      `created: ${job.createdAt || job.startedAt}`,
+      job.startedAt ? `started: ${job.startedAt}` : null,
+      job.finishedAt ? `finished: ${job.finishedAt}` : null,
+      job.error ? `error: ${job.error.slice(0, 180)}` : null,
+    ].filter(Boolean).join("\n")),
+  ].join("\n\n");
+}
+
+async function retryFailedIngestionForActiveExpert(chatId, userId) {
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /retry_failed доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const expertId = sanitizeRuntimeExpertId(expert.expertId);
+  if (expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    await bot.sendMessage(chatId, "Dinara использует production retrieval. Runtime retry для неё не нужен.");
+    return;
+  }
+  const snapshot = await buildRuntimeIngestionSnapshot(expertId);
+  if (!snapshot.failedFiles.length) {
+    await bot.sendMessage(chatId, `Нет failed files для ${expertId}.`);
+    return;
+  }
+  const failedIds = snapshot.failedFiles.map((file) => file.fileId);
+  await setRuntimeFileIngestStatus(expertId, failedIds, "pending", {
+    retryCount: 0,
+    maxRetries: INGESTION_MAX_RETRIES,
+    ingestError: null,
+    lastIngestAt: new Date().toISOString(),
+  });
+  await enqueueRuntimeIngestion({
+    chatId,
+    userId,
+    expert,
+    fileIds: failedIds,
+    reason: "retry_failed",
+    notify: true,
+  });
+}
+
+async function buildRuntimeMetricsText(userId) {
+  if (!(await canManagePaidBeta(userId))) return "🔒 /runtime_metrics доступен только для admin/full_access.";
+  const [experts, registry] = await Promise.all([
+    loadExpertRegistry().catch(() => []),
+    loadExpertKbRegistry(),
+  ]);
+  const entries = registry.experts || [];
+  const allFiles = entries.flatMap((entry) => entry.files || []);
+  const indexedExperts = entries.filter((entry) => summarizeKbEntry(entry, { expertId: entry.expertId }).retrievalReady).length;
+  const jobs = [...ingestionJobs.values()];
+  const totalChunks = entries.reduce((sum, entry) => sum + Number(entry.chunksCount || 0), 0);
+  const totalEmbeddings = entries.reduce((sum, entry) => sum + Number(entry.embeddingCount || 0), 0);
+  return [
+    "Runtime metrics",
+    "",
+    `experts count: ${experts.length}`,
+    `kb files: ${allFiles.length}`,
+    `indexed experts: ${indexedExperts}`,
+    `queue size: ${jobs.filter((job) => ["queued", "retry_wait"].includes(job.status)).length}`,
+    `active jobs: ${jobs.filter((job) => job.status === "running").length}`,
+    `failed jobs: ${jobs.filter((job) => job.status === "failed").length}`,
+    `total chunks: ${totalChunks}`,
+    `total embeddings: ${totalEmbeddings}`,
+  ].join("\n");
+}
+
+async function retrieveRuntimeExpertGroundingContext(topic, generationOwnership, options = {}) {
+  const expertId = sanitizeRuntimeExpertId(generationOwnership.expertId);
+  const entry = await getKbEntryForExpert(expertId);
+  const summary = summarizeKbEntry(entry, { expertId });
+  if (!summary.retrievalReady) return null;
+  const indexDir = runtimeExpertIndexDir(expertId);
+  const retrieval = await runWithRuntimeTimeout(
+    retrieveFromIndexDir(indexDir, topic, options.topK || 5, {
+      includeVectors: false,
+      expertId,
+      kbLabel: `runtime:${expertId}`,
+    }),
+    Number(process.env.RUNTIME_RETRIEVAL_TIMEOUT_MS || 8000),
+    "Runtime retrieval"
+  );
+  const filtered = (retrieval.results || []).filter((chunk) => Number.isFinite(chunk.score) && chunk.score >= 0.02);
+  const built = buildKnowledgeBaseContext(filtered, Number(process.env.RUNTIME_KB_MAX_CONTEXT_TOKENS || 2400));
+  if (!built.context) return null;
+  return {
+    context: built.context,
+    chunks: built.usedChunks || filtered,
+    sources: built.sources || filtered.map((chunk) => chunk.source?.source_file || chunk.chunk_id),
+    estimatedTokens: built.estimatedTokens || Math.ceil(built.context.length / 3.5),
+    productionVersion: null,
+    knowledgeBase: `runtime:${expertId}`,
+  };
+}
+
+function onboardingCompleteness(expert = {}, mediaProfile = {}) {
+  const checks = {
+    expertId: Boolean(expert.expertId),
+    displayName: Boolean(expert.displayName),
+    niche: Boolean(expert.niche),
+    styleDescription: Boolean(expert.styleDescription),
+    mediaProfile: Boolean(mediaProfile?.expertId),
+    kbConfigured: Boolean(expert.kbConfigured),
+  };
+  const done = Object.values(checks).filter(Boolean).length;
+  const total = Object.values(checks).length;
+  return {
+    checks,
+    done,
+    total,
+    percent: Math.round((done / total) * 100),
+  };
+}
+
+function formatExpertLine(expert, activeExpertId) {
+  const activeMark = expert.expertId === activeExpertId ? " <- active" : "";
+  const niche = expert.niche ? ` · ${expert.niche}` : "";
+  return `- ${expert.expertId}: ${expert.displayName}${niche}${activeMark}`;
+}
+
+async function switchActiveExpertForChat(chatId, expertId) {
+  const expert = await getExpertById(expertId);
+  if (!expert || expert.status !== "active") return { ok: false, reason: "not_found" };
+  const state = userState.get(chatId) || {};
+  state.activeExpertId = expert.expertId;
+  state.lastExpertId = expert.expertId;
+  userState.set(chatId, state);
+  await ensureMediaProfileForExpert(expert.expertId);
+  return { ok: true, expert };
+}
+
+async function sendExpertList(chatId) {
+  const experts = await loadExpertRegistry();
+  const activeExpertId = getActiveExpertIdForChat(chatId);
+  const rows = experts
+    .filter((expert) => expert.status === "active")
+    .map((expert) => [{ text: `${expert.expertId === activeExpertId ? "✓ " : ""}${expert.displayName}`, callback_data: `exp_sw:${expert.expertId}` }]);
+  await bot.sendMessage(chatId, [
+    "Runtime experts",
+    "",
+    ...experts.map((expert) => formatExpertLine(expert, activeExpertId)),
+    "",
+    "Switch: /expert_switch expertId",
+    "Create: /expert_create",
+  ].join("\n"), rows.length ? { reply_markup: { inline_keyboard: rows } } : {});
+}
+
+async function sendExpertStatus(chatId) {
+  const activeExpertId = getActiveExpertIdForChat(chatId);
+  const expert = await getExpertById(activeExpertId) || await getDefaultExpert();
+  const mediaProfile = await getMediaProfileForExpert(expert.expertId);
+  const voice = await getVoiceReadiness(chatId);
+  const image = await getImageReadiness(chatId);
+  const video = await getVideoReadiness(chatId);
+  const complete = onboardingCompleteness(expert, mediaProfile);
+  const yesNo = (value) => value ? "yes" : "no";
+  await bot.sendMessage(chatId, [
+    "Expert runtime status",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    `niche/topic: ${expert.niche || "not set"}`,
+    `style: ${expert.styleDescription || "not set"}`,
+    "",
+    `voice configured: ${yesNo(voice.voiceProfileIdPresent)}`,
+    `image configured: ${yesNo(image.loraUrlPresent)}`,
+    `video configured: ${yesNo(video.enabled)}`,
+    `kb configured: ${yesNo(expert.kbConfigured)}`,
+    "",
+    `onboarding completeness: ${complete.percent}% (${complete.done}/${complete.total})`,
+    `media profile: ${mediaProfile.status || "missing"}`,
+    `registry file: runtime_data/experts.json`,
+    `media file: runtime_data/media_profiles.json`,
+  ].join("\n"));
+}
+
+async function startRuntimeExpertCreate(chatId) {
+  const state = userState.get(chatId) || {};
+  state.runtimeExpertCreate = {
+    step: "expertId",
+    values: {},
+  };
+  userState.set(chatId, state);
+  await bot.sendMessage(chatId, [
+    "Создаём lightweight runtime expert.",
+    "",
+    "Шаг 1/4: пришлите expertId латиницей.",
+    "Например: relationship_coach или nutrition_expert",
+  ].join("\n"));
+}
+
+async function handleRuntimeExpertCreateMessage(msg, state) {
+  const chatId = msg.chat.id;
+  if (!state.runtimeExpertCreate || !msg.text) return false;
+  const flow = state.runtimeExpertCreate;
+  const text = msg.text.trim();
+  if (!text) return true;
+  if (text === "/cancel") {
+    state.runtimeExpertCreate = null;
+    userState.set(chatId, state);
+    await bot.sendMessage(chatId, "Runtime expert creation cancelled.");
+    return true;
+  }
+  if (text.startsWith("/")) return false;
+
+  if (flow.step === "expertId") {
+    const expertId = sanitizeRuntimeExpertId(text);
+    if (!expertId) {
+      await bot.sendMessage(chatId, "expertId должен содержать латинские буквы/цифры, _ или -. Пришлите ещё раз.");
+      return true;
+    }
+    const existing = await getExpertById(expertId);
+    if (existing) {
+      await bot.sendMessage(chatId, "Такой expertId уже есть. Пришлите другой expertId.");
+      return true;
+    }
+    flow.values.expertId = expertId;
+    flow.step = "displayName";
+    userState.set(chatId, state);
+    await bot.sendMessage(chatId, "Шаг 2/4: как показывать эксперта? Например: Анна, нутрициолог");
+    return true;
+  }
+
+  if (flow.step === "displayName") {
+    flow.values.displayName = text.slice(0, 120);
+    flow.step = "niche";
+    userState.set(chatId, state);
+    await bot.sendMessage(chatId, "Шаг 3/4: ниша или тема эксперта. Например: отношения после развода, нутрициология для мам, карьерный коучинг");
+    return true;
+  }
+
+  if (flow.step === "niche") {
+    flow.values.niche = text.slice(0, 240);
+    flow.step = "styleDescription";
+    userState.set(chatId, state);
+    await bot.sendMessage(chatId, "Шаг 4/4: коротко опишите стиль. Например: спокойно, доказательно, без давления, с простыми примерами");
+    return true;
+  }
+
+  if (flow.step === "styleDescription") {
+    flow.values.styleDescription = text.slice(0, 600);
+    const now = new Date().toISOString();
+    const expert = await upsertRuntimeExpert({
+      ...flow.values,
+      knowledgeBase: `runtime:${flow.values.expertId}`,
+      styleProfile: `runtime:${flow.values.expertId}`,
+      status: "active",
+      kbConfigured: false,
+      createdAt: now,
+      updatedAt: now,
+      onboarding: {
+        expertId: true,
+        displayName: true,
+        niche: true,
+        styleDescription: true,
+      },
+    });
+    await ensureMediaProfileForExpert(expert.expertId);
+    state.runtimeExpertCreate = null;
+    state.activeExpertId = expert.expertId;
+    state.lastExpertId = expert.expertId;
+    userState.set(chatId, state);
+    await bot.sendMessage(chatId, [
+      "✅ Runtime expert created and switched.",
+      "",
+      `${expert.expertId}: ${expert.displayName}`,
+      `niche/topic: ${expert.niche}`,
+      `style: ${expert.styleDescription}`,
+      "",
+      "Media/KBase scaffold created. Upload UI intentionally not added yet.",
+      "Check: /expert_status",
+    ].join("\n"));
+    return true;
+  }
+
+  return true;
+}
+
 // ─── КОМАНДЫ ─────────────────────────────────────────────────────────────────
 
 bot.onText(/\/start/, async (msg) => {
@@ -5108,6 +7941,176 @@ bot.onText(/\/start/, async (msg) => {
 
 bot.onText(/\/help/, async (msg) => { await sendHelp(msg.chat.id); });
 
+bot.onText(/\/expert_create/, async (msg) => {
+  await startRuntimeExpertCreate(msg.chat.id);
+});
+
+bot.onText(/\/expert_list/, async (msg) => {
+  await sendExpertList(msg.chat.id);
+});
+
+bot.onText(/\/expert_switch(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const expertId = sanitizeRuntimeExpertId(match?.[1] || "");
+  if (!expertId) {
+    await bot.sendMessage(chatId, "Usage: /expert_switch expertId\n\nПосмотреть expertId: /expert_list");
+    return;
+  }
+  const result = await switchActiveExpertForChat(chatId, expertId);
+  if (!result.ok) {
+    await bot.sendMessage(chatId, `Expert "${expertId}" not found or inactive. Посмотреть список: /expert_list`);
+    return;
+  }
+  await bot.sendMessage(chatId, `✅ Active expert switched to ${result.expert.expertId} (${result.expert.displayName}).`);
+});
+
+bot.onText(/\/expert_status/, async (msg) => {
+  await sendExpertStatus(msg.chat.id);
+});
+
+bot.onText(/\/kb_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildKbStatusText(msg.chat.id));
+});
+
+bot.onText(/\/kb_list/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildKbListText(msg.chat.id));
+});
+
+bot.onText(/\/kb_active/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildKbActiveText(msg.chat.id));
+});
+
+bot.onText(/\/ingest_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildIngestStatusText(msg.chat.id));
+});
+
+bot.onText(/\/ingest_queue/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, buildIngestQueueText());
+});
+
+bot.onText(/\/ingest_run/, async (msg) => {
+  await runIngestionForActiveExpert(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/identity_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildIdentityStatusText(msg.chat.id));
+});
+
+bot.onText(/\/identity_show/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildIdentityShowText(msg.chat.id));
+});
+
+bot.onText(/\/identity_extract/, async (msg) => {
+  await runIdentityExtractionForActiveExpert(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/brain_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildBrainStatusText(msg.chat.id));
+});
+
+bot.onText(/\/brain_show/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildBrainShowText(msg.chat.id));
+});
+
+bot.onText(/\/content_memory/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildContentMemoryText(msg.chat.id));
+});
+
+bot.onText(/\/strategy_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildStrategyStatusText(msg.chat.id));
+});
+
+bot.onText(/\/strategy_show/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildStrategyShowText(msg.chat.id));
+});
+
+bot.onText(/\/content_plan/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildContentPlanText(msg.chat.id));
+});
+
+bot.onText(/\/strategy_rebuild/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /strategy_rebuild доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    await bot.sendMessage(chatId, "Dinara остается на старом стабильном поведении. Content strategy для нее не пересобираю.");
+    return;
+  }
+  try {
+    const { strategy, memory } = await rebuildContentStrategyForExpert(expert);
+    await bot.sendMessage(chatId, [
+      `✅ Content strategy rebuilt: ${expert.expertId}`,
+      `memory items: ${memory.items.length}`,
+      `content balance: ${formatStrategyBalance(strategy.contentBalance)}`,
+      `recommended topics: ${strategy.recommendedNextTopics.length}`,
+      `series ideas: ${strategy.seriesIdeas.length}`,
+      `path: runtime_data/expert_content_strategy/${expert.expertId}.json`,
+    ].join("\n"));
+  } catch (error) {
+    await bot.sendMessage(chatId, `❌ Content strategy rebuild failed: ${String(error.message || error).slice(0, 900)}`);
+  }
+});
+
+bot.onText(/\/brain_rebuild/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /brain_rebuild доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  if (expert.expertId === DEFAULT_RUNTIME_EXPERT.expertId) {
+    await bot.sendMessage(chatId, "Dinara остается на старом стабильном поведении. Content brain для нее не пересобираю.");
+    return;
+  }
+  try {
+    const { brain, memory, identityProfile } = await rebuildContentBrainForExpert(expert);
+    await bot.sendMessage(chatId, [
+      `✅ Content brain rebuilt: ${expert.expertId}`,
+      `memory items: ${memory.items.length}`,
+      `identity profile: ${identityProfile?.status || "minimal"}`,
+      `recommended topics: ${brain.recommendedTopics.length}`,
+      `recommended formats: ${brain.recommendedFormats.length}`,
+      `path: runtime_data/expert_content_brain/${expert.expertId}.json`,
+    ].join("\n"));
+  } catch (error) {
+    await bot.sendMessage(chatId, `❌ Content brain rebuild failed: ${String(error.message || error).slice(0, 900)}`);
+  }
+});
+
+bot.onText(/\/retry_failed/, async (msg) => {
+  await retryFailedIngestionForActiveExpert(msg.chat.id, msg.from?.id || msg.chat.id);
+});
+
+bot.onText(/\/runtime_metrics/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildRuntimeMetricsText(msg.from?.id || msg.chat.id));
+});
+
+bot.onText(/\/kb_attach/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 /kb_attach доступен только для admin/full_access.");
+    return;
+  }
+  const expert = await getActiveRuntimeExpertForChat(chatId);
+  const state = userState.get(chatId) || {};
+  state.kbAttachAwaiting = true;
+  userState.set(chatId, state);
+  await bot.sendMessage(chatId, [
+    "Runtime KB attach mode.",
+    "",
+    `active expert: ${expert.expertId} (${expert.displayName})`,
+    "Отправьте TXT, MD, PDF или DOCX.",
+    "",
+    "Файл будет сохранён и автоматически добавлен в ingestion queue.",
+  ].join("\n"));
+});
+
 bot.onText(/\/onboard/, async (msg) => {
   await startExpertOnboarding(msg.chat.id, msg.from?.id || msg.chat.id);
 });
@@ -5128,15 +8131,26 @@ bot.onText(/\/premium_status/, async (msg) => {
   await bot.sendMessage(msg.chat.id, await buildPremiumStatusText(msg.from?.id || msg.chat.id));
 });
 
+bot.onText(/\/subscription/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildPremiumStatusText(msg.from?.id || msg.chat.id));
+});
+
 bot.onText(/\/plans/, async (msg) => {
-  await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText());
+  await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText(), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+      [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
+      [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
+    ]},
+  });
 });
 
 bot.onText(/\/upgrade/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildManualUpgradeText(), {
     reply_markup: { inline_keyboard: [
-      [{ text: "Запросить beta_paid", callback_data: "req_limit_text" }],
+      [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
       [{ text: "Посмотреть планы", callback_data: "show_plans" }],
+      [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
     ]},
   });
 });
@@ -5222,17 +8236,23 @@ bot.onText(/\/revoke_beta(?:\s+(\S+))?/, async (msg, match) => {
 bot.onText(/\/usage(?:\s+(\S+))?/, async (msg, match) => {
   const chatId = msg.chat.id;
   const adminUserId = msg.from?.id || chatId;
+  const targetUserId = match?.[1] || adminUserId;
+  if (targetUserId !== String(adminUserId) && !(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Чужой usage доступен только admin/full_access.");
+    return;
+  }
+  const plan = await loadUserPlan(targetUserId);
+  await bot.sendMessage(chatId, formatPlanState(plan));
+});
+
+bot.onText(/\/queue_status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
   if (!(await canManagePaidBeta(adminUserId))) {
-    await bot.sendMessage(chatId, "🔒 Usage доступен только admin/full_access.");
+    await bot.sendMessage(chatId, "🔒 Queue status доступен только admin/full_access.");
     return;
   }
-  const targetUserId = match?.[1];
-  if (!targetUserId) {
-    await bot.sendMessage(chatId, "Usage: /usage USER_ID");
-    return;
-  }
-  const entitlement = await getOrCreateEntitlement(targetUserId);
-  await bot.sendMessage(chatId, formatEntitlement(entitlement));
+  await bot.sendMessage(chatId, buildQueueStatusText());
 });
 
 bot.onText(/\/voice_status/, async (msg) => {
@@ -5408,43 +8428,51 @@ bot.onText(/\/test_image(?:\s+([\s\S]+))?/, async (msg, match) => {
       return;
     }
 
-    let imageResult;
-    try {
-      console.log("[/test_image] FAL image request start", { endpoint: readiness.modelEndpoint });
-      imageResult = await generateImage(chatId, scenePrompt, { loraUrl: readiness.loraUrl });
-      console.log("[/test_image] FAL image request success", {
-        imageUrlPresent: Boolean(imageResult?.imageUrl),
-        cost: imageResult?.cost,
-      });
-    } catch (error) {
-      console.log("[/test_image] FAL image request fail", error);
-      await bot.sendMessage(chatId, formatImageGenerationError(error));
-      return;
-    }
+    await enqueueGenerationJob("image", {
+      chatId,
+      userId,
+      label: "test_image",
+      run: async ({ progress }) => {
+        let imageResult;
+        await progress("generating image");
+        try {
+          console.log("[/test_image] FAL image request start", { endpoint: readiness.modelEndpoint });
+          imageResult = await generateImage(chatId, scenePrompt, { loraUrl: readiness.loraUrl });
+          console.log("[/test_image] FAL image request success", {
+            imageUrlPresent: Boolean(imageResult?.imageUrl),
+            cost: imageResult?.cost,
+          });
+        } catch (error) {
+          console.log("[/test_image] FAL image request fail", error);
+          await bot.sendMessage(chatId, formatImageGenerationError(error));
+          throw error;
+        }
 
-    try {
-      console.log("[/test_image] Telegram sendPhoto start");
-      await bot.sendPhoto(chatId, imageResult.imageUrl, {
-        caption: [
-          "Тестовое изображение готово.",
-          `expertId: ${readiness.expertId}`,
-          `image source: ${readiness.imageAvatarProfileSource}`,
-          `cost reported by FAL: $${Number(imageResult.cost || 0).toFixed(3)}`,
-          "Generation limits were not incremented.",
-        ].join("\n"),
-      });
-      console.log("[/test_image] Telegram sendPhoto success");
-    } catch (error) {
-      console.log("[/test_image] Telegram sendPhoto fail", error);
-      await bot.sendMessage(chatId, [
-        "Изображение сгенерировано, но Telegram не смог отправить фото.",
-        `URL: ${imageResult.imageUrl}`,
-        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
-      ].join("\n"));
-      return;
-    }
+        try {
+          console.log("[/test_image] Telegram sendPhoto start");
+          await bot.sendPhoto(chatId, imageResult.imageUrl, {
+            caption: [
+              "Тестовое изображение готово.",
+              `expertId: ${readiness.expertId}`,
+              `image source: ${readiness.imageAvatarProfileSource}`,
+              `cost reported by FAL: $${Number(imageResult.cost || 0).toFixed(3)}`,
+              "Generation limits were not incremented.",
+            ].join("\n"),
+          });
+          console.log("[/test_image] Telegram sendPhoto success");
+        } catch (error) {
+          console.log("[/test_image] Telegram sendPhoto fail", error);
+          await bot.sendMessage(chatId, [
+            "Изображение сгенерировано, но Telegram не смог отправить фото.",
+            `URL: ${imageResult.imageUrl}`,
+            `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+          ].join("\n"));
+          throw error;
+        }
+      },
+    });
 
-    await bot.editMessageText("Готово: тестовое изображение отправлено.", {
+    await bot.editMessageText("Готово: тестовое изображение поставлено в очередь.", {
       chat_id: chatId,
       message_id: status.message_id,
     }).catch(() => {});
@@ -5538,102 +8566,98 @@ bot.onText(/\/test_video(?:\s+([\s\S]+))?/, async (msg, match) => {
       return;
     }
 
-    await bot.editMessageText("Шаг 1/4: генерирую короткий голос...", {
+    await enqueueGenerationJob("video", {
+      chatId,
+      userId,
+      label: "test_video",
+      run: async ({ progress }) => {
+        await progress("generating voice");
+        let voiceBuffer;
+        try {
+          console.log("[/test_video] Fish request start");
+          ({ buffer: voiceBuffer } = await generateVoice(videoText, readiness.voiceProfileId));
+          console.log("[/test_video] Fish request success", { bytes: voiceBuffer.length });
+        } catch (error) {
+          console.log("[/test_video] Fish request fail", error);
+          await bot.sendMessage(chatId, formatVideoGenerationError(error));
+          throw error;
+        }
+
+        await progress("uploading");
+        let audioUrl;
+        try {
+          console.log("[/test_video] Cloudinary upload start");
+          audioUrl = await uploadAudioToCloudinary(voiceBuffer, `${readiness.expertId || "expert"}-test-video.mp3`);
+          console.log("[/test_video] Cloudinary upload success", { audioUrlPresent: Boolean(audioUrl) });
+        } catch (error) {
+          console.log("[/test_video] Cloudinary upload fail", error);
+          await bot.sendMessage(chatId, [
+            "Голос сгенерирован, но видео требует публичный audio URL.",
+            "Cloudinary сейчас недоступен или не настроен.",
+            `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+          ].join("\n"));
+          throw error;
+        }
+
+        await progress("generating image");
+        let imageResult;
+        try {
+          console.log("[/test_video] FAL image request start", { endpoint: readiness.imageModelEndpoint });
+          imageResult = await generateImage(chatId, TEST_VIDEO_SCENE_PROMPT, { loraUrl: readiness.loraUrl });
+          console.log("[/test_video] FAL image request success", { imageUrlPresent: Boolean(imageResult?.imageUrl) });
+        } catch (error) {
+          console.log("[/test_video] FAL image request fail", error);
+          await bot.sendMessage(chatId, formatVideoGenerationError(error));
+          throw error;
+        }
+
+        await progress("generating video");
+        let videoResult;
+        try {
+          console.log("[/test_video] Aurora request start", { endpoint: readiness.modelEndpoint });
+          videoResult = await generateVideoAurora(chatId, imageResult.imageUrl, audioUrl);
+          console.log("[/test_video] Aurora request success", { videoUrlPresent: Boolean(videoResult?.videoUrl), cost: videoResult?.cost });
+        } catch (error) {
+          console.log("[/test_video] Aurora request fail", error);
+          await bot.sendMessage(chatId, formatVideoGenerationError(error));
+          throw error;
+        }
+
+        const state = userState.get(chatId) || {};
+        state.lastImageUrl = imageResult.imageUrl;
+        state.lastAudioUrl = audioUrl;
+        state.lastVideoUrl = videoResult.videoUrl;
+        state.lastExpertId = readiness.expertId;
+        userState.set(chatId, state);
+
+        try {
+          console.log("[/test_video] Telegram sendVideo start");
+          await bot.sendVideo(chatId, videoResult.videoUrl, {
+            caption: [
+              "Тестовое видео готово.",
+              `expertId: ${readiness.expertId}`,
+              `video endpoint: ${readiness.modelEndpoint}`,
+              "Generation limits were not incremented.",
+            ].join("\n"),
+          });
+          console.log("[/test_video] Telegram sendVideo success");
+        } catch (error) {
+          console.log("[/test_video] Telegram sendVideo fail", error);
+          await bot.sendMessage(chatId, [
+            "Видео сгенерировано, но Telegram не смог отправить mp4.",
+            `URL: ${videoResult.videoUrl}`,
+            `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+          ].join("\n"));
+          throw error;
+        }
+      },
+    });
+
+    await bot.editMessageText("Готово: тестовое видео поставлено в очередь.", {
       chat_id: chatId,
       message_id: status.message_id,
     }).catch(() => {});
-    let voiceBuffer;
-    try {
-      console.log("[/test_video] Fish request start");
-      ({ buffer: voiceBuffer } = await generateVoice(videoText, readiness.voiceProfileId));
-      console.log("[/test_video] Fish request success", { bytes: voiceBuffer.length });
-    } catch (error) {
-      console.log("[/test_video] Fish request fail", error);
-      await bot.sendMessage(chatId, formatVideoGenerationError(error));
-      return;
-    }
-
-    await bot.editMessageText("Шаг 2/4: загружаю аудио в Cloudinary...", {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
-    let audioUrl;
-    try {
-      console.log("[/test_video] Cloudinary upload start");
-      audioUrl = await uploadAudioToCloudinary(voiceBuffer, `${readiness.expertId || "expert"}-test-video.mp3`);
-      console.log("[/test_video] Cloudinary upload success", { audioUrlPresent: Boolean(audioUrl) });
-    } catch (error) {
-      console.log("[/test_video] Cloudinary upload fail", error);
-      await bot.sendMessage(chatId, [
-        "Голос сгенерирован, но видео требует публичный audio URL.",
-        "Cloudinary сейчас недоступен или не настроен.",
-        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
-      ].join("\n"));
-      return;
-    }
-
-    await bot.editMessageText("Шаг 3/4: генерирую изображение Динары...", {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
-    let imageResult;
-    try {
-      console.log("[/test_video] FAL image request start", { endpoint: readiness.imageModelEndpoint });
-      imageResult = await generateImage(chatId, TEST_VIDEO_SCENE_PROMPT, { loraUrl: readiness.loraUrl });
-      console.log("[/test_video] FAL image request success", { imageUrlPresent: Boolean(imageResult?.imageUrl) });
-    } catch (error) {
-      console.log("[/test_video] FAL image request fail", error);
-      await bot.sendMessage(chatId, formatVideoGenerationError(error));
-      return;
-    }
-
-    await bot.editMessageText("Шаг 4/4: запускаю Aurora video generation...", {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
-    let videoResult;
-    try {
-      console.log("[/test_video] Aurora request start", { endpoint: readiness.modelEndpoint });
-      videoResult = await generateVideoAurora(chatId, imageResult.imageUrl, audioUrl);
-      console.log("[/test_video] Aurora request success", { videoUrlPresent: Boolean(videoResult?.videoUrl), cost: videoResult?.cost });
-    } catch (error) {
-      console.log("[/test_video] Aurora request fail", error);
-      await bot.sendMessage(chatId, formatVideoGenerationError(error));
-      return;
-    }
-
-    const state = userState.get(chatId) || {};
-    state.lastImageUrl = imageResult.imageUrl;
-    state.lastAudioUrl = audioUrl;
-    state.lastVideoUrl = videoResult.videoUrl;
-    state.lastExpertId = readiness.expertId;
-    userState.set(chatId, state);
-
-    try {
-      console.log("[/test_video] Telegram sendVideo start");
-      await bot.sendVideo(chatId, videoResult.videoUrl, {
-        caption: [
-          "Тестовое видео готово.",
-          `expertId: ${readiness.expertId}`,
-          `video endpoint: ${readiness.modelEndpoint}`,
-          "Generation limits were not incremented.",
-        ].join("\n"),
-      });
-      console.log("[/test_video] Telegram sendVideo success");
-    } catch (error) {
-      console.log("[/test_video] Telegram sendVideo fail", error);
-      await bot.sendMessage(chatId, [
-        "Видео сгенерировано, но Telegram не смог отправить mp4.",
-        `URL: ${videoResult.videoUrl}`,
-        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
-      ].join("\n"));
-      return;
-    }
-
-    await bot.editMessageText("Готово: тестовое видео отправлено.", {
-      chat_id: chatId,
-      message_id: status.message_id,
-    }).catch(() => {});
+    return;
   } catch (error) {
     console.log("[/test_video] handler fail", error);
     const message = [
@@ -5727,7 +8751,8 @@ bot.onText(/\/runtime_preview(?:\s+([\s\S]+))?/, async (msg, match) => {
 
 bot.on("pre_checkout_query", async (query) => {
   try {
-    await bot.answerPreCheckoutQuery(query.id, true);
+    const planType = planTypeFromStarsPayload(query.invoice_payload);
+    await bot.answerPreCheckoutQuery(query.id, Boolean(PLAN_CATALOG[planType]));
   } catch (error) {
     console.error("Pre-checkout answer failed:", error.message);
   }
@@ -5745,18 +8770,19 @@ bot.on("message", async (msg) => {
     const state = userState.get(chatId) || {};
 
     if (msg.successful_payment) {
-      const runtime = await loadExpertRuntime(chatId);
-      runtime.limits.text = Number(runtime.limits.text || SOFT_FREE_LIMITS.text) + 10;
-      runtime.monetization.paid_plan = "stars_text10_beta";
-      runtime.monetization.telegram_stars_ready = true;
-      runtime.updated_at = new Date().toISOString();
-      await saveExpertRuntime(chatId, runtime);
-      await bot.sendMessage(chatId, "Оплата получена. Добавил 10 beta-генераций к вашему AI-эксперту.");
-      await sendExpertDashboard(chatId, msg.from?.id || chatId);
+      await handleSuccessfulStarsPayment(msg);
+      return;
+    }
+
+    if (state.runtimeExpertCreate && await handleRuntimeExpertCreateMessage(msg, state)) {
       return;
     }
 
     if (msg.text && msg.text.startsWith('/')) return;
+
+    if (state.kbAttachAwaiting && await attachKnowledgeFileToActiveExpert(msg)) {
+      return;
+    }
 
     if (msg.text === "\uD83D\uDE80 Старт") {
       const access = await checkDemoAccess(chatId);
@@ -5855,11 +8881,19 @@ bot.on("message", async (msg) => {
       userState.set(chatId, { ...state, awaitingCustomScene: false });
       const translatedScene = await translateScene(text);
       const customScene = `${translatedScene}, bokeh background, photorealistic`;
-      const { imageUrl, cost: photoCost, scenePrompt } = await generateImage(chatId, customScene);
-      const s = userState.get(chatId) || {};
-      s.lastImageUrl = imageUrl;
-      userState.set(chatId, s);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
+      await enqueueGenerationJob("image", {
+        chatId,
+        userId: msg.from?.id || chatId,
+        label: "custom_scene_image",
+        run: async ({ progress }) => {
+          await progress("generating image");
+          const { imageUrl, cost: photoCost, scenePrompt } = await generateImage(chatId, customScene);
+          const s = userState.get(chatId) || {};
+          s.lastImageUrl = imageUrl;
+          userState.set(chatId, s);
+          await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
+        },
+      });
       return;
     }
 
@@ -5911,6 +8945,17 @@ bot.on("callback_query", async (query) => {
 
   try {
     const state = userState.get(chatId) || {};
+
+    if (data.startsWith("exp_sw:")) {
+      const expertId = sanitizeRuntimeExpertId(data.replace("exp_sw:", ""));
+      const result = await switchActiveExpertForChat(chatId, expertId);
+      if (!result.ok) {
+        await bot.sendMessage(chatId, `Expert "${expertId}" not found or inactive.`);
+        return;
+      }
+      await bot.sendMessage(chatId, `✅ Active expert switched to ${result.expert.expertId} (${result.expert.displayName}).`);
+      return;
+    }
 
     if (data === "admin_tools") {
       await sendAdminTools(chatId, query.from?.id || chatId, state.adminTargetUserId || query.from?.id || chatId);
@@ -6085,8 +9130,9 @@ bot.on("callback_query", async (query) => {
     if (data === "manual_upgrade") {
       await bot.sendMessage(chatId, buildManualUpgradeText(), {
         reply_markup: { inline_keyboard: [
-          [{ text: "Запросить beta_paid", callback_data: "req_limit_text" }],
+          [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
           [{ text: "Планы", callback_data: "show_plans" }],
+          [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
         ]},
       });
       return;
@@ -6094,15 +9140,22 @@ bot.on("callback_query", async (query) => {
 
     if (data === "show_plans") {
       await bot.sendMessage(chatId, buildPaidBetaPlansText(), {
-        reply_markup: { inline_keyboard: [[{ text: "Запросить beta_paid", callback_data: "req_limit_text" }]] },
+        reply_markup: { inline_keyboard: [
+          [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+          [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
+          [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
+        ]},
       });
       return;
     }
 
+    if (data.startsWith("stars_plan:")) {
+      await sendStarsUpgradePlaceholder(chatId, "text", data.replace("stars_plan:", ""));
+      return;
+    }
+
     if (data.startsWith("stars_pack:")) {
-      await bot.sendMessage(chatId, buildManualUpgradeText(), {
-        reply_markup: { inline_keyboard: [[{ text: "Запросить beta_paid", callback_data: "req_limit_text" }]] },
-      });
+      await sendStarsUpgradePlaceholder(chatId, "text", data.replace("stars_pack:", ""));
       return;
     }
 
@@ -6668,14 +9721,22 @@ bot.on("callback_query", async (query) => {
       }
       const scenePrompt = state.photos?.[data.replace("rp:", "")]?.scenePrompt || state.lastScenePrompt;
       if (!scenePrompt) { await bot.sendMessage(chatId, "Не могу воспроизвести сцену."); return; }
-      const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
-      await incrementLimit(chatId, "photo", state.lastScenario, null);
-      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
-      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
-      const s = userState.get(chatId) || {};
-      s.lastImageUrl = imageUrl;
-      userState.set(chatId, s);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost, newScene);
+      await enqueueGenerationJob("image", {
+        chatId,
+        userId: query.from?.id || chatId,
+        label: "regenerate_photo",
+        run: async ({ progress }) => {
+          await progress("generating image");
+          const { imageUrl, cost: photoCost, scenePrompt: newScene } = await generateImage(chatId, scenePrompt);
+          await incrementLimit(chatId, "photo", state.lastScenario, null);
+          await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+          await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
+          const s = userState.get(chatId) || {};
+          s.lastImageUrl = imageUrl;
+          userState.set(chatId, s);
+          await sendPhotoWithButtons(chatId, imageUrl, photoCost, newScene);
+        },
+      });
       return;
     }
 
@@ -6700,10 +9761,18 @@ bot.on("callback_query", async (query) => {
       if (!(await guardMediaAction(chatId, "видео"))) return;
       if (!(await guardRuntimeQuotaForAction(chatId, "video", "видео"))) return;
       if (!state.lastImageUrl || !state.lastAudioUrl) { await bot.sendMessage(chatId, "Нет фото или аудио."); return; }
-      const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, state.lastImageUrl, state.lastAudioUrl);
-      await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
-      await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
-      await sendVideoWithButtons(chatId, videoUrl, videoCost);
+      await enqueueGenerationJob("video", {
+        chatId,
+        userId: query.from?.id || chatId,
+        label: "regenerate_video",
+        run: async ({ progress }) => {
+          await progress("generating video");
+          const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, state.lastImageUrl, state.lastAudioUrl);
+          await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
+          await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
+          await sendVideoWithButtons(chatId, videoUrl, videoCost);
+        },
+      });
       return;
     }
 
@@ -6822,11 +9891,19 @@ bot.on("callback_query", async (query) => {
       const s = userState.get(chatId) || {};
       s.lastImageUrl = imageUrl;
       userState.set(chatId, s);
-      const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, state.lastAudioUrl);
-      await incrementLimit(chatId, "video", state.lastScenario, null);
-      await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
-      await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
-      await sendVideoWithButtons(chatId, videoUrl, videoCost);
+      await enqueueGenerationJob("video", {
+        chatId,
+        userId: query.from?.id || chatId,
+        label: "make_video_from_photo",
+        run: async ({ progress }) => {
+          await progress("generating video");
+          const { videoUrl, cost: videoCost } = await generateVideoAurora(chatId, imageUrl, state.lastAudioUrl);
+          await incrementLimit(chatId, "video", state.lastScenario, null);
+          await incrementExpertRuntime(chatId, "generate_video", { counter: "video", scenario: state.lastScenario });
+          await recordRuntimeCost(chatId, "video", "fal_video_generation", videoCost, { scenario: state.lastScenario }).catch(() => {});
+          await sendVideoWithButtons(chatId, videoUrl, videoCost);
+        },
+      });
       return;
     }
 
@@ -6840,14 +9917,22 @@ bot.on("callback_query", async (query) => {
         await handleLimitExhausted(chatId, "photo", photoCheck.user); return;
       }
       const scenePrompt = await buildTopicScenePrompt(state.lastTopic || "психология");
-      const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
-      await incrementLimit(chatId, "photo", state.lastScenario, null);
-      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
-      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
-      const s = userState.get(chatId) || {};
-      s.lastImageUrl = imageUrl;
-      userState.set(chatId, s);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
+      await enqueueGenerationJob("image", {
+        chatId,
+        userId: query.from?.id || chatId,
+        label: "topic_photo",
+        run: async ({ progress }) => {
+          await progress("generating image");
+          const { imageUrl, cost: photoCost } = await generateImage(chatId, scenePrompt);
+          await incrementLimit(chatId, "photo", state.lastScenario, null);
+          await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+          await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
+          const s = userState.get(chatId) || {};
+          s.lastImageUrl = imageUrl;
+          userState.set(chatId, s);
+          await sendPhotoWithButtons(chatId, imageUrl, photoCost, scenePrompt);
+        },
+      });
     } else if (data === "photo_office") {
       if (!(await guardMediaAction(chatId, "фото"))) return;
       if (!(await guardRuntimeQuotaForAction(chatId, "photo", "фото"))) return;
@@ -6858,14 +9943,22 @@ bot.on("callback_query", async (query) => {
         await handleLimitExhausted(chatId, "photo", photoCheck.user); return;
       }
       const officeScene = `sitting in cozy therapist office, bookshelf background, soft warm lamp light, wooden furniture, indoor plants, bokeh background`;
-      const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
-      await incrementLimit(chatId, "photo", state.lastScenario, null);
-      await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
-      await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
-      const s = userState.get(chatId) || {};
-      s.lastImageUrl = imageUrl;
-      userState.set(chatId, s);
-      await sendPhotoWithButtons(chatId, imageUrl, photoCost, officeScene);
+      await enqueueGenerationJob("image", {
+        chatId,
+        userId: query.from?.id || chatId,
+        label: "office_photo",
+        run: async ({ progress }) => {
+          await progress("generating image");
+          const { imageUrl, cost: photoCost } = await generateImage(chatId, officeScene);
+          await incrementLimit(chatId, "photo", state.lastScenario, null);
+          await incrementExpertRuntime(chatId, "generate_photo", { counter: "photo", scenario: state.lastScenario });
+          await recordRuntimeCost(chatId, "image", "fal_image_generation", photoCost, { scenario: state.lastScenario }).catch(() => {});
+          const s = userState.get(chatId) || {};
+          s.lastImageUrl = imageUrl;
+          userState.set(chatId, s);
+          await sendPhotoWithButtons(chatId, imageUrl, photoCost, officeScene);
+        },
+      });
     } else if (data === "photo_custom") {
       userState.set(chatId, { ...state, awaitingCustomScene: true });
       await bot.sendMessage(chatId, "✏️ Опишите сцену на русском:");
@@ -6947,6 +10040,17 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
       demoMode: state.demoMode || variant === "demo",
       premium: runtimeQuotaCheck.premium,
     });
+    await appendGeneratedContentMemory(ownership, {
+      expertId: ownership.expertId,
+      topic,
+      hook: detectGeneratedHook(fullAnswer),
+      cta: detectGeneratedCta(fullAnswer),
+      contentType: inferContentType({ lengthMode, preset: state.pendingContentPreset || state.lastContentPreset, variant }),
+      platform: "telegram",
+      scenario,
+      lengthMode,
+      variant,
+    }).catch((error) => console.warn("Content memory/strategy save failed:", error.message));
     if ((runtimeBeforeGeneration.counters?.text || 0) === 0) {
       await trackBetaEvent(chatId, BETA_EVENT_NAMES.FIRST_GENERATION, {
         scenario,
@@ -7021,14 +10125,15 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
 
     await sendGeneratedText(chatId, fullAnswer, scenario);
     const entitlementRemaining = Math.max(0, Number(entitlementAfterGeneration.generationLimit || 0) - Number(entitlementAfterGeneration.generationUsed || 0));
-    const remaining = ["admin", "beta_paid"].includes(entitlementAfterGeneration.plan)
+    const premiumPlanAfterGeneration = Boolean(entitlementAfterGeneration.premium) || ["admin", "beta_paid", "start", "pro"].includes(entitlementAfterGeneration.plan);
+    const remaining = premiumPlanAfterGeneration
       ? entitlementRemaining
       : runtimeRemaining(runtimeAfterGeneration, "text");
     if (remaining !== null && (remaining <= 3 || state.demoMode || variant === "demo")) {
       await bot.sendMessage(
         chatId,
         [
-          `Осталось текстовых генераций: ${remaining}/${["admin", "beta_paid"].includes(entitlementAfterGeneration.plan) ? entitlementAfterGeneration.generationLimit : runtimeAfterGeneration.limits.text}.`,
+          `Осталось текстовых генераций: ${remaining}/${premiumPlanAfterGeneration ? entitlementAfterGeneration.generationLimit : runtimeAfterGeneration.limits.text}.`,
           remaining <= 0
             ? "Лимит закончился. Можно запросить расширение, а пока улучшить AI-эксперта материалами."
             : "Чтобы следующий текст был сильнее, можно продолжить онбординг: добавить стиль, материалы или собрать своего AI-эксперта.",
