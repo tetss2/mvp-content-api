@@ -44,6 +44,47 @@ This creates or replaces the user's entitlement:
 
 It also writes an audit event to `payment_events.jsonl` with type `manual_grant`.
 
+Real payments are not connected in this beta layer. Telegram Stars, Stripe, cards, crypto, invoices, and provider webhooks should remain disabled until a separate monetization iteration.
+
+## User Commands
+
+Users can inspect their beta access from Telegram:
+
+```text
+/premium_status
+```
+
+The response shows:
+
+- `userId`
+- current plan
+- status
+- `generationUsed`
+- `generationLimit`
+- remaining generations
+- `validUntil`
+- active `expertId`
+
+Users can view available beta plans:
+
+```text
+/plans
+```
+
+Current beta plans:
+
+- `demo`: small starter limit for checking the product value.
+- `beta_paid`: manual paid-beta access granted by an admin with `/grant_beta USER_ID LIMIT DAYS`.
+- `admin`: service access for testing and support.
+
+Users can request an upgrade:
+
+```text
+/upgrade
+```
+
+The bot explains that paid access is enabled manually and prompts the user to contact the administrator for `beta_paid`.
+
 ## Revoke Access
 
 Admin/full-access operators can revoke access:
@@ -72,6 +113,8 @@ The response shows:
 - valid-until timestamp
 - updated timestamp
 
+For self-service user-facing status, use `/premium_status`.
+
 ## Storage Locations
 
 By default, files are stored under `RUNTIME_DATA_ROOT`:
@@ -89,13 +132,14 @@ RUNTIME_DATA_ROOT=/data/beta
 
 The files are auto-created on startup if missing.
 
-## Why Telegram Stars Is Not Connected Yet
+## Why Real Payments Are Not Connected Yet
 
-Telegram Stars hooks already exist elsewhere in the runtime as placeholders, but this layer is intentionally manual:
+This layer is intentionally manual:
 
 - it avoids real payment-provider state while beta access is still changing;
 - it gives a simple audit trail for manual grants/revokes;
 - it keeps the risk surface small while onboarding, retrieval, and expert identity are still being stabilized.
+- it keeps beta validation focused on usage, limits, and retention before billing provider work.
 
 ## Before Real Monetization
 

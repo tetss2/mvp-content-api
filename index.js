@@ -1144,6 +1144,56 @@ function formatEntitlement(entitlement) {
   ].join("\n");
 }
 
+function planLimitLabel(plan) {
+  if (!plan) return "∞";
+  return Number(plan.generationLimit) >= 1000000 ? "почти без лимита" : `${plan.generationLimit} генераций`;
+}
+
+function buildPaidBetaPlansText() {
+  return [
+    "Beta-планы",
+    "",
+    `demo — ${planLimitLabel(PAID_BETA_PLANS.demo)}. Стартовый доступ, чтобы быстро проверить качество AI-эксперта.`,
+    `beta_paid — ${planLimitLabel(PAID_BETA_PLANS.beta_paid)} на ${PAID_BETA_PLANS.beta_paid.days} дней. Включается вручную администратором для закрытой beta.`,
+    `admin — ${planLimitLabel(PAID_BETA_PLANS.admin)}. Служебный доступ для тестов и поддержки.`,
+    "",
+    "Реальные платежи пока не подключены. Для подключения beta_paid используйте /upgrade.",
+  ].join("\n");
+}
+
+async function getActiveExpertId(userId) {
+  const inventory = await getOnboardingInventory(userId).catch(() => null);
+  return inventory?.profile?.active_scenario_id || inventory?.scenarios?.[0]?.id || "none";
+}
+
+async function buildPremiumStatusText(userId) {
+  const entitlement = await getOrCreateEntitlement(userId);
+  const remaining = Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0));
+  const activeExpertId = await getActiveExpertId(userId);
+  return [
+    "Premium status",
+    "",
+    `userId: ${entitlement.userId}`,
+    `current plan: ${entitlement.plan}`,
+    `status: ${entitlement.status}`,
+    `generationUsed: ${entitlement.generationUsed || 0}`,
+    `generationLimit: ${entitlement.generationLimit}`,
+    `remaining: ${remaining}`,
+    `validUntil: ${entitlement.validUntil || "none"}`,
+    `active expertId: ${activeExpertId}`,
+  ].join("\n");
+}
+
+function buildManualUpgradeText() {
+  return [
+    "Платный доступ пока включается вручную.",
+    "Напишите администратору для подключения beta_paid.",
+    "",
+    "Команда для просмотра планов: /plans",
+    "Статус доступа: /premium_status",
+  ].join("\n");
+}
+
 function betaTelemetryPath() {
   const day = new Date().toISOString().slice(0, 10);
   return join(BETA_TELEMETRY_DIR, `${day}.jsonl`);
@@ -1521,21 +1571,22 @@ async function handlePaidBetaAccessDenied(chatId, entitlement, reason) {
     ? Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0))
     : 0;
   await bot.sendMessage(chatId, [
-    "Доступ к генерации сейчас ограничен.",
+    "Лимит генераций закончился.",
     "",
     entitlement
       ? `План: ${entitlement.plan}, статус: ${entitlement.status}.`
       : "План ещё не создан.",
     entitlement ? `Использовано: ${entitlement.generationUsed || 0}/${entitlement.generationLimit}.` : "",
     entitlement?.validUntil ? `Действует до: ${entitlement.validUntil}.` : "",
-    remaining <= 0 ? "Лимит beta-генераций закончился." : "",
+    `Осталось: ${remaining}.`,
     reason === "entitlement_expired"
       ? "Срок доступа истёк."
       : "",
     "",
-    "Можно запросить beta-доступ у администратора или продолжить улучшать профиль эксперта.",
+    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
   ].filter(Boolean).join("\n"), {
     reply_markup: { inline_keyboard: [
+      [{ text: "Открыть /upgrade", callback_data: "manual_upgrade" }],
       [{ text: "Запросить beta-доступ", callback_data: "req_limit_text" }],
       [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
     ]},
@@ -1562,9 +1613,7 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
     "",
     quotaText,
     "",
-    TELEGRAM_STARS_ENABLED
-      ? "Можно докупить beta-пакет через Telegram Stars или запросить ручной premium-доступ."
-      : "Можно создать своего AI-эксперта, усилить его материалами и запросить premium-доступ. Оплата Telegram Stars пока в placeholder-режиме, hook готов для быстрого теста.",
+    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: buildUpgradeKeyboard(isDemo ? "demo" : "text") },
   });
@@ -1572,7 +1621,7 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
 
 function buildUpgradeKeyboard(limitType = "text") {
   const rows = [
-    [{ text: TELEGRAM_STARS_ENABLED ? "Оплатить beta-пакет Stars" : "Stars beta-пакет (скоро)", callback_data: `stars_pack:${limitType}:text10` }],
+    [{ text: "Как подключить beta_paid", callback_data: "manual_upgrade" }],
     [{ text: "Запросить premium-доступ", callback_data: `req_limit_${limitType}` }],
     [{ text: "Создать/усилить AI-эксперта", callback_data: "ob_template_menu" }],
     [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
@@ -5075,8 +5124,21 @@ bot.onText(/\/invite/, async (msg) => {
   await sendBetaInviteCopy(msg.chat.id);
 });
 
+bot.onText(/\/premium_status/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, await buildPremiumStatusText(msg.from?.id || msg.chat.id));
+});
+
+bot.onText(/\/plans/, async (msg) => {
+  await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText());
+});
+
 bot.onText(/\/upgrade/, async (msg) => {
-  await sendStarsUpgradePlaceholder(msg.chat.id, "text", "text10");
+  await bot.sendMessage(msg.chat.id, buildManualUpgradeText(), {
+    reply_markup: { inline_keyboard: [
+      [{ text: "Запросить beta_paid", callback_data: "req_limit_text" }],
+      [{ text: "Посмотреть планы", callback_data: "show_plans" }],
+    ]},
+  });
 });
 
 bot.onText(/\/create_expert/, async (msg) => {
@@ -6020,9 +6082,27 @@ bot.on("callback_query", async (query) => {
       return;
     }
 
+    if (data === "manual_upgrade") {
+      await bot.sendMessage(chatId, buildManualUpgradeText(), {
+        reply_markup: { inline_keyboard: [
+          [{ text: "Запросить beta_paid", callback_data: "req_limit_text" }],
+          [{ text: "Планы", callback_data: "show_plans" }],
+        ]},
+      });
+      return;
+    }
+
+    if (data === "show_plans") {
+      await bot.sendMessage(chatId, buildPaidBetaPlansText(), {
+        reply_markup: { inline_keyboard: [[{ text: "Запросить beta_paid", callback_data: "req_limit_text" }]] },
+      });
+      return;
+    }
+
     if (data.startsWith("stars_pack:")) {
-      const [, limitType, pack] = data.split(":");
-      await sendStarsUpgradePlaceholder(chatId, limitType || "text", pack || "text10");
+      await bot.sendMessage(chatId, buildManualUpgradeText(), {
+        reply_markup: { inline_keyboard: [[{ text: "Запросить beta_paid", callback_data: "req_limit_text" }]] },
+      });
       return;
     }
 
