@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { access, mkdir, writeFile, rm } from "fs/promises";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -27,9 +28,19 @@ const optional = [
 
 const missingRequired = required.filter((name) => !process.env[name]);
 const missingOptional = optional.filter(([name]) => !process.env[name]);
+const warnings = [];
 
 if (betaMode && process.env.TELEGRAM_TOKEN && process.env.TELEGRAM_TOKEN === process.env.TELEGRAM_BETA_TOKEN) {
   missingRequired.push("TELEGRAM_BETA_TOKEN must differ from TELEGRAM_TOKEN in beta mode");
+}
+if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && process.env.MINIAPP_DEV_AUTH !== "false") {
+  warnings.push("MINIAPP_DEV_AUTH should be false in production/Railway.");
+}
+if (process.env.TELEGRAM_STARS_ENABLED === "true" && process.env.PAYMENT_TEST_MODE === "true") {
+  warnings.push("PAYMENT_TEST_MODE=true while Telegram Stars checkout is enabled.");
+}
+if (process.env.TELEGRAM_STARS_ENABLED === "true" && !process.env.TELEGRAM_BOT_USERNAME) {
+  warnings.push("TELEGRAM_BOT_USERNAME missing; Mini App Telegram handoff links are degraded.");
 }
 
 await mkdir(dataRoot, { recursive: true });
@@ -69,6 +80,7 @@ const status = {
   missingRequired,
   missingOptional: missingOptional.map(([name, feature]) => ({ name, feature })),
   missingFiles,
+  warnings,
 };
 
 console.log(JSON.stringify(status, null, 2));

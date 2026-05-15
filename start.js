@@ -1,3 +1,4 @@
+import "dotenv/config";
 import http from "http";
 import { promises as fs } from "fs";
 import { dirname, join } from "path";
@@ -17,6 +18,8 @@ const leadsBotTokenPresent = Boolean(leadsToken);
 const leadsBotTokenOverlapsMain = Boolean(mainToken && leadsToken && mainToken === leadsToken);
 const leadsBotEnabled = leadsBotRequested && leadsBotTokenPresent && !leadsBotTokenOverlapsMain;
 const userPlansRoot = process.env.USER_PLANS_ROOT || join(__dirname, "runtime_data", "user_plans");
+const runtimeEventsPath = process.env.RUNTIME_EVENTS_PATH || join(process.env.RUNTIME_DATA_ROOT || __dirname, "runtime_events.jsonl");
+const startupWarnings = [];
 const planCatalog = {
   FREE: {
     planType: "FREE",
@@ -46,9 +49,27 @@ const miniappShell = createMiniappShell({
   expertsPath: process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json"),
   mediaProfilesPath: process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json"),
   expertKbRegistryPath: process.env.EXPERT_KB_REGISTRY_PATH || join(__dirname, "runtime_data", "expert_kb_registry.json"),
+  runtimeEventsPath,
   telegramStarsReady: process.env.TELEGRAM_STARS_ENABLED === "true",
   telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || "",
 });
+
+function validateStartup() {
+  if (!mainToken && process.env.TELEGRAM_POLLING !== "false") {
+    startupWarnings.push(`${mainTokenName} missing; main Telegram polling will not start.`);
+  }
+  if (!process.env.OPENAI_API_KEY) startupWarnings.push("OPENAI_API_KEY missing; text generation and runtime ingestion will fail.");
+  if (process.env.TELEGRAM_STARS_ENABLED === "true") {
+    if (!process.env.TELEGRAM_BOT_USERNAME) startupWarnings.push("TELEGRAM_BOT_USERNAME missing; Mini App handoff links are degraded.");
+    if (process.env.PAYMENT_TEST_MODE === "true") startupWarnings.push("PAYMENT_TEST_MODE=true; do not use this for uncontrolled production traffic.");
+  }
+  if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && process.env.MINIAPP_DEV_AUTH !== "false") {
+    startupWarnings.push("MINIAPP_DEV_AUTH should be false in production/Railway.");
+  }
+  if (leadsBotRequested && leadsBotTokenOverlapsMain) {
+    startupWarnings.push("LEADS_BOT_TOKEN matches the main bot token; leads bot disabled to avoid polling conflicts.");
+  }
+}
 
 function tokenFingerprint(value) {
   if (value === undefined || value === null || value === "") return value;
@@ -56,6 +77,8 @@ function tokenFingerprint(value) {
   if (text.length <= 10) return "[set]";
   return `${text.slice(0, 6)}...${text.slice(-4)}`;
 }
+
+validateStartup();
 
 function sendJson(res, status, payload) {
   res.writeHead(status, { "content-type": "application/json" });
@@ -119,11 +142,12 @@ console.log("[startup] Leads bot:", {
       ? "LEADS_BOT_TOKEN matches main bot token"
       : (leadsBotRequested ? "LEADS_BOT_TOKEN missing" : "START_LEADS_BOT is not true")),
 });
+for (const warning of startupWarnings) console.warn("[startup:warning]", warning);
 http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   if (await miniappShell.handle(req, res)) return;
   if (url.pathname === "/healthz" || url.pathname === "/") {
-    sendJson(res, 200, { ok: true, service: "mvp-content-api", runtimeMode, startedAt });
+    sendJson(res, 200, { ok: true, service: "mvp-content-api", runtimeMode, startedAt, warnings: startupWarnings });
     return;
   }
   if (url.pathname === "/runtime/plans") {

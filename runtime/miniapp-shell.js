@@ -5,6 +5,7 @@ import { runRuntimeGenerationAdapter } from "../scripts/runtime-generation-adapt
 
 const MINIAPP_STATIC_ROOT = resolve(process.cwd(), "public", "miniapp");
 const MAX_BODY_BYTES = 64 * 1024;
+const MAX_AUTH_AGE_SECONDS = Number(process.env.MINIAPP_AUTH_MAX_AGE_SECONDS || 24 * 60 * 60);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -26,6 +27,12 @@ function sendText(res, status, text, contentType = "text/plain; charset=utf-8") 
 
 function safeUserId(value) {
   return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function safeNonNegativeInteger(value, fallback = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return fallback;
+  return Math.floor(number);
 }
 
 function normalizePlanType(value, catalog) {
@@ -67,16 +74,16 @@ function normalizePlan(userId, raw, catalog) {
     status: raw?.status || "active",
     premium: Boolean(raw?.premium ?? plan.premium),
     limits: {
-      text: Number(raw?.limits?.text ?? raw?.generationLimit ?? plan.textLimit ?? plan.generationLimit ?? 0),
-      photo: Number(raw?.limits?.photo ?? 0),
-      audio: Number(raw?.limits?.audio ?? 0),
-      video: Number(raw?.limits?.video ?? 0),
+      text: safeNonNegativeInteger(raw?.limits?.text ?? raw?.generationLimit ?? plan.textLimit ?? plan.generationLimit ?? 0),
+      photo: safeNonNegativeInteger(raw?.limits?.photo ?? 0),
+      audio: safeNonNegativeInteger(raw?.limits?.audio ?? 0),
+      video: safeNonNegativeInteger(raw?.limits?.video ?? 0),
     },
     usage: {
-      text: Number(raw?.usage?.text ?? raw?.generationUsed ?? 0),
-      photo: Number(raw?.usage?.photo ?? 0),
-      audio: Number(raw?.usage?.audio ?? 0),
-      video: Number(raw?.usage?.video ?? 0),
+      text: safeNonNegativeInteger(raw?.usage?.text ?? raw?.generationUsed ?? 0),
+      photo: safeNonNegativeInteger(raw?.usage?.photo ?? 0),
+      audio: safeNonNegativeInteger(raw?.usage?.audio ?? 0),
+      video: safeNonNegativeInteger(raw?.usage?.video ?? 0),
     },
     source: raw?.source || "runtime",
     validUntil: raw?.validUntil || null,
@@ -99,6 +106,20 @@ async function readJson(path, fallback) {
     return JSON.parse(await fs.readFile(path, "utf-8"));
   } catch {
     return fallback;
+  }
+}
+
+async function logMiniappEvent(options, type, payload = {}) {
+  const event = {
+    ts: new Date().toISOString(),
+    type,
+    source: "miniapp",
+    ...payload,
+  };
+  try {
+    await fs.appendFile(options.runtimeEventsPath || join(options.runtimeDataRoot, "runtime_events.jsonl"), `${JSON.stringify(event)}\n`, "utf-8");
+  } catch (error) {
+    console.warn(`[miniapp] event log failed: ${error.message}`);
   }
 }
 
@@ -139,6 +160,11 @@ function validateTelegramInitData(initData, botToken) {
   } catch {
     user = null;
   }
+  if (!user?.id) return { ok: false, reason: "missing_user" };
+  if (!/^\d+$/.test(String(user.id))) return { ok: false, reason: "invalid_user" };
+  const authDate = Number(params.get("auth_date") || 0);
+  if (!authDate) return { ok: false, reason: "missing_auth_date" };
+  if (Date.now() / 1000 - authDate > MAX_AUTH_AGE_SECONDS) return { ok: false, reason: "stale_auth_date" };
 
   return {
     ok: true,
@@ -186,6 +212,7 @@ function buildSession(req, url, options) {
 function requireSession(req, res, url, options) {
   const session = buildSession(req, url, options);
   if (!session.authenticated || !session.userId) {
+    logMiniappEvent(options, "miniapp_session_rejected", { reason: session.reason || "missing_user", path: url.pathname }).catch(() => {});
     sendJson(res, 401, { ok: false, error: "unauthorized", session });
     return null;
   }
@@ -350,7 +377,14 @@ function createMiniappShell(options = {}) {
 
     try {
       if (url.pathname === "/miniapp/api/session") {
-        sendJson(res, 200, { ok: true, session: buildSession(req, url, resolvedOptions) });
+        const session = buildSession(req, url, resolvedOptions);
+        await logMiniappEvent(resolvedOptions, "miniapp_launch", {
+          authenticated: session.authenticated,
+          mode: session.mode,
+          userId: session.userId || null,
+          reason: session.reason || session.authWarning || null,
+        });
+        sendJson(res, 200, { ok: true, session });
         return true;
       }
       if (url.pathname === "/miniapp/api/dashboard") {

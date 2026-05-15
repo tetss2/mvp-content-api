@@ -112,6 +112,7 @@ const IS_CLOUD_RUNTIME = IS_BETA_RUNTIME || IS_PRODUCTION || Boolean(process.env
 const POLLING_STARTUP_DELAY_MS = Number(process.env.POLLING_STARTUP_DELAY_MS || (IS_CLOUD_RUNTIME ? 4000 : 0));
 const ENTITLEMENTS_PATH = process.env.ENTITLEMENTS_PATH || join(RUNTIME_DATA_ROOT, "entitlements.json");
 const PAYMENT_EVENTS_PATH = process.env.PAYMENT_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "payment_events.jsonl");
+const RUNTIME_EVENTS_PATH = process.env.RUNTIME_EVENTS_PATH || join(RUNTIME_DATA_ROOT, "runtime_events.jsonl");
 const USER_PLANS_ROOT = process.env.USER_PLANS_ROOT || join(__dirname, "runtime_data", "user_plans");
 const EXPERTS_RUNTIME_PATH = process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json");
 const MEDIA_PROFILES_RUNTIME_PATH = process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json");
@@ -125,6 +126,11 @@ const EXPERT_CONTENT_STRATEGY_ROOT = process.env.EXPERT_CONTENT_STRATEGY_ROOT ||
 const INGESTION_TIMEOUT_MS = Number(process.env.INGESTION_RUNTIME_TIMEOUT_MS || 180000);
 const INGESTION_MAX_RETRIES = Number(process.env.INGESTION_RUNTIME_MAX_RETRIES || 2);
 const INGESTION_RETRY_DELAY_MS = Number(process.env.INGESTION_RUNTIME_RETRY_DELAY_MS || 30000);
+const PAYMENT_TEST_MODE = process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true";
+const INVOICE_MAX_AGE_MS = Number(process.env.INVOICE_MAX_AGE_MS || 24 * 60 * 60 * 1000);
+const activePaymentCharges = new Set();
+const activeGenerations = new Set();
+const userPlanLocks = new Map();
 
 const PAID_BETA_PLANS = {
   demo: {
@@ -211,6 +217,55 @@ function tokenPresenceReport() {
 
 function runtimeLog(...args) {
   console.log(`[${RUNTIME_NAME}]`, ...args);
+}
+
+async function logRuntimeEvent(type, payload = {}) {
+  const event = {
+    ts: new Date().toISOString(),
+    runtime: RUNTIME_NAME,
+    mode: RUNTIME_MODE,
+    type,
+    ...payload,
+  };
+  try {
+    await appendJsonlSafe(RUNTIME_EVENTS_PATH, event);
+  } catch (error) {
+    console.warn(`[${RUNTIME_NAME}] runtime event log failed: ${error.message}`);
+  }
+  if (DEBUG_LOGS) console.log(`[${RUNTIME_NAME}:event]`, JSON.stringify(event));
+  return event;
+}
+
+async function logPaymentEvent(type, payload = {}) {
+  return appendJsonlSafe(PAYMENT_EVENTS_PATH, {
+    type,
+    createdAt: nowIso(),
+    runtime: RUNTIME_NAME,
+    mode: RUNTIME_MODE,
+    ...payload,
+  });
+}
+
+function safeNonNegativeInteger(value, fallback = 0) {
+  const number = Number(value);
+  if (!Number.isFinite(number) || number < 0) return fallback;
+  return Math.floor(number);
+}
+
+async function withUserPlanLock(userId, task) {
+  const key = entitlementUserId(userId);
+  const previous = userPlanLocks.get(key) || Promise.resolve();
+  let release;
+  const current = new Promise((resolve) => { release = resolve; });
+  const tail = previous.then(() => current, () => current);
+  userPlanLocks.set(key, tail);
+  await previous.catch(() => {});
+  try {
+    return await task();
+  } finally {
+    release();
+    if (userPlanLocks.get(key) === tail) userPlanLocks.delete(key);
+  }
 }
 
 function debugLog(...args) {
@@ -780,11 +835,14 @@ async function ensurePaidBetaStorage() {
   await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
   const entitlementsExisted = await fileExists(ENTITLEMENTS_PATH);
   const paymentEventsExisted = await fileExists(PAYMENT_EVENTS_PATH);
+  const runtimeEventsExisted = await fileExists(RUNTIME_EVENTS_PATH);
   if (!entitlementsExisted) await writeJsonFileSafe(ENTITLEMENTS_PATH, { users: {} });
   if (!paymentEventsExisted) await fs.writeFile(PAYMENT_EVENTS_PATH, "", "utf-8");
+  if (!runtimeEventsExisted) await fs.writeFile(RUNTIME_EVENTS_PATH, "", "utf-8");
   runtimeLog("paid beta access layer enabled", {
     entitlementsFileExists: await fileExists(ENTITLEMENTS_PATH),
     paymentEventsFileExists: await fileExists(PAYMENT_EVENTS_PATH),
+    runtimeEventsFileExists: await fileExists(RUNTIME_EVENTS_PATH),
     userPlansRoot: USER_PLANS_ROOT,
   });
 }
@@ -826,6 +884,15 @@ function validateRuntimeEnv() {
   warnOptionalEnv("CLOUDINARY_API_SECRET", "video audio hosting");
   if (TELEGRAM_STARS_ENABLED && TELEGRAM_STARS_PROVIDER_TOKEN) {
     STARTUP_WARNINGS.push("TELEGRAM_STARS_PROVIDER_TOKEN is ignored for XTR payments; Telegram Stars invoices use an empty provider token.");
+  }
+  if (TELEGRAM_STARS_ENABLED && PAYMENT_TEST_MODE) {
+    STARTUP_WARNINGS.push("PAYMENT_TEST_MODE is enabled while Telegram Stars checkout is enabled; use only for controlled first-payment diagnostics.");
+  }
+  if (IS_CLOUD_RUNTIME && !process.env.PORT) {
+    STARTUP_WARNINGS.push("PORT is not set; Railway normally injects it, local fallback will use 3000.");
+  }
+  if (!MINIAPP_PUBLIC_URL) {
+    STARTUP_WARNINGS.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL missing; Telegram Mini App button is disabled.");
   }
 }
 
@@ -1428,16 +1495,16 @@ function buildPlanState(userId, planType = "FREE", patch = {}) {
     status: patch.status || "active",
     premium: Boolean(patch.premium ?? catalog.premium),
     limits: {
-      text: Number(patch.limits?.text ?? patch.generationLimit ?? catalog.generationLimit),
-      photo: Number(patch.limits?.photo ?? (catalog.premium ? 10 : SOFT_FREE_LIMITS.photo)),
-      audio: Number(patch.limits?.audio ?? (catalog.premium ? 20 : SOFT_FREE_LIMITS.audio)),
-      video: Number(patch.limits?.video ?? (normalizedType === "PRO" ? 20 : SOFT_FREE_LIMITS.video)),
+      text: safeNonNegativeInteger(patch.limits?.text ?? patch.generationLimit ?? catalog.generationLimit, catalog.generationLimit || SOFT_FREE_LIMITS.text),
+      photo: safeNonNegativeInteger(patch.limits?.photo ?? (catalog.premium ? 10 : SOFT_FREE_LIMITS.photo), SOFT_FREE_LIMITS.photo),
+      audio: safeNonNegativeInteger(patch.limits?.audio ?? (catalog.premium ? 20 : SOFT_FREE_LIMITS.audio), SOFT_FREE_LIMITS.audio),
+      video: safeNonNegativeInteger(patch.limits?.video ?? (normalizedType === "PRO" ? 20 : SOFT_FREE_LIMITS.video), SOFT_FREE_LIMITS.video),
     },
     usage: {
-      text: Number(previousUsage.text ?? patch.generationUsed ?? 0),
-      photo: Number(previousUsage.photo ?? 0),
-      audio: Number(previousUsage.audio ?? 0),
-      video: Number(previousUsage.video ?? 0),
+      text: safeNonNegativeInteger(previousUsage.text ?? patch.generationUsed ?? 0),
+      photo: safeNonNegativeInteger(previousUsage.photo ?? 0),
+      audio: safeNonNegativeInteger(previousUsage.audio ?? 0),
+      video: safeNonNegativeInteger(previousUsage.video ?? 0),
     },
     source: patch.source || "runtime",
     validUntil,
@@ -1471,9 +1538,16 @@ async function loadUserPlan(userId) {
   const id = entitlementUserId(userId);
   const path = userPlanPath(id);
   try {
-    return normalizePlanState(id, JSON.parse(await fs.readFile(path, "utf-8")));
+    const normalized = normalizePlanState(id, JSON.parse(await fs.readFile(path, "utf-8")));
+    if (normalized.userId !== id || !PLAN_CATALOG[normalized.planType]) {
+      await logRuntimeEvent("user_plan_recovered", { userId: id, reason: "invalid_plan_shape", planType: normalized.planType });
+    }
+    return normalized;
   } catch (error) {
-    if (error?.code !== "ENOENT") console.warn(`[plans] failed to read ${path}: ${error.message}`);
+    if (error?.code !== "ENOENT") {
+      console.warn(`[plans] failed to read ${path}: ${error.message}`);
+      await logRuntimeEvent("user_plan_recovered", { userId: id, reason: "read_failed", error: error.message });
+    }
   }
 
   let legacy = null;
@@ -1494,7 +1568,7 @@ async function loadUserPlan(userId) {
 async function saveUserPlan(userId, plan) {
   const normalized = normalizePlanState(userId, plan);
   await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
-  await fs.writeFile(userPlanPath(userId), JSON.stringify(normalized, null, 2), "utf-8");
+  await writeJsonFileSafe(userPlanPath(userId), normalized);
   return normalized;
 }
 
@@ -1523,34 +1597,69 @@ async function checkUserPlanAccess(userId, key = "text") {
 }
 
 async function incrementUserPlanUsage(userId, key = "text") {
-  const plan = await loadUserPlan(userId);
-  plan.usage = plan.usage || {};
-  plan.usage[key] = Number(plan.usage[key] || 0) + 1;
-  plan.updatedAt = nowIso();
-  return saveUserPlan(userId, plan);
+  return withUserPlanLock(userId, async () => {
+    const access = await checkUserPlanAccess(userId, key);
+    if (!access.ok) {
+      await logRuntimeEvent("usage_decrement_blocked", { userId: entitlementUserId(userId), key, reason: access.reason });
+      throw new Error(`usage_not_allowed:${access.reason}`);
+    }
+    const plan = access.plan;
+    plan.usage = plan.usage || {};
+    plan.usage[key] = safeNonNegativeInteger(plan.usage[key]) + 1;
+    plan.updatedAt = nowIso();
+    const saved = await saveUserPlan(userId, plan);
+    await logRuntimeEvent("usage_consumed", {
+      userId: entitlementUserId(userId),
+      key,
+      used: saved.usage?.[key] || 0,
+      limit: saved.limits?.[key] || 0,
+      remaining: planRemaining(saved, key),
+      planType: saved.planType,
+    });
+    return saved;
+  });
 }
 
 async function activateUserPlan(userId, planType, options = {}) {
-  const current = await loadUserPlan(userId).catch(() => null);
-  const next = buildPlanState(userId, planType, {
-    source: options.source || "manual",
-    days: options.days,
-    validUntil: options.validUntil,
-    usage: options.resetUsage === false ? current?.usage : {},
-    telegramStars: options.telegramStars,
+  const normalizedType = normalizePlanType(planType);
+  const catalog = PLAN_CATALOG[normalizedType];
+  if (!catalog || (options.requirePremium !== false && !catalog.premium)) {
+    await logPaymentEvent("plan_activation_rejected", {
+      userId: entitlementUserId(userId),
+      requestedPlanType: String(planType || ""),
+      normalizedPlanType: normalizedType,
+      reason: catalog ? "non_premium_plan" : "unknown_plan",
+      source: options.source || "manual",
+    });
+    throw new Error(`invalid_plan_activation:${normalizedType}`);
+  }
+  return withUserPlanLock(userId, async () => {
+    const current = await loadUserPlan(userId).catch(() => null);
+    const next = buildPlanState(userId, normalizedType, {
+      source: options.source || "manual",
+      days: options.days,
+      validUntil: options.validUntil,
+      usage: options.resetUsage === false ? current?.usage : {},
+      telegramStars: options.telegramStars,
+    });
+    const saved = await saveUserPlan(userId, next);
+    await logPaymentEvent(options.eventType || "plan_activated", {
+      userId: entitlementUserId(userId),
+      planType: saved.planType,
+      source: saved.source,
+      chargeId: options.chargeId || null,
+      payload: options.payload || null,
+      createdBy: options.createdBy ? entitlementUserId(options.createdBy) : null,
+    });
+    await logRuntimeEvent("plan_activated", {
+      userId: entitlementUserId(userId),
+      planType: saved.planType,
+      source: saved.source,
+      validUntil: saved.validUntil,
+      textLimit: saved.limits?.text || 0,
+    });
+    return saved;
   });
-  const saved = await saveUserPlan(userId, next);
-  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
-    type: options.eventType || "plan_activated",
-    userId: entitlementUserId(userId),
-    planType: saved.planType,
-    source: saved.source,
-    chargeId: options.chargeId || null,
-    payload: options.payload || null,
-    createdAt: nowIso(),
-    createdBy: options.createdBy ? entitlementUserId(options.createdBy) : null,
-  });
-  return saved;
 }
 
 async function hasPaymentEvent(chargeId) {
@@ -1571,6 +1680,24 @@ async function hasPaymentEvent(chargeId) {
   }
 }
 
+async function hasPaidInvoicePayload(payload) {
+  if (!payload) return false;
+  try {
+    const raw = await fs.readFile(PAYMENT_EVENTS_PATH, "utf-8");
+    return raw.split(/\r?\n/).some((line) => {
+      if (!line.trim()) return false;
+      try {
+        const event = JSON.parse(line);
+        return event.type === "telegram_stars_invoice_paid" && event.payload === payload;
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
+}
+
 function formatPlanState(plan) {
   const textRemaining = planRemaining(plan, "text");
   return [
@@ -1582,6 +1709,77 @@ function formatPlanState(plan) {
     `Remaining: ${textRemaining}`,
     `Valid until: ${plan.validUntil || "none"}`,
     `Updated: ${plan.updatedAt || "none"}`,
+  ].join("\n");
+}
+
+async function listUserPlans(limit = 200) {
+  await ensureRuntimeDirectory(USER_PLANS_ROOT, "user plan storage");
+  const files = await fs.readdir(USER_PLANS_ROOT).catch(() => []);
+  const plans = [];
+  for (const file of files.filter((name) => name.endsWith(".json")).slice(0, limit)) {
+    const raw = await readJsonFileSafe(join(USER_PLANS_ROOT, file), null);
+    if (raw) plans.push(normalizePlanState(raw.userId || file.replace(/\.json$/, ""), raw));
+  }
+  return plans;
+}
+
+async function buildRuntimeStatusText() {
+  const plans = await listUserPlans();
+  const paymentEvents = await readJsonlFileSafe(PAYMENT_EVENTS_PATH);
+  const premiumUsers = plans.filter((plan) => plan.premium && plan.status === "active" && !isPlanExpired(plan));
+  return [
+    "Runtime status",
+    "",
+    `runtime: ${RUNTIME_NAME}`,
+    `mode: ${RUNTIME_MODE}`,
+    `nodeEnv: ${NODE_ENV}`,
+    `cloudRuntime: ${IS_CLOUD_RUNTIME ? "yes" : "no"}`,
+    `polling: ${TELEGRAM_POLLING_ENABLED ? "enabled" : "disabled"}`,
+    `mainBot: ${MAIN_BOT_ENABLED ? "enabled" : "disabled"}`,
+    `starsCheckout: ${TELEGRAM_STARS_ENABLED ? "enabled" : "disabled"}`,
+    `paymentTestMode: ${PAYMENT_TEST_MODE ? "enabled" : "disabled"}`,
+    `miniappUrl: ${MINIAPP_PUBLIC_URL ? "configured" : "missing"}`,
+    `plans: ${plans.length}`,
+    `premium active: ${premiumUsers.length}`,
+    `payment events: ${paymentEvents.length}`,
+    `startup warnings: ${STARTUP_WARNINGS.length}`,
+    "",
+    STARTUP_WARNINGS.length ? STARTUP_WARNINGS.map((warning) => `- ${warning}`).join("\n") : "No startup warnings.",
+  ].join("\n");
+}
+
+async function buildPaymentDiagnosticsText() {
+  const events = await readJsonlFileSafe(PAYMENT_EVENTS_PATH);
+  const last = events.slice(-8).reverse();
+  return [
+    "Payment diagnostics",
+    "",
+    `starsCheckout: ${TELEGRAM_STARS_ENABLED ? "enabled" : "disabled"}`,
+    `paymentTestMode: ${PAYMENT_TEST_MODE ? "enabled" : "disabled"}`,
+    `invoiceMaxAgeMinutes: ${Math.round(INVOICE_MAX_AGE_MS / 60000)}`,
+    `events: ${events.length}`,
+    "",
+    ...last.map((event) => [
+      `${event.createdAt || event.ts || "no-ts"} ${event.type}`,
+      `user=${event.userId || "n/a"} plan=${event.planType || event.plan || "n/a"} ok=${event.ok ?? "n/a"} reason=${event.reason || "none"}`,
+      `charge=${safeLogValue(event.chargeId || event.telegramPaymentChargeId || event.providerPaymentChargeId || "")}`,
+    ].join("\n")),
+  ].join("\n");
+}
+
+async function buildPremiumUsersOverviewText() {
+  const plans = await listUserPlans();
+  const premium = plans
+    .filter((plan) => plan.premium || ["START", "PRO"].includes(plan.planType))
+    .sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")))
+    .slice(0, 25);
+  return [
+    "Premium users",
+    "",
+    premium.length ? premium.map((plan) => {
+      const expired = isPlanExpired(plan);
+      return `${plan.userId}: ${plan.planType}, ${plan.status}${expired ? "/expired" : ""}, ${plan.usage?.text || 0}/${plan.limits?.text || 0}, left ${planRemaining(plan, "text")}, until ${plan.validUntil || "none"}`;
+    }).join("\n") : "No premium users found.",
   ].join("\n");
 }
 
@@ -2286,6 +2484,10 @@ function validateStarsPurchase({ payload, userId, currency, totalAmount }) {
   if (parsed.userId && parsed.userId !== entitlementUserId(userId)) return { ok: false, reason: "user_mismatch", parsed };
   if (currency && currency !== TELEGRAM_STARS_CURRENCY) return { ok: false, reason: "invalid_currency", parsed };
   if (totalAmount !== undefined && Number(totalAmount) !== Number(plan.starsPrice)) return { ok: false, reason: "invalid_amount", parsed };
+  if (!parsed.legacy && parsed.createdAtMs) {
+    const ageMs = Date.now() - parsed.createdAtMs;
+    if (ageMs < 0 || ageMs > INVOICE_MAX_AGE_MS) return { ok: false, reason: "invoice_expired", parsed };
+  }
   return { ok: true, planType: parsed.planType, plan, parsed };
 }
 
@@ -2296,6 +2498,16 @@ async function sendStarsPlanInvoice(chatId, limitType = "text", pack = "START") 
   const title = `${plan.label} premium access`;
   const description = `${plan.generationLimit} text generations for ${plan.days || 30} days.`;
   const payload = buildStarsInvoicePayload(planType, chatId);
+  await logPaymentEvent("telegram_stars_invoice_created", {
+    userId: entitlementUserId(chatId),
+    chatId: entitlementUserId(chatId),
+    planType,
+    payload,
+    amount: plan.starsPrice,
+    currency: TELEGRAM_STARS_CURRENCY,
+    testMode: PAYMENT_TEST_MODE,
+    checkoutEnabled: TELEGRAM_STARS_ENABLED,
+  });
   if (TELEGRAM_STARS_ENABLED && bot.sendInvoice) {
     try {
       await bot.sendInvoice(
@@ -2339,7 +2551,15 @@ async function handleSuccessfulStarsPayment(msg) {
   const userId = msg.from?.id || chatId;
   const payment = msg.successful_payment;
   const chargeId = payment.telegram_payment_charge_id || payment.provider_payment_charge_id || payment.invoice_payload;
+  if (activePaymentCharges.has(chargeId)) {
+    await logPaymentEvent("telegram_stars_duplicate_inflight", { userId: entitlementUserId(userId), chatId: entitlementUserId(chatId), chargeId });
+    await bot.sendMessage(chatId, "Оплата уже обрабатывается. Premium активируется автоматически через несколько секунд.");
+    return loadUserPlan(userId);
+  }
+  activePaymentCharges.add(chargeId);
+  try {
   if (await hasPaymentEvent(chargeId)) {
+    await logPaymentEvent("telegram_stars_duplicate_ignored", { userId: entitlementUserId(userId), chatId: entitlementUserId(chatId), chargeId });
     await bot.sendMessage(chatId, "Оплата уже учтена. Premium-доступ активен.");
     return loadUserPlan(userId);
   }
@@ -2350,8 +2570,7 @@ async function handleSuccessfulStarsPayment(msg) {
     totalAmount: payment.total_amount,
   });
   if (!validation.ok) {
-    await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
-      type: "telegram_stars_rejected",
+    await logPaymentEvent("telegram_stars_rejected", {
       userId: entitlementUserId(userId),
       chatId: entitlementUserId(chatId),
       reason: validation.reason,
@@ -2360,7 +2579,6 @@ async function handleSuccessfulStarsPayment(msg) {
       providerPaymentChargeId: payment.provider_payment_charge_id || null,
       currency: payment.currency || null,
       totalAmount: payment.total_amount ?? null,
-      createdAt: nowIso(),
     });
     await bot.sendMessage(chatId, "Оплата получена, но payload не прошёл runtime-проверку. Я передал событие в audit log, premium не активирован автоматически.");
     return null;
@@ -2381,8 +2599,7 @@ async function handleSuccessfulStarsPayment(msg) {
       providerPaymentChargeId: payment.provider_payment_charge_id || null,
     },
   });
-  await appendJsonlSafe(PAYMENT_EVENTS_PATH, {
-    type: "telegram_stars_invoice_paid",
+  await logPaymentEvent("telegram_stars_invoice_paid", {
     userId: entitlementUserId(userId),
     chatId: entitlementUserId(chatId),
     planType,
@@ -2392,7 +2609,6 @@ async function handleSuccessfulStarsPayment(msg) {
     currency: payment.currency,
     totalAmount: payment.total_amount,
     payload: payment.invoice_payload,
-    createdAt: nowIso(),
   });
   const runtime = await loadExpertRuntime(userId);
   runtime.monetization.paid_plan = plan.planType;
@@ -2410,6 +2626,9 @@ async function handleSuccessfulStarsPayment(msg) {
   ].join("\n"));
   await sendExpertDashboard(chatId, userId);
   return plan;
+  } finally {
+    activePaymentCharges.delete(chargeId);
+  }
 }
 
 async function handleNotRegistered(chatId) {
@@ -4465,7 +4684,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Runtime KB:*\n/kb_status — статус базы активного эксперта\n/kb_attach — прикрепить файл к активному эксперту\n/kb_list — список файлов\n/kb_active — текущий retrieval source\n/retry_failed — повторить failed ingestion\n/runtime_metrics — runtime метрики\n\n*Content brain:*\n/brain_status — статус памяти и рекомендаций\n/brain_show — профиль brain активного эксперта\n/content_memory — последние темы/hooks/CTA\n/brain_rebuild — пересобрать brain из identity + memory\n\n*Content strategy:*\n/strategy_status — статус strategy активного эксперта\n/strategy_show — баланс, слабые зоны и next content\n/strategy_rebuild — пересобрать strategy из memory + identity + brain\n/content_plan — lightweight roadmap на 7 идей\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Runtime KB:*\n/kb_status — статус базы активного эксперта\n/kb_attach — прикрепить файл к активному эксперту\n/kb_list — список файлов\n/kb_active — текущий retrieval source\n/retry_failed — повторить failed ingestion\n/runtime_metrics — runtime метрики\n/runtime_status — production readiness статус\n/payment_diag — payment диагностика\n/premium_users — premium users overview\n\n*Content brain:*\n/brain_status — статус памяти и рекомендаций\n/brain_show — профиль brain активного эксперта\n/content_memory — последние темы/hooks/CTA\n/brain_rebuild — пересобрать brain из identity + memory\n\n*Content strategy:*\n/strategy_status — статус strategy активного эксперта\n/strategy_show — баланс, слабые зоны и next content\n/strategy_rebuild — пересобрать strategy из memory + identity + brain\n/content_plan — lightweight roadmap на 7 идей\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -8367,6 +8586,64 @@ bot.onText(/\/usage(?:\s+(\S+))?/, async (msg, match) => {
   await bot.sendMessage(chatId, formatPlanState(plan));
 });
 
+bot.onText(/\/runtime_status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Runtime status доступен только admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, await buildRuntimeStatusText());
+});
+
+bot.onText(/\/payment_diag/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Payment diagnostics доступны только admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, await buildPaymentDiagnosticsText());
+});
+
+bot.onText(/\/premium_users/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Premium users overview доступен только admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, await buildPremiumUsersOverviewText());
+});
+
+bot.onText(/\/test_payment(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Test payment доступен только admin/full_access.");
+    return;
+  }
+  if (!PAYMENT_TEST_MODE) {
+    await bot.sendMessage(chatId, "PAYMENT_TEST_MODE выключен. Команда не активирует планы в этом окружении.");
+    return;
+  }
+  const targetUserId = match?.[1] || adminUserId;
+  const planType = normalizePlanType(match?.[2] || "START");
+  if (!PLAN_CATALOG[planType]?.premium) {
+    await bot.sendMessage(chatId, "Usage: /test_payment USER_ID START|PRO");
+    return;
+  }
+  const fakeChargeId = `test_${planType}_${targetUserId}_${Date.now()}`;
+  const plan = await activateUserPlan(targetUserId, planType, {
+    source: "payment_test_mode",
+    eventType: "test_payment_activated",
+    chargeId: fakeChargeId,
+    payload: `test_payment:${planType}:${targetUserId}`,
+    createdBy: adminUserId,
+  });
+  await bot.sendMessage(chatId, ["✅ Test payment activation complete.", "", formatPlanState(plan)].join("\n"));
+});
+
 bot.onText(/\/queue_status/, async (msg) => {
   const chatId = msg.chat.id;
   const adminUserId = msg.from?.id || chatId;
@@ -8879,10 +9156,21 @@ bot.on("pre_checkout_query", async (query) => {
       currency: query.currency,
       totalAmount: query.total_amount,
     });
+    const replayed = validation.ok && await hasPaidInvoicePayload(query.invoice_payload);
+    const ok = validation.ok && !replayed;
+    await logPaymentEvent("telegram_stars_pre_checkout", {
+      userId: entitlementUserId(query.from?.id),
+      payload: query.invoice_payload,
+      planType: validation.planType || validation.parsed?.planType || null,
+      ok,
+      reason: replayed ? "invoice_replay" : (validation.reason || null),
+      currency: query.currency,
+      totalAmount: query.total_amount,
+    });
     await bot.answerPreCheckoutQuery(
       query.id,
-      validation.ok,
-      validation.ok ? undefined : { error_message: "Не удалось подтвердить план Telegram Stars. Откройте /plans и попробуйте ещё раз." },
+      ok,
+      ok ? undefined : { error_message: "Не удалось подтвердить план Telegram Stars. Откройте /plans и попробуйте ещё раз." },
     );
   } catch (error) {
     console.error("Pre-checkout answer failed:", error.message);
@@ -10107,6 +10395,14 @@ bot.on("callback_query", async (query) => {
 
 async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "default") {
   const state = userState.get(chatId) || {};
+  const generationLockKey = `${chatId}:text`;
+  if (activeGenerations.has(generationLockKey)) {
+    await logRuntimeEvent("generation_race_blocked", { userId: entitlementUserId(chatId), scenario, lengthMode, variant });
+    await bot.sendMessage(chatId, "Одна генерация уже выполняется. Дождитесь результата, чтобы лимит не списался дважды.");
+    return;
+  }
+  activeGenerations.add(generationLockKey);
+  try {
   const cooldown = checkCooldown(state, "lastGenerationAt", ABUSE_LIMITS.generationCooldownMs);
   if (!cooldown.ok) {
     await bot.sendMessage(chatId, `Генерация уже запущена недавно. Подождите ${cooldown.remainingSec} сек., чтобы не потерять результат.`);
@@ -10281,6 +10577,13 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     }
   } catch (error) {
     console.error("Generation failed:", error.message);
+    await logRuntimeEvent("generation_failed", {
+      userId: entitlementUserId(chatId),
+      scenario,
+      lengthMode,
+      variant,
+      error: String(error.message || error).slice(0, 500),
+    });
     const s = userState.get(chatId) || {};
     s.pendingTopic = topic;
     s.pendingScenario = scenario;
@@ -10308,6 +10611,9 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
     }).catch(async () => {
       await bot.sendMessage(chatId, friendlyErrorMessage(error, "generation"));
     });
+  }
+  } finally {
+    activeGenerations.delete(generationLockKey);
   }
 }
 
