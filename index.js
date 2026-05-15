@@ -1649,6 +1649,11 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
   const description = "10 extra text generations for closed beta testing.";
   if (TELEGRAM_STARS_CHECKOUT_READY && bot.sendInvoice) {
     try {
+      console.log("starsInvoiceAttempt", {
+        amount: BETA_PACK_STARS_PRICE,
+        currency: TELEGRAM_STARS_CURRENCY,
+        hasPayButton: true,
+      });
       await bot.sendInvoice(
         chatId,
         title,
@@ -1659,7 +1664,7 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
         [{ label: "10 text generations", amount: BETA_PACK_STARS_PRICE }],
         {
           start_parameter: "beta_text_pack",
-          reply_markup: { inline_keyboard: [[{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }]] },
+          reply_markup: { inline_keyboard: [[{ text: `Оплатить ${BETA_PACK_STARS_PRICE} ⭐`, pay: true }]] },
         }
       );
       return;
