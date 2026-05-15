@@ -42,6 +42,18 @@ if (process.env.TELEGRAM_STARS_ENABLED === "true" && process.env.PAYMENT_TEST_MO
 if (process.env.TELEGRAM_STARS_ENABLED === "true" && !process.env.TELEGRAM_BOT_USERNAME) {
   warnings.push("TELEGRAM_BOT_USERNAME missing; Mini App Telegram handoff links are degraded.");
 }
+if (process.env.TELEGRAM_WEBHOOK_URL && !/^https:\/\//i.test(process.env.TELEGRAM_WEBHOOK_URL)) {
+  missingRequired.push("TELEGRAM_WEBHOOK_URL must be HTTPS when configured");
+}
+const miniappUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && miniappUrl && !/^https:\/\//i.test(miniappUrl)) {
+  missingRequired.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway");
+}
+for (const name of ["PLAN_START_STARS_PRICE", "PLAN_PRO_STARS_PRICE"]) {
+  if (process.env[name] && (!Number.isFinite(Number(process.env[name])) || Number(process.env[name]) <= 0)) {
+    missingRequired.push(`${name} must be a positive Stars amount`);
+  }
+}
 
 await mkdir(dataRoot, { recursive: true });
 const probe = join(dataRoot, ".railway-write-probe");
@@ -76,6 +88,10 @@ const status = {
   leadsBotEnabled: process.env.START_LEADS_BOT === "true" && Boolean(process.env.LEADS_BOT_TOKEN),
   leadsBotRequested: process.env.START_LEADS_BOT === "true",
   leadsBotTokenPresent: Boolean(process.env.LEADS_BOT_TOKEN),
+  webhookConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_URL),
+  miniappConfigured: Boolean(miniappUrl),
+  starsCheckout: process.env.TELEGRAM_STARS_ENABLED === "true",
+  paymentTestMode: process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true",
   required,
   missingRequired,
   missingOptional: missingOptional.map(([name, feature]) => ({ name, feature })),

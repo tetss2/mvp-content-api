@@ -36,7 +36,8 @@
     "kb:test:retrieve": "node scripts/safe-cleaned-kb-retrieval-test.js",
     "verify:runtime-safety": "node scripts/verify-runtime-safety-gate.js",
     "beta:telemetry": "node scripts/beta-telemetry-summary.js",
-    "railway:check": "node scripts/verify-railway-runtime.js"
+    "railway:check": "node scripts/verify-railway-runtime.js",
+    "live:smoke": "node scripts/live-smoke-check.js"
   },
   "engines": {
     "node": ">=18"

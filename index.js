@@ -103,6 +103,7 @@ const GENERATION_QUEUE_TIMEOUTS_MS = {
   video: Number(process.env.GENERATION_VIDEO_TIMEOUT_MS || 600000),
 };
 const STARTUP_WARNINGS = [];
+const STARTUP_ERRORS = [];
 const POLLING_LOCK_PATH = process.env.POLLING_LOCK_PATH || join(RUNTIME_DATA_ROOT, "telegram-polling.lock");
 const POLLING_LOCK_STALE_MS = Number(process.env.POLLING_LOCK_STALE_MS || 120000);
 const POLLING_RETRY_MS = Number(process.env.POLLING_RETRY_MS || 30000);
@@ -857,7 +858,10 @@ async function fileExists(path) {
 }
 
 function requireEnv(name) {
-  if (!process.env[name]) throw new Error(`Missing required env var: ${name}`);
+  if (!process.env[name]) {
+    STARTUP_ERRORS.push(`Missing required env var: ${name}`);
+    throw new Error(`Missing required env var: ${name}`);
+  }
 }
 
 function warnOptionalEnv(name, feature) {
@@ -893,10 +897,32 @@ function validateRuntimeEnv() {
   }
   if (!MINIAPP_PUBLIC_URL) {
     STARTUP_WARNINGS.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL missing; Telegram Mini App button is disabled.");
+  } else if ((IS_PRODUCTION || IS_CLOUD_RUNTIME) && !/^https:\/\//i.test(MINIAPP_PUBLIC_URL)) {
+    STARTUP_ERRORS.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway.");
+    throw new Error("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway.");
+  }
+  if (process.env.TELEGRAM_WEBHOOK_URL && !/^https:\/\//i.test(process.env.TELEGRAM_WEBHOOK_URL)) {
+    STARTUP_ERRORS.push("TELEGRAM_WEBHOOK_URL must be HTTPS when configured.");
+    throw new Error("TELEGRAM_WEBHOOK_URL must be HTTPS when configured.");
+  }
+  for (const planType of ["START", "PRO"]) {
+    const price = Number(PLAN_CATALOG[planType]?.starsPrice);
+    if (!Number.isFinite(price) || price <= 0) {
+      STARTUP_ERRORS.push(`${planType} Stars price must be positive.`);
+      throw new Error(`${planType} Stars price must be positive.`);
+    }
   }
 }
 
 validateRuntimeEnv();
+runtimeLog("deploy-safe validation", {
+  ok: STARTUP_ERRORS.length === 0,
+  errors: STARTUP_ERRORS.length,
+  warnings: STARTUP_WARNINGS.length,
+  railway: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID),
+  miniappConfigured: Boolean(MINIAPP_PUBLIC_URL),
+  starsCheckout: TELEGRAM_STARS_ENABLED,
+});
 await ensureRuntimeDirectory(RUNTIME_DATA_ROOT, "runtime data root");
 await Promise.all([
   ensureRuntimeDirectory(join(RUNTIME_DATA_ROOT, "reports", "beta-telemetry"), "beta telemetry"),
@@ -912,6 +938,25 @@ await ensureExpertRegistry();
 await ensureMediaProfileRegistry();
 await ensureExpertKbRegistry();
 await ensurePaidBetaStorage();
+runtimeLog("runtime readiness", {
+  mainBotEnabled: MAIN_BOT_ENABLED,
+  polling: TELEGRAM_POLLING_ENABLED,
+  runtimeDataRoot: RUNTIME_DATA_ROOT,
+  userPlansRoot: USER_PLANS_ROOT,
+  warnings: STARTUP_WARNINGS.length,
+});
+runtimeLog("payment readiness", {
+  starsCheckout: TELEGRAM_STARS_ENABLED,
+  paymentTestMode: PAYMENT_TEST_MODE,
+  currency: TELEGRAM_STARS_CURRENCY,
+  startStarsPrice: PLAN_CATALOG.START.starsPrice,
+  proStarsPrice: PLAN_CATALOG.PRO.starsPrice,
+});
+runtimeLog("miniapp readiness", {
+  configured: Boolean(MINIAPP_PUBLIC_URL),
+  publicUrlHttps: MINIAPP_PUBLIC_URL ? /^https:\/\//i.test(MINIAPP_PUBLIC_URL) : null,
+  devAuth: process.env.MINIAPP_DEV_AUTH !== "false",
+});
 
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 let pollingActive = false;
@@ -1783,6 +1828,168 @@ async function buildPremiumUsersOverviewText() {
   ].join("\n");
 }
 
+function buildDeploySelfCheckText() {
+  const required = [
+    TELEGRAM_POLLING_ENABLED ? TELEGRAM_TOKEN_SOURCE : null,
+    "OPENAI_API_KEY",
+  ].filter(Boolean);
+  const optional = [
+    ["SUPABASE_URL", "retrieval"],
+    ["SUPABASE_ANON_KEY", "retrieval"],
+    ["FISH_AUDIO_API_KEY", "voice"],
+    ["FISH_AUDIO_VOICE_ID", "voice"],
+    ["FALAI_KEY", "photo/video"],
+    ["CLOUDINARY_CLOUD", "video audio hosting"],
+    ["CLOUDINARY_API_KEY", "video audio hosting"],
+    ["CLOUDINARY_API_SECRET", "video audio hosting"],
+    ["MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL", "Mini App button"],
+  ];
+  const missingRequired = required.filter((name) => !process.env[name]);
+  const missingOptional = optional.filter(([name]) => {
+    if (name.includes("/")) return !MINIAPP_PUBLIC_URL;
+    return !process.env[name];
+  });
+  const blockers = [
+    ...missingRequired.map((name) => `${name} missing`),
+    ...STARTUP_ERRORS,
+  ];
+  const webhookUrl = process.env.TELEGRAM_WEBHOOK_URL || "";
+  return [
+    "Deploy self-check",
+    "",
+    `ok: ${blockers.length === 0 ? "yes" : "no"}`,
+    `runtime: ${RUNTIME_NAME}`,
+    `mode: ${RUNTIME_MODE}`,
+    `railway: ${process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID ? "yes" : "no"}`,
+    `polling: ${TELEGRAM_POLLING_ENABLED ? "enabled" : "disabled"}`,
+    `main bot: ${MAIN_BOT_ENABLED ? "enabled" : "disabled"}`,
+    `token source: ${TELEGRAM_TOKEN_SOURCE || "none"}`,
+    `webhook configured: ${webhookUrl ? "yes" : "no"}`,
+    `webhook https: ${webhookUrl ? (/^https:\/\//i.test(webhookUrl) ? "yes" : "no") : "n/a"}`,
+    `miniapp: ${MINIAPP_PUBLIC_URL ? "configured" : "missing"}`,
+    `miniapp https: ${MINIAPP_PUBLIC_URL ? (/^https:\/\//i.test(MINIAPP_PUBLIC_URL) ? "yes" : "no") : "n/a"}`,
+    `stars checkout: ${TELEGRAM_STARS_ENABLED ? "enabled" : "disabled"}`,
+    `payment test mode: ${PAYMENT_TEST_MODE ? "enabled" : "disabled"}`,
+    "",
+    blockers.length ? `Blockers:\n${blockers.map((item) => `- ${item}`).join("\n")}` : "Blockers: none",
+    "",
+    missingOptional.length ? `Degraded optional features:\n${missingOptional.map(([name, feature]) => `- ${name}: ${feature}`).join("\n")}` : "Degraded optional features: none",
+    "",
+    STARTUP_WARNINGS.length ? `Warnings:\n${STARTUP_WARNINGS.map((warning) => `- ${warning}`).join("\n")}` : "Warnings: none",
+  ].join("\n");
+}
+
+function buildPaymentFlowCheckText(userId, planType = "START") {
+  const normalizedType = normalizePlanType(planType);
+  const plan = PLAN_CATALOG[normalizedType];
+  const payload = buildStarsInvoicePayload(normalizedType, userId);
+  const validation = validateStarsPurchase({
+    payload,
+    userId,
+    currency: TELEGRAM_STARS_CURRENCY,
+    totalAmount: plan?.starsPrice,
+  });
+  const blockers = [];
+  if (!plan?.premium) blockers.push("plan is not premium");
+  if (!validation.ok) blockers.push(`invoice payload validation failed: ${validation.reason}`);
+  if (!TELEGRAM_STARS_ENABLED) blockers.push("TELEGRAM_STARS_ENABLED is false; real invoice send will use manual fallback");
+  return [
+    "Payment flow check",
+    "",
+    `ok: ${blockers.length === 0 ? "yes" : "degraded"}`,
+    `user: ${entitlementUserId(userId)}`,
+    `plan: ${normalizedType}`,
+    `currency: ${TELEGRAM_STARS_CURRENCY}`,
+    `stars price: ${plan?.starsPrice || "n/a"}`,
+    `payload shape: ${validation.ok ? "valid" : "invalid"}`,
+    `sendInvoice available: ${bot.sendInvoice ? "yes" : "no"}`,
+    `stars checkout enabled: ${TELEGRAM_STARS_ENABLED ? "yes" : "no"}`,
+    `provider token required: no`,
+    "",
+    blockers.length ? blockers.map((item) => `- ${item}`).join("\n") : "Ready for controlled Stars invoice test.",
+  ].join("\n");
+}
+
+async function buildPremiumActivationCheckText(userId) {
+  const plan = await loadUserPlan(userId);
+  const access = await checkUserPlanAccess(userId, "text").catch((error) => ({ ok: false, reason: error.message, plan }));
+  return [
+    "Premium activation check",
+    "",
+    formatPlanState(plan),
+    "",
+    `generation access: ${access.ok ? "ready" : "blocked"}`,
+    access.ok ? `remaining text: ${access.remaining}` : `reason: ${access.reason}`,
+  ].join("\n");
+}
+
+async function buildMiniappAvailabilityCheckText() {
+  const lines = [
+    "Mini App availability check",
+    "",
+    `configured: ${MINIAPP_PUBLIC_URL ? "yes" : "no"}`,
+    `url https: ${MINIAPP_PUBLIC_URL ? (/^https:\/\//i.test(MINIAPP_PUBLIC_URL) ? "yes" : "no") : "n/a"}`,
+    `dev auth: ${process.env.MINIAPP_DEV_AUTH !== "false" ? "enabled" : "disabled"}`,
+    `bot username: ${process.env.TELEGRAM_BOT_USERNAME ? "configured" : "missing"}`,
+  ];
+  if (!MINIAPP_PUBLIC_URL) {
+    lines.push("", "Result: Mini App button is disabled until MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL is set.");
+    return lines.join("\n");
+  }
+  try {
+    const res = await fetchWithTimeout(MINIAPP_PUBLIC_URL, { method: "GET" }, 8000, "Mini App availability");
+    lines.push("", `HTTP: ${res.status}`, `available: ${res.ok ? "yes" : "no"}`);
+  } catch (error) {
+    lines.push("", `available: no`, `error: ${String(error.message || error).slice(0, 240)}`);
+  }
+  return lines.join("\n");
+}
+
+async function buildRetrievalAvailabilityCheckText(scenario = "sexologist", query = "тревога в отношениях") {
+  const normalizedScenario = String(scenario || "sexologist").toLowerCase();
+  const lines = [
+    "Retrieval availability check",
+    "",
+    `scenario: ${normalizedScenario}`,
+    `query: ${query}`,
+    `supabase configured: ${supabase ? "yes" : "no"}`,
+  ];
+  if (normalizedScenario === "sexologist") {
+    const retrieval = await retrieveGroundingContext(query, "sexologist", { topK: 3, timeoutMs: 8000 }).catch((error) => ({ error }));
+    if (retrieval?.context) {
+      lines.push(`production index: ready`, `chunks: ${retrieval.chunks?.length || 0}`, `sources: ${(retrieval.sources || []).slice(0, 3).join(", ") || "n/a"}`);
+      return lines.join("\n");
+    }
+    lines.push(`production index: unavailable`, retrieval?.error ? `error: ${String(retrieval.error.message || retrieval.error).slice(0, 240)}` : "error: no context returned");
+  }
+  const vectorChunks = await vectorSearch(query, normalizedScenario, 3);
+  if (vectorChunks?.length) {
+    lines.push(`legacy vector fallback: ready`, `chunks: ${vectorChunks.length}`);
+    return lines.join("\n");
+  }
+  const fallbackArticles = Array.isArray(articles)
+    ? articles.map((article) => ({ article, score: scoreArticle(article, query) })).filter((item) => item.score > 0).slice(0, 3)
+    : [];
+  lines.push(`legacy vector fallback: unavailable`, `static article fallback: ${fallbackArticles.length ? "ready" : "empty"}`);
+  if (fallbackArticles.length) lines.push(`articles: ${fallbackArticles.map(({ article }) => article.title).join("; ")}`);
+  return lines.join("\n");
+}
+
+async function resetUserPlanUsage(userId, key = "all") {
+  return withUserPlanLock(userId, async () => {
+    const plan = await loadUserPlan(userId);
+    const keys = key === "all" ? ["text", "photo", "audio", "video"] : [key];
+    plan.usage = plan.usage || {};
+    for (const usageKey of keys) {
+      if (Object.prototype.hasOwnProperty.call(plan.usage, usageKey)) plan.usage[usageKey] = 0;
+    }
+    plan.updatedAt = nowIso();
+    const saved = await saveUserPlan(userId, plan);
+    await logRuntimeEvent("usage_reset", { userId: entitlementUserId(userId), key, source: "admin_helper" });
+    return saved;
+  });
+}
+
 function buildEntitlement(userId, planKey, patch = {}) {
   const plan = PAID_BETA_PLANS[planKey] || PAID_BETA_PLANS.demo;
   const now = nowIso();
@@ -2530,6 +2737,13 @@ async function sendStarsPlanInvoice(chatId, limitType = "text", pack = "START") 
       return;
     } catch (error) {
       console.warn("Stars invoice failed, falling back to placeholder:", error.message);
+      await logPaymentEvent("telegram_stars_invoice_failed", {
+        userId: entitlementUserId(chatId),
+        chatId: entitlementUserId(chatId),
+        planType,
+        payload,
+        reason: String(error.message || error).slice(0, 500),
+      });
     }
   }
   await trackBetaEvent(chatId, BETA_EVENT_NAMES.PAID_GENERATION_PLACEHOLDER, { limit_type: limitType, pack });
@@ -4684,7 +4898,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Runtime KB:*\n/kb_status — статус базы активного эксперта\n/kb_attach — прикрепить файл к активному эксперту\n/kb_list — список файлов\n/kb_active — текущий retrieval source\n/retry_failed — повторить failed ingestion\n/runtime_metrics — runtime метрики\n/runtime_status — production readiness статус\n/payment_diag — payment диагностика\n/premium_users — premium users overview\n\n*Content brain:*\n/brain_status — статус памяти и рекомендаций\n/brain_show — профиль brain активного эксперта\n/content_memory — последние темы/hooks/CTA\n/brain_rebuild — пересобрать brain из identity + memory\n\n*Content strategy:*\n/strategy_status — статус strategy активного эксперта\n/strategy_show — баланс, слабые зоны и next content\n/strategy_rebuild — пересобрать strategy из memory + identity + brain\n/content_plan — lightweight roadmap на 7 идей\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Runtime KB:*\n/kb_status — статус базы активного эксперта\n/kb_attach — прикрепить файл к активному эксперту\n/kb_list — список файлов\n/kb_active — текущий retrieval source\n/retry_failed — повторить failed ingestion\n/runtime_metrics — runtime метрики\n/runtime_status — production readiness статус\n/deploy_check — safe deploy self-check\n/payment_diag — payment диагностика\n/payment_flow_check — dry payment flow validation\n/premium_activation_check — premium/usage activation check\n/miniapp_check — Mini App availability check\n/retrieval_check — retrieval availability check\n/test_premium USER_ID START|PRO [MINUTES] — временный premium\n/usage_reset USER_ID [all|text] — сброс usage для smoke test\n/premium_users — premium users overview\n\n*Content brain:*\n/brain_status — статус памяти и рекомендаций\n/brain_show — профиль brain активного эксперта\n/content_memory — последние темы/hooks/CTA\n/brain_rebuild — пересобрать brain из identity + memory\n\n*Content strategy:*\n/strategy_status — статус strategy активного эксперта\n/strategy_show — баланс, слабые зоны и next content\n/strategy_rebuild — пересобрать strategy из memory + identity + brain\n/content_plan — lightweight roadmap на 7 идей\n\n*Вопросы?* @tetss2`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -8596,6 +8810,16 @@ bot.onText(/\/runtime_status/, async (msg) => {
   await bot.sendMessage(chatId, await buildRuntimeStatusText());
 });
 
+bot.onText(/\/(?:deploy_check|self_check|runtime_self_check)/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Deploy self-check доступен только admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, buildDeploySelfCheckText());
+});
+
 bot.onText(/\/payment_diag/, async (msg) => {
   const chatId = msg.chat.id;
   const adminUserId = msg.from?.id || chatId;
@@ -8606,6 +8830,18 @@ bot.onText(/\/payment_diag/, async (msg) => {
   await bot.sendMessage(chatId, await buildPaymentDiagnosticsText());
 });
 
+bot.onText(/\/payment_flow_check(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Payment flow check доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1] || adminUserId;
+  const planType = match?.[2] || "START";
+  await bot.sendMessage(chatId, buildPaymentFlowCheckText(targetUserId, planType));
+});
+
 bot.onText(/\/premium_users/, async (msg) => {
   const chatId = msg.chat.id;
   const adminUserId = msg.from?.id || chatId;
@@ -8614,6 +8850,39 @@ bot.onText(/\/premium_users/, async (msg) => {
     return;
   }
   await bot.sendMessage(chatId, await buildPremiumUsersOverviewText());
+});
+
+bot.onText(/\/premium_activation_check(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Premium activation check доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1] || adminUserId;
+  await bot.sendMessage(chatId, await buildPremiumActivationCheckText(targetUserId));
+});
+
+bot.onText(/\/miniapp_check/, async (msg) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Mini App check доступен только admin/full_access.");
+    return;
+  }
+  await bot.sendMessage(chatId, await buildMiniappAvailabilityCheckText());
+});
+
+bot.onText(/\/retrieval_check(?:\s+(\S+))?(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Retrieval check доступен только admin/full_access.");
+    return;
+  }
+  const scenario = match?.[1] || "sexologist";
+  const query = match?.[2] || "тревога в отношениях";
+  await bot.sendMessage(chatId, await buildRetrievalAvailabilityCheckText(scenario, query));
 });
 
 bot.onText(/\/test_payment(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
@@ -8642,6 +8911,46 @@ bot.onText(/\/test_payment(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
     createdBy: adminUserId,
   });
   await bot.sendMessage(chatId, ["✅ Test payment activation complete.", "", formatPlanState(plan)].join("\n"));
+});
+
+bot.onText(/\/test_premium(?:\s+(\S+))?(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Temporary premium helper доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1];
+  const planType = normalizePlanType(match?.[2] || "START");
+  const minutes = Math.max(1, Math.min(1440, Number(match?.[3] || 60)));
+  if (!targetUserId || !PLAN_CATALOG[planType]?.premium) {
+    await bot.sendMessage(chatId, "Usage: /test_premium USER_ID START|PRO [MINUTES]");
+    return;
+  }
+  const plan = await activateUserPlan(targetUserId, planType, {
+    source: "admin_test_premium",
+    eventType: "test_premium_activated",
+    validUntil: new Date(Date.now() + minutes * 60 * 1000).toISOString(),
+    createdBy: adminUserId,
+  });
+  await bot.sendMessage(chatId, [`✅ Temporary premium activated for ${minutes} minutes.`, "", formatPlanState(plan)].join("\n"));
+});
+
+bot.onText(/\/usage_reset(?:\s+(\S+))?(?:\s+(\S+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const adminUserId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(adminUserId))) {
+    await bot.sendMessage(chatId, "🔒 Usage reset доступен только admin/full_access.");
+    return;
+  }
+  const targetUserId = match?.[1];
+  const key = String(match?.[2] || "all").toLowerCase();
+  if (!targetUserId || !["all", "text", "photo", "audio", "video"].includes(key)) {
+    await bot.sendMessage(chatId, "Usage: /usage_reset USER_ID [all|text|photo|audio|video]");
+    return;
+  }
+  const plan = await resetUserPlanUsage(targetUserId, key);
+  await bot.sendMessage(chatId, ["✅ Usage reset complete.", "", formatPlanState(plan)].join("\n"));
 });
 
 bot.onText(/\/queue_status/, async (msg) => {

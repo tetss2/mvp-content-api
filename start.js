@@ -20,6 +20,7 @@ const leadsBotEnabled = leadsBotRequested && leadsBotTokenPresent && !leadsBotTo
 const userPlansRoot = process.env.USER_PLANS_ROOT || join(__dirname, "runtime_data", "user_plans");
 const runtimeEventsPath = process.env.RUNTIME_EVENTS_PATH || join(process.env.RUNTIME_DATA_ROOT || __dirname, "runtime_events.jsonl");
 const startupWarnings = [];
+const startupErrors = [];
 const planCatalog = {
   FREE: {
     planType: "FREE",
@@ -56,12 +57,23 @@ const miniappShell = createMiniappShell({
 
 function validateStartup() {
   if (!mainToken && process.env.TELEGRAM_POLLING !== "false") {
-    startupWarnings.push(`${mainTokenName} missing; main Telegram polling will not start.`);
+    startupErrors.push(`${mainTokenName} missing; main Telegram polling will not start.`);
   }
-  if (!process.env.OPENAI_API_KEY) startupWarnings.push("OPENAI_API_KEY missing; text generation and runtime ingestion will fail.");
+  if (!process.env.OPENAI_API_KEY) startupErrors.push("OPENAI_API_KEY missing; text generation and runtime ingestion will fail.");
+  if (process.env.TELEGRAM_WEBHOOK_URL && !/^https:\/\//i.test(process.env.TELEGRAM_WEBHOOK_URL)) {
+    startupErrors.push("TELEGRAM_WEBHOOK_URL must be an HTTPS URL when configured.");
+  }
+  const miniappUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+  if (miniappUrl && !/^https:\/\//i.test(miniappUrl) && (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT)) {
+    startupErrors.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway.");
+  }
   if (process.env.TELEGRAM_STARS_ENABLED === "true") {
     if (!process.env.TELEGRAM_BOT_USERNAME) startupWarnings.push("TELEGRAM_BOT_USERNAME missing; Mini App handoff links are degraded.");
     if (process.env.PAYMENT_TEST_MODE === "true") startupWarnings.push("PAYMENT_TEST_MODE=true; do not use this for uncontrolled production traffic.");
+    for (const [name, fallback] of [["PLAN_START_STARS_PRICE", "149"], ["PLAN_PRO_STARS_PRICE", "499"]]) {
+      const value = Number(process.env[name] || fallback);
+      if (!Number.isFinite(value) || value <= 0) startupErrors.push(`${name} must be a positive Stars amount.`);
+    }
   }
   if ((process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT) && process.env.MINIAPP_DEV_AUTH !== "false") {
     startupWarnings.push("MINIAPP_DEV_AUTH should be false in production/Railway.");
@@ -87,6 +99,73 @@ function sendJson(res, status, payload) {
 
 function safeUserId(value) {
   return String(value || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+}
+
+function boolStatus(value) {
+  return value ? "ready" : "missing";
+}
+
+function buildRuntimeStatusPayload() {
+  const miniappUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+  return {
+    ok: startupErrors.length === 0,
+    service: "mvp-content-api",
+    runtimeMode,
+    betaMode,
+    startedAt,
+    railway: {
+      detected: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID),
+      portPresent: Boolean(process.env.PORT),
+    },
+    telegram: {
+      polling: process.env.TELEGRAM_POLLING !== "false",
+      mainBotEnabled,
+      tokenName: mainTokenName,
+      tokenPresent: Boolean(mainToken),
+      webhookConfigured: Boolean(process.env.TELEGRAM_WEBHOOK_URL),
+      webhookHttps: process.env.TELEGRAM_WEBHOOK_URL ? /^https:\/\//i.test(process.env.TELEGRAM_WEBHOOK_URL) : null,
+    },
+    ai: {
+      openai: boolStatus(process.env.OPENAI_API_KEY),
+      supabaseUrl: boolStatus(process.env.SUPABASE_URL),
+      supabaseAnonKey: boolStatus(process.env.SUPABASE_ANON_KEY),
+    },
+    errors: startupErrors,
+    warnings: startupWarnings,
+  };
+}
+
+function buildPaymentStatusPayload() {
+  return {
+    ok: startupErrors.filter((item) => item.includes("Stars") || item.includes("TELEGRAM")).length === 0,
+    starsCheckout: process.env.TELEGRAM_STARS_ENABLED === "true",
+    paymentTestMode: process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true",
+    currency: "XTR",
+    plans: Object.fromEntries(Object.entries(planCatalog).map(([key, plan]) => [key, {
+      premium: Boolean(plan.premium),
+      textLimit: plan.textLimit,
+      days: plan.days || null,
+      starsPrice: plan.starsPrice || null,
+    }])),
+    providerTokenRequired: false,
+    warnings: startupWarnings.filter((item) => /PAYMENT|Stars|TELEGRAM_STARS/i.test(item)),
+  };
+}
+
+function buildMiniappStatusPayload() {
+  const publicUrl = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
+  const productionLike = process.env.NODE_ENV === "production" || Boolean(process.env.RAILWAY_ENVIRONMENT);
+  return {
+    ok: Boolean(publicUrl) && (!productionLike || /^https:\/\//i.test(publicUrl)),
+    configured: Boolean(publicUrl),
+    publicUrl: publicUrl ? "[configured]" : null,
+    publicUrlHttps: publicUrl ? /^https:\/\//i.test(publicUrl) : null,
+    devAuth: process.env.MINIAPP_DEV_AUTH !== "false",
+    devAuthRecommended: productionLike ? "false" : "any",
+    shellPath: "/miniapp",
+    apiPaths: ["/miniapp/api/session", "/miniapp/api/plans", "/miniapp/api/dashboard"],
+    telegramBotUsernamePresent: Boolean(process.env.TELEGRAM_BOT_USERNAME),
+  };
 }
 
 async function readMiniappPlan(userId) {
@@ -116,6 +195,15 @@ console.log("[startup] Runtime:", {
   runtimeMode,
   betaMode,
 });
+console.log("[deploy-safe] Validation:", {
+  ok: startupErrors.length === 0,
+  errors: startupErrors.length,
+  warnings: startupWarnings.length,
+  railway: Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_SERVICE_ID),
+});
+console.log("[runtime-readiness]", buildRuntimeStatusPayload());
+console.log("[payment-readiness]", buildPaymentStatusPayload());
+console.log("[miniapp-readiness]", buildMiniappStatusPayload());
 console.log("[startup] Main bot:", {
   enabled: mainBotEnabled,
   polling: process.env.TELEGRAM_POLLING !== "false",
@@ -142,14 +230,30 @@ console.log("[startup] Leads bot:", {
       ? "LEADS_BOT_TOKEN matches main bot token"
       : (leadsBotRequested ? "LEADS_BOT_TOKEN missing" : "START_LEADS_BOT is not true")),
 });
+for (const error of startupErrors) console.error("[startup:error]", error);
 for (const warning of startupWarnings) console.warn("[startup:warning]", warning);
 http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
-  if (await miniappShell.handle(req, res)) return;
-  if (url.pathname === "/healthz" || url.pathname === "/") {
-    sendJson(res, 200, { ok: true, service: "mvp-content-api", runtimeMode, startedAt, warnings: startupWarnings });
+  if (url.pathname === "/healthz" || url.pathname === "/health" || url.pathname === "/") {
+    sendJson(res, startupErrors.length ? 503 : 200, { ok: startupErrors.length === 0, service: "mvp-content-api", runtimeMode, startedAt, errors: startupErrors, warnings: startupWarnings });
     return;
   }
+  if (url.pathname === "/runtime-status") {
+    const payload = buildRuntimeStatusPayload();
+    sendJson(res, payload.ok ? 200 : 503, payload);
+    return;
+  }
+  if (url.pathname === "/payment-status") {
+    const payload = buildPaymentStatusPayload();
+    sendJson(res, payload.ok ? 200 : 503, payload);
+    return;
+  }
+  if (url.pathname === "/miniapp-status") {
+    const payload = buildMiniappStatusPayload();
+    sendJson(res, payload.ok ? 200 : 503, payload);
+    return;
+  }
+  if (await miniappShell.handle(req, res)) return;
   if (url.pathname === "/runtime/plans") {
     sendJson(res, 200, { ok: true, plans: planCatalog, telegramStarsReady: process.env.TELEGRAM_STARS_ENABLED === "true" });
     return;
