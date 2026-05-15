@@ -89,7 +89,8 @@ const LEADS_BOT_REQUESTED = process.env.START_LEADS_BOT === "true";
 const LEADS_BOT_ENABLED = LEADS_BOT_REQUESTED && Boolean(LEADS_BOT_TOKEN);
 const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
-const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
+const BETA_PACK_STARS_PRICE_SOURCE = process.env.BETA_PACK_STARS_PRICE ? "env" : "default";
+const BETA_PACK_STARS_PRICE = Number(process.env.BETA_PACK_STARS_PRICE || 149);
 const TELEGRAM_STARS_CURRENCY = "XTR";
 const TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED = false;
 const TELEGRAM_STARS_CHECKOUT_READY = TELEGRAM_STARS_ENABLED && TELEGRAM_STARS_CURRENCY === "XTR";
@@ -750,6 +751,8 @@ runtimeLog("Feature readiness:", {
   telegramStars: TELEGRAM_STARS_ENABLED,
   starsCheckoutReady: TELEGRAM_STARS_CHECKOUT_READY,
   starsProviderTokenRequired: TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED,
+  betaPackStarsPrice: BETA_PACK_STARS_PRICE,
+  betaPackStarsPriceSource: BETA_PACK_STARS_PRICE_SOURCE,
 });
 for (const warning of STARTUP_WARNINGS) console.warn(`[startup] ${warning}`);
 
@@ -1163,7 +1166,7 @@ function buildPaidBetaPlansText() {
     `admin — ${planLimitLabel(PAID_BETA_PLANS.admin)}. Служебный доступ для тестов и поддержки.`,
     "",
     TELEGRAM_STARS_CHECKOUT_READY
-      ? `Telegram Stars checkout включён. Пакет beta: 10 дополнительных генераций за ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars.`
+      ? `Telegram Stars checkout включён. Пакет beta: 10 дополнительных генераций за ${BETA_PACK_STARS_PRICE} Stars.`
       : "Telegram Stars checkout отключён. Для подключения beta_paid используйте /upgrade.",
   ].join("\n");
 }
@@ -1197,7 +1200,7 @@ function buildManualUpgradeText() {
       ? "Telegram Stars checkout включён. Можно оплатить beta-пакет или запросить beta_paid вручную."
       : "Платный доступ пока включается вручную.",
     TELEGRAM_STARS_CHECKOUT_READY
-      ? `Stars-пакет: 10 дополнительных генераций за ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars.`
+      ? `Stars-пакет: 10 дополнительных генераций за ${BETA_PACK_STARS_PRICE} Stars.`
       : "Напишите администратору для подключения beta_paid.",
     "",
     "Команда для просмотра планов: /plans",
@@ -1653,7 +1656,7 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
         `beta_${limitType}_${pack}_${Date.now()}`,
         "",
         TELEGRAM_STARS_CURRENCY,
-        [{ label: "10 text generations", amount: TELEGRAM_STARS_TEXT_PACK_PRICE }],
+        [{ label: "10 text generations", amount: BETA_PACK_STARS_PRICE }],
         {
           start_parameter: "beta_text_pack",
           reply_markup: { inline_keyboard: [[{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }]] },
@@ -1668,7 +1671,7 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
   await bot.sendMessage(chatId, [
     "Stars-оплата подготовлена как beta-hook.",
     "",
-    `Пакет: 10 дополнительных текстовых генераций (${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars).`,
+    `Пакет: 10 дополнительных текстовых генераций (${BETA_PACK_STARS_PRICE} Stars).`,
     "В этом окружении checkout ещё не включён, поэтому я отправлю запрос администратору.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: [
@@ -5142,7 +5145,7 @@ bot.onText(/\/premium_status/, async (msg) => {
 bot.onText(/\/plans/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText(), {
     reply_markup: { inline_keyboard: [
-      [{ text: `Оплатить ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars`, callback_data: "stars_pack:text10" }],
+      [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
       [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
     ]},
   });
@@ -5151,7 +5154,7 @@ bot.onText(/\/plans/, async (msg) => {
 bot.onText(/\/upgrade/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildManualUpgradeText(), {
     reply_markup: { inline_keyboard: [
-      [{ text: `Оплатить ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars`, callback_data: "stars_pack:text10" }],
+      [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
       [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
       [{ text: "Посмотреть планы", callback_data: "show_plans" }],
     ]},
@@ -6102,7 +6105,7 @@ bot.on("callback_query", async (query) => {
     if (data === "manual_upgrade") {
       await bot.sendMessage(chatId, buildManualUpgradeText(), {
         reply_markup: { inline_keyboard: [
-          [{ text: `Оплатить ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars`, callback_data: "stars_pack:text10" }],
+          [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
           [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
           [{ text: "Планы", callback_data: "show_plans" }],
         ]},
@@ -6113,7 +6116,7 @@ bot.on("callback_query", async (query) => {
     if (data === "show_plans") {
       await bot.sendMessage(chatId, buildPaidBetaPlansText(), {
         reply_markup: { inline_keyboard: [
-          [{ text: `Оплатить ${TELEGRAM_STARS_TEXT_PACK_PRICE} Stars`, callback_data: "stars_pack:text10" }],
+          [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
           [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
         ]},
       });
