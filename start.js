@@ -10,6 +10,9 @@ const leadsBotRequested = process.env.START_LEADS_BOT === "true";
 const leadsBotTokenPresent = Boolean(leadsToken);
 const leadsBotTokenOverlapsMain = Boolean(mainToken && leadsToken && mainToken === leadsToken);
 const leadsBotEnabled = leadsBotRequested && leadsBotTokenPresent && !leadsBotTokenOverlapsMain;
+const telegramStarsEnabled = process.env.TELEGRAM_STARS_ENABLED === "true";
+const telegramStarsProviderTokenRequired = false;
+const telegramStarsCheckoutReady = telegramStarsEnabled;
 
 function tokenFingerprint(value) {
   if (value === undefined || value === null || value === "") return value;
@@ -47,6 +50,13 @@ console.log("[startup] Leads bot:", {
     : (leadsBotTokenOverlapsMain
       ? "LEADS_BOT_TOKEN matches main bot token"
       : (leadsBotRequested ? "LEADS_BOT_TOKEN missing" : "START_LEADS_BOT is not true")),
+});
+console.log("[startup] Telegram Stars:", {
+  telegramStars: telegramStarsEnabled,
+  starsCheckoutReady: telegramStarsCheckoutReady,
+  currency: "XTR",
+  providerTokenRequired: telegramStarsProviderTokenRequired,
+  providerTokenBehavior: "empty_string_for_xtr",
 });
 http.createServer((req, res) => {
   if (req.url === "/healthz" || req.url === "/") {
