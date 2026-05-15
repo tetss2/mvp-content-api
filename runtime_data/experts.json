@@ -1,8 +1,22 @@
 {
-  "expertId": "dinara",
-  "displayName": "Динара",
-  "knowledgeBase": "psychologist",
-  "styleProfile": "dinara_style",
-  "status": "active",
-  "createdAt": "2026-05-15T00:00:00.000Z"
+  "experts": [
+    {
+      "expertId": "dinara",
+      "displayName": "Динара",
+      "niche": "психология, отношения, самоценность",
+      "styleDescription": "тёплый, глубинный, бережный голос практикующего психолога",
+      "knowledgeBase": "psychologist",
+      "styleProfile": "dinara_style",
+      "status": "active",
+      "kbConfigured": true,
+      "createdAt": "2026-05-15T00:00:00.000Z",
+      "updatedAt": "2026-05-15T00:00:00.000Z",
+      "onboarding": {
+        "expertId": true,
+        "displayName": true,
+        "niche": true,
+        "styleDescription": true
+      }
+    }
+  ]
 }

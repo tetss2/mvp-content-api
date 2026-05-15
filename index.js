@@ -94,6 +94,8 @@ const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN 
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
 const MINIAPP_PUBLIC_URL = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
 const TELEGRAM_STARS_CURRENCY = "XTR";
+const TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED = false;
+const TELEGRAM_STARS_CHECKOUT_READY = TELEGRAM_STARS_ENABLED && TELEGRAM_STARS_CURRENCY === "XTR";
 const GENERATION_QUEUE_LIMITS = {
   image: Number(process.env.GENERATION_IMAGE_CONCURRENCY || 2),
   video: Number(process.env.GENERATION_VIDEO_CONCURRENCY || 1),
@@ -947,8 +949,11 @@ runtimeLog("runtime readiness", {
 });
 runtimeLog("payment readiness", {
   starsCheckout: TELEGRAM_STARS_ENABLED,
+  starsCheckoutReady: TELEGRAM_STARS_CHECKOUT_READY,
   paymentTestMode: PAYMENT_TEST_MODE,
   currency: TELEGRAM_STARS_CURRENCY,
+  providerTokenRequired: TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED,
+  providerTokenBehavior: "empty_string_for_xtr",
   startStarsPrice: PLAN_CATALOG.START.starsPrice,
   proStarsPrice: PLAN_CATALOG.PRO.starsPrice,
 });
@@ -1260,6 +1265,8 @@ runtimeLog("Feature readiness:", {
   fal: Boolean(FAL_KEY),
   cloudinary: Boolean(CLOUDINARY_CLOUD && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET),
   telegramStars: TELEGRAM_STARS_ENABLED,
+  starsCheckoutReady: TELEGRAM_STARS_CHECKOUT_READY,
+  starsProviderTokenRequired: TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED,
 });
 for (const warning of STARTUP_WARNINGS) console.warn(`[startup] ${warning}`);
 
@@ -2233,7 +2240,7 @@ function planLimitLabel(plan) {
 }
 
 function formatStarsPrice(plan) {
-  return TELEGRAM_STARS_ENABLED ? `${plan.starsPrice} Stars` : "Stars checkout disabled";
+  return TELEGRAM_STARS_CHECKOUT_READY ? `${plan.starsPrice} Stars` : "Stars checkout disabled";
 }
 
 function buildPaidBetaPlansText() {
@@ -2244,7 +2251,7 @@ function buildPaidBetaPlansText() {
     `START — ${PLAN_CATALOG.START.generationLimit} генераций на ${PLAN_CATALOG.START.days} дней, ${formatStarsPrice(PLAN_CATALOG.START)}. ${PLAN_CATALOG.START.description}`,
     `PRO — ${PLAN_CATALOG.PRO.generationLimit} генераций на ${PLAN_CATALOG.PRO.days} дней, ${formatStarsPrice(PLAN_CATALOG.PRO)}. ${PLAN_CATALOG.PRO.description}`,
     "",
-    TELEGRAM_STARS_ENABLED
+    TELEGRAM_STARS_CHECKOUT_READY
       ? "Telegram Stars checkout включён. Нажмите кнопку плана, Telegram покажет invoice в Stars."
       : "Telegram Stars checkout подготовлен, но в этом окружении отключён. Можно запросить premium вручную через /upgrade.",
   ].join("\n");
@@ -2276,7 +2283,7 @@ async function buildPremiumStatusText(userId) {
 function buildManualUpgradeText() {
   return [
     "Premium-доступ можно включить через Telegram Stars или вручную на beta.",
-    TELEGRAM_STARS_ENABLED
+    TELEGRAM_STARS_CHECKOUT_READY
       ? "Выберите план в /plans и оплатите Stars."
       : "В этом окружении checkout отключён, поэтому безопасно доступен ручной запрос.",
     "",
@@ -2778,10 +2785,13 @@ async function sendStarsPlanInvoice(chatId, limitType = "text", pack = "START") 
     payload,
     amount: plan.starsPrice,
     currency: TELEGRAM_STARS_CURRENCY,
+    providerTokenRequired: TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED,
+    providerTokenUsed: "",
     testMode: PAYMENT_TEST_MODE,
     checkoutEnabled: TELEGRAM_STARS_ENABLED,
+    checkoutReady: TELEGRAM_STARS_CHECKOUT_READY,
   });
-  if (TELEGRAM_STARS_ENABLED && bot.sendInvoice) {
+  if (TELEGRAM_STARS_CHECKOUT_READY && bot.sendInvoice) {
     try {
       await bot.sendInvoice(
         chatId,
@@ -2811,6 +2821,15 @@ async function sendStarsPlanInvoice(chatId, limitType = "text", pack = "START") 
         reason: String(error.message || error).slice(0, 500),
       });
     }
+  }
+  if (TELEGRAM_STARS_ENABLED && !bot.sendInvoice) {
+    await logPaymentEvent("telegram_stars_invoice_unavailable", {
+      userId: entitlementUserId(chatId),
+      chatId: entitlementUserId(chatId),
+      planType,
+      reason: "sendInvoice_unavailable",
+      providerTokenRequired: TELEGRAM_STARS_PROVIDER_TOKEN_REQUIRED,
+    });
   }
   await trackBetaEvent(chatId, BETA_EVENT_NAMES.PAID_GENERATION_PLACEHOLDER, { limit_type: limitType, pack });
   await bot.sendMessage(chatId, [

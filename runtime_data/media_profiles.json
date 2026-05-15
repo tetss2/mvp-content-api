@@ -1,8 +1,13 @@
 {
-  "expertId": "dinara",
-  "voiceProfileId": null,
-  "imageAvatarProfileId": null,
-  "videoAvatarProfileId": null,
-  "status": "draft",
-  "updatedAt": "2026-05-15T00:00:00.000Z"
+  "profiles": [
+    {
+      "expertId": "dinara",
+      "voiceProfileId": null,
+      "imageAvatarProfileId": null,
+      "videoAvatarProfileId": null,
+      "imagePromptBase": null,
+      "status": "draft",
+      "updatedAt": "2026-05-15T00:00:00.000Z"
+    }
+  ]
 }

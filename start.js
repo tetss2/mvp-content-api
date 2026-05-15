@@ -21,6 +21,9 @@ const userPlansRoot = process.env.USER_PLANS_ROOT || join(__dirname, "runtime_da
 const runtimeEventsPath = process.env.RUNTIME_EVENTS_PATH || join(process.env.RUNTIME_DATA_ROOT || __dirname, "runtime_events.jsonl");
 const startupWarnings = [];
 const startupErrors = [];
+const telegramStarsEnabled = process.env.TELEGRAM_STARS_ENABLED === "true";
+const telegramStarsProviderTokenRequired = false;
+const telegramStarsCheckoutReady = telegramStarsEnabled;
 const planCatalog = {
   FREE: {
     planType: "FREE",
@@ -51,7 +54,7 @@ const miniappShell = createMiniappShell({
   mediaProfilesPath: process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json"),
   expertKbRegistryPath: process.env.EXPERT_KB_REGISTRY_PATH || join(__dirname, "runtime_data", "expert_kb_registry.json"),
   runtimeEventsPath,
-  telegramStarsReady: process.env.TELEGRAM_STARS_ENABLED === "true",
+  telegramStarsReady: telegramStarsCheckoutReady,
   telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || "",
 });
 
@@ -67,7 +70,7 @@ function validateStartup() {
   if (miniappUrl && !/^https:\/\//i.test(miniappUrl) && (process.env.NODE_ENV === "production" || process.env.RAILWAY_ENVIRONMENT)) {
     startupErrors.push("MINIAPP_PUBLIC_URL/TELEGRAM_MINIAPP_URL must be HTTPS in production/Railway.");
   }
-  if (process.env.TELEGRAM_STARS_ENABLED === "true") {
+  if (telegramStarsEnabled) {
     if (!process.env.TELEGRAM_BOT_USERNAME) startupWarnings.push("TELEGRAM_BOT_USERNAME missing; Mini App handoff links are degraded.");
     if (process.env.PAYMENT_TEST_MODE === "true") startupWarnings.push("PAYMENT_TEST_MODE=true; do not use this for uncontrolled production traffic.");
     for (const [name, fallback] of [["PLAN_START_STARS_PRICE", "149"], ["PLAN_PRO_STARS_PRICE", "499"]]) {
@@ -157,17 +160,18 @@ function buildPaymentStatusPayload() {
   const startPrice = Number(planCatalog.START.starsPrice);
   const proPrice = Number(planCatalog.PRO.starsPrice);
   const diagnostics = [];
-  if (process.env.TELEGRAM_STARS_ENABLED !== "true") diagnostics.push("TELEGRAM_STARS_ENABLED=false; real invoices use manual fallback.");
+  if (!telegramStarsEnabled) diagnostics.push("TELEGRAM_STARS_ENABLED=false; real invoices use manual fallback.");
   if (process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true") diagnostics.push("Payment test mode must be disabled for first live Stars payment.");
   if (!Number.isFinite(startPrice) || startPrice <= 0) diagnostics.push("START Stars price is invalid.");
   if (!Number.isFinite(proPrice) || proPrice <= 0) diagnostics.push("PRO Stars price is invalid.");
   return {
-    ok: startupErrors.filter((item) => item.includes("Stars") || item.includes("TELEGRAM")).length === 0 && diagnostics.every((item) => item.startsWith("TELEGRAM_STARS_ENABLED=false")),
-    starsCheckout: process.env.TELEGRAM_STARS_ENABLED === "true",
+    ok: startupErrors.filter((item) => item.includes("Stars") || item.includes("TELEGRAM")).length === 0 && telegramStarsCheckoutReady,
+    starsCheckout: telegramStarsEnabled,
+    starsCheckoutReady: telegramStarsCheckoutReady,
     paymentTestMode: process.env.PAYMENT_TEST_MODE === "true" || process.env.TELEGRAM_STARS_TEST_MODE === "true",
     currency: "XTR",
     invoiceRuntime: {
-      providerTokenRequired: false,
+      providerTokenRequired: telegramStarsProviderTokenRequired,
       providerTokenPresent: Boolean(process.env.TELEGRAM_STARS_PROVIDER_TOKEN),
       providerTokenBehavior: "ignored_for_xtr",
       startPlanReady: Number.isFinite(startPrice) && startPrice > 0,
@@ -179,7 +183,7 @@ function buildPaymentStatusPayload() {
       days: plan.days || null,
       starsPrice: plan.starsPrice || null,
     }])),
-    providerTokenRequired: false,
+    providerTokenRequired: telegramStarsProviderTokenRequired,
     diagnostics,
     warnings: startupWarnings.filter((item) => /PAYMENT|Stars|TELEGRAM_STARS/i.test(item)),
   };
@@ -292,7 +296,7 @@ http.createServer(async (req, res) => {
   }
   if (await miniappShell.handle(req, res)) return;
   if (url.pathname === "/runtime/plans") {
-    sendJson(res, 200, { ok: true, plans: planCatalog, telegramStarsReady: process.env.TELEGRAM_STARS_ENABLED === "true" });
+    sendJson(res, 200, { ok: true, plans: planCatalog, telegramStarsReady: telegramStarsCheckoutReady });
     return;
   }
   if (url.pathname === "/runtime/usage") {

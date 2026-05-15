@@ -168,6 +168,35 @@ async function loadProductionKb(kb) {
   return { paths, indexManifest, productionManifest, docstore };
 }
 
+async function loadIndexDir(indexDir, kbLabel = "runtime") {
+  const paths = {
+    current: indexDir,
+    faissIndex: join(indexDir, "faiss.index"),
+    docstore: join(indexDir, "docstore.jsonl"),
+    indexManifest: join(indexDir, "index_manifest.json"),
+  };
+  const checks = {
+    current: await exists(paths.current),
+    faissIndex: await exists(paths.faissIndex),
+    docstore: await exists(paths.docstore),
+    indexManifest: await exists(paths.indexManifest),
+  };
+  if (!checks.current) throw new Error(`Runtime index not found: ${repoRelative(paths.current)}`);
+  if (!checks.faissIndex) throw new Error(`Missing runtime FAISS index: ${repoRelative(paths.faissIndex)}`);
+  if (!checks.docstore) throw new Error(`Missing runtime docstore: ${repoRelative(paths.docstore)}`);
+  if (!checks.indexManifest) throw new Error(`Missing runtime index manifest: ${repoRelative(paths.indexManifest)}`);
+
+  const indexManifest = await readJson(paths.indexManifest);
+  const docstore = await readJsonlRows(paths.docstore);
+  if (indexManifest.embedding_dim !== EMBEDDING_DIM) {
+    throw new Error(`Runtime index embedding_dim ${indexManifest.embedding_dim} != ${EMBEDDING_DIM}`);
+  }
+  if (indexManifest.vectors !== docstore.length) {
+    throw new Error(`Runtime index vectors ${indexManifest.vectors} != docstore rows ${docstore.length}`);
+  }
+  return { paths, indexManifest, docstore, kbLabel };
+}
+
 function openAiEmbeddingRequest(input, apiKey) {
   const body = JSON.stringify({ model: EMBEDDING_MODEL, input });
   return new Promise((resolve, reject) => {
@@ -451,6 +480,55 @@ export async function retrieve(kb, query, topK, options = {}) {
       manifest_path: repoRelative(loaded.paths.productionManifest),
       index_generated_at: loaded.indexManifest.generated_at || null,
       index_vectors: loaded.indexManifest.vectors,
+    },
+    results,
+  };
+}
+
+export async function retrieveFromIndexDir(indexDir, query, topK = DEFAULT_TOP_K, options = {}) {
+  const kbLabel = options.kbLabel || options.expertId || "runtime";
+  const loaded = await loadIndexDir(indexDir, kbLabel);
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("OPENAI_API_KEY is required for query embeddings.");
+
+  const queryEmbedding = await embedQuery(query, apiKey);
+  const search = await searchFaiss(loaded.paths.faissIndex, queryEmbedding, topK, {
+    includeVectors: options.includeVectors === true,
+  });
+  const results = [];
+  search.ids.forEach((vectorId, index) => {
+    if (vectorId < 0 || vectorId >= loaded.docstore.length) return;
+    const row = loaded.docstore[vectorId];
+    results.push({
+      rank: results.length + 1,
+      score: Number(search.scores[index]),
+      vector_id: vectorId,
+      chunk_id: row.chunk_id,
+      text: row.text,
+      metadata: row.metadata || {},
+      source: sourceMetadata(row.metadata || {}),
+      kb_id: kbLabel,
+      production_version: null,
+      ...(options.includeVectors === true && Array.isArray(search.vectors?.[index])
+        ? { embedding: search.vectors[index] }
+        : {}),
+    });
+  });
+
+  return {
+    type: "runtime_kb_retrieval",
+    generated_at: nowIso(),
+    query,
+    kb_id: kbLabel,
+    production_version: null,
+    topK,
+    result_count: results.length,
+    embedding_model: EMBEDDING_MODEL,
+    manifest_info: {
+      manifest_path: repoRelative(loaded.paths.indexManifest),
+      index_generated_at: loaded.indexManifest.generated_at || null,
+      index_vectors: loaded.indexManifest.vectors,
+      expert_id: loaded.indexManifest.expert_id || options.expertId || null,
     },
     results,
   };

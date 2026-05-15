@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { spawnSync } from "child_process";
 import os from "os";
 import { basename, dirname, isAbsolute, join, relative } from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import https from "https";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -172,7 +172,7 @@ function splitParagraphs(text) {
     .filter(Boolean);
 }
 
-function chunkText(text, maxTokens = MAX_CHUNK_TOKENS, overlapTokens = CHUNK_OVERLAP_TOKENS) {
+export function chunkText(text, maxTokens = MAX_CHUNK_TOKENS, overlapTokens = CHUNK_OVERLAP_TOKENS) {
   const paragraphs = splitParagraphs(text);
   const chunks = [];
   let current = [];
@@ -659,7 +659,7 @@ async function openAiEmbeddingRequestWithRetry(input, apiKey, retries = 5) {
   throw new Error("OpenAI embeddings retry loop exited unexpectedly.");
 }
 
-async function embedChunks(chunks, apiKey) {
+export async function embedChunks(chunks, apiKey) {
   const embeddings = [];
   const batchSize = 64;
   for (let i = 0; i < chunks.length; i += batchSize) {
@@ -670,7 +670,7 @@ async function embedChunks(chunks, apiKey) {
   return embeddings;
 }
 
-async function buildFaissIndex(stagingDir, vectorsPath) {
+export async function buildFaissIndex(stagingDir, vectorsPath) {
   mkdirSync(dirname(stagingDir), { recursive: true });
   mkdirSync(stagingDir, { recursive: true });
   const tempFaissDir = join(os.tmpdir(), "mvp-content-api-faiss", timestampId());
@@ -853,7 +853,7 @@ print(index.ntotal)
   }
 }
 
-async function validateStaging(stagingDir) {
+export async function validateStaging(stagingDir) {
   const errors = [];
   const indexPath = join(stagingDir, "faiss.index");
   const docstorePath = join(stagingDir, "docstore.jsonl");
@@ -967,7 +967,9 @@ async function main() {
   console.log(JSON.stringify({ ok: true, result }, null, 2));
 }
 
-main().catch((err) => {
-  console.error(JSON.stringify({ ok: false, error: err.message }, null, 2));
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(JSON.stringify({ ok: false, error: err.message }, null, 2));
+    process.exit(1);
+  });
+}
