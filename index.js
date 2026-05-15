@@ -1143,8 +1143,8 @@ function formatEntitlement(entitlement) {
   const remaining = Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0));
   return [
     `User: ${entitlement.userId}`,
-    `Plan: ${entitlement.plan}`,
-    `Status: ${entitlement.status}`,
+    `Plan: ${paidPlanLabel(entitlement.plan)}`,
+    `Status: ${paidStatusLabel(entitlement.status)}`,
     `Generations: ${entitlement.generationUsed || 0}/${entitlement.generationLimit}`,
     `Remaining: ${remaining}`,
     `Valid until: ${entitlement.validUntil || "none"}`,
@@ -1157,17 +1157,33 @@ function planLimitLabel(plan) {
   return Number(plan.generationLimit) >= 1000000 ? "почти без лимита" : `${plan.generationLimit} генераций`;
 }
 
+function paidPlanLabel(plan) {
+  return {
+    demo: "демо-доступ",
+    beta_paid: "платный beta-доступ",
+    admin: "служебный доступ",
+  }[plan] || plan || "не выбран";
+}
+
+function paidStatusLabel(status) {
+  return {
+    active: "активен",
+    expired: "истёк",
+    revoked: "отозван",
+  }[status] || status || "неизвестно";
+}
+
 function buildPaidBetaPlansText() {
   return [
     "Beta-планы",
     "",
     `demo — ${planLimitLabel(PAID_BETA_PLANS.demo)}. Стартовый доступ, чтобы быстро проверить качество AI-эксперта.`,
-    `beta_paid — ${planLimitLabel(PAID_BETA_PLANS.beta_paid)} на ${PAID_BETA_PLANS.beta_paid.days} дней. Можно оплатить Telegram Stars или запросить вручную.`,
+    `Платный beta-доступ — ${planLimitLabel(PAID_BETA_PLANS.beta_paid)} на ${PAID_BETA_PLANS.beta_paid.days} дней. Можно оплатить Telegram Stars или запросить вручную.`,
     `admin — ${planLimitLabel(PAID_BETA_PLANS.admin)}. Служебный доступ для тестов и поддержки.`,
     "",
     TELEGRAM_STARS_CHECKOUT_READY
       ? `Telegram Stars checkout включён. Пакет beta: 10 дополнительных генераций за ${BETA_PACK_STARS_PRICE} Stars.`
-      : "Telegram Stars checkout отключён. Для подключения beta_paid используйте /upgrade.",
+      : "Telegram Stars checkout отключён. Для подключения платного beta-доступа используйте /upgrade.",
   ].join("\n");
 }
 
@@ -1181,27 +1197,27 @@ async function buildPremiumStatusText(userId) {
   const remaining = Math.max(0, Number(entitlement.generationLimit || 0) - Number(entitlement.generationUsed || 0));
   const activeExpertId = await getActiveExpertId(userId);
   return [
-    "Premium status",
+    "Статус доступа",
     "",
     `userId: ${entitlement.userId}`,
-    `current plan: ${entitlement.plan}`,
-    `status: ${entitlement.status}`,
-    `generationUsed: ${entitlement.generationUsed || 0}`,
-    `generationLimit: ${entitlement.generationLimit}`,
-    `remaining: ${remaining}`,
-    `validUntil: ${entitlement.validUntil || "none"}`,
-    `active expertId: ${activeExpertId}`,
+    `план: ${paidPlanLabel(entitlement.plan)}`,
+    `статус: ${paidStatusLabel(entitlement.status)}`,
+    `использовано генераций: ${entitlement.generationUsed || 0}`,
+    `лимит генераций: ${entitlement.generationLimit}`,
+    `осталось: ${remaining}`,
+    `действует до: ${entitlement.validUntil || "без срока"}`,
+    `активный эксперт: ${activeExpertId}`,
   ].join("\n");
 }
 
 function buildManualUpgradeText() {
   return [
     TELEGRAM_STARS_CHECKOUT_READY
-      ? "Telegram Stars checkout включён. Можно оплатить beta-пакет или запросить beta_paid вручную."
+      ? "Telegram Stars checkout включён. Можно оплатить beta-пакет или запросить платный beta-доступ вручную."
       : "Платный доступ пока включается вручную.",
     TELEGRAM_STARS_CHECKOUT_READY
       ? `Stars-пакет: 10 дополнительных генераций за ${BETA_PACK_STARS_PRICE} Stars.`
-      : "Напишите администратору для подключения beta_paid.",
+      : "Напишите администратору для подключения платного beta-доступа.",
     "",
     "Команда для просмотра планов: /plans",
     "Статус доступа: /premium_status",
@@ -1364,7 +1380,7 @@ function buildRuntimeCounterText(runtime) {
     ? Math.max(0, Number(textLimit) - textUsed)
     : null;
   const bits = [
-    `Режим: ${starsBetaPack ? "beta-pack" : (premiumOn ? "premium-ready" : (runtime.mode || "free_demo"))}`,
+    `Режим: ${starsBetaPack ? "beta-пакет" : (premiumOn ? "готов к premium-доступу" : (runtime.mode || "free_demo"))}`,
     starsBetaPack ? "Пакет: Beta text pack" : null,
     starsBetaPack ? "Куплено beta-генераций: 10" : null,
     `Тексты: ${textUsed}/${premiumOn ? "∞" : textLimit}`,
@@ -1601,7 +1617,7 @@ async function handlePaidBetaAccessDenied(chatId, entitlement, reason) {
     "Лимит генераций закончился.",
     "",
     entitlement
-      ? `План: ${entitlement.plan}, статус: ${entitlement.status}.`
+      ? `План: ${paidPlanLabel(entitlement.plan)}, статус: ${paidStatusLabel(entitlement.status)}.`
       : "План ещё не создан.",
     entitlement ? `Использовано: ${entitlement.generationUsed || 0}/${entitlement.generationLimit}.` : "",
     entitlement?.validUntil ? `Действует до: ${entitlement.validUntil}.` : "",
@@ -1610,12 +1626,12 @@ async function handlePaidBetaAccessDenied(chatId, entitlement, reason) {
       ? "Срок доступа истёк."
       : "",
     "",
-    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
+    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение платного beta-доступа.",
   ].filter(Boolean).join("\n"), {
     reply_markup: { inline_keyboard: [
       [{ text: "Открыть /upgrade", callback_data: "manual_upgrade" }],
       [{ text: "Запросить beta-доступ", callback_data: "req_limit_text" }],
-      [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+      [{ text: "Открыть профиль AI-эксперта", callback_data: "ob_dashboard" }],
     ]},
   });
 }
@@ -1640,7 +1656,7 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
     "",
     quotaText,
     "",
-    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение beta_paid.",
+    "Чтобы продолжить генерации, откройте /upgrade и запросите ручное подключение платного beta-доступа.",
   ].join("\n"), {
     reply_markup: { inline_keyboard: buildUpgradeKeyboard(isDemo ? "demo" : "text") },
   });
@@ -1648,10 +1664,10 @@ async function handleRuntimeLimitExhausted(chatId, limitType, runtime, options =
 
 function buildUpgradeKeyboard(limitType = "text") {
   const rows = [
-    [{ text: "Как подключить beta_paid", callback_data: "manual_upgrade" }],
+    [{ text: "Как подключить платный beta-доступ", callback_data: "manual_upgrade" }],
     [{ text: "Запросить premium-доступ", callback_data: `req_limit_${limitType}` }],
     [{ text: "Создать/усилить AI-эксперта", callback_data: "ob_template_menu" }],
-    [{ text: "Открыть dashboard", callback_data: "ob_dashboard" }],
+    [{ text: "Открыть профиль AI-эксперта", callback_data: "ob_dashboard" }],
   ];
   return rows;
 }
@@ -1694,7 +1710,7 @@ async function sendStarsUpgradePlaceholder(chatId, limitType = "text", pack = "t
   ].join("\n"), {
     reply_markup: { inline_keyboard: [
       [{ text: "Запросить premium вручную", callback_data: `req_limit_${limitType}` }],
-      [{ text: "Dashboard", callback_data: "ob_dashboard" }],
+      [{ text: "Профиль AI-эксперта", callback_data: "ob_dashboard" }],
     ]},
   });
 }
@@ -1707,14 +1723,14 @@ async function handleNotRegistered(chatId) {
       "1. Быстрое демо: готовый AI-эксперт покажет первый пост за минуту.",
       "2. Свой AI-эксперт: выбираете роль, загружаете материалы и получаете голос ближе к себе.",
       "",
-      "Для закрытого beta-доступа напишите @tetss2.",
+      "Для закрытого beta-доступа напишите @Dmitry_Kachaev.",
     ].join("\n"),
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [
         [{ text: "Попробовать демо", callback_data: "demo_start" }],
         [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
-        [{ text: "Написать @tetss2", url: "https://t.me/tetss2" }],
+        [{ text: "Написать @Dmitry_Kachaev", url: "https://t.me/Dmitry_Kachaev" }],
       ]},
     }
   );
@@ -1732,7 +1748,7 @@ async function handleExpired(chatId, user) {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
         { text: "📩 Запросить продление", callback_data: "req_extend" },
-        { text: "💬 Написать @tetss2", url: "https://t.me/tetss2" },
+        { text: "💬 Написать @Dmitry_Kachaev", url: "https://t.me/Dmitry_Kachaev" },
       ]]},
     }
   );
@@ -2119,49 +2135,49 @@ function buildFirstGenerationWowInstruction(isFirstGeneration = false) {
 const CONTENT_PRESETS = [
   {
     id: "emotional",
-    label: "💔 Emotional post",
+    label: "💔 Эмоциональный пост",
     lengthMode: "normal",
     instruction: "Формат: эмоциональный пост. Начни с узнаваемого внутреннего переживания, дай ощущение «меня поняли», затем мягко переведи к осознанию. Минимум объяснений, максимум живой человеческой правды.",
   },
   {
     id: "expert",
-    label: "🧠 Expert post",
+    label: "🧠 Экспертный пост",
     lengthMode: "normal",
     instruction: "Формат: экспертный пост. Дай ясную профессиональную рамку, 1-2 точных наблюдения и практичный вывод. Без сухой лекции, без академического тона.",
   },
   {
     id: "reels",
-    label: "🎬 Reels script",
+    label: "🎬 Сценарий Reels",
     lengthMode: "short",
     instruction: "Формат: сценарий Reels. Короткий крючок, 3-5 реплик для голоса, финальная фраза. Пиши как устную речь, без длинных абзацев.",
   },
   {
     id: "storytelling",
-    label: "📖 Storytelling",
+    label: "📖 Сторителлинг",
     lengthMode: "long",
     instruction: "Формат: storytelling. Построй текст через маленькую сцену или узнаваемую ситуацию, затем раскрой смысл и заверши теплым вопросом.",
   },
   {
     id: "provocative",
-    label: "⚡ Provocative post",
+    label: "⚡ Провокационный пост",
     lengthMode: "normal",
     instruction: "Формат: провокационный пост. Начни с сильного, но этичного тезиса, который ломает привычный миф. Не скатывайся в агрессию или кликбейт.",
   },
   {
     id: "warm",
-    label: "🌿 Warm audience",
+    label: "🌿 Тёплая аудитория",
     lengthMode: "normal",
     instruction: "Формат: теплый пост для своей аудитории. Больше заботы, принятия и спокойного контакта. Финал должен звучать как приглашение, а не как инструкция.",
   },
   {
     id: "sales_soft",
-    label: "🤝 Sales soft",
+    label: "🤝 Мягкая продажа",
     lengthMode: "normal",
     instruction: "Формат: мягкая продажа. Сначала ценность и узнавание проблемы, затем естественный мост к консультации/продукту без давления, обещаний результата и манипуляций.",
   },
   {
     id: "longread",
-    label: "📚 Longread",
+    label: "📚 Лонгрид",
     lengthMode: "long",
     instruction: "Формат: longread. Разверни тему глубже: проблема, почему она держится, что человек может заметить в себе, мягкий практический вывод. Без списков ради списков.",
   },
@@ -2831,10 +2847,10 @@ function buildUploadVisibilityText(category, stored, count) {
 
 function qualityLabel(score) {
   return {
-    good: "good",
-    medium: "medium",
-    weak: "weak",
-  }[score] || "unknown";
+    good: "хороший уровень",
+    medium: "средний уровень",
+    weak: "слабый уровень / нужно усилить",
+  }[score] || "неизвестно";
 }
 
 function buildUploadRecoverySuggestions(category, quality = null) {
@@ -2842,22 +2858,22 @@ function buildUploadRecoverySuggestions(category, quality = null) {
   const weakExpert = quality?.expert_learning === "weak";
   if (category === "knowledge") {
     const suggestions = [
-      "Recovery suggestions:",
-      "• Add 1-3 longer texts where you explain your approach, beliefs, cases, objections, or client situations.",
-      "• If you pasted a link, also paste the article/post text. Telegram often cannot read the page content from a bare URL.",
-      "• Add a short note: who your audience is, what you believe, what you never promise, and what topics you avoid.",
+      "Как усилить материалы:",
+      "• Добавьте 1-3 более длинных текста, где вы объясняете подход, взгляды, кейсы, возражения или ситуации клиентов.",
+      "• Если отправляли ссылку, добавьте ещё и текст статьи/поста. Telegram не всегда может прочитать страницу по одной ссылке.",
+      "• Добавьте короткую заметку: кто ваша аудитория, во что вы верите, чего никогда не обещаете и каких тем избегаете.",
     ];
-    if (weakExpert) suggestions.push("• Current material is thin for worldview. A 10-15 sentence expert note will help more than another short link.");
+    if (weakExpert) suggestions.push("• Сейчас материала мало для экспертной позиции. Заметка на 10-15 предложений поможет больше, чем ещё одна короткая ссылка.");
     return suggestions;
   }
   if (category === "style") {
     const suggestions = [
-      "Recovery suggestions:",
-      "• Add 3-5 real posts written by you. Best format: full text, not screenshots and not links only.",
-      "• Include posts with different moods: expert, personal, selling softly, reflective, practical.",
-      "• Add one post you especially like and one you do not want the AI to imitate.",
+      "Как усилить стиль:",
+      "• Добавьте 3-5 реальных постов, написанных вами. Лучший формат: полный текст, а не скриншоты и не только ссылки.",
+      "• Добавьте посты с разным настроением: экспертный, личный, мягко продающий, рефлексивный, практический.",
+      "• Добавьте один пост, который вам особенно нравится, и один пример, который AI не должен повторять.",
     ];
-    if (weakStyle) suggestions.push("• Current sample is weak for rhythm. Longer paragraphs with your openings and endings will improve the first WOW-post.");
+    if (weakStyle) suggestions.push("• Сейчас примеров мало для ритма. Более длинные фрагменты с вашими началами и финалами улучшат первый сильный пост.");
     return suggestions;
   }
   return [];
@@ -2869,17 +2885,17 @@ function buildMaterialQualityText(quality, category = "") {
   const useful = Array.isArray(quality.useful_signals) ? quality.useful_signals.filter(Boolean).slice(0, 2) : [];
   const lines = [
     "",
-    "Material quality:",
-    `• overall: ${qualityLabel(quality.score)}`,
-    `• style learning: ${qualityLabel(quality.style_learning)}`,
-    `• expert learning: ${qualityLabel(quality.expert_learning)}`,
+    "Качество материалов:",
+    `• общее: ${qualityLabel(quality.score)}`,
+    `• обучение стилю: ${qualityLabel(quality.style_learning)}`,
+    `• экспертная база: ${qualityLabel(quality.expert_learning)}`,
   ];
   if (warnings.length > 0) {
-    lines.push("Warnings:");
+    lines.push("Что стоит проверить:");
     for (const warning of warnings) lines.push(`• ${warning}`);
   }
   if (useful.length > 0) {
-    lines.push("Useful signals:");
+    lines.push("Полезные сигналы:");
     for (const signal of useful) lines.push(`• ${signal}`);
   }
   if (quality.score === "weak" || quality.style_learning === "weak" || quality.expert_learning === "weak") {
@@ -3004,7 +3020,7 @@ async function sendBetaOnboardingGuide(chatId) {
     reply_markup: { inline_keyboard: [
       [{ text: "Загрузить материалы", callback_data: "ob_upload_more:knowledge" }],
       [{ text: "Загрузить стиль", callback_data: "ob_upload_more:style" }],
-      [{ text: "Dashboard", callback_data: "ob_dashboard" }],
+      [{ text: "Профиль AI-эксперта", callback_data: "ob_dashboard" }],
     ]},
   });
 }
@@ -3038,7 +3054,7 @@ async function rebuildPersonaAndNotify(chatId, userId, intro = "Обновляю
       "Материалы сохранены, но обновление AI-эксперта не завершилось.",
       friendlyErrorMessage(error, "extraction"),
       "",
-      "Можно продолжить с текущей версией или нажать «Regenerate persona» позже.",
+      "Можно продолжить с текущей версией или нажать «Обновить профиль эксперта» позже.",
     ].join("\n"), {
       chat_id: chatId,
       message_id: status.message_id,
@@ -3061,7 +3077,7 @@ async function startExpertOnboarding(chatId, fromUserId) {
   await bot.sendMessage(chatId,
     "Создадим AI-эксперта, который пишет не как пустой ассистент, а как конкретный автор.\n\nБыстрый путь: выберите шаблон и сразу получите первый пост. Точный путь: соберите с нуля и добавьте материалы, стиль, фото или голос.",
     { reply_markup: { inline_keyboard: [
-      [{ text: "⚡ Start with template expert", callback_data: "ob_template_menu" }],
+      [{ text: "⚡ Начать с шаблонного эксперта", callback_data: "ob_template_menu" }],
       [{ text: "📝 Собрать с нуля", callback_data: "ob_custom_name" }],
     ]}}
   );
@@ -3131,10 +3147,10 @@ function buildStarterProfileMarkdown(templateKey, template) {
       ...template.openings.map((opening, index) => `${index + 1}. ${opening}\n\n${template.worldview[index % template.worldview.length]}\n\n${template.ctaPatterns[index % template.ctaPatterns.length]}`),
     ].join("\n\n"),
     material_quality: [
-      "Starter template expert.",
-      "Knowledge uploads: weak yet.",
-      "Style learning: template-based.",
-      "Recommendation: add 3-5 real posts later to make the voice more personal.",
+      "Шаблонный AI-эксперт.",
+      "Материалы знаний: слабый уровень / нужно усилить.",
+      "Обучение стилю: на основе шаблона.",
+      "Рекомендация: позже добавьте 3-5 реальных постов, чтобы голос стал более личным.",
     ].join("\n"),
   };
 }
@@ -3392,7 +3408,7 @@ async function finishExpertOnboarding(chatId, fromUserId) {
   await bot.sendMessage(chatId, [
     "AI-эксперт собран.",
     "",
-    "Сейчас главное не идеальность профиля, а первый живой результат. Я открою dashboard: там видно готовность, материалы и кнопка тестовой генерации.",
+    "Сейчас главное не идеальность профиля, а первый живой результат. Я открою профиль: там видно готовность, материалы и кнопка тестовой генерации.",
   ].join("\n"));
   await sendExpertDashboard(chatId, userId);
 }
@@ -3422,22 +3438,22 @@ async function sendExpertDashboard(chatId, userId = chatId) {
       reply_markup: { inline_keyboard: [
         [{ text: "✨ Первый/тестовый пост", callback_data: "ob_test_generation" }],
         [
-          { text: "🧩 List scenarios", callback_data: "ob_list_scenarios" },
-          { text: "🔄 Switch scenario", callback_data: "ob_select_scenario" },
+          { text: "🧩 Список сценариев", callback_data: "ob_list_scenarios" },
+          { text: "🔄 Сменить сценарий", callback_data: "ob_select_scenario" },
         ],
         [
-          { text: "🧠 Regenerate persona", callback_data: "ob_regen_persona" },
-          { text: "📣 My AI expert", callback_data: "ob_share_identity" },
+          { text: "🧠 Обновить профиль эксперта", callback_data: "ob_regen_persona" },
+          { text: "📣 Мой AI-эксперт", callback_data: "ob_share_identity" },
         ],
-        [{ text: "➕ Add scenario", callback_data: "ob_add_scenario" }],
+        [{ text: "➕ Добавить сценарий", callback_data: "ob_add_scenario" }],
         [
-          { text: "📚 Add materials", callback_data: "ob_upload_more:knowledge" },
-          { text: "✍️ Add style", callback_data: "ob_upload_more:style" },
+          { text: "📚 Добавить материалы", callback_data: "ob_upload_more:knowledge" },
+          { text: "✍️ Добавить стиль", callback_data: "ob_upload_more:style" },
         ],
-        [{ text: "📘 Onboarding guide", callback_data: "ob_guide" }],
+        [{ text: "📘 Гайд по онбордингу", callback_data: "ob_guide" }],
         [
-          { text: "🖼 Upload avatar", callback_data: "ob_upload_more:avatar" },
-          { text: "🎙 Upload voice", callback_data: "ob_upload_more:voice" },
+          { text: "🖼 Загрузить аватар", callback_data: "ob_upload_more:avatar" },
+          { text: "🎙 Загрузить голос", callback_data: "ob_upload_more:voice" },
         ],
         [{ text: "Создать новый контент", callback_data: "back_to_topics" }],
       ]},
@@ -3465,7 +3481,7 @@ async function buildShareableExpertIdentity(userId) {
   const style = await readProfileDraft(userId, "style_guidance.md", 420);
   const materialsReady = [
     inventory.counts.knowledge > 0 ? `${inventory.counts.knowledge} материалов` : "материалы можно усилить",
-    inventory.counts.style > 0 ? `${inventory.counts.style} примеров стиля` : "стиль пока template-based",
+    inventory.counts.style > 0 ? `${inventory.counts.style} примеров стиля` : "стиль пока на основе шаблона",
   ].join(" · ");
   const textUsed = Number(runtime.counters?.text || 0);
   const textLimit = runtime.limits?.text ?? "∞";
@@ -3507,7 +3523,7 @@ async function sendShareableExpertIdentity(chatId, userId = chatId) {
   await sendLongPlainText(chatId, text, {
     inline_keyboard: [
       [{ text: "📣 Текст для пересылки", callback_data: "share_friend" }],
-      [{ text: "← Dashboard", callback_data: "ob_dashboard" }],
+      [{ text: "← Профиль AI-эксперта", callback_data: "ob_dashboard" }],
     ],
   });
 }
@@ -3633,7 +3649,7 @@ async function sendScenarioList(chatId, userId = chatId, mode = "list") {
       }]))
     : [];
 
-  rows.push([{ text: "← Dashboard", callback_data: "ob_dashboard" }]);
+  rows.push([{ text: "← Профиль AI-эксперта", callback_data: "ob_dashboard" }]);
   const state = userState.get(chatId) || {};
   state.userScenarioMenu = inventory.scenarios.map((scenario) => scenario.id);
   userState.set(chatId, state);
@@ -3665,7 +3681,7 @@ async function sendTopicMenu(chatId) {
   if (userScenarios.length > 0) {
     const activeScenario = userScenarios.find((scenario) => scenario.id === activeScenarioId);
     if (activeScenario) {
-      keyboard.push([{ text: `✅ Active: ${activeScenario.label}`, callback_data: `prompt_topic_sc:${activeScenario.id}` }]);
+      keyboard.push([{ text: `✅ Активный: ${activeScenario.label}`, callback_data: `prompt_topic_sc:${activeScenario.id}` }]);
     }
     for (let i = 0; i < userScenarios.length; i += 2) {
       keyboard.push(userScenarios.slice(i, i + 2).map((scenario, offset) => ({
@@ -3673,11 +3689,11 @@ async function sendTopicMenu(chatId) {
         callback_data: `usc:${i + offset}`,
       })));
     }
-    keyboard.push([{ text: "👤 Expert dashboard", callback_data: "ob_dashboard" }]);
+    keyboard.push([{ text: "👤 Профиль AI-эксперта", callback_data: "ob_dashboard" }]);
   }
-  keyboard.push([{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }]);
+  keyboard.push([{ text: "🚀 Начать с шаблонного эксперта", callback_data: "ob_template_menu" }]);
   keyboard.push([{ text: "➕ Создать AI-эксперта с нуля", callback_data: "ob_start" }]);
-  keyboard.push([{ text: "💌 Beta invite copy", callback_data: "demo_invite_copy" }]);
+  keyboard.push([{ text: "💌 Текст beta-инвайта", callback_data: "demo_invite_copy" }]);
   await bot.sendMessage(chatId, `С чего начнём?\n\nДемо покажет ценность быстро. Свой AI-эксперт даст лучший голос после материалов.`, {
     parse_mode: "Markdown",
     reply_markup: { inline_keyboard: keyboard },
@@ -3724,7 +3740,7 @@ async function sendPresetsMenu(chatId) {
 
 async function sendHelp(chatId) {
   await bot.sendMessage(chatId,
-    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/my_expert — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Вопросы?* @tetss2`,
+    `ℹ️ *Справка*\n\n*Флоу генерации:* сценарий → тема → длина → стиль → текст → аудио → фото → видео → публикация в канал\n\n*Онбординг эксперта:*\n/onboard — создать AI-эксперта\n/myexpert — посмотреть профиль и материалы\n/profile — посмотреть профиль и материалы\n/status — посмотреть профиль и материалы\n/add_scenario — добавить сценарий\n\n*Вопросы?* @Dmitry_Kachaev`,
     {
       parse_mode: "Markdown",
       reply_markup: { inline_keyboard: [[
@@ -5093,7 +5109,7 @@ bot.onText(/\/start/, async (msg) => {
     const user = Object.values(db.users).find(u => u.invite_code === inviteCode);
     if (user) {
       if (user.tg_id !== chatId) {
-        await bot.sendMessage(chatId, "🔐 Этот инвайт-код уже использован. Обратитесь к @tetss2 для получения нового доступа.");
+        await bot.sendMessage(chatId, "🔐 Этот инвайт-код уже использован. Обратитесь к @Dmitry_Kachaev для получения нового доступа.");
         return;
       }
     }
@@ -5110,7 +5126,7 @@ bot.onText(/\/start/, async (msg) => {
   if (await userHasCompletedExpert(chatId)) {
     const profile = await loadUserProfile(chatId);
     await bot.sendMessage(chatId,
-      `👋 Добро пожаловать, *${profile?.expert_name || "эксперт"}*!\n\nВаш AI-эксперт уже создан. Открыл dashboard, чтобы сразу протестировать результат.`,
+      `👋 Добро пожаловать, *${profile?.expert_name || "эксперт"}*!\n\nВаш AI-эксперт уже создан. Открыл профиль, чтобы сразу протестировать результат.`,
       { parse_mode: "Markdown", reply_markup: START_KEYBOARD }
     );
     await sendExpertDashboard(chatId, chatId);
@@ -5142,7 +5158,7 @@ bot.onText(/\/start/, async (msg) => {
       "Добро пожаловать в закрытую beta.\n\nЦель простая: за пару минут увидеть, может ли AI-эксперт звучать как живой автор, а не как шаблонный GPT-пост.",
       { reply_markup: { inline_keyboard: [
         [{ text: "⚡ Попробовать демо сейчас", callback_data: "demo_start" }],
-        [{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }],
+        [{ text: "🚀 Начать с шаблонного эксперта", callback_data: "ob_template_menu" }],
         [{ text: "Создать AI-эксперта", callback_data: "ob_start" }],
         [{ text: "💌 Текст инвайта", callback_data: "demo_invite_copy" }],
         [{ text: "У меня уже есть доступ", callback_data: "show_help" }],
@@ -5177,7 +5193,7 @@ bot.onText(/\/plans/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText(), {
     reply_markup: { inline_keyboard: [
       [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
-      [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
+      [{ text: "Запросить платный beta-доступ", callback_data: "req_limit_text" }],
     ]},
   });
 });
@@ -5186,7 +5202,7 @@ bot.onText(/\/upgrade/, async (msg) => {
   await bot.sendMessage(msg.chat.id, buildManualUpgradeText(), {
     reply_markup: { inline_keyboard: [
       [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
-      [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
+      [{ text: "Запросить платный beta-доступ", callback_data: "req_limit_text" }],
       [{ text: "Посмотреть планы", callback_data: "show_plans" }],
     ]},
   });
@@ -5196,7 +5212,7 @@ bot.onText(/\/create_expert/, async (msg) => {
   await sendCreateExpertCta(msg.chat.id);
 });
 
-bot.onText(/\/my_expert/, async (msg) => {
+bot.onText(/\/(?:my_expert|myexpert|profile|status)(?:@\w+)?(?:\s|$)/, async (msg) => {
   await sendExpertDashboard(msg.chat.id, msg.from?.id || msg.chat.id);
 });
 
@@ -6137,7 +6153,7 @@ bot.on("callback_query", async (query) => {
       await bot.sendMessage(chatId, buildManualUpgradeText(), {
         reply_markup: { inline_keyboard: [
           [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
-          [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
+          [{ text: "Запросить платный beta-доступ", callback_data: "req_limit_text" }],
           [{ text: "Планы", callback_data: "show_plans" }],
         ]},
       });
@@ -6148,7 +6164,7 @@ bot.on("callback_query", async (query) => {
       await bot.sendMessage(chatId, buildPaidBetaPlansText(), {
         reply_markup: { inline_keyboard: [
           [{ text: `Оплатить ${BETA_PACK_STARS_PRICE} Stars`, callback_data: "stars_pack:text10" }],
-          [{ text: "Запросить beta_paid вручную", callback_data: "req_limit_text" }],
+          [{ text: "Запросить платный beta-доступ", callback_data: "req_limit_text" }],
         ]},
       });
       return;
@@ -6293,7 +6309,7 @@ bot.on("callback_query", async (query) => {
       const idx = parseInt(data.replace("ob_set_active:", ""));
       const scenarioId = state.userScenarioMenu?.[idx];
       if (!scenarioId) {
-        await bot.sendMessage(chatId, "Сценарий не найден. Откройте dashboard заново.");
+        await bot.sendMessage(chatId, "Сценарий не найден. Откройте профиль AI-эксперта заново.");
         return;
       }
       await setActiveUserScenario(query.from?.id || chatId, scenarioId);
@@ -7112,13 +7128,13 @@ async function runGeneration(chatId, scenario, lengthMode, styleKey, variant = "
       "Генерация не завершилась.",
       friendlyErrorMessage(error, "generation"),
       "",
-      "Тема сохранена. Можно повторить или перейти в dashboard и усилить эксперта.",
+      "Тема сохранена. Можно повторить или перейти в профиль и усилить эксперта.",
     ].join("\n"), {
       chat_id: chatId,
       message_id: genMsg.message_id,
       reply_markup: { inline_keyboard: [
         [{ text: "🔁 Повторить", callback_data: "retry_generation" }],
-        [{ text: "👤 Dashboard", callback_data: "ob_dashboard" }],
+        [{ text: "👤 Профиль AI-эксперта", callback_data: "ob_dashboard" }],
       ]},
     }).catch(async () => {
       await bot.sendMessage(chatId, friendlyErrorMessage(error, "generation"));
