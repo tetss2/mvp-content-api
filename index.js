@@ -92,6 +92,7 @@ const LEADS_BOT_ENABLED = LEADS_BOT_REQUESTED && Boolean(LEADS_BOT_TOKEN);
 const TELEGRAM_STARS_ENABLED = process.env.TELEGRAM_STARS_ENABLED === "true";
 const TELEGRAM_STARS_PROVIDER_TOKEN = process.env.TELEGRAM_STARS_PROVIDER_TOKEN || "";
 const TELEGRAM_STARS_TEXT_PACK_PRICE = Number(process.env.TELEGRAM_STARS_TEXT_PACK_PRICE || 149);
+const MINIAPP_PUBLIC_URL = process.env.MINIAPP_PUBLIC_URL || process.env.TELEGRAM_MINIAPP_URL || "";
 const GENERATION_QUEUE_LIMITS = {
   image: Number(process.env.GENERATION_IMAGE_CONCURRENCY || 2),
   video: Number(process.env.GENERATION_VIDEO_CONCURRENCY || 1),
@@ -2964,8 +2965,20 @@ const QUICK_TOPICS_SEX = [
   "боль во время секса — что делать",
 ];
 
+function miniappKeyboardButton() {
+  return MINIAPP_PUBLIC_URL ? { text: "Панель", web_app: { url: MINIAPP_PUBLIC_URL } } : null;
+}
+
+function miniappInlineButton() {
+  return MINIAPP_PUBLIC_URL ? { text: "Открыть панель", web_app: { url: MINIAPP_PUBLIC_URL } } : null;
+}
+
+const startKeyboardRows = [[{ text: "\uD83D\uDE80 Старт" }]];
+const startMiniappButton = miniappKeyboardButton();
+if (startMiniappButton) startKeyboardRows.push([startMiniappButton]);
+
 const START_KEYBOARD = {
-  keyboard: [[{ text: "\uD83D\uDE80 Старт" }]],
+  keyboard: startKeyboardRows,
   resize_keyboard: true,
   one_time_keyboard: true,
 };
@@ -4309,6 +4322,8 @@ async function sendTopicMenu(chatId) {
     }
     keyboard.push([{ text: "👤 Expert dashboard", callback_data: "ob_dashboard" }]);
   }
+  const miniappButton = miniappInlineButton();
+  if (miniappButton) keyboard.push([miniappButton]);
   keyboard.push([{ text: "🚀 Start with template expert", callback_data: "ob_template_menu" }]);
   keyboard.push([{ text: "➕ Создать AI-эксперта с нуля", callback_data: "ob_start" }]);
   keyboard.push([{ text: "💌 Beta invite copy", callback_data: "demo_invite_copy" }]);
@@ -8135,13 +8150,27 @@ bot.onText(/\/subscription/, async (msg) => {
   await bot.sendMessage(msg.chat.id, await buildPremiumStatusText(msg.from?.id || msg.chat.id));
 });
 
+bot.onText(/\/panel/, async (msg) => {
+  const button = miniappInlineButton();
+  if (!button) {
+    await bot.sendMessage(msg.chat.id, "Mini App panel is not configured yet. Set MINIAPP_PUBLIC_URL to enable it.");
+    return;
+  }
+  await bot.sendMessage(msg.chat.id, "Панель управления открывается отдельной кнопкой. AI-диалог и генерация остаются здесь, в Telegram.", {
+    reply_markup: { inline_keyboard: [[button]] },
+  });
+});
+
 bot.onText(/\/plans/, async (msg) => {
+  const miniappButton = miniappInlineButton();
+  const rows = [
+    [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
+    [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
+    [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
+  ];
+  if (miniappButton) rows.unshift([miniappButton]);
   await bot.sendMessage(msg.chat.id, buildPaidBetaPlansText(), {
-    reply_markup: { inline_keyboard: [
-      [{ text: "Оплатить START Stars", callback_data: "stars_plan:START" }],
-      [{ text: "Оплатить PRO Stars", callback_data: "stars_plan:PRO" }],
-      [{ text: "Запросить premium вручную", callback_data: "req_limit_text" }],
-    ]},
+    reply_markup: { inline_keyboard: rows },
   });
 });
 

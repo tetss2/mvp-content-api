@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Expert OS</title>
+    <link rel="stylesheet" href="/miniapp/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">AI Expert OS</p>
+        <h1>Панель управления</h1>
+      </div>
+      <span id="sessionBadge" class="badge">session</span>
+    </header>
+
+    <nav class="tabs" aria-label="Mini App sections">
+      <button class="tab is-active" data-view="dashboard">Dashboard</button>
+      <button class="tab" data-view="plans">Plans</button>
+      <button class="tab" data-view="usage">Usage</button>
+      <button class="tab" data-view="generate">Generate</button>
+      <button class="tab" data-view="uploads">Uploads</button>
+    </nav>
+
+    <main>
+      <section id="dashboard" class="view is-active">
+        <div class="grid">
+          <article class="panel">
+            <h2>Runtime</h2>
+            <dl id="runtimeSummary" class="facts"></dl>
+          </article>
+          <article class="panel">
+            <h2>Experts</h2>
+            <div id="expertsList" class="list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="plans" class="view">
+        <div id="plansList" class="plan-grid"></div>
+      </section>
+
+      <section id="usage" class="view">
+        <article class="panel">
+          <h2>Usage</h2>
+          <dl id="usageFacts" class="facts"></dl>
+        </article>
+      </section>
+
+      <section id="generate" class="view">
+        <form id="generateForm" class="panel form">
+          <h2>Generation Handoff</h2>
+          <label>
+            Topic
+            <textarea name="topic" rows="4" maxlength="500" required placeholder="Тема поста"></textarea>
+          </label>
+          <label>
+            Length
+            <select name="length">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </label>
+          <label>
+            Platform
+            <select name="platform">
+              <option value="telegram" selected>Telegram</option>
+              <option value="instagram_post">Instagram post</option>
+              <option value="instagram_reels">Instagram reels</option>
+            </select>
+          </label>
+          <button type="submit">Prepare in runtime</button>
+          <pre id="generateResult" class="result"></pre>
+        </form>
+      </section>
+
+      <section id="uploads" class="view">
+        <article class="panel">
+          <h2>Uploads</h2>
+          <dl id="uploadsFacts" class="facts"></dl>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="/miniapp/app.js" type="module"></script>
+  </body>
+</html>

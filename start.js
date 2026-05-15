@@ -2,6 +2,7 @@ import http from "http";
 import { promises as fs } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { createMiniappShell } from "./runtime/miniapp-shell.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const startedAt = new Date().toISOString();
@@ -37,6 +38,17 @@ const planCatalog = {
     starsPrice: Number(process.env.PLAN_PRO_STARS_PRICE || 499),
   },
 };
+const miniappShell = createMiniappShell({
+  botToken: mainToken,
+  planCatalog,
+  userPlansRoot,
+  runtimeDataRoot: process.env.RUNTIME_DATA_ROOT || __dirname,
+  expertsPath: process.env.EXPERTS_RUNTIME_PATH || join(__dirname, "runtime_data", "experts.json"),
+  mediaProfilesPath: process.env.MEDIA_PROFILES_RUNTIME_PATH || join(__dirname, "runtime_data", "media_profiles.json"),
+  expertKbRegistryPath: process.env.EXPERT_KB_REGISTRY_PATH || join(__dirname, "runtime_data", "expert_kb_registry.json"),
+  telegramStarsReady: process.env.TELEGRAM_STARS_ENABLED === "true",
+  telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || "",
+});
 
 function tokenFingerprint(value) {
   if (value === undefined || value === null || value === "") return value;
@@ -109,6 +121,7 @@ console.log("[startup] Leads bot:", {
 });
 http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  if (await miniappShell.handle(req, res)) return;
   if (url.pathname === "/healthz" || url.pathname === "/") {
     sendJson(res, 200, { ok: true, service: "mvp-content-api", runtimeMode, startedAt });
     return;
