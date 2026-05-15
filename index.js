@@ -1349,17 +1349,30 @@ function runtimeRemaining(runtime, key = "text") {
   return Math.max(0, Number(limit) - Number(runtime.counters?.[key] || 0));
 }
 
+function isStarsBetaTextPack(runtime) {
+  return runtime?.monetization?.paid_plan === "stars_text10_beta";
+}
+
 function buildRuntimeCounterText(runtime) {
   const textLeft = runtimeRemaining(runtime, "text");
   const demoLeft = runtimeRemaining(runtime, "demo");
-  const premiumOn = runtime.monetization?.premium_generation_enabled || runtime.monetization?.paid_plan;
+  const starsBetaPack = isStarsBetaTextPack(runtime);
+  const premiumOn = runtime.monetization?.premium_generation_enabled || (runtime.monetization?.paid_plan && !starsBetaPack);
+  const textUsed = Number(runtime.counters?.text || 0);
+  const textLimit = runtime.limits?.text ?? "∞";
+  const betaPackLeft = starsBetaPack && Number.isFinite(Number(textLimit))
+    ? Math.max(0, Number(textLimit) - textUsed)
+    : null;
   const bits = [
-    `Режим: ${premiumOn ? "premium-ready" : (runtime.mode || "free_demo")}`,
-    `Тексты: ${runtime.counters?.text || 0}/${premiumOn ? "∞" : (runtime.limits?.text ?? "∞")}`,
+    `Режим: ${starsBetaPack ? "beta-pack" : (premiumOn ? "premium-ready" : (runtime.mode || "free_demo"))}`,
+    starsBetaPack ? "Пакет: Beta text pack" : null,
+    starsBetaPack ? "Куплено beta-генераций: 10" : null,
+    `Тексты: ${textUsed}/${premiumOn ? "∞" : textLimit}`,
     `Фото: ${runtime.counters?.photo || 0}/${runtime.limits?.photo ?? "∞"}`,
     `Видео: ${runtime.counters?.video || 0}/${runtime.limits?.video ?? "∞"}`,
-  ];
+  ].filter(Boolean);
   if (demoLeft !== null) bits.push(`Демо: ${runtime.counters?.demo || 0}/${runtime.limits?.demo ?? "∞"}`);
+  if (betaPackLeft !== null) bits.push(`Осталось текстовых генераций: ${betaPackLeft}/${textLimit}`);
   if (textLeft !== null) {
     bits.push(`Осталось бесплатных текстов: ${textLeft}`);
     if (textLeft <= 3) bits.push("Монетизация: готов Stars-upgrade hook, можно тестировать оплату/расширение вручную");
@@ -3454,6 +3467,19 @@ async function buildShareableExpertIdentity(userId) {
     inventory.counts.knowledge > 0 ? `${inventory.counts.knowledge} материалов` : "материалы можно усилить",
     inventory.counts.style > 0 ? `${inventory.counts.style} примеров стиля` : "стиль пока template-based",
   ].join(" · ");
+  const textUsed = Number(runtime.counters?.text || 0);
+  const textLimit = runtime.limits?.text ?? "∞";
+  const starsBetaPack = isStarsBetaTextPack(runtime);
+  const betaPackLeft = starsBetaPack && Number.isFinite(Number(textLimit))
+    ? Math.max(0, Number(textLimit) - textUsed)
+    : null;
+  const generationLines = starsBetaPack && betaPackLeft !== null
+    ? [
+        "Пакет: Beta text pack",
+        "Куплено beta-генераций: 10",
+        `Осталось текстовых генераций: ${betaPackLeft}/${textLimit}`,
+      ]
+    : [`Генерации: ${textUsed}/${textLimit} текстов`];
   return [
     "Мой AI-эксперт",
     "",
@@ -3461,7 +3487,7 @@ async function buildShareableExpertIdentity(userId) {
     `Роль: ${activeScenario?.label || "не выбрана"}`,
     `Статус: ${profile.status === "completed" ? "готов к генерации" : "собирается"}`,
     `Основа: ${materialsReady}`,
-    `Генерации: ${runtime.counters?.text || 0}/${runtime.limits?.text ?? "∞"} текстов`,
+    ...generationLines,
     "",
     "Persona:",
     persona || "Будет точнее после загрузки материалов.",
