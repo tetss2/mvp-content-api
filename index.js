@@ -385,6 +385,31 @@ async function getImageReadiness(chatId) {
   };
 }
 
+async function getVideoReadiness(chatId) {
+  const voice = await getVoiceReadiness(chatId);
+  const image = await getImageReadiness(chatId);
+  const mediaProfile = await getMediaProfileForExpert(voice.expertId);
+  return {
+    enabled: Boolean(FAL_KEY && cloudinaryAudioReady() && FISH_AUDIO_API_KEY && voice.voiceProfileId && image.loraUrl),
+    expertId: voice.expertId,
+    falKeyPresent: Boolean(FAL_KEY),
+    cloudinaryPresent: cloudinaryAudioReady(),
+    fishAudioKeyPresent: Boolean(FISH_AUDIO_API_KEY),
+    voiceProfileIdPresent: Boolean(voice.voiceProfileId),
+    voiceProfileSource: voice.voiceProfileSource,
+    imageAvatarProfileIdPresent: image.imageAvatarProfileIdPresent,
+    imageAvatarProfileSource: image.imageAvatarProfileSource,
+    loraUrlPresent: image.loraUrlPresent,
+    videoAvatarProfileIdPresent: Boolean(mediaProfile.videoAvatarProfileId),
+    modelEndpoint: "fal-ai/creatify/aurora",
+    imageModelEndpoint: image.modelEndpoint,
+    imageSize: image.imageSize,
+    audioBridge: "Cloudinary video/upload",
+    loraUrl: image.loraUrl,
+    voiceProfileId: voice.voiceProfileId,
+  };
+}
+
 async function guardConfiguredVoiceGeneration(chatId) {
   const readiness = await getVoiceReadiness(chatId);
   if (readiness.enabled) return readiness;
@@ -433,6 +458,33 @@ function formatImageGenerationError(error) {
   if (!raw) return "Неизвестная ошибка FAL.ai.";
   if (raw.includes("fal photo error")) return raw.slice(0, 900);
   return `FAL.ai не смог сгенерировать изображение: ${raw.slice(0, 900)}`;
+}
+
+function buildVideoReadinessMissingText(readiness) {
+  const missing = [];
+  if (!readiness.falKeyPresent) missing.push("FALAI_KEY");
+  if (!readiness.cloudinaryPresent) missing.push("CLOUDINARY_CLOUD, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET");
+  if (!readiness.fishAudioKeyPresent) missing.push("FISH_AUDIO_API_KEY");
+  if (!readiness.voiceProfileIdPresent) missing.push("voiceProfileId в runtime_data/media_profiles.json или FISH_AUDIO_VOICE_ID");
+  if (!readiness.loraUrlPresent) missing.push("Dinara LoRA URL или imageAvatarProfileId в runtime_data/media_profiles.json");
+  if (!missing.length) return null;
+  return [
+    "Видео Динары пока не настроено.",
+    "",
+    `Не хватает: ${missing.join(", ")}.`,
+    "",
+    "Для /test_video нужны изображение, mp3 и публичный audio URL через Cloudinary.",
+  ].join("\n");
+}
+
+function formatVideoGenerationError(error) {
+  const raw = String(error?.message || error || "unknown error").trim();
+  if (!raw) return "Неизвестная ошибка генерации видео.";
+  if (raw.includes("Cloudinary")) return raw.slice(0, 900);
+  if (raw.includes("Aurora")) return raw.slice(0, 900);
+  if (raw.includes("Fish Audio")) return raw.slice(0, 900);
+  if (raw.includes("fal photo error")) return raw.slice(0, 900);
+  return `Видео не удалось сгенерировать: ${raw.slice(0, 900)}`;
 }
 
 async function getExpertById(expertId) {
@@ -1645,6 +1697,8 @@ fair light skin tone, soft warm skin, dark straight hair, photorealistic,
 absolutely no wrinkles, perfectly smooth skin, youthful appearance, 33 years old,
 asian features, soft round face, small nose, almond eyes, upturned eye corners,
 subtle gentle closed-mouth smile, calm serene expression`;
+
+const TEST_VIDEO_SCENE_PROMPT = "sitting in a cozy therapist office, soft daylight, calm neutral background, professional talking-head setup";
 
 const LORA_URL = "https://v3b.fal.media/files/b/0a972654/A_18FqqSaUR0LlZegGtS0_pytorch_lora_weights.safetensors";
 
@@ -5336,6 +5390,192 @@ bot.onText(/\/test_image(?:\s+([\s\S]+))?/, async (msg, match) => {
     console.log("[/test_image] handler fail", error);
     const message = [
       "Не удалось выполнить /test_image.",
+      `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+    ].join("\n");
+    if (status?.message_id) {
+      await bot.editMessageText(message, {
+        chat_id: chatId,
+        message_id: status.message_id,
+      }).catch(async () => {
+        await bot.sendMessage(chatId, message).catch(() => {});
+      });
+    } else {
+      await bot.sendMessage(chatId, message).catch(() => {});
+    }
+  }
+});
+
+bot.onText(/\/video_status/, async (msg) => {
+  const chatId = msg.chat.id;
+  const userId = msg.from?.id || chatId;
+  if (!(await canManagePaidBeta(userId))) {
+    await bot.sendMessage(chatId, "🔒 Video status доступен только admin/full_access.");
+    return;
+  }
+  const readiness = await getVideoReadiness(chatId);
+  const yesNo = (value) => value ? "yes" : "no";
+  await bot.sendMessage(chatId, [
+    "Video generation beta readiness",
+    "",
+    `video enabled: ${yesNo(readiness.enabled)}`,
+    `FALAI_KEY present: ${yesNo(readiness.falKeyPresent)}`,
+    `Cloudinary present: ${yesNo(readiness.cloudinaryPresent)}`,
+    `Fish Audio key present: ${yesNo(readiness.fishAudioKeyPresent)}`,
+    `voiceProfileId present: ${yesNo(readiness.voiceProfileIdPresent)}`,
+    `voiceProfileId source: ${readiness.voiceProfileSource}`,
+    `imageAvatarProfileId present: ${yesNo(readiness.imageAvatarProfileIdPresent)}`,
+    `image avatar source: ${readiness.imageAvatarProfileSource}`,
+    `videoAvatarProfileId present: ${yesNo(readiness.videoAvatarProfileIdPresent)}`,
+    `video model/endpoint: ${readiness.modelEndpoint}`,
+    `image model/endpoint: ${readiness.imageModelEndpoint}`,
+    `audio URL bridge: ${readiness.audioBridge}`,
+    `active expertId: ${readiness.expertId}`,
+    "",
+    "For /test_video required: FALAI_KEY + Cloudinary + Fish Audio key + voiceProfileId + Dinara LoRA/profile.",
+    "This diagnostic command does not spend generation limits.",
+  ].join("\n"));
+});
+
+bot.onText(/\/test_video(?:\s+([\s\S]+))?/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  let status = null;
+  console.log("[/test_video] command received", { chatId, userId: msg.from?.id || chatId });
+  try {
+    status = await bot.sendMessage(chatId, "Готовлю тестовое видео...");
+
+    const userId = msg.from?.id || chatId;
+    if (!(await canManagePaidBeta(userId))) {
+      await bot.sendMessage(chatId, "🔒 Test video доступен только admin/full_access.");
+      return;
+    }
+
+    const text = (match?.[1] || "").trim();
+    if (!text) {
+      await bot.sendMessage(chatId, [
+        "Usage:",
+        "/test_video Привет, это тест видео Динары",
+      ].join("\n"));
+      return;
+    }
+
+    const videoText = text.length > 450 ? text.slice(0, 450).trim() : text;
+    const readiness = await getVideoReadiness(chatId);
+    console.log("[/test_video] readiness", {
+      expertId: readiness.expertId,
+      falKeyPresent: readiness.falKeyPresent,
+      cloudinaryPresent: readiness.cloudinaryPresent,
+      fishAudioKeyPresent: readiness.fishAudioKeyPresent,
+      voiceProfileSource: readiness.voiceProfileSource,
+      imageSource: readiness.imageAvatarProfileSource,
+      modelEndpoint: readiness.modelEndpoint,
+    });
+
+    const missingText = buildVideoReadinessMissingText(readiness);
+    if (missingText) {
+      await bot.sendMessage(chatId, missingText);
+      return;
+    }
+
+    await bot.editMessageText("Шаг 1/4: генерирую короткий голос...", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    let voiceBuffer;
+    try {
+      console.log("[/test_video] Fish request start");
+      ({ buffer: voiceBuffer } = await generateVoice(videoText, readiness.voiceProfileId));
+      console.log("[/test_video] Fish request success", { bytes: voiceBuffer.length });
+    } catch (error) {
+      console.log("[/test_video] Fish request fail", error);
+      await bot.sendMessage(chatId, formatVideoGenerationError(error));
+      return;
+    }
+
+    await bot.editMessageText("Шаг 2/4: загружаю аудио в Cloudinary...", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    let audioUrl;
+    try {
+      console.log("[/test_video] Cloudinary upload start");
+      audioUrl = await uploadAudioToCloudinary(voiceBuffer, `${readiness.expertId || "expert"}-test-video.mp3`);
+      console.log("[/test_video] Cloudinary upload success", { audioUrlPresent: Boolean(audioUrl) });
+    } catch (error) {
+      console.log("[/test_video] Cloudinary upload fail", error);
+      await bot.sendMessage(chatId, [
+        "Голос сгенерирован, но видео требует публичный audio URL.",
+        "Cloudinary сейчас недоступен или не настроен.",
+        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+      ].join("\n"));
+      return;
+    }
+
+    await bot.editMessageText("Шаг 3/4: генерирую изображение Динары...", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    let imageResult;
+    try {
+      console.log("[/test_video] FAL image request start", { endpoint: readiness.imageModelEndpoint });
+      imageResult = await generateImage(chatId, TEST_VIDEO_SCENE_PROMPT, { loraUrl: readiness.loraUrl });
+      console.log("[/test_video] FAL image request success", { imageUrlPresent: Boolean(imageResult?.imageUrl) });
+    } catch (error) {
+      console.log("[/test_video] FAL image request fail", error);
+      await bot.sendMessage(chatId, formatVideoGenerationError(error));
+      return;
+    }
+
+    await bot.editMessageText("Шаг 4/4: запускаю Aurora video generation...", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+    let videoResult;
+    try {
+      console.log("[/test_video] Aurora request start", { endpoint: readiness.modelEndpoint });
+      videoResult = await generateVideoAurora(chatId, imageResult.imageUrl, audioUrl);
+      console.log("[/test_video] Aurora request success", { videoUrlPresent: Boolean(videoResult?.videoUrl), cost: videoResult?.cost });
+    } catch (error) {
+      console.log("[/test_video] Aurora request fail", error);
+      await bot.sendMessage(chatId, formatVideoGenerationError(error));
+      return;
+    }
+
+    const state = userState.get(chatId) || {};
+    state.lastImageUrl = imageResult.imageUrl;
+    state.lastAudioUrl = audioUrl;
+    state.lastVideoUrl = videoResult.videoUrl;
+    state.lastExpertId = readiness.expertId;
+    userState.set(chatId, state);
+
+    try {
+      console.log("[/test_video] Telegram sendVideo start");
+      await bot.sendVideo(chatId, videoResult.videoUrl, {
+        caption: [
+          "Тестовое видео готово.",
+          `expertId: ${readiness.expertId}`,
+          `video endpoint: ${readiness.modelEndpoint}`,
+          "Generation limits were not incremented.",
+        ].join("\n"),
+      });
+      console.log("[/test_video] Telegram sendVideo success");
+    } catch (error) {
+      console.log("[/test_video] Telegram sendVideo fail", error);
+      await bot.sendMessage(chatId, [
+        "Видео сгенерировано, но Telegram не смог отправить mp4.",
+        `URL: ${videoResult.videoUrl}`,
+        `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
+      ].join("\n"));
+      return;
+    }
+
+    await bot.editMessageText("Готово: тестовое видео отправлено.", {
+      chat_id: chatId,
+      message_id: status.message_id,
+    }).catch(() => {});
+  } catch (error) {
+    console.log("[/test_video] handler fail", error);
+    const message = [
+      "Не удалось выполнить /test_video.",
       `Короткая причина: ${String(error?.message || error || "unknown error").slice(0, 500)}`,
     ].join("\n");
     if (status?.message_id) {
